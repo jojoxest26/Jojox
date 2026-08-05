@@ -1,0 +1,33 @@
+{
+  "name": "@jojox/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JoJoX security analysis engine + backend — 21 checks for AI-generated code, GitHub App, API",
+  "type": "module",
+  "main": "src/analyze.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx src/cli.ts",
+    "dev": "tsx watch src/server/index.ts",
+    "start": "tsx src/server/index.ts"
+  },
+  "dependencies": {
+    "@octokit/app": "^15.1.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "fast-glob": "^3.3.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.5"
+  }
+}
