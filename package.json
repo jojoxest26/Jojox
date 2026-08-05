@@ -5,6 +5,9 @@
   "description": "JoJoX security analysis engine + backend — 21 checks for AI-generated code, GitHub App, API",
   "type": "module",
   "main": "src/analyze.ts",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
