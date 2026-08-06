@@ -23,5 +23,12 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "../src"]
-}
+     "include": [
+    "src",
+    "../src/analyze.ts",
+    "../src/types.ts",
+    "../src/scoring.ts",
+    "../src/checks",
+    "../src/util"
+  ]
+} 
