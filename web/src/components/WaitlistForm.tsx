@@ -1,6 +1,35 @@
 import { useState } from "react";
 import { joinWaitlist } from "../lib/api.js";
 
+const ROADMAP = [
+  {
+    icon: "🏷️",
+    title: "Badge sempre aggiornato nel README",
+    text: "Si aggiorna da solo, senza che tu debba rigenerarlo a mano.",
+  },
+  {
+    icon: "🔧",
+    title: "Correzioni automatiche via pull request",
+    text: "Non solo segnalate — applicate direttamente sul tuo repo.",
+  },
+  {
+    icon: "🗄️",
+    title: "Controllo automatico delle impostazioni Supabase",
+    text: "Verifica che la configurazione reale del progetto corrisponda a quello che il codice si aspetta.",
+  },
+  {
+    icon: "⌨️",
+    title: "CLI e server MCP",
+    text: "Da terminale, o richiamabile direttamente dal tuo agente AI.",
+  },
+  {
+    icon: "💳",
+    title: "Abbonamento gestibile da solo",
+    text: "Passa al piano Pro, o torna a quello gratuito, direttamente dall'app — senza scriverci.",
+    span2: true,
+  },
+];
+
 export function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -19,12 +48,21 @@ export function WaitlistForm() {
 
   return (
     <section className="waitlist-section container">
-      <div className="card" style={{ padding: "1.5rem" }}>
-        <h3 style={{ margin: "0 0 0.3rem" }}>In arrivo</h3>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", margin: 0 }}>
-          Badge sempre aggiornato nel README, correzioni automatiche via pull request, controllo delle impostazioni
-          Supabase, CLI e server MCP.
-        </p>
+      <div className="card waitlist-card">
+        <h2>In arrivo</h2>
+        <p>Ancora in lavorazione — te lo diciamo chiaramente, invece di fingere che esista già:</p>
+
+        <div className="roadmap-grid">
+          {ROADMAP.map((item) => (
+            <div key={item.title} className={`roadmap-item${item.span2 ? " span-2" : ""}`}>
+              <p>
+                {item.icon} {item.title}
+              </p>
+              <p>{item.text}</p>
+            </div>
+          ))}
+        </div>
+
         <form className="waitlist-form" onSubmit={handleSubmit}>
           <input
             type="email"
@@ -33,8 +71,8 @@ export function WaitlistForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <button type="submit" className="btn btn-primary" disabled={status === "sending"}>
-            Unisciti alla lista
+          <button type="submit" className="btn btn-primary hard-border hard-shadow-sm" disabled={status === "sending"}>
+            Unisciti alla lista d'attesa
           </button>
         </form>
         {status === "done" && <p className="waitlist-msg">✓ Sei in lista!</p>}

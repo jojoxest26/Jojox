@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient.js";
 import { LoginPanel } from "./LoginPanel.js";
@@ -8,13 +8,39 @@ const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 export function Header({ session }: { session: Session | null }) {
   const [loginOpen, setLoginOpen] = useState(false);
 
+  useEffect(() => {
+    if (session) return;
+    const openLogin = () => setLoginOpen(true);
+    window.addEventListener("jojox-open-login", openLogin);
+    return () => window.removeEventListener("jojox-open-login", openLogin);
+  }, [session]);
+
   return (
     <header className="header">
       <div className="container header-inner">
-        <span className="logo">JoJoX</span>
+        <a
+          className="logo-link"
+          href="/"
+          aria-label="JoJoX"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
+          <svg viewBox="0 0 100 100" width="32" height="32" aria-hidden="true">
+            <line x1="63" y1="63" x2="90" y2="90" stroke="#171717" strokeWidth="11" strokeLinecap="round" />
+            <line x1="64" y1="64" x2="86" y2="86" stroke="#f59e0b" strokeWidth="6" strokeLinecap="round" />
+            <circle cx="41" cy="41" r="30" fill="#f59e0b" stroke="#171717" strokeWidth="6" />
+            <circle cx="41" cy="41" r="20" fill="#fff" stroke="#171717" strokeWidth="5" />
+            <circle cx="34" cy="38" r="3.2" fill="#171717" />
+            <circle cx="49" cy="38" r="3.2" fill="#171717" />
+            <path d="M32 46c3 5 12 5 15 0" fill="none" stroke="#171717" strokeWidth="3.4" strokeLinecap="round" />
+          </svg>
+          <span className="logo font-logo">JoJoX</span>
+        </a>
         <div className="header-actions">
           <a
-            className="btn btn-secondary"
+            className="btn btn-secondary hard-border hard-shadow-sm"
             href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
             target="_blank"
             rel="noreferrer"
@@ -24,13 +50,21 @@ export function Header({ session }: { session: Session | null }) {
           {session ? (
             <>
               <span className="user-email">{session.user.email}</span>
-              <button type="button" className="btn btn-secondary" onClick={() => supabase.auth.signOut()}>
+              <button
+                type="button"
+                className="btn btn-secondary hard-border hard-shadow-sm"
+                onClick={() => supabase.auth.signOut()}
+              >
                 Esci
               </button>
             </>
           ) : (
             <div className="login-panel-anchor">
-              <button type="button" className="btn btn-primary" onClick={() => setLoginOpen((v) => !v)}>
+              <button
+                type="button"
+                className="btn btn-primary hard-border hard-shadow-sm"
+                onClick={() => setLoginOpen((v) => !v)}
+              >
                 Accedi
               </button>
               {loginOpen && <LoginPanel onClose={() => setLoginOpen(false)} />}

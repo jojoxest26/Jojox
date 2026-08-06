@@ -1,55 +1,99 @@
-const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
+function openLogin() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.dispatchEvent(new CustomEvent("jojox-open-login"));
+}
+
+function scrollToAnalyzer() {
+  document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+}
 
 export function Pricing() {
   return (
     <section className="pricing-section container">
-      <h2 style={{ textAlign: "center", fontSize: "1.6rem", fontWeight: 800 }}>
-        Paghi il monitoraggio continuo, non le singole analisi
-      </h2>
-      <p style={{ textAlign: "center", color: "var(--text-muted)", maxWidth: 560, margin: "0.5rem auto 0" }}>
-        Analizzare il codice è sempre gratis. Il piano a pagamento serve solo se vuoi tenerlo sotto controllo senza
-        limiti.
-      </p>
-      <div className="pricing-grid">
-        <div className="card price-card">
-          <h3>Ospite</h3>
-          <div className="price-amount">Gratis</div>
+      <h2>Paghi il monitoraggio continuo, non le singole analisi</h2>
+      <p>Analizzare il codice è sempre gratis. Il piano a pagamento serve solo se vuoi tenerlo sotto controllo senza limiti.</p>
+
+      <div className="card guest-callout">
+        <div>
+          <div className="guest-title">
+            <span>👤</span>
+            <h3>Modalità ospite</h3>
+          </div>
           <ul>
-            <li>✓ Analisi illimitate nel browser</li>
+            <li>✓ 1 analisi gratuita</li>
             <li>✓ Tutti i 21 controlli con esempi di correzione</li>
             <li>✓ Punteggio di sicurezza</li>
             <li>✓ Niente viene salvato, niente lascia il tuo browser</li>
           </ul>
         </div>
+        <button type="button" className="btn btn-secondary hard-border hard-shadow" onClick={scrollToAnalyzer}>
+          Prova senza registrarti
+        </button>
+      </div>
+
+      <div className="pricing-grid">
         <div className="card price-card">
-          <h3>Free</h3>
+          <h3>Gratis</h3>
           <div className="price-amount">0€</div>
           <ul>
-            <li>✓ 5 analisi al mese salvate nello storico</li>
+            <li>✓ 5 analisi al mese</li>
             <li>✓ Tutti i 21 controlli, con esempi di correzione</li>
-            <li>✓ Punteggio di sicurezza</li>
+            <li>✓ Punteggio di sicurezza + badge da scaricare (.svg)</li>
             <li>✓ Cronologia delle ultime 20 analisi</li>
           </ul>
+          <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={openLogin}>
+            Inizia gratis
+          </button>
+          <p className="price-card-note">Per chi analizza progetti una tantum</p>
         </div>
-        <div className="card price-card">
+
+        <div className="card price-card featured">
+          <span className="pill pill-amber price-card-badge">MONITORING</span>
           <h3>Pro</h3>
-          <div className="price-amount">9,99€ /mese</div>
+          <div className="price-amount">
+            9,99€ <span className="per">/mese</span>
+          </div>
           <ul>
             <li>✓ Analisi e cronologia illimitate</li>
-            <li>✓ Integrazione GitHub: controlla ogni push e blocca le modifiche rischiose</li>
+            <li>✓ Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose</li>
             <li>✓ Commenti automatici sulle pull request</li>
+            <li>
+              <span className="soon">IN ARRIVO</span>Badge che si aggiorna da solo a ogni push
+            </li>
+            <li>
+              <span className="soon">IN ARRIVO</span>Correzioni automatiche via pull request
+            </li>
           </ul>
-          <a
-            className="btn btn-secondary"
-            href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ width: "100%" }}
-          >
-            Collega GitHub
-          </a>
+          <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={openLogin}>
+            Attiva Pro
+          </button>
+          <p className="price-card-note">Per monitoraggio continuo su ogni push</p>
+        </div>
+
+        <div className="card price-card">
+          <span className="pill pill-mint price-card-badge">TEAM</span>
+          <h3>Team</h3>
+          <div className="price-amount">
+            24,99€ <span className="per">/mese</span>
+          </div>
+          <ul>
+            <li>✓ Tutto quello incluso nel Pro</li>
+            <li>✓ Fino a 5 seat inclusi (poi 7€/seat)</li>
+            <li>✓ Dashboard condivisa con lo storico di tutti i repo del team</li>
+            <li>✓ Fino a 10 repo collegati alla GitHub App</li>
+          </ul>
+          <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={openLogin}>
+            Attiva Team
+          </button>
+          <p className="price-card-note">Per team con più repo</p>
         </div>
       </div>
+
+      <p className="pricing-disclaimer">
+        Disdici quando vuoi, senza vincoli. Le voci contrassegnate "In arrivo" sono ancora in lavorazione: se attivi
+        il Pro, sai già cosa stai finanziando.{" "}
+        <span>(Per ora Pro e Team vanno attivati a mano, finché non colleghiamo un sistema di pagamento automatico.)</span>
+      </p>
     </section>
   );
 }
