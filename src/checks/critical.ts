@@ -10,7 +10,7 @@ export const criticalChecks: Check[] = [
   {
     id: "supabase-service-role-in-client",
     severity: "critical",
-    confidence: "heuristic",
+   confidence: "confirmed",
     title: "La chiave segreta di Supabase finisce in una parte pensata per il browser",
     description:
       "Una variabile con prefisso pubblico (es. NEXT_PUBLIC_, VITE_) o un file lato client fa riferimento alla service role key di Supabase. Questa chiave bypassa la Row Level Security: se finisce nel bundle del browser, chiunque può leggerla e agire come amministratore sul database.",

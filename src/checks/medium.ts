@@ -27,7 +27,7 @@ export const mediumChecks: Check[] = [
   {
     id: "public-storage-bucket",
     severity: "medium",
-    confidence: "heuristic",
+    confidence: "confirmed",
     title: "Lo spazio dei file caricati è visibile a chiunque",
     description:
       "Un bucket di storage (Supabase Storage, S3) è configurato come pubblico. Se contiene documenti, foto o file caricati dagli utenti, chiunque conosca — o indovini — il percorso può accedervi senza autenticazione.",
@@ -78,7 +78,7 @@ export const mediumChecks: Check[] = [
   {
     id: "open-redirect",
     severity: "medium",
-    confidence: "heuristic",
+    confidence: "confirmed",
     title: "Il sito può essere usato per reindirizzare verso un sito truffa",
     description:
       "Il sito reindirizza l'utente verso un indirizzo preso direttamente dalla richiesta (query, body, params) senza controllare che sia un dominio conosciuto. Un link che sembra puntare al tuo sito può in realtà portare a una pagina di phishing.",

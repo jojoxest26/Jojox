@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, lineFromIndex, redactLine } from "../util/scan.js";
+import { scanLines, lineFromIndex, redactLine } from "../util/scan.js";
 
 const ADMIN_AUTH_KEYWORDS = /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole/;
 
@@ -100,19 +100,18 @@ export const highChecks: Check[] = [
   {
     id: "weak-password-hashing",
     severity: "high",
-    confidence: "heuristic",
-    title: "Le password potrebbero essere protette con un metodo ormai facile da violare",
+    confidence: "confirmed",
+    title: "Le password sono protette con un metodo ormai facile da violare",
     description:
-      "Nel file compare md5() o sha1() usati vicino a operazioni sulle password. Questi algoritmi sono troppo veloci da calcolare: un attaccante con il database può provare miliardi di password al secondo.",
+      "Nella stessa riga, md5() o sha1() vengono applicati a un valore legato a una password. Questi algoritmi sono troppo veloci da calcolare: un attaccante con il database può provare miliardi di password al secondo.",
     fix: {
       before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
       after: `const hashed = await bcrypt.hash(password, 12)`,
     },
     detect(file) {
-      if (!/password/i.test(file.content)) return [];
       const pattern = /createHash\(\s*["'](md5|sha1)["']\s*\)|\b(md5|sha1)\s*\(\s*password/gi;
-      if (!fileMatch(file, pattern)) return [];
-      return scanLines(file, pattern);
+      const lines = file.content.split("\n");
+      return scanLines(file, pattern).filter((m) => /password/i.test(lines[m.line - 1] ?? ""));
     },
   },
 ];
