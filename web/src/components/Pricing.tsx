@@ -3,13 +3,13 @@ function openLogin() {
   window.dispatchEvent(new CustomEvent("jojox-open-login"));
 }
 
-function scrollToAnalyzer() {
-  document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+function openAnalyzer() {
+  window.dispatchEvent(new Event("jojox-open-analyzer"));
 }
 
 export function Pricing() {
   return (
-    <section className="pricing-section container">
+    <section className="pricing-section container" id="pricing">
       <h2>Paghi il monitoraggio continuo, non le singole analisi</h2>
       <p>Prova 1 analisi senza dare nulla. Poi basta l'email, nessuna password: fino a 5 analisi al mese gratis.</p>
 
@@ -26,7 +26,7 @@ export function Pricing() {
             <li>✓ Un solo tentativo per visitatore, imposto dal nostro server</li>
           </ul>
         </div>
-        <button type="button" className="btn btn-secondary hard-border hard-shadow" onClick={scrollToAnalyzer}>
+        <button type="button" className="btn btn-secondary hard-border hard-shadow" onClick={openAnalyzer}>
           Prova senza registrarti
         </button>
       </div>

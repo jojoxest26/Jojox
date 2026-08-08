@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Header } from "./components/Header.js";
 import { Hero } from "./components/Hero.js";
 import { Features } from "./components/Features.js";
@@ -12,6 +13,33 @@ import { useSession } from "./hooks/useSession.js";
 
 function App() {
   const { session, loading } = useSession();
+  const [analyzerOpen, setAnalyzerOpen] = useState(false);
+  const [pendingScroll, setPendingScroll] = useState(false);
+
+  // Chi è già loggato vede sempre l'analyzer, ma senza lo scatto dello
+  // scroll automatico al caricamento della pagina.
+  useEffect(() => {
+    if (session) setAnalyzerOpen(true);
+  }, [session]);
+
+  // I 4 pulsanti nella sezione Prezzi (Ospite/Gratis/Pro/Team) sono l'unico
+  // modo per aprire l'analyzer: quello ospite lo apre subito, gli altri tre
+  // passano dal login (e l'effect sopra lo apre non appena la sessione arriva).
+  useEffect(() => {
+    const handler = () => {
+      setAnalyzerOpen(true);
+      setPendingScroll(true);
+    };
+    window.addEventListener("jojox-open-analyzer", handler);
+    return () => window.removeEventListener("jojox-open-analyzer", handler);
+  }, []);
+
+  useEffect(() => {
+    if (analyzerOpen && pendingScroll) {
+      document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+      setPendingScroll(false);
+    }
+  }, [analyzerOpen, pendingScroll]);
 
   if (loading) return null;
 
@@ -20,9 +48,13 @@ function App() {
       <Header session={session} />
       <Hero />
       <Features />
-      <Analyzer session={session} />
-      {session && <HistoryPanel session={session} />}
       <Pricing />
+      {analyzerOpen && (
+        <>
+          <Analyzer session={session} />
+          {session && <HistoryPanel session={session} />}
+        </>
+      )}
       <GithubSection />
       <WaitlistForm />
       <ChecksList />

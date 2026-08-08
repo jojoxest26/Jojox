@@ -1,6 +1,6 @@
 export function Hero() {
-  function scrollToAnalyzer() {
-    document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+  function scrollToPricing() {
+    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -31,7 +31,7 @@ export function Hero() {
       <p className="hero-badge">Per progetti costruiti con Claude Code · Cursor · Lovable · Bolt</p>
 
       <div className="hero-actions">
-        <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToAnalyzer}>
+        <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToPricing}>
           Analizza il tuo codice — gratis
         </button>
       </div>
