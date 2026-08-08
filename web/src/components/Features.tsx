@@ -1,8 +1,8 @@
 const FEATURES = [
   {
     icon: "🛡️",
-    title: "L'analisi manuale avviene nel tuo browser",
-    text: "Quando carichi il codice a mano, non lascia mai il tuo computer: nessuno lo vede tranne te. (L'integrazione GitHub, invece, analizza il codice sui nostri server — vedi sotto.)",
+    title: "Il codice non viene mai salvato",
+    text: "L'analisi che carichi a mano passa dai nostri server (per salvare punteggio e storico), ma il testo dei file non viene mai conservato — solo i risultati. Le correzioni automatiche, invece, restano sempre e solo nel tuo browser.",
   },
   {
     icon: "🔧",
