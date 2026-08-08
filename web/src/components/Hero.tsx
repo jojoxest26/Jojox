@@ -21,9 +21,9 @@ export function Hero() {
       <p className="hero-sub">Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.</p>
 
       <div className="hero-pills">
-        <span className="pill pill-mint">100% nel browser*</span>
+        <span className="pill pill-mint">Correzioni sempre nel tuo browser</span>
         <span className="sep">·</span>
-        <span className="pill pill-amber">Nessuna registrazione</span>
+        <span className="pill pill-amber">Nessuna registrazione per iniziare</span>
         <span className="sep">·</span>
         <span className="pill pill-plain">Gratis</span>
       </div>
@@ -34,11 +34,8 @@ export function Hero() {
         <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToAnalyzer}>
           Analizza il tuo codice — gratis
         </button>
-        <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={scrollToAnalyzer}>
-          Prova senza registrarti
-        </button>
       </div>
-      <p className="hero-guest-note">Modalità ospite: 1 analisi gratuita, senza account.</p>
+      <p className="hero-guest-note">1 analisi gratuita senza email. Poi basta la mail — 5 analisi/mese gratis.</p>
     </section>
   );
 }

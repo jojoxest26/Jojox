@@ -39,6 +39,32 @@ export function analyzeViaApi(files: SourceFile[], accessToken: string): Promise
   });
 }
 
+export type GuestAnalyzeResult = { ok: true; result: AnalysisResult } | { ok: false; limitReached: true };
+
+/**
+ * Analisi anonima, senza login: concessa una sola volta per visitatore
+ * (il server la traccia per IP). Passa comunque dal backend — non gira nel
+ * browser — perché il limite deve essere imposto lato server per avere un
+ * senso, non solo suggerito lato client.
+ */
+export async function guestAnalyzeViaApi(files: SourceFile[]): Promise<GuestAnalyzeResult> {
+  const response = await fetch(`${API_URL}/api/guest-analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ files }),
+  });
+
+  if (response.status === 429) {
+    return { ok: false, limitReached: true };
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? `Richiesta fallita (${response.status})`);
+  }
+
+  return { ok: true, result: (await response.json()) as AnalysisResult };
+}
+
 export async function fetchHistory(accessToken: string): Promise<AnalysisHistoryEntry[]> {
   const { analyses } = await apiFetch<{ analyses: AnalysisHistoryEntry[] }>("/api/analyses", { accessToken });
   return analyses;

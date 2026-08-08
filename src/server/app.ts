@@ -5,10 +5,17 @@ import { analyzeRouter } from "./routes/analyze.js";
 import { analysesRouter } from "./routes/analyses.js";
 import { waitlistRouter } from "./routes/waitlist.js";
 import { badgeRouter } from "./routes/badge.js";
+import { guestAnalyzeRouter } from "./routes/guestAnalyze.js";
 import { githubWebhookRouter } from "./routes/webhooks/github.js";
 
 export function createApp(): Express {
   const app = express();
+
+  // Railway mette il server dietro un proxy: senza questo, req.ip vedrebbe
+  // sempre l'IP del proxy invece di quello di chi visita, e il limite di
+  // un'analisi gratuita per IP (guestAnalyzeRouter) diventerebbe inutile —
+  // un solo slot condiviso da chiunque.
+  app.set("trust proxy", 1);
 
   // Il webhook GitHub verifica una firma HMAC sul corpo grezzo della richiesta,
   // quindi va montato prima del parser JSON generico (che lo trasformerebbe).
@@ -28,6 +35,7 @@ export function createApp(): Express {
   app.use(analysesRouter);
   app.use(waitlistRouter);
   app.use(badgeRouter);
+  app.use(guestAnalyzeRouter);
 
   return app;
 }

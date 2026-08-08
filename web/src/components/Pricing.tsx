@@ -11,7 +11,7 @@ export function Pricing() {
   return (
     <section className="pricing-section container">
       <h2>Paghi il monitoraggio continuo, non le singole analisi</h2>
-      <p>Analizzare il codice è sempre gratis. Il piano a pagamento serve solo se vuoi tenerlo sotto controllo senza limiti.</p>
+      <p>Prova 1 analisi senza dare nulla. Poi basta l'email, nessuna password: fino a 5 analisi al mese gratis.</p>
 
       <div className="card guest-callout">
         <div>
@@ -20,10 +20,10 @@ export function Pricing() {
             <h3>Modalità ospite</h3>
           </div>
           <ul>
-            <li>✓ 1 analisi gratuita</li>
+            <li>✓ 1 analisi gratuita, senza email</li>
             <li>✓ Tutti i 21 controlli con esempi di correzione</li>
             <li>✓ Punteggio di sicurezza</li>
-            <li>✓ Niente viene salvato, niente lascia il tuo browser</li>
+            <li>✓ Un solo tentativo per visitatore, imposto dal nostro server</li>
           </ul>
         </div>
         <button type="button" className="btn btn-secondary hard-border hard-shadow" onClick={scrollToAnalyzer}>
