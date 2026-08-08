@@ -52,3 +52,27 @@ export function fileMatch(file: SourceFile, pattern: RegExp): boolean {
 export function lineFromIndex(content: string, index: number): number {
   return content.slice(0, index).split("\n").length;
 }
+
+/**
+ * Riscrive ogni riga che combacia con `pattern` usando `replacer`. Se
+ * `replacer` ritorna `null` per una riga, quella riga resta invariata.
+ * Ritorna il nuovo contenuto e `true` se è stata cambiata almeno una riga.
+ */
+export function replaceLines(
+  content: string,
+  pattern: RegExp,
+  replacer: (lineText: string, match: RegExpExecArray) => string | null
+): { content: string; changed: boolean } {
+  const flags = pattern.flags.includes("g") ? pattern.flags : pattern.flags + "g";
+  let changed = false;
+  const lines = content.split("\n").map((lineText) => {
+    const re = new RegExp(pattern.source, flags);
+    const m = re.exec(lineText);
+    if (!m) return lineText;
+    const replaced = replacer(lineText, m);
+    if (replaced === null) return lineText;
+    changed = true;
+    return replaced;
+  });
+  return { content: lines.join("\n"), changed };
+}

@@ -38,3 +38,5 @@ export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {
 
 export type { AnalysisResult, Finding, SourceFile, Severity, Confidence, Check, CheckMatch, FixExample } from "./types.js";
 export { ALL_CHECKS } from "./checks/index.js";
+export { applyAutofixes } from "./autofix.js";
+export type { AutofixResult } from "./autofix.js";

@@ -1,5 +1,6 @@
 import type { Check } from "../types.js";
-import { scanLines, fileMatch } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines } from "../util/scan.js";
+import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
 const SERVER_ONLY_PATH = /(^|\/)(api|server|edge-functions?|functions)(\/|\.)/i;
@@ -10,7 +11,7 @@ export const criticalChecks: Check[] = [
   {
     id: "supabase-service-role-in-client",
     severity: "critical",
-   confidence: "confirmed",
+    confidence: "confirmed",
     title: "La chiave segreta di Supabase finisce in una parte pensata per il browser",
     description:
       "Una variabile con prefisso pubblico (es. NEXT_PUBLIC_, VITE_) o un file lato client fa riferimento alla service role key di Supabase. Questa chiave bypassa la Row Level Security: se finisce nel bundle del browser, chiunque può leggerla e agire come amministratore sul database.",
@@ -26,6 +27,9 @@ export const criticalChecks: Check[] = [
       );
       return scanLines(file, pattern);
     },
+    // Nessun autofix: la correzione vera è spostare questo codice in un file
+    // solo-server, una decisione architetturale che non possiamo prendere
+    // al posto tuo senza rischiare di rompere il progetto.
   },
 
   {
@@ -60,6 +64,23 @@ export const criticalChecks: Check[] = [
 
       return [...highConfidenceMatches, ...assignmentMatches];
     },
+    autofix(file) {
+      // Correggiamo solo la forma "nomeVariabile = 'valore letterale'": è
+      // l'unica per cui possiamo dedurre in modo affidabile il nome della
+      // variabile d'ambiente da usare. Le chiavi riconosciute per formato
+      // (AKIA…, sk_live_…, blocchi PRIVATE KEY) restano segnalate soltanto:
+      // vanno anche revocate, non solo tolte dal codice — se sono finite in
+      // un commit, potrebbero già essere compromesse.
+      const pattern =
+        /\b(apiKey|api_key|secret|secretKey|password|token|authToken)(\s*[:=]\s*)["'`][^"'`]{12,}["'`]/gi;
+      const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
+        if (/process\.env|import\.meta\.env/.test(line)) return null;
+        const [, varName, operator] = m;
+        const replacement = `${varName}${operator}process.env.${toEnvName(varName)}`;
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
+      });
+      return changed ? content : null;
+    },
   },
 
   {
@@ -84,6 +105,8 @@ export const criticalChecks: Check[] = [
 
       return [{ line: 1, snippet: `…${basename} contiene variabili con valori assegnati…` }];
     },
+    // Nessun autofix: spostare le credenziali fuori dal repo (.gitignore) e
+    // ruotarle è un'azione che deve fare una persona, non uno script.
   },
 
   {
@@ -102,6 +125,16 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /DISABLE ROW LEVEL SECURITY/gi),
         ...scanLines(file, /USING\s*\(\s*true\s*\)/gi),
       ];
+    },
+    autofix(file) {
+      // Riattiviamo la RLS quando è esplicitamente disattivata: è un
+      // ripristino sicuro. Una policy "USING (true)" invece richiede di
+      // sapere qual è la vera regola di proprietà dei dati — non la
+      // inventiamo, resta segnalata per una correzione manuale.
+      const { content, changed } = replaceLines(file.content, /DISABLE ROW LEVEL SECURITY/gi, (line, m) => {
+        return line.slice(0, m.index) + "ENABLE ROW LEVEL SECURITY" + line.slice(m.index + m[0].length);
+      });
+      return changed ? content : null;
     },
   },
 
@@ -122,6 +155,9 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /\.(query|raw|execute)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
       ];
     },
+    // Nessun autofix: parametrizzare correttamente la query dipende dal
+    // driver/ORM usato — un tentativo automatico rischierebbe di generare
+    // SQL sintatticamente sbagliato o, peggio, ancora vulnerabile.
   },
 
   {
@@ -142,6 +178,18 @@ export const criticalChecks: Check[] = [
         /password\s*[:=]\s*(req\.body\.password|req\.body\[["']password["']\]|password)\b/gi
       );
     },
+    autofix(file) {
+      if (/bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2/i.test(file.content)) return null;
+      const pattern = /password\s*[:=]\s*(req\.body\.password|req\.body\[["']password["']\]|password)\b/gi;
+      const note = " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+      const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
+        const value = m[1];
+        const prefix = m[0].slice(0, m[0].length - value.length);
+        const replacement = `${prefix}await bcrypt.hash(${value}, 12)${note}`;
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
+      });
+      return changed ? content : null;
+    },
   },
 
   {
@@ -160,6 +208,21 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /jwt\.(sign|verify)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
         ...scanLines(file, /JWT_SECRET\s*=\s*["'][^"']+["']/g),
       ];
+    },
+    autofix(file) {
+      const r1 = replaceLines(
+        file.content,
+        /jwt\.(sign|verify)\s*\(([^)]*),\s*["'][^"']{6,}["']/g,
+        (line, m) => {
+          const [, method, args] = m;
+          const replacement = `jwt.${method}(${args}, process.env.JWT_SECRET`;
+          return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
+        }
+      );
+      const r2 = replaceLines(r1.content, /JWT_SECRET\s*=\s*["'][^"']+["']/g, (line, m) => {
+        return line.slice(0, m.index) + "JWT_SECRET = process.env.JWT_SECRET" + line.slice(m.index + m[0].length);
+      });
+      return r1.changed || r2.changed ? r2.content : null;
     },
   },
 
@@ -181,5 +244,8 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /\b(exec|execSync|spawn)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
       ];
     },
+    // Nessun autofix: separare comando e argomenti in modo sicuro richiede
+    // di capire quale sia davvero il programma e quali i suoi parametri —
+    // provarci alla cieca rischia di generare codice che non funziona più.
   },
 ];

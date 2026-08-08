@@ -1,7 +1,9 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, redactLine } from "../util/scan.js";
+import { scanLines, redactLine, replaceLines } from "../util/scan.js";
 
 const OWNERSHIP_KEYWORDS = /userId|user\.id|owner|req\.user|auth\.uid/;
+const REDIRECT_REMOVED_NOTE =
+  " /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */";
 
 export const mediumChecks: Check[] = [
   {
@@ -22,6 +24,9 @@ export const mediumChecks: Check[] = [
         ...scanLines(file, /\.innerHTML\s*=\s*[^"'`\s][^;]*/g),
       ];
     },
+    // Nessun autofix: non sappiamo se quell'HTML deve restare tale (e va
+    // solo sanificato, aggiungendo una dipendenza) o può diventare testo
+    // semplice — dipende da cosa deve davvero mostrare quella pagina.
   },
 
   {
@@ -41,6 +46,16 @@ export const mediumChecks: Check[] = [
         ...scanLines(file, /acl\s*:\s*["']public-read["']/g),
       ];
     },
+    autofix(file) {
+      const r1 = replaceLines(file.content, /createBucket\([^)]*public\s*:\s*true/g, (line, m) => {
+        const replacement = m[0].replace(/public\s*:\s*true/, "public: false");
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
+      });
+      const r2 = replaceLines(r1.content, /acl\s*:\s*["']public-read["']/g, (line, m) => {
+        return line.slice(0, m.index) + `acl: "private"` + line.slice(m.index + m[0].length);
+      });
+      return r1.changed || r2.changed ? r2.content : null;
+    },
   },
 
   {
@@ -57,6 +72,9 @@ export const mediumChecks: Check[] = [
     detect(file) {
       return scanLines(file, /\.get\s*\(\s*["'][^"']*\/(delete|remove|update|edit)[^"']*["']/gi);
     },
+    // Nessun autofix: cambiare il metodo da GET a POST rompe chiunque
+    // chiami questa rotta altrove (form, link, fetch) — quei punti di
+    // chiamata non li vediamo, quindi non possiamo aggiornarli insieme.
   },
 
   {
@@ -73,6 +91,9 @@ export const mediumChecks: Check[] = [
     detect(file) {
       return scanLines(file, /localStorage\.setItem\(\s*["'][^"']*(token|jwt|auth)[^"']*["']/gi);
     },
+    // Nessun autofix: la correzione vera sposta la scrittura del cookie sul
+    // server, cioè in un file diverso da quello dove vive questa riga —
+    // non possiamo farlo senza sapere dov'è quel server.
   },
 
   {
@@ -91,6 +112,28 @@ export const mediumChecks: Check[] = [
         ...scanLines(file, /res\.redirect\(\s*req\.(query|body|params)/g),
         ...scanLines(file, /window\.location(\.href)?\s*=\s*(req\.(query|body|params)|new URLSearchParams)/g),
       ];
+    },
+    autofix(file) {
+      // Non conosciamo l'elenco di percorsi che dovrebbero essere permessi,
+      // quindi non lo inventiamo: chiudiamo il buco reindirizzando sempre
+      // alla home. Se il redirect dinamico serve davvero, va riattivato a
+      // mano con un vero elenco di destinazioni consentite.
+      const r1 = replaceLines(
+        file.content,
+        /res\.redirect\(\s*req\.(query|body|params)(?:\.\w+|\[[^\]]+\])*\s*\)/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `res.redirect("/")${REDIRECT_REMOVED_NOTE}` + line.slice(m.index + m[0].length);
+        }
+      );
+      const r2 = replaceLines(
+        r1.content,
+        /window\.location(\.href)?\s*=\s*(req\.(query|body|params)(?:\.\w+|\[[^\]]+\])*|new URLSearchParams\([^)]*\)[^;\n]*)/g,
+        (line, m) => {
+          const prop = m[1] ?? "";
+          return line.slice(0, m.index) + `window.location${prop} = "/"${REDIRECT_REMOVED_NOTE}` + line.slice(m.index + m[0].length);
+        }
+      );
+      return r1.changed || r2.changed ? r2.content : null;
     },
   },
 
@@ -120,5 +163,8 @@ export const mediumChecks: Check[] = [
       });
       return matches;
     },
+    // Nessun autofix: non sappiamo qual è il campo che collega il record
+    // all'utente proprietario nel tuo schema dati — aggiungerne uno a
+    // caso creerebbe una query che sembra corretta ma non lo è.
   },
 ];

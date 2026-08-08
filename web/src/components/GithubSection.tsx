@@ -1,4 +1,5 @@
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function GithubSection() {
   return (
@@ -28,6 +29,18 @@ export function GithubSection() {
         >
           Collega GitHub
         </a>
+
+        <div className="github-badge-howto">
+          <p className="github-badge-title">🏷️ Badge sempre aggiornato nel README</p>
+          <p>
+            Dopo aver collegato il repository, incolla questa riga nel tuo <code>README.md</code> (sostituisci{" "}
+            <code>proprietario/repo</code> con i tuoi) — il punteggio si aggiorna da solo a ogni analisi, senza
+            bisogno di rigenerarlo a mano:
+          </p>
+          <pre className="github-badge-snippet">
+            {`![JoJoX](${API_URL}/badge/proprietario/repo.svg)`}
+          </pre>
+        </div>
       </div>
     </section>
   );

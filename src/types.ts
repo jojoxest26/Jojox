@@ -38,6 +38,14 @@ export interface Check {
   description: string;
   fix: FixExample;
   detect: (file: SourceFile, allFiles: readonly SourceFile[]) => CheckMatch[];
+  /**
+   * Corregge davvero il contenuto del file, quando è possibile farlo in modo
+   * meccanico e sicuro (senza dover indovinare logica specifica del
+   * progetto). Ritorna il contenuto corretto, oppure null se in questo file
+   * non c'è nulla da correggere automaticamente — in quel caso il problema
+   * resta segnalato solo con l'esempio "prima/dopo".
+   */
+  autofix?: (file: SourceFile) => string | null;
 }
 
 export interface AnalysisResult {
