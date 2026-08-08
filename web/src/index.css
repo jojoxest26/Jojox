@@ -358,6 +358,7 @@ body {
 /* ---------- analyzer ---------- */
 .analyzer {
   padding: 1rem 0 3rem;
+  scroll-margin-top: 5rem;
 }
 .dropzone {
   border: 2px dashed var(--border);
@@ -633,6 +634,9 @@ body {
 /* ---------- pricing ---------- */
 .pricing-section {
   padding: 2.5rem 0;
+  /* L'header resta fisso in alto: senza margine lo scroll-into-view
+     nasconderebbe il titolo della sezione sotto di esso. */
+  scroll-margin-top: 5rem;
 }
 .pricing-section > h2 {
   text-align: center;
