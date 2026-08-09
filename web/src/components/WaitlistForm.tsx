@@ -3,11 +3,6 @@ import { joinWaitlist } from "../lib/api.js";
 
 const ROADMAP = [
   {
-    icon: "🏷️",
-    title: "Badge sempre aggiornato nel README",
-    text: "Si aggiorna da solo, senza che tu debba rigenerarlo a mano.",
-  },
-  {
     icon: "🔧",
     title: "Correzioni automatiche via pull request",
     text: "Non solo segnalate — applicate direttamente sul tuo repo.",
