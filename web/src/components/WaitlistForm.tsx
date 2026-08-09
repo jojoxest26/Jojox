@@ -21,7 +21,6 @@ const ROADMAP = [
     icon: "💳",
     title: "Abbonamento gestibile da solo",
     text: "Passa al piano Pro, o torna a quello gratuito, direttamente dall'app — senza scriverci.",
-    span2: true,
   },
 ];
 
@@ -49,7 +48,7 @@ export function WaitlistForm() {
 
         <div className="roadmap-grid">
           {ROADMAP.map((item) => (
-            <div key={item.title} className={`roadmap-item${item.span2 ? " span-2" : ""}`}>
+            <div key={item.title} className="roadmap-item">
               <p>
                 {item.icon} {item.title}
               </p>
