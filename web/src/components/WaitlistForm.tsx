@@ -3,11 +3,6 @@ import { joinWaitlist } from "../lib/api.js";
 
 const ROADMAP = [
   {
-    icon: "🔧",
-    title: "Correzioni automatiche via pull request",
-    text: "Non solo segnalate — applicate direttamente sul tuo repo.",
-  },
-  {
     icon: "🗄️",
     title: "Controllo automatico delle impostazioni Supabase",
     text: "Verifica che la configurazione reale del progetto corrisponda a quello che il codice si aspetta.",

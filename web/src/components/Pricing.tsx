@@ -57,11 +57,9 @@ export function Pricing() {
             <li>✓ Analisi e cronologia illimitate</li>
             <li>✓ Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose</li>
             <li>✓ Commenti automatici sulle pull request</li>
+            <li>✓ Correzioni automatiche proposte come pull request</li>
             <li>
               <span className="soon">IN ARRIVO</span>Badge che si aggiorna da solo a ogni push
-            </li>
-            <li>
-              <span className="soon">IN ARRIVO</span>Correzioni automatiche via pull request
             </li>
           </ul>
           <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={openLogin}>
