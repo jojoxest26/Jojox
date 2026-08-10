@@ -58,9 +58,7 @@ export function Pricing() {
             <li>✓ Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose</li>
             <li>✓ Commenti automatici sulle pull request</li>
             <li>✓ Correzioni automatiche proposte come pull request</li>
-            <li>
-              <span className="soon">IN ARRIVO</span>Badge che si aggiorna da solo a ogni push
-            </li>
+            <li>✓ Badge che si aggiorna da solo a ogni push</li>
           </ul>
           <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={openLogin}>
             Attiva Pro
@@ -75,7 +73,11 @@ export function Pricing() {
             24,99€ <span className="per">/mese</span>
           </div>
           <ul>
-            <li>✓ Tutto quello incluso nel Pro</li>
+            <li>✓ Analisi e cronologia illimitate</li>
+            <li>✓ Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose</li>
+            <li>✓ Commenti automatici sulle pull request</li>
+            <li>✓ Correzioni automatiche proposte come pull request</li>
+            <li>✓ Badge che si aggiorna da solo a ogni push</li>
             <li>✓ Fino a 5 seat inclusi (poi 7€/seat)</li>
             <li>✓ Dashboard condivisa con lo storico di tutti i repo del team</li>
             <li>✓ Fino a 10 repo collegati alla GitHub App</li>
