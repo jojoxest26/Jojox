@@ -15,7 +15,9 @@ export function checkRunConclusion(result: AnalysisResult): "success" | "failure
   return hasBlockingFinding ? "failure" : "success";
 }
 
-export function formatPrComment(result: AnalysisResult): string {
+export function formatPrComment(result: AnalysisResult, fixPrUrl?: string | null): string {
+  const fixLine = fixPrUrl ? `🔧 **[Ho aperto una pull request con le correzioni automatiche](${fixPrUrl})** — controllala prima di unire.` : null;
+
   if (result.findings.length === 0) {
     return [
       `## JoJoX — Punteggio di sicurezza: ${result.score}/100`,
@@ -44,6 +46,7 @@ export function formatPrComment(result: AnalysisResult): string {
 
   return [
     `## JoJoX — Punteggio di sicurezza: ${result.score}/100`,
+    ...(fixLine ? [fixLine] : []),
     ...sections,
     "_Generato automaticamente da JoJoX su ogni push. Blocca la pull request quando trova problemi critici o alti — puoi renderlo un controllo obbligatorio nelle impostazioni del branch._",
   ].join("\n\n");
