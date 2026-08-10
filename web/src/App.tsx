@@ -6,6 +6,7 @@ import { Analyzer } from "./components/Analyzer.js";
 import { HistoryPanel } from "./components/HistoryPanel.js";
 import { Pricing } from "./components/Pricing.js";
 import { GithubSection } from "./components/GithubSection.js";
+import { SupabaseCheckSection } from "./components/SupabaseCheckSection.js";
 import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
@@ -56,6 +57,7 @@ function App() {
         </>
       )}
       <GithubSection />
+      <SupabaseCheckSection />
       <WaitlistForm />
       <ChecksList />
       <Footer />

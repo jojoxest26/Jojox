@@ -51,7 +51,8 @@ export function FindingsList({ result }: { result: AnalysisResult }) {
                 <div className="finding-head">
                   <span className="finding-title">{finding.title}</span>
                   <span className="finding-location">
-                    {finding.file}:{finding.line}
+                    {finding.file}
+                    {finding.line > 0 ? `:${finding.line}` : ""}
                   </span>
                 </div>
                 <div className="finding-confidence">

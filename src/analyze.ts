@@ -1,6 +1,7 @@
 import type { AnalysisResult, Finding, SourceFile } from "./types.js";
 import { ALL_CHECKS } from "./checks/index.js";
 import { computeScore, summarizeBySeverity } from "./scoring.js";
+import { SUPABASE_SNAPSHOT_FILENAME, parseSupabaseSnapshot, supabaseConfigFindings } from "./supabaseConfigChecks.js";
 
 /** Files this engine never needs to look inside — keeps noise and runtime down. */
 const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
@@ -11,6 +12,10 @@ export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {
 
   const findings: Finding[] = [];
   for (const file of relevantFiles) {
+    // Non è codice sorgente da scansionare riga per riga: è lo snapshot
+    // della configurazione reale di Supabase, con la sua analisi dedicata.
+    if (file.path.endsWith(SUPABASE_SNAPSHOT_FILENAME)) continue;
+
     for (const check of ALL_CHECKS) {
       const matches = check.detect(file, relevantFiles);
       for (const match of matches) {
@@ -29,6 +34,12 @@ export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {
     }
   }
 
+  const snapshotFile = relevantFiles.find((f) => f.path.endsWith(SUPABASE_SNAPSHOT_FILENAME));
+  if (snapshotFile) {
+    const snapshot = parseSupabaseSnapshot(snapshotFile.content);
+    if (snapshot) findings.push(...supabaseConfigFindings(snapshot));
+  }
+
   return {
     score: computeScore(findings),
     findings,
@@ -40,3 +51,10 @@ export type { AnalysisResult, Finding, SourceFile, Severity, Confidence, Check, 
 export { ALL_CHECKS } from "./checks/index.js";
 export { applyAutofixes } from "./autofix.js";
 export type { AutofixResult } from "./autofix.js";
+export {
+  SUPABASE_SNAPSHOT_FILENAME,
+  SUPABASE_SNAPSHOT_QUERY,
+  parseSupabaseSnapshot,
+  supabaseConfigFindings,
+} from "./supabaseConfigChecks.js";
+export type { SupabaseSchemaSnapshot } from "./supabaseConfigChecks.js";

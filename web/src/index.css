@@ -806,6 +806,49 @@ body {
   word-break: break-all;
 }
 
+/* ---------- supabase check ---------- */
+.supabase-check-section {
+  padding: 0 0 3rem;
+}
+.supabase-check-card {
+  padding: 1.75rem 2rem;
+}
+.supabase-check-card .supabase-check-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.supabase-check-card h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.supabase-check-card p {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 640px;
+  line-height: 1.6;
+}
+.supabase-check-card code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85em;
+  background: var(--surface-muted);
+  padding: 0.1em 0.4em;
+  border-radius: 0.3em;
+}
+.supabase-check-snippet {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 1rem;
+  background: var(--surface-muted);
+  border-radius: 0.6rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+
 /* ---------- roadmap / waitlist ---------- */
 .waitlist-section {
   padding: 0 0 3rem;

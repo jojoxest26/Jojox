@@ -3,11 +3,6 @@ import { joinWaitlist } from "../lib/api.js";
 
 const ROADMAP = [
   {
-    icon: "🗄️",
-    title: "Controllo automatico delle impostazioni Supabase",
-    text: "Verifica che la configurazione reale del progetto corrisponda a quello che il codice si aspetta.",
-  },
-  {
     icon: "💳",
     title: "Abbonamento gestibile da solo",
     text: "Passa al piano Pro, o torna a quello gratuito, direttamente dall'app — senza scriverci.",
