@@ -8,11 +8,6 @@ const ROADMAP = [
     text: "Verifica che la configurazione reale del progetto corrisponda a quello che il codice si aspetta.",
   },
   {
-    icon: "⌨️",
-    title: "CLI e server MCP",
-    text: "Da terminale, o richiamabile direttamente dal tuo agente AI.",
-  },
-  {
     icon: "💳",
     title: "Abbonamento gestibile da solo",
     text: "Passa al piano Pro, o torna a quello gratuito, direttamente dall'app — senza scriverci.",

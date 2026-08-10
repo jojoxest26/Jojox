@@ -10,7 +10,9 @@ Sicurezza per codice scritto (anche) da AI: 21 controlli statici, punteggio 0-10
 - `src/checks/{critical,high,medium,low}.ts` — gli 8+5+6+2 controlli, uno per gravità
 - `src/scoring.ts` — formula del punteggio, a rendimento decrescente per occorrenze ripetute dello stesso controllo
 - `src/analyze.ts` — `analyzeFiles(files)`, il punto d'ingresso
-- `src/cli.ts` — analizza una cartella locale da terminale
+- `src/autofix.ts` — `applyAutofixes(files)`, corregge in automatico quello che i singoli controlli sanno correggere
+- `src/cli.ts` — analizza (e con `--fix` corregge) una cartella locale da terminale
+- `src/mcp/server.ts` — server MCP (JSON-RPC su stdio, senza SDK esterni) che espone `analyze_code`, `fix_code` e `list_checks` a un agente AI
 
 **Backend** (`src/server/`):
 - `src/server/app.ts` / `index.ts` — server Express, CORS ristretto a `ALLOWED_ORIGINS`
@@ -32,23 +34,11 @@ Sicurezza per codice scritto (anche) da AI: 21 controlli statici, punteggio 0-10
 
 ```bash
 npm install
-npm test                          # 72 test: engine + backend
-npm run cli -- ./path/al/progetto # analizza una cartella locale
-npm run dev                       # backend in locale (richiede un .env, vedi .env.example)
+npm test                                # 72 test: engine + backend
+npm run cli -- ./path/al/progetto       # analizza una cartella locale
+npm run cli -- ./path/al/progetto --fix # corregge in automatico quello che si può
+npm run dev                             # backend in locale (richiede un .env, vedi .env.example)
 
 cd web
 npm install
 npm run dev                       # sito in locale (richiede un .env, vedi web/.env.example)
-```
-
-## Punteggio
-
-Si parte da 100. Ogni controllo attivato sottrae punti in base alla gravità (critico 25, alto 12, medio 6, basso 3). Più occorrenze dello stesso controllo pesano di più ma con rendimento decrescente — tendono asintoticamente a 2 volte il peso base, non azzerano il punteggio da sole. Formula in `src/scoring.ts`.
-
-## Deploy
-
-Vedi **[SETUP.md](./SETUP.md)** per la procedura completa: Supabase, GitHub App, Railway (backend) e Vercel (sito).
-
-## Prossimi passi
-
-Non ancora costruiti (deliberatamente rimandati a dopo il primo cliente): pagamenti Stripe automatici, gestione multi-seat per i piani Team, badge auto-aggiornante nel README, CLI/MCP server standalone.
