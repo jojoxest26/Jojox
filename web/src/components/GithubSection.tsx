@@ -1,7 +1,11 @@
+import { useState } from "react";
+
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const API_URL = import.meta.env.VITE_API_URL;
 
 export function GithubSection() {
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
     <section className="github-section container">
       <div className="card github-card">
@@ -30,30 +34,42 @@ export function GithubSection() {
           Collega GitHub
         </a>
 
-        <div className="github-badge-howto">
-          <p className="github-badge-title">🏷️ Badge sempre aggiornato nel README</p>
-          <p>
-            Dopo aver collegato il repository, incolla questa riga nel tuo <code>README.md</code> (sostituisci{" "}
-            <code>proprietario/repo</code> con i tuoi) — il punteggio si aggiorna da solo a ogni analisi, senza
-            bisogno di rigenerarlo a mano:
-          </p>
-          <pre className="github-badge-snippet">
-            {`![JoJoX](${API_URL}/badge/proprietario/repo.svg)`}
-          </pre>
-        </div>
+        <button
+          type="button"
+          className="supabase-check-toggle github-details-toggle"
+          onClick={() => setShowDetails((v) => !v)}
+        >
+          {showDetails ? "Nascondi dettagli avanzati" : "Mostra dettagli avanzati (badge, CLI, agenti AI)"}
+        </button>
 
-        <div className="github-badge-howto">
-          <p className="github-badge-title">🖥️ Anche da terminale e per agenti AI</p>
-          <p>
-            JoJoX si può usare anche senza sito: da riga di comando (con <code>--fix</code> per correggere in
-            automatico) o come strumento MCP per Claude Code e altri agenti AI, che così possono controllarsi da
-            soli mentre scrivono codice. Istruzioni complete nel{" "}
-            <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
-              README del repository
-            </a>
-            .
-          </p>
-        </div>
+        {showDetails && (
+          <>
+            <div className="github-badge-howto">
+              <p className="github-badge-title">🏷️ Badge sempre aggiornato nel README</p>
+              <p>
+                Dopo aver collegato il repository, incolla questa riga nel tuo <code>README.md</code> (sostituisci{" "}
+                <code>proprietario/repo</code> con i tuoi) — il punteggio si aggiorna da solo a ogni analisi, senza
+                bisogno di rigenerarlo a mano:
+              </p>
+              <pre className="github-badge-snippet">
+                {`![JoJoX](${API_URL}/badge/proprietario/repo.svg)`}
+              </pre>
+            </div>
+
+            <div className="github-badge-howto">
+              <p className="github-badge-title">🖥️ Anche da terminale e per agenti AI</p>
+              <p>
+                JoJoX si può usare anche senza sito: da riga di comando (con <code>--fix</code> per correggere in
+                automatico) o come strumento MCP per Claude Code e altri agenti AI, che così possono controllarsi da
+                soli mentre scrivono codice. Istruzioni complete nel{" "}
+                <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
+                  README del repository
+                </a>
+                .
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

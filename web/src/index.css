@@ -783,6 +783,10 @@ body {
 .github-card .btn {
   margin-top: 1.25rem;
 }
+.supabase-check-toggle.github-details-toggle {
+  margin: 1.25rem 0 0 1rem;
+  display: inline-block;
+}
 .github-badge-howto {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
