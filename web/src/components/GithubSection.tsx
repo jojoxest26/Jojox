@@ -41,6 +41,19 @@ export function GithubSection() {
             {`![JoJoX](${API_URL}/badge/proprietario/repo.svg)`}
           </pre>
         </div>
+
+        <div className="github-badge-howto">
+          <p className="github-badge-title">🖥️ Anche da terminale e per agenti AI</p>
+          <p>
+            JoJoX si può usare anche senza sito: da riga di comando (con <code>--fix</code> per correggere in
+            automatico) o come strumento MCP per Claude Code e altri agenti AI, che così possono controllarsi da
+            soli mentre scrivono codice. Istruzioni complete nel{" "}
+            <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
+              README del repository
+            </a>
+            .
+          </p>
+        </div>
       </div>
     </section>
   );
