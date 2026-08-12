@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { SUPABASE_SNAPSHOT_FILENAME, SUPABASE_SNAPSHOT_QUERY } from "../../../src/analyze.js";
 
 export function SupabaseCheckSection() {
+  const [showQuery, setShowQuery] = useState(false);
+
   return (
     <section className="supabase-check-section container">
       <div className="card supabase-check-card">
@@ -19,7 +22,10 @@ export function SupabaseCheckSection() {
           chiamato esattamente <code>{SUPABASE_SNAPSHOT_FILENAME}</code>, e caricalo insieme al resto del codice
           nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 21 controlli.
         </p>
-        <pre className="supabase-check-snippet">{SUPABASE_SNAPSHOT_QUERY}</pre>
+        <button type="button" className="supabase-check-toggle" onClick={() => setShowQuery((v) => !v)}>
+          {showQuery ? "Nascondi la query" : "Mostra la query"}
+        </button>
+        {showQuery && <pre className="supabase-check-snippet">{SUPABASE_SNAPSHOT_QUERY}</pre>}
       </div>
     </section>
   );

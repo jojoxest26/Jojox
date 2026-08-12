@@ -838,6 +838,17 @@ body {
   padding: 0.1em 0.4em;
   border-radius: 0.3em;
 }
+.supabase-check-toggle {
+  margin: 1rem 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-ink, var(--text));
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .supabase-check-snippet {
   margin: 0.75rem 0 0;
   padding: 0.75rem 1rem;
