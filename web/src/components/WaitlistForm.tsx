@@ -37,6 +37,11 @@ const ROADMAP = [
     title: "Sito in più lingue",
     text: "JoJoX utilizzabile nella propria lingua madre, non solo in italiano.",
   },
+  {
+    icon: "➕",
+    title: "Correzioni che aggiungono codice mancante",
+    text: "Oggi JoJoX corregge solo righe già presenti. In arrivo: la capacità di aggiungere da solo il codice che manca — una policy di sicurezza, un controllo assente — così ogni analisi diventa un progetto già pronto all'uso, non solo un elenco di cose da sistemare a mano.",
+  },
 ];
 
 export function WaitlistForm() {

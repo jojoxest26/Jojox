@@ -135,6 +135,9 @@ export function Analyzer({ session }: { session: Session | null }) {
                 ? "Sei loggato: l'analisi viene salvata nel tuo storico."
                 : "Modalità ospite: 1 analisi gratuita, senza email. Dopo, basta la mail per continuare (5 al mese, gratis)."}
             </div>
+            <div className="dropzone-hint">
+              Funziona su qualsiasi codice — anche scritto interamente a mano, non solo generato dall'AI.
+            </div>
             {files.length > 0 && (
               <div className="file-chip-row" onClick={(e) => e.stopPropagation()}>
                 {files.slice(0, 12).map((f) => (
