@@ -179,9 +179,6 @@ export function Pricing({ session }: { session: Session | null }) {
             <li>✓ Commenti automatici sulle pull request</li>
             <li>✓ Correzioni automatiche proposte come pull request</li>
             <li>✓ Badge che si aggiorna da solo a ogni push</li>
-            <li>✓ Fino a 5 seat inclusi (poi 7€/seat)</li>
-            <li>✓ Dashboard condivisa con lo storico di tutti i repo del team</li>
-            <li>✓ Fino a 10 repo collegati alla GitHub App</li>
           </ul>
           {session && plan === "team" ? (
             <>

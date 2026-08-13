@@ -3,9 +3,9 @@ import { joinWaitlist } from "../lib/api.js";
 
 const ROADMAP = [
   {
-    icon: "💳",
-    title: "Abbonamento gestibile da solo",
-    text: "Passa al piano Pro, o torna a quello gratuito, direttamente dall'app — senza scriverci.",
+    icon: "👥",
+    title: "Gestione team con più seat",
+    text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — in arrivo a inizio settembre.",
   },
 ];
 
