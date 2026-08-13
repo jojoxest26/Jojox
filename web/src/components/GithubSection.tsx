@@ -39,7 +39,7 @@ export function GithubSection() {
           className="supabase-check-toggle github-details-toggle"
           onClick={() => setShowDetails((v) => !v)}
         >
-          {showDetails ? "Nascondi dettagli avanzati" : "Mostra dettagli avanzati (badge, CLI, agenti AI)"}
+          {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: badge, CLI e agenti AI"}
         </button>
 
         {showDetails && (

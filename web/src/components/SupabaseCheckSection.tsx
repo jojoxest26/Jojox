@@ -23,7 +23,7 @@ export function SupabaseCheckSection() {
           nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 21 controlli.
         </p>
         <button type="button" className="supabase-check-toggle" onClick={() => setShowQuery((v) => !v)}>
-          {showQuery ? "Nascondi la query" : "Mostra la query"}
+          {showQuery ? "▲ Nascondi la query" : "▼ Mostra la query"}
         </button>
         {showQuery && <pre className="supabase-check-snippet">{SUPABASE_SNAPSHOT_QUERY}</pre>}
       </div>

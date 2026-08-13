@@ -813,7 +813,7 @@ body {
 }
 .supabase-check-toggle.github-details-toggle {
   margin: 1.25rem 0 0 1rem;
-  display: inline-block;
+
 }
 .github-badge-howto {
   margin-top: 1.5rem;
@@ -870,16 +870,25 @@ body {
   padding: 0.1em 0.4em;
   border-radius: 0.3em;
 }
-.supabase-check-toggle {
+..supabase-check-toggle {
   margin: 1rem 0 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent-ink, var(--text));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 2px 2px 0 0 var(--ink);
+  color: var(--text);
   font-weight: 700;
-  font-size: 0.85rem;
-  text-decoration: underline;
+  font-size: 0.82rem;
   cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.supabase-check-toggle:hover {
+  background: var(--surface-muted);
+  transform: scale(1.03);
 }
 .supabase-check-snippet {
   margin: 0.75rem 0 0;
