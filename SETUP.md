@@ -185,6 +185,55 @@ impersonare il tuo.
 Da questo momento jojox.it è il sito vero e proprio, non più
 un'anteprima: login, storico, integrazione GitHub, tutto attivo su quel
 dominio.
+## 7. Stripe (abbonamento self-service)
+
+A differenza delle sezioni precedenti, qui le chiavi **non me le mandi in
+chat**: vanno impostate direttamente su Railway da te, perché sono credenziali
+che muovono soldi veri — stesso principio della service_role key di
+Supabase, ma ancora più delicato.
+
+1. Vai su **stripe.com** → crea l'account (se non l'hai già fatto) →
+   assicurati che l'interruttore **Test mode** in alto a destra sia attivo:
+   con le chiavi di test si prova tutto con carte finte, senza soldi veri e
+   senza dover completare subito la verifica legale dell'azienda
+2. **Product catalog** → **Add product** → crea due prodotti con un prezzo
+   **ricorrente mensile**:
+   - "JoJoX Pro" — 9,99€/mese
+   - "JoJoX Team" — 24,99€/mese
+   Per ognuno, apri il prezzo appena creato e copia il suo **ID** (inizia
+   con `price_`)
+3. **Settings → Billing → Customer portal**: attiva la possibilità per i
+   clienti di **cancellare l'abbonamento** e di **cambiare piano** (aggiungi
+   entrambi i prezzi appena creati come opzioni disponibili) — è quello che
+   rende l'abbonamento davvero "self-service": una volta lì dentro, gestisce
+   tutto Stripe stesso (disdetta, upgrade, downgrade, metodo di pagamento),
+   JoJoX si limita ad aprire la porta
+4. **Developers → Webhooks → Add endpoint**:
+   - **Endpoint URL**: `https://<il-tuo-dominio-railway>/webhooks/stripe`
+   - **Eventi da ascoltare**: `customer.subscription.created`,
+     `customer.subscription.updated`, `customer.subscription.deleted`
+   - Crea l'endpoint, poi apri **Signing secret** e copialo (inizia con
+     `whsec_`)
+5. **Developers → API keys** → copia la **Secret key** (in modalità test
+   inizia con `sk_test_`)
+6. Vai su **Railway** → il progetto del backend → **Variables** → aggiungi
+   tu stesso queste chiavi (non a me):
+   - `STRIPE_SECRET_KEY` — la secret key del punto 5
+   - `STRIPE_WEBHOOK_SECRET` — il signing secret del punto 4
+   - `STRIPE_PRICE_ID_PRO` — l'ID del prezzo "Pro" dal punto 2
+   - `STRIPE_PRICE_ID_TEAM` — l'ID del prezzo "Team" dal punto 2
+   - `APP_URL` — il dominio vero del sito (es. `https://jojox.it`, o quello
+     provvisorio di Vercel se non ci sei ancora arrivato)
+7. Prova subito: sul sito, da loggato, clicca **Attiva Pro** → nel checkout
+   Stripe usa la carta di prova `4242 4242 4242 4242`, una data futura
+   qualsiasi e un CVC qualsiasi → dopo il pagamento dovresti tornare sul
+   sito con il piano attivato in pochi secondi
+
+Quando tutto funziona in modalità test e sei pronto per i clienti veri: su
+Stripe disattiva **Test mode**, ripeti i punti 2-5 in modalità live (i
+prodotti/prezzi/webhook vanno ricreati, sono separati da quelli di test), e
+aggiorna le 4 variabili su Railway con i valori "live".
+
 
 ---
 

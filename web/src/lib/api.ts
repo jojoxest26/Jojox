@@ -76,3 +76,27 @@ export function joinWaitlist(email: string): Promise<{ joined: boolean }> {
     body: JSON.stringify({ email }),
   });
 }
+
+export type Plan = "free" | "pro" | "team";
+
+export async function fetchProfile(accessToken: string): Promise<Plan> {
+  const { plan } = await apiFetch<{ plan: Plan }>("/api/profile", { accessToken });
+  return plan;
+}
+
+/** Crea una sessione di Stripe Checkout e restituisce l'URL a cui reindirizzare per attivare un piano a pagamento. */
+export function createCheckoutSession(plan: "pro" | "team", accessToken: string): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-checkout-session", {
+    method: "POST",
+    body: JSON.stringify({ plan }),
+    accessToken,
+  });
+}
+
+/** Crea una sessione del portale clienti Stripe (upgrade, downgrade, disdetta, metodo di pagamento). */
+export function createPortalSession(accessToken: string): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-portal-session", {
+    method: "POST",
+    accessToken,
+  });
+}

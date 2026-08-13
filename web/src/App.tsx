@@ -49,7 +49,7 @@ function App() {
       <Header session={session} />
       <Hero />
       <Features />
-      <Pricing />
+      <Pricing session={session} />
       {analyzerOpen && (
         <>
           <Analyzer session={session} />

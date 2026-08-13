@@ -7,6 +7,9 @@ import { waitlistRouter } from "./routes/waitlist.js";
 import { badgeRouter } from "./routes/badge.js";
 import { guestAnalyzeRouter } from "./routes/guestAnalyze.js";
 import { githubWebhookRouter } from "./routes/webhooks/github.js";
+import { stripeWebhookRouter } from "./routes/webhooks/stripe.js";
+import { stripeRouter } from "./routes/stripe.js";
+import { profileRouter } from "./routes/profile.js";
 
 export function createApp(): Express {
   const app = express();
@@ -17,9 +20,11 @@ export function createApp(): Express {
   // un solo slot condiviso da chiunque.
   app.set("trust proxy", 1);
 
-  // Il webhook GitHub verifica una firma HMAC sul corpo grezzo della richiesta,
-  // quindi va montato prima del parser JSON generico (che lo trasformerebbe).
+  // I webhook GitHub e Stripe verificano una firma HMAC sul corpo grezzo
+  // della richiesta, quindi vanno montati prima del parser JSON generico
+  // (che lo trasformerebbe).
   app.use(githubWebhookRouter);
+  app.use(stripeWebhookRouter);
 
   app.use(
     cors({
@@ -36,6 +41,8 @@ export function createApp(): Express {
   app.use(waitlistRouter);
   app.use(badgeRouter);
   app.use(guestAnalyzeRouter);
+  app.use(stripeRouter);
+  app.use(profileRouter);
 
   return app;
 }

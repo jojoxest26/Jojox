@@ -24,4 +24,16 @@ export const env = {
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  /** URL pubblico del sito, usato nei redirect di Stripe (checkout, portale clienti). */
+  appUrl: process.env.APP_URL ?? "http://localhost:5173",
+  /**
+   * Chiavi Stripe: volutamente opzionali (non "required()"). Finché non
+   * sono impostate su Railway, le rotte di pagamento rispondono 503 invece
+   * di far crashare l'intero server all'avvio — il resto del sito deve
+   * continuare a funzionare anche prima che Stripe sia configurato.
+   */
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? null,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? null,
+  stripePriceIdPro: process.env.STRIPE_PRICE_ID_PRO ?? null,
+  stripePriceIdTeam: process.env.STRIPE_PRICE_ID_TEAM ?? null,
 };

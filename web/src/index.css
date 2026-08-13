@@ -751,6 +751,34 @@ body {
   margin: 1.5rem auto 0;
   line-height: 1.6;
 }
+.price-card-active {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+.price-card .price-card-active + .btn {
+  width: 100%;
+}
+.pricing-notice {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-radius: 0.6rem;
+  padding: 0.6rem 1rem;
+  margin: 1rem auto 0;
+  max-width: 560px;
+}
+.pricing-notice-success {
+  color: #15803d;
+  background: #dcfce7;
+}
+.pricing-error {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--critical);
+  margin: 1rem 0 0;
+}
 
 /* ---------- github + ci ---------- */
 .github-section {
