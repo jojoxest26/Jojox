@@ -7,6 +7,36 @@ const ROADMAP = [
     title: "Gestione team con più seat",
     text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — in arrivo a inizio settembre.",
   },
+  {
+    icon: "📄",
+    title: "Report PDF esportabile",
+    text: "Il punteggio e i risultati di un'analisi in un documento scaricabile, pronto da mostrare a un manager o un revisore.",
+  },
+  {
+    icon: "🪝",
+    title: "Blocco commit in locale",
+    text: "Un comando da terminale che ferma il commit sul tuo computer, prima ancora che il codice arrivi su GitHub, se trova un problema critico.",
+  },
+  {
+    icon: "💬",
+    title: "Notifiche su Slack",
+    text: "Avviso automatico sul canale del team quando una pull request viene bloccata o corretta, senza dover controllare GitHub.",
+  },
+  {
+    icon: "📈",
+    title: "Andamento del punteggio nel tempo",
+    text: "Un grafico che mostra come cambia la sicurezza del tuo codice, analisi dopo analisi, invece di un punteggio isolato.",
+  },
+  {
+    icon: "🧩",
+    title: "Estensione per VS Code",
+    text: "Gli avvisi direttamente nell'editor mentre scrivi, senza dover caricare i file sul sito.",
+  },
+  {
+    icon: "🌍",
+    title: "Sito in più lingue",
+    text: "JoJoX utilizzabile nella propria lingua madre, non solo in italiano.",
+  },
 ];
 
 export function WaitlistForm() {
