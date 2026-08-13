@@ -870,7 +870,7 @@ body {
   padding: 0.1em 0.4em;
   border-radius: 0.3em;
 }
-..supabase-check-toggle {
+.supabase-check-toggle {
   margin: 1rem 0 0;
   display: inline-flex;
   align-items: center;
