@@ -13,11 +13,6 @@ const ROADMAP = [
     text: "Il punteggio e i risultati di un'analisi in un documento scaricabile, pronto da mostrare a un manager o un revisore.",
   },
   {
-    icon: "🪝",
-    title: "Blocco commit in locale",
-    text: "Un comando da terminale che ferma il commit sul tuo computer, prima ancora che il codice arrivi su GitHub, se trova un problema critico.",
-  },
-  {
     icon: "💬",
     title: "Notifiche su Slack",
     text: "Avviso automatico sul canale del team quando una pull request viene bloccata o corretta, senza dover controllare GitHub.",

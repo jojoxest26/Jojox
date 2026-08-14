@@ -1,12 +1,16 @@
 #!/usr/bin/env node
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import fg from "fast-glob";
 import { analyzeFiles, applyAutofixes } from "./analyze.js";
 import { ALL_CHECKS } from "./checks/index.js";
 import type { Severity } from "./types.js";
 
 const AUTOFIXABLE_CHECK_IDS = new Set(ALL_CHECKS.filter((c) => c.autofix).map((c) => c.id));
+
+const HOOK_MARKER = "# jojox-precommit-hook";
 
 const SEVERITY_LABEL: Record<Severity, string> = {
   critical: "CRITICO",
@@ -17,7 +21,61 @@ const SEVERITY_LABEL: Record<Severity, string> = {
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
 
+/**
+ * Installa un git hook pre-commit nel repository indicato: da quel momento,
+ * ogni commit viene analizzato prima di essere accettato, e viene bloccato
+ * se trova un problema critico. Riusa `tsx` già installato dentro JoJoX
+ * stesso (percorso assoluto), così funziona indipendentemente da cosa c'è
+ * installato nel repository di destinazione.
+ */
+function installHook(target: string): void {
+  const root = resolve(target);
+  const gitDir = resolve(root, ".git");
+  if (!existsSync(gitDir)) {
+    console.error(`Non trovo una cartella .git in ${root} — lancia questo comando dentro un repository Git.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const hooksDir = resolve(gitDir, "hooks");
+  mkdirSync(hooksDir, { recursive: true });
+  const hookPath = resolve(hooksDir, "pre-commit");
+
+  if (existsSync(hookPath)) {
+    const existing = readFileSync(hookPath, "utf8");
+    if (!existing.includes(HOOK_MARKER)) {
+      console.error(
+        `C'è già un pre-commit hook in ${hookPath} non installato da JoJoX — rimuovilo o rinominalo a mano prima di riprovare, per non perdere quello che fa già.`
+      );
+      process.exitCode = 1;
+      return;
+    }
+  }
+
+  const jojoxSrcDir = dirname(fileURLToPath(import.meta.url));
+  const precommitScript = resolve(jojoxSrcDir, "precommit.ts");
+  const tsxBin = resolve(jojoxSrcDir, "..", "node_modules", ".bin", process.platform === "win32" ? "tsx.cmd" : "tsx");
+
+  const hookContent = `#!/bin/sh
+${HOOK_MARKER} — non modificare a mano, per aggiornarlo rilancia "npm run cli -- install-hook"
+"${tsxBin}" "${precommitScript}"
+exit $?
+`;
+
+  writeFileSync(hookPath, hookContent, "utf8");
+  chmodSync(hookPath, 0o755);
+
+  console.log(
+    `\n✓ Hook installato in ${hookPath}\nDa ora, ogni commit in questo repository viene controllato da JoJoX — se trova un problema critico, blocca il commit.\n`
+  );
+}
+
 async function main() {
+  if (process.argv[2] === "install-hook") {
+    installHook(process.argv[3] ?? ".");
+    return;
+  }
+
   const target = process.argv[2] ?? ".";
   const asJson = process.argv.includes("--json");
   const shouldFix = process.argv.includes("--fix");

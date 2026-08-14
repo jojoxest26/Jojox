@@ -68,6 +68,15 @@ export function GithubSection() {
                 .
               </p>
             </div>
+
+            <div className="github-badge-howto">
+              <p className="github-badge-title">🪝 Blocco commit in locale</p>
+              <p>
+                Un comando da terminale (<code>install-hook</code>) installa un controllo che ferma il commit sul tuo
+                computer, prima ancora che il codice arrivi su GitHub, se trova un problema critico — così il
+                problema non entra mai nella cronologia del repository.
+              </p>
+            </div>
           </>
         )}
       </div>
