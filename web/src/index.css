@@ -340,8 +340,26 @@ body {
   padding: 1.5rem;
 }
 .feature-card .feature-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 0 var(--ink);
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+.feature-icon-blue {
+  background: #dbeafe;
+}
+.feature-icon-amber {
+  background: #fef3c7;
+}
+.feature-icon-mint {
+  background: #d1fae5;
+  
 }
 .feature-card h3 {
   margin: 0;
