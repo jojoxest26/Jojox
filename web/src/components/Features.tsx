@@ -24,8 +24,8 @@ export function Features() {
     <section className="features-section container">
       <div className="features-grid">
         {FEATURES.map((f) => (
-          <div key={f.title} className="card feature-card lift">
-            <div className={`feature-icon feature-icon-${f.accent}`}>{f.icon}</div>
+          <div key={f.title} className={`card feature-card feature-card-${f.accent} lift`}>
+            <div className="feature-icon">{f.icon}</div>
             <h3>{f.title}</h3>
             <p>{f.text}</p>
           </div>
