@@ -11,13 +11,13 @@
   --accent-hover: #fbbf24;
   --accent-ink: #171717;
 
-  --critical-border: #ef8b8b
+  --critical-border: #ef8b8b;
   --critical: #e05353;
-  --high-border: #eba15c
+  --high-border: #eba15c;
   --high: #e5772a;
-  --medium-border: #e6c62e
+  --medium-border: #e6c62e;
   --medium: #d6a91c;
-  --low-border: #74aef0
+  --low-border: #74aef0;
   --low: #4c86e5;
 
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
