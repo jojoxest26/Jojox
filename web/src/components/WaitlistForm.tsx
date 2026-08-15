@@ -8,11 +8,6 @@ const ROADMAP = [
     text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — in arrivo a inizio settembre.",
   },
   {
-    icon: "📄",
-    title: "Report PDF esportabile",
-    text: "Il punteggio e i risultati di un'analisi in un documento scaricabile, pronto da mostrare a un manager o un revisore.",
-  },
-  {
     icon: "💬",
     title: "Notifiche su Slack",
     text: "Avviso automatico sul canale del team quando una pull request viene bloccata o corretta, senza dover controllare GitHub.",
