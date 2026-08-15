@@ -309,19 +309,34 @@ body {
   background: #fee2e2;
   color: #b91c1c;
 }
+.pill-critical {
+  background: #fecaca;
+  color: var(--text);
+  border-color: #e05353;
+  border-width: 1px;
+  box-shadow: none;
+}
 .pill-high {
-  background: #ffedd5;
-  color: #c2410c;
+  background: #fed7aa;
+  color: var(--text);
+  border-color: #e5772a;
+  border-width: 1px;
+  box-shadow: none;
 }
 .pill-medium {
-  background: #fef9c3;
-  color: #a16207;
+  background: #fef08a;
+  color: var(--text);
+  border-color: #d6a91c;
+  border-width: 1px;
+  box-shadow: none;
 }
 .pill-low {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #bfdbfe;
+  color: var(--text);
+  border-color: #4c86e5;
+  border-width: 1px;
+  box-shadow: none;
 }
-
 /* ---------- feature cards ---------- */
 .features-section {
   padding: 0 0 3rem;
