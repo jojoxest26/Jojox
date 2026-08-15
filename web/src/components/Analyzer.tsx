@@ -4,6 +4,7 @@ import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeViaApi, guestAnalyzeViaApi } from "../lib/api.js";
 import { createZip } from "../lib/zip.js";
+import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 
 const MAX_FILES = 300;
@@ -188,6 +189,18 @@ export function Analyzer({ session }: { session: Session | null }) {
               </p>
             )
           )}
+        </div>
+      )}
+
+      {result && (
+        <div style={{ textAlign: "center", margin: "1rem 0" }}>
+          <button
+            type="button"
+            className="btn btn-secondary hard-border hard-shadow-sm"
+            onClick={() => openReportWindow(result, files, autofix)}
+          >
+            Scarica report PDF
+          </button>
         </div>
       )}
 

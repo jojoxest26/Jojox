@@ -43,9 +43,9 @@ function main() {
   const { blocked, findings } = runPrecommitCheck(process.cwd());
   if (!blocked) return;
 
-  console.error(
-    `\n🛑 JoJoX ha bloccato il commit: ${findings.length} problema${findings.length === 1 ? "" : "i"} critic${findings.length === 1 ? "o" : "i"} trovat${findings.length === 1 ? "o" : "i"}.\n`
-  );
+  const summary =
+    findings.length === 1 ? "1 problema critico trovato" : `${findings.length} problemi critici trovati`;
+  console.error(`\n🛑 JoJoX ha bloccato il commit: ${summary}.\n`);
   for (const finding of findings) {
     console.error(`  ${finding.file}:${finding.line}  ${finding.title}`);
   }
