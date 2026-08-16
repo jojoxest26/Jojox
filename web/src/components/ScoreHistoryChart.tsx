@@ -2,11 +2,11 @@ import { useRef, useState } from "react";
 import type { AnalysisHistoryEntry } from "../lib/api.js";
 
 const WIDTH = 600;
-const HEIGHT = 180;
-const PAD_LEFT = 32;
-const PAD_RIGHT = 12;
-const PAD_TOP = 16;
-const PAD_BOTTOM = 28;
+const HEIGHT = 100;
+const PAD_LEFT = 30;
+const PAD_RIGHT = 10;
+const PAD_TOP = 10;
+const PAD_BOTTOM = 20;
 
 function formatShortDate(iso: string): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
