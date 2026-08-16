@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { fetchHistory, type AnalysisHistoryEntry } from "../lib/api.js";
+import { ScoreHistoryChart } from "./ScoreHistoryChart.js";
 
 export function HistoryPanel({ session }: { session: Session }) {
   const [history, setHistory] = useState<AnalysisHistoryEntry[] | null>(null);
@@ -18,6 +19,7 @@ export function HistoryPanel({ session }: { session: Session }) {
   return (
     <section className="history-section container">
       <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
+        <ScoreHistoryChart history={history} />
         <h3 style={{ margin: "0 0 0.5rem" }}>Il tuo storico</h3>
         {history.map((entry) => (
           <div key={entry.id} className="history-row">

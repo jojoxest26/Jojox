@@ -13,11 +13,6 @@ const ROADMAP = [
     text: "Avviso automatico sul canale del team quando una pull request viene bloccata o corretta, senza dover controllare GitHub.",
   },
   {
-    icon: "📈",
-    title: "Andamento del punteggio nel tempo",
-    text: "Un grafico che mostra come cambia la sicurezza del tuo codice, analisi dopo analisi, invece di un punteggio isolato.",
-  },
-  {
     icon: "🧩",
     title: "Estensione per VS Code",
     text: "Gli avvisi direttamente nell'editor mentre scrivi, senza dover caricare i file sul sito.",
