@@ -16,6 +16,9 @@ function App() {
   const { session, loading } = useSession();
   const [analyzerOpen, setAnalyzerOpen] = useState(false);
   const [pendingScroll, setPendingScroll] = useState(false);
+  // Incrementato a ogni analisi salvata: HistoryPanel lo osserva per
+  // ricaricare storico e grafico senza dover ricaricare la pagina.
+  const [historyVersion, setHistoryVersion] = useState(0);
 
   // Chi è già loggato vede sempre l'analyzer, ma senza lo scatto dello
   // scroll automatico al caricamento della pagina.
@@ -52,8 +55,8 @@ function App() {
       <Pricing session={session} />
       {analyzerOpen && (
         <>
-          <Analyzer session={session} />
-          {session && <HistoryPanel session={session} />}
+          <Analyzer session={session} onAnalysisSaved={() => setHistoryVersion((v) => v + 1)} />
+          {session && <HistoryPanel session={session} refreshKey={historyVersion} />}
         </>
       )}
       <GithubSection />

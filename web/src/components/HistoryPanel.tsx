@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { fetchHistory, type AnalysisHistoryEntry } from "../lib/api.js";
 import { ScoreHistoryChart } from "./ScoreHistoryChart.js";
 
-export function HistoryPanel({ session }: { session: Session }) {
+export function HistoryPanel({ session, refreshKey }: { session: Session; refreshKey?: number }) {
   const [history, setHistory] = useState<AnalysisHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,7 +11,7 @@ export function HistoryPanel({ session }: { session: Session }) {
     fetchHistory(session.access_token)
       .then(setHistory)
       .catch((err) => setError(err instanceof Error ? err.message : "Errore nel caricamento dello storico"));
-  }, [session.access_token]);
+  }, [session.access_token, refreshKey]);
 
   if (error) return null;
   if (!history || history.length === 0) return null;

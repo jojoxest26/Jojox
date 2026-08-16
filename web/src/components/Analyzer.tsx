@@ -38,7 +38,13 @@ function downloadZip(files: SourceFile[]) {
   URL.revokeObjectURL(url);
 }
 
-export function Analyzer({ session }: { session: Session | null }) {
+export function Analyzer({
+  session,
+  onAnalysisSaved,
+}: {
+  session: Session | null;
+  onAnalysisSaved?: () => void;
+}) {
   const [files, setFiles] = useState<SourceFile[]>([]);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [autofix, setAutofix] = useState<AutofixResult | null>(null);
@@ -69,6 +75,7 @@ export function Analyzer({ session }: { session: Session | null }) {
         // La correzione gira sempre nel browser, sui file originali: mai
         // inviata al server, anche se l'analisi lo è.
         setAutofix(applyAutofixes(files));
+        onAnalysisSaved?.();
         return;
       }
 
