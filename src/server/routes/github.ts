@@ -20,6 +20,45 @@ githubRouter.get("/api/github/installations", requireAuth, async (req: AuthedReq
   res.json({ installations: data });
 });
 
+// Collega un'installazione della GitHub App all'utente loggato. GitHub reindirizza
+// qui (via "Setup URL" nelle impostazioni della App) subito dopo l'installazione,
+// passando l'installation_id nell'URL — senza questo passaggio, il webhook che
+// registra l'installazione non saprebbe a quale utente JoJoX appartiene.
+githubRouter.post("/api/github/installations/:installationId/claim", requireAuth, async (req: AuthedRequest, res) => {
+  const installationId = Number(req.params.installationId);
+
+  const { data: installation } = await supabaseAdmin
+    .from("github_installations")
+    .select("installed_by")
+    .eq("installation_id", installationId)
+    .single();
+
+  if (!installation) {
+    res.status(404).json({ error: "Installazione non trovata" });
+    return;
+  }
+
+  // Già collegata a questo stesso utente: nessuna azione, va bene così.
+  // Già collegata a un utente diverso: non la sovrascriviamo silenziosamente.
+  if (installation.installed_by && installation.installed_by !== req.userId) {
+    res.status(409).json({ error: "Questa installazione è già collegata a un altro account" });
+    return;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("github_installations")
+    .update({ installed_by: req.userId })
+    .eq("installation_id", installationId)
+    .is("installed_by", null);
+
+  if (error) {
+    res.status(500).json({ error: "Errore nel collegamento dell'installazione" });
+    return;
+  }
+
+  res.json({ ok: true });
+});
+
 githubRouter.put("/api/github/installations/:installationId/slack-webhook", requireAuth, async (req: AuthedRequest, res) => {
   const installationId = Number(req.params.installationId);
   const slackWebhookUrl: string | null = req.body?.slackWebhookUrl || null;

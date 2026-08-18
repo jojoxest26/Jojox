@@ -115,6 +115,14 @@ export async function fetchGithubInstallations(accessToken: string): Promise<Git
   return installations;
 }
 
+/** Collega un'installazione GitHub appena creata all'utente loggato (vedi App.tsx, callback dopo l'installazione). */
+export function claimGithubInstallation(installationId: number, accessToken: string): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>(`/api/github/installations/${installationId}/claim`, {
+    method: "POST",
+    accessToken,
+  });
+}
+
 /** Salva (o rimuove, passando null) l'URL del webhook Slack per un'installazione. */
 export function saveSlackWebhook(
   installationId: number,

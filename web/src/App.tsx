@@ -11,6 +11,7 @@ import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
 import { useSession } from "./hooks/useSession.js";
+import { claimGithubInstallation } from "./lib/api.js";
 
 function App() {
   const { session, loading } = useSession();
@@ -44,6 +45,25 @@ function App() {
       setPendingScroll(false);
     }
   }, [analyzerOpen, pendingScroll]);
+
+  // GitHub reindirizza qui (via "Setup URL" nelle impostazioni della App)
+  // subito dopo che qualcuno installa la GitHub App, passando l'installation_id
+  // nell'URL. Lo usiamo per collegare quell'installazione all'utente loggato.
+  useEffect(() => {
+    if (!session) return;
+    const params = new URLSearchParams(window.location.search);
+    const installationId = params.get("installation_id");
+    if (!installationId) return;
+
+    claimGithubInstallation(Number(installationId), session.access_token)
+      .catch(() => {})
+      .finally(() => {
+        params.delete("installation_id");
+        params.delete("setup_action");
+        const query = params.toString();
+        window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
+      });
+  }, [session]);
 
   if (loading) return null;
 
