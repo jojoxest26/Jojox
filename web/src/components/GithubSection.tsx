@@ -48,15 +48,7 @@ function SlackWebhookForm({ installation, session }: { installation: GithubInsta
   );
 }
 
-function SlackNotifications({ session }: { session: Session }) {
-  const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
-
-  useEffect(() => {
-    fetchGithubInstallations(session.access_token)
-      .then(setInstallations)
-      .catch(() => setInstallations([]));
-  }, [session.access_token]);
-
+function SlackNotifications({ session, installations }: { session: Session; installations: GithubInstallation[] | null }) {
   return (
     <div className="github-badge-howto">
       <p className="github-badge-title">🔔 Notifiche su Slack</p>
@@ -83,6 +75,19 @@ function SlackNotifications({ session }: { session: Session }) {
 
 export function GithubSection({ session }: { session: Session | null }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
+
+  useEffect(() => {
+    if (!session) {
+      setInstallations(null);
+      return;
+    }
+    fetchGithubInstallations(session.access_token)
+      .then(setInstallations)
+      .catch(() => setInstallations([]));
+  }, [session]);
+
+  const connected = installations !== null && installations.length > 0;
 
   return (
     <section className="github-section container">
@@ -103,13 +108,19 @@ export function GithubSection({ session }: { session: Session | null }) {
           Stesso motore dell'analisi manuale, nessun LLM. Gira sui nostri server per poter intervenire in automatico
           a ogni push.
         </p>
+        {connected && (
+          <p className="github-connected">
+            <span className="pill pill-mint">✓ COLLEGATO</span>{" "}
+            {installations!.map((i) => i.account_login).join(", ")}
+          </p>
+        )}
         <a
           className="btn btn-primary"
           href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
           target="_blank"
           rel="noreferrer"
         >
-          Collega GitHub
+          {connected ? "Collega un altro account GitHub" : "Collega GitHub"}
         </a>
 
         <button
@@ -156,7 +167,7 @@ export function GithubSection({ session }: { session: Session | null }) {
               </p>
             </div>
 
-            {session && <SlackNotifications session={session} />}
+            {session && <SlackNotifications session={session} installations={installations} />}
           </>
         )}
       </div>

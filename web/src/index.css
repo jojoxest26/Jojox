@@ -830,6 +830,14 @@ body {
 .github-card .github-note {
   font-size: 0.78rem;
 }
+.github-card .github-connected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
 .github-card .btn {
   margin-top: 1.25rem;
 }
