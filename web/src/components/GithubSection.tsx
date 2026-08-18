@@ -117,9 +117,7 @@ export function GithubSection({ session }: { session: Session | null }) {
           className="supabase-check-toggle github-details-toggle"
           onClick={() => setShowDetails((v) => !v)}
         >
-          {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: badge, CLI e agenti AI"}
-        </button>
-
+          {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: notifiche Slack, badge, CLI e agenti AI"}
         {showDetails && (
           <>
             <div className="github-badge-howto">
