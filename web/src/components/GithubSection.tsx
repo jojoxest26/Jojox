@@ -118,6 +118,8 @@ export function GithubSection({ session }: { session: Session | null }) {
           onClick={() => setShowDetails((v) => !v)}
         >
           {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: notifiche Slack, badge, CLI e agenti AI"}
+        </button>
+
         {showDetails && (
           <>
             <div className="github-badge-howto">
