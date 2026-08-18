@@ -11,7 +11,7 @@ import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
 import { useSession } from "./hooks/useSession.js";
-import { claimGithubInstallation } from "./lib/api.js";
+import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 
 function App() {
   const { session, loading } = useSession();
@@ -20,6 +20,19 @@ function App() {
   // Incrementato a ogni analisi salvata: HistoryPanel lo osserva per
   // ricaricare storico e grafico senza dover ricaricare la pagina.
   const [historyVersion, setHistoryVersion] = useState(0);
+  // Caricate qui (non nei singoli componenti) così Header e GithubSection
+  // mostrano sempre lo stesso stato "collegato o no", senza disallinearsi.
+  const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
+
+  useEffect(() => {
+    if (!session) {
+      setInstallations(null);
+      return;
+    }
+    fetchGithubInstallations(session.access_token)
+      .then(setInstallations)
+      .catch(() => setInstallations([]));
+  }, [session]);
 
   // Chi è già loggato vede sempre l'analyzer, ma senza lo scatto dello
   // scroll automatico al caricamento della pagina.
@@ -56,6 +69,7 @@ function App() {
     if (!installationId) return;
 
     claimGithubInstallation(Number(installationId), session.access_token)
+      .then(() => fetchGithubInstallations(session.access_token).then(setInstallations))
       .catch(() => {})
       .finally(() => {
         params.delete("installation_id");
@@ -69,7 +83,7 @@ function App() {
 
   return (
     <>
-      <Header session={session} />
+      <Header session={session} installations={installations} />
       <Hero />
       <Features />
       <Pricing session={session} />
@@ -79,7 +93,7 @@ function App() {
           {session && <HistoryPanel session={session} refreshKey={historyVersion} />}
         </>
       )}
-      <GithubSection session={session} />
+      <GithubSection session={session} installations={installations} />
       <SupabaseCheckSection />
       <WaitlistForm />
       <ChecksList />

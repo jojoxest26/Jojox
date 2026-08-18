@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { fetchGithubInstallations, saveSlackWebhook, type GithubInstallation } from "../lib/api.js";
+import { saveSlackWebhook, type GithubInstallation } from "../lib/api.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const API_URL = import.meta.env.VITE_API_URL;
@@ -73,20 +73,14 @@ function SlackNotifications({ session, installations }: { session: Session; inst
   );
 }
 
-export function GithubSection({ session }: { session: Session | null }) {
+export function GithubSection({
+  session,
+  installations,
+}: {
+  session: Session | null;
+  installations: GithubInstallation[] | null;
+}) {
   const [showDetails, setShowDetails] = useState(false);
-  const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
-
-  useEffect(() => {
-    if (!session) {
-      setInstallations(null);
-      return;
-    }
-    fetchGithubInstallations(session.access_token)
-      .then(setInstallations)
-      .catch(() => setInstallations([]));
-  }, [session]);
-
   const connected = installations !== null && installations.length > 0;
 
   return (

@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient.js";
 import { LoginPanel } from "./LoginPanel.js";
+import type { GithubInstallation } from "../lib/api.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 
-export function Header({ session }: { session: Session | null }) {
+export function Header({ session, installations }: { session: Session | null; installations: GithubInstallation[] | null }) {
   const [loginOpen, setLoginOpen] = useState(false);
+  const connected = installations !== null && installations.length > 0;
 
   useEffect(() => {
     if (session) return;
@@ -45,7 +47,7 @@ export function Header({ session }: { session: Session | null }) {
             target="_blank"
             rel="noreferrer"
           >
-            Collega GitHub
+            {connected ? "✓ GitHub collegato" : "Collega GitHub"}
           </a>
           {session ? (
             <>
