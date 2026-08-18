@@ -1,9 +1,87 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { fetchGithubInstallations, saveSlackWebhook, type GithubInstallation } from "../lib/api.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const API_URL = import.meta.env.VITE_API_URL;
 
-export function GithubSection() {
+function SlackWebhookForm({ installation, session }: { installation: GithubInstallation; session: Session }) {
+  const [value, setValue] = useState(installation.slack_webhook_url ?? "");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave() {
+    setStatus("saving");
+    setError(null);
+    try {
+      await saveSlackWebhook(installation.installation_id, value.trim() || null, session.access_token);
+      setStatus("saved");
+    } catch (err) {
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "Errore nel salvataggio");
+    }
+  }
+
+  return (
+    <div className="slack-webhook-row">
+      <label className="slack-webhook-label" htmlFor={`slack-${installation.installation_id}`}>
+        {installation.account_login}
+      </label>
+      <div className="slack-webhook-input-row">
+        <input
+          id={`slack-${installation.installation_id}`}
+          type="url"
+          placeholder="https://hooks.slack.com/services/..."
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setStatus("idle");
+          }}
+        />
+        <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={handleSave} disabled={status === "saving"}>
+          {status === "saving" ? "Salvataggio..." : "Salva"}
+        </button>
+      </div>
+      {status === "saved" && <p className="slack-webhook-msg">✓ Salvato</p>}
+      {status === "error" && <p className="slack-webhook-msg slack-webhook-msg-error">{error}</p>}
+    </div>
+  );
+}
+
+function SlackNotifications({ session }: { session: Session }) {
+  const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
+
+  useEffect(() => {
+    fetchGithubInstallations(session.access_token)
+      .then(setInstallations)
+      .catch(() => setInstallations([]));
+  }, [session.access_token]);
+
+  return (
+    <div className="github-badge-howto">
+      <p className="github-badge-title">🔔 Notifiche su Slack</p>
+      {!installations || installations.length === 0 ? (
+        <p>Collega prima GitHub (bottone qui sopra) per poter impostare le notifiche Slack.</p>
+      ) : (
+        <>
+          <p>
+            Incolla qui l'URL di un{" "}
+            <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noreferrer">
+              Incoming Webhook Slack
+            </a>{" "}
+            per ricevere un avviso sul canale del team quando una pull request viene bloccata o corretta in
+            automatico:
+          </p>
+          {installations.map((installation) => (
+            <SlackWebhookForm key={installation.installation_id} installation={installation} session={session} />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+export function GithubSection({ session }: { session: Session | null }) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -77,6 +155,8 @@ export function GithubSection() {
                 problema non entra mai nella cronologia del repository.
               </p>
             </div>
+
+            {session && <SlackNotifications session={session} />}
           </>
         )}
       </div>

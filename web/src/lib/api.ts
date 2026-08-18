@@ -100,3 +100,30 @@ export function createPortalSession(accessToken: string): Promise<{ url: string 
     accessToken,
   });
 }
+
+export interface GithubInstallation {
+  installation_id: number;
+  account_login: string;
+  slack_webhook_url: string | null;
+}
+
+/** Le installazioni della GitHub App collegate all'utente loggato. */
+export async function fetchGithubInstallations(accessToken: string): Promise<GithubInstallation[]> {
+  const { installations } = await apiFetch<{ installations: GithubInstallation[] }>("/api/github/installations", {
+    accessToken,
+  });
+  return installations;
+}
+
+/** Salva (o rimuove, passando null) l'URL del webhook Slack per un'installazione. */
+export function saveSlackWebhook(
+  installationId: number,
+  slackWebhookUrl: string | null,
+  accessToken: string
+): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>(`/api/github/installations/${installationId}/slack-webhook`, {
+    method: "PUT",
+    body: JSON.stringify({ slackWebhookUrl }),
+    accessToken,
+  });
+}

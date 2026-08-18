@@ -6,6 +6,7 @@ import { analyzeFiles, applyAutofixes } from "../../../analyze.js";
 import { ALL_CHECKS } from "../../../checks/index.js";
 import { checkRunConclusion, formatPrComment } from "../../github/report.js";
 import { supabaseAdmin } from "../../db/supabase.js";
+import { notifySlack } from "../../slack/notify.js";
 import type { SourceFile } from "../../../types.js";
 
 interface InstallationPayload {
@@ -145,24 +146,39 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
     body: formatPrComment(result, fixPrUrl),
   });
 
-  const installedBy = await getInstalledByUserId(installationId);
+  const installation = await getInstallation(installationId);
   await supabaseAdmin.from("analyses").insert({
-    user_id: installedBy,
+    user_id: installation?.installed_by ?? null,
     source: "github",
     repo_full_name: `${owner}/${repo}`,
     score: result.score,
     summary: result.summary,
     findings: result.findings,
   });
+
+  const prUrl = `https://github.com/${owner}/${repo}/pull/${pullNumber}`;
+  if (checkRunConclusion(result) === "failure") {
+    await notifySlack(
+      installation?.slack_webhook_url,
+      `🛑 JoJoX ha bloccato una pull request su *${owner}/${repo}* (punteggio ${result.score}/100): ${prUrl}`
+    );
+  } else if (fixPrUrl) {
+    await notifySlack(
+      installation?.slack_webhook_url,
+      `🔧 JoJoX ha proposto correzioni automatiche per una pull request su *${owner}/${repo}*: ${fixPrUrl}`
+    );
+  }
 }
 
-async function getInstalledByUserId(installationId: number): Promise<string | null> {
+async function getInstallation(
+  installationId: number
+): Promise<{ installed_by: string | null; slack_webhook_url: string | null } | null> {
   const { data } = await supabaseAdmin
     .from("github_installations")
-    .select("installed_by")
+    .select("installed_by, slack_webhook_url")
     .eq("installation_id", installationId)
     .single();
-  return data?.installed_by ?? null;
+  return data ?? null;
 }
 
 function fixPrBranchName(pullNumber: number): string {

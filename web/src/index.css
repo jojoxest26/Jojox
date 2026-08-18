@@ -1118,3 +1118,14 @@ body {
   font-size: 9px;
   fill: var(--text-muted);
 }
+/* ---------- slack webhook ---------- */
+.slack-webhook-row { margin-top: 1rem; }
+.slack-webhook-label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.3rem; }
+.slack-webhook-input-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.slack-webhook-input-row input {
+  flex: 1; min-width: 220px; border-radius: 0.6rem; border: 1px solid var(--border);
+  background: var(--surface-muted); padding: 0.6rem 0.85rem; font-size: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.slack-webhook-msg { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
+.slack-webhook-msg-error { color: var(--critical); }

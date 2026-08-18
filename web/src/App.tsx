@@ -59,7 +59,7 @@ function App() {
           {session && <HistoryPanel session={session} refreshKey={historyVersion} />}
         </>
       )}
-      <GithubSection />
+      <GithubSection session={session} />
       <SupabaseCheckSection />
       <WaitlistForm />
       <ChecksList />

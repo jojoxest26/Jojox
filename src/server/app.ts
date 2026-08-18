@@ -10,6 +10,7 @@ import { githubWebhookRouter } from "./routes/webhooks/github.js";
 import { stripeWebhookRouter } from "./routes/webhooks/stripe.js";
 import { stripeRouter } from "./routes/stripe.js";
 import { profileRouter } from "./routes/profile.js";
+import { githubRouter } from "./routes/github.js";
 
 export function createApp(): Express {
   const app = express();
@@ -29,7 +30,7 @@ export function createApp(): Express {
   app.use(
     cors({
       origin: env.allowedOrigins,
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PUT"],
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
@@ -43,6 +44,7 @@ export function createApp(): Express {
   app.use(guestAnalyzeRouter);
   app.use(stripeRouter);
   app.use(profileRouter);
+  app.use(githubRouter);
 
   return app;
 }
