@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "..",
+    "strict": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "types": ["node"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "../src/types.ts",
+    "../src/analyze.ts",
+    "../src/autofix.ts",
+    "../src/scoring.ts",
+    "../src/supabaseConfigChecks.ts",
+    "../src/util/**/*.ts",
+    "../src/checks/**/*.ts"
+  ]
+}

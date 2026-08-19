@@ -1,0 +1,24 @@
+{
+  "name": "jojox-vscode",
+  "displayName": "JoJoX — Sicurezza per codice AI",
+  "description": "Controlla il codice mentre scrivi: gli stessi 21 controlli di sicurezza del sito jojox.it, senza LLM e senza inviare nulla fuori dal tuo editor.",
+  "version": "0.1.0",
+  "publisher": "jojox",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Linters"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/vscode-extension/src/extension.js",
+  "contributes": {},
+  "scripts": {
+    "compile": "tsc -p . && node -e \"require('fs').writeFileSync('dist/src/package.json', JSON.stringify({type:'module'}))\"",
+    "watch": "tsc -p . --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.5.3"
+  }
+}
