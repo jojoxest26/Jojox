@@ -122,7 +122,7 @@ export function GithubSection({
           className="supabase-check-toggle github-details-toggle"
           onClick={() => setShowDetails((v) => !v)}
         >
-          {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: notifiche Slack, badge, CLI e agenti AI"}
+          {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: notifiche Slack, badge, CLI, VS Code e agenti AI"}
         </button>
 
         {showDetails && (
@@ -140,11 +140,12 @@ export function GithubSection({
             </div>
 
             <div className="github-badge-howto">
-              <p className="github-badge-title">🖥️ Anche da terminale e per agenti AI</p>
+              <p className="github-badge-title">🖥️ Anche da terminale, in VS Code e per agenti AI</p>
               <p>
                 JoJoX si può usare anche senza sito: da riga di comando (con <code>--fix</code> per correggere in
-                automatico) o come strumento MCP per Claude Code e altri agenti AI, che così possono controllarsi da
-                soli mentre scrivono codice. Istruzioni complete nel{" "}
+                automatico), come estensione VS Code che sottolinea i problemi mentre scrivi, o come strumento MCP
+                per Claude Code e altri agenti AI, che così possono controllarsi da soli mentre scrivono codice.
+                Istruzioni complete nel{" "}
                 <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
                   README del repository
                 </a>

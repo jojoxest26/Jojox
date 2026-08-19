@@ -8,11 +8,6 @@ const ROADMAP = [
     text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — in arrivo a inizio settembre.",
   },
   {
-    icon: "🧩",
-    title: "Estensione per VS Code",
-    text: "Gli avvisi direttamente nell'editor mentre scrivi, senza dover caricare i file sul sito.",
-  },
-  {
     icon: "🌍",
     title: "Sito in più lingue",
     text: "JoJoX utilizzabile nella propria lingua madre, non solo in italiano.",
