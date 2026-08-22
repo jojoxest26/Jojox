@@ -1137,3 +1137,23 @@ body {
 }
 .slack-webhook-msg { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .slack-webhook-msg-error { color: var(--critical); }
+.lang-switcher {
+  display: flex;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 2px 2px 0 0 var(--ink);
+}
+.lang-btn {
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+}
+.lang-btn-active {
+  background: #f59e0b;
+  color: #171717;
+}

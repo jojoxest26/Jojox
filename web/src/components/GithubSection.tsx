@@ -1,11 +1,14 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { saveSlackWebhook, type GithubInstallation } from "../lib/api.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
+import { renderWithTokens } from "../i18n/richText.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const API_URL = import.meta.env.VITE_API_URL;
 
 function SlackWebhookForm({ installation, session }: { installation: GithubInstallation; session: Session }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState(installation.slack_webhook_url ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +21,7 @@ function SlackWebhookForm({ installation, session }: { installation: GithubInsta
       setStatus("saved");
     } catch (err) {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Errore nel salvataggio");
+      setError(err instanceof Error ? err.message : t.github.slackErrorGeneric);
     }
   }
 
@@ -39,30 +42,33 @@ function SlackWebhookForm({ installation, session }: { installation: GithubInsta
           }}
         />
         <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={handleSave} disabled={status === "saving"}>
-          {status === "saving" ? "Salvataggio..." : "Salva"}
+          {status === "saving" ? t.github.slackSaving : t.github.slackSave}
         </button>
       </div>
-      {status === "saved" && <p className="slack-webhook-msg">✓ Salvato</p>}
+      {status === "saved" && <p className="slack-webhook-msg">{t.github.slackSaved}</p>}
       {status === "error" && <p className="slack-webhook-msg slack-webhook-msg-error">{error}</p>}
     </div>
   );
 }
 
 function SlackNotifications({ session, installations }: { session: Session; installations: GithubInstallation[] | null }) {
+  const { t } = useTranslation();
+
   return (
     <div className="github-badge-howto">
-      <p className="github-badge-title">🔔 Notifiche su Slack</p>
+      <p className="github-badge-title">{t.github.slackTitle}</p>
       {!installations || installations.length === 0 ? (
-        <p>Collega prima GitHub (bottone qui sopra) per poter impostare le notifiche Slack.</p>
+        <p>{t.github.slackConnectFirst}</p>
       ) : (
         <>
           <p>
-            Incolla qui l'URL di un{" "}
-            <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noreferrer">
-              Incoming Webhook Slack
-            </a>{" "}
-            per ricevere un avviso sul canale del team quando una pull request viene bloccata o corretta in
-            automatico:
+            {renderWithTokens(t.github.slackBody, {
+              link: (
+                <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noreferrer">
+                  {t.github.slackLink}
+                </a>
+              ),
+            })}
           </p>
           {installations.map((installation) => (
             <SlackWebhookForm key={installation.installation_id} installation={installation} session={session} />
@@ -80,6 +86,7 @@ export function GithubSection({
   session: Session | null;
   installations: GithubInstallation[] | null;
 }) {
+  const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
   const connected = installations !== null && installations.length > 0;
 
@@ -87,24 +94,15 @@ export function GithubSection({
     <section className="github-section container">
       <div className="card github-card">
         <div className="github-title">
-          <h2>GitHub App + CI</h2>
-          <span className="pill pill-amber">DISPONIBILE</span>
+          <h2>{t.github.title}</h2>
+          <span className="pill pill-amber">{t.github.badge}</span>
         </div>
-        <p>
-          Collega GitHub. A ogni push e a ogni pull request JoJoX controlla il codice. Se trova un problema critico,
-          blocca la pull request e lascia un commento chiaro con il riepilogo.
-        </p>
-        <p>
-          Basta impostarlo come controllo obbligatorio nelle impostazioni del branch: le modifiche rischiose non
-          potranno più essere unite.
-        </p>
-        <p className="github-note">
-          Stesso motore dell'analisi manuale, nessun LLM. Gira sui nostri server per poter intervenire in automatico
-          a ogni push.
-        </p>
+        <p>{t.github.body1}</p>
+        <p>{t.github.body2}</p>
+        <p className="github-note">{t.github.note}</p>
         {connected && (
           <p className="github-connected">
-            <span className="pill pill-mint">✓ COLLEGATO</span>{" "}
+            <span className="pill pill-mint">{t.github.connectedLabel}</span>{" "}
             {installations!.map((i) => i.account_login).join(", ")}
           </p>
         )}
@@ -114,7 +112,7 @@ export function GithubSection({
           target="_blank"
           rel="noreferrer"
         >
-          {connected ? "Collega un altro account GitHub" : "Collega GitHub"}
+          {connected ? t.header.connectAnother : t.header.connect}
         </a>
 
         <button
@@ -122,17 +120,18 @@ export function GithubSection({
           className="supabase-check-toggle github-details-toggle"
           onClick={() => setShowDetails((v) => !v)}
         >
-          {showDetails ? "▲ Nascondi dettagli avanzati" : "▼ Vedi anche: notifiche Slack, badge, CLI, VS Code e agenti AI"}
+          {showDetails ? t.github.toggleHide : t.github.toggleShow}
         </button>
 
         {showDetails && (
           <>
             <div className="github-badge-howto">
-              <p className="github-badge-title">🏷️ Badge sempre aggiornato nel README</p>
+              <p className="github-badge-title">{t.github.badgeTitle}</p>
               <p>
-                Dopo aver collegato il repository, incolla questa riga nel tuo <code>README.md</code> (sostituisci{" "}
-                <code>proprietario/repo</code> con i tuoi) — il punteggio si aggiorna da solo a ogni analisi, senza
-                bisogno di rigenerarlo a mano:
+                {renderWithTokens(t.github.badgeBody, {
+                  readme: <code>README.md</code>,
+                  repo: <code>proprietario/repo</code>,
+                })}
               </p>
               <pre className="github-badge-snippet">
                 {`![JoJoX](${API_URL}/badge/proprietario/repo.svg)`}
@@ -140,26 +139,22 @@ export function GithubSection({
             </div>
 
             <div className="github-badge-howto">
-              <p className="github-badge-title">🖥️ Anche da terminale, in VS Code e per agenti AI</p>
+              <p className="github-badge-title">{t.github.terminalTitle}</p>
               <p>
-                JoJoX si può usare anche senza sito: da riga di comando (con <code>--fix</code> per correggere in
-                automatico), come estensione VS Code che sottolinea i problemi mentre scrivi, o come strumento MCP
-                per Claude Code e altri agenti AI, che così possono controllarsi da soli mentre scrivono codice.
-                Istruzioni complete nel{" "}
-                <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
-                  README del repository
-                </a>
-                .
+                {renderWithTokens(t.github.terminalBody, {
+                  fix: <code>--fix</code>,
+                  link: (
+                    <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
+                      {t.github.terminalLink}
+                    </a>
+                  ),
+                })}
               </p>
             </div>
 
             <div className="github-badge-howto">
-              <p className="github-badge-title">🪝 Blocco commit in locale</p>
-              <p>
-                Un comando da terminale (<code>install-hook</code>) installa un controllo che ferma il commit sul tuo
-                computer, prima ancora che il codice arrivi su GitHub, se trova un problema critico — così il
-                problema non entra mai nella cronologia del repository.
-              </p>
+              <p className="github-badge-title">{t.github.hookTitle}</p>
+              <p>{renderWithTokens(t.github.hookBody, { cmd: <code>install-hook</code> })}</p>
             </div>
 
             {session && <SlackNotifications session={session} installations={installations} />}

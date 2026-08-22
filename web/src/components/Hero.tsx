@@ -1,4 +1,9 @@
+﻿import { useTranslation } from "../i18n/LanguageContext.js";
+import { renderWithTokens } from "../i18n/richText.js";
+
 export function Hero() {
+  const { t } = useTranslation();
+
   function scrollToPricing() {
     document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
   }
@@ -6,36 +11,37 @@ export function Hero() {
   return (
     <section className="hero container">
       <h1>
-        Il tuo agente AI scrive codice ogni giorno.
+        {t.hero.titleLine1}
         <br />
         <span className="blue-highlight">
-          <span className="font-logo">JoJoX</span> lo sorveglia.
+          <span className="font-logo">JoJoX</span> {t.hero.titleLine2Suffix}
         </span>
       </h1>
 
       <p>
-        Non un controllo una tantum. <span className="marker-highlight">Monitoraggio continuo</span>. 21 controlli
-        pubblici sugli errori più comuni nel codice scritto dall'IA, un{" "}
-        <span className="marker-highlight">punteggio di sicurezza</span> chiaro, e correzioni pronte da copiare.
+        {renderWithTokens(t.hero.body, {
+          monitoring: <span className="marker-highlight">{t.hero.bodyMonitoring}</span>,
+          score: <span className="marker-highlight">{t.hero.bodyScore}</span>,
+        })}
       </p>
-      <p className="hero-sub">Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.</p>
+      <p className="hero-sub">{t.hero.sub}</p>
 
       <div className="hero-pills">
-        <span className="pill pill-mint">Correzioni sempre nel tuo browser</span>
-        <span className="sep">·</span>
-        <span className="pill pill-amber">Nessuna registrazione per iniziare</span>
-        <span className="sep">·</span>
-        <span className="pill pill-plain">Gratis</span>
+        <span className="pill pill-mint">{t.hero.pill1}</span>
+        <span className="sep">Â·</span>
+        <span className="pill pill-amber">{t.hero.pill2}</span>
+        <span className="sep">Â·</span>
+        <span className="pill pill-plain">{t.hero.pill3}</span>
       </div>
 
-      <p className="hero-badge">Per progetti costruiti con Claude Code · Cursor · Lovable · Bolt</p>
+      <p className="hero-badge">{t.hero.badge}</p>
 
       <div className="hero-actions">
         <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToPricing}>
-          Analizza il tuo codice — gratis
+          {t.hero.cta}
         </button>
       </div>
-      <p className="hero-guest-note">1 analisi gratuita senza email. Poi basta la mail — 5 analisi/mese gratis.</p>
+      <p className="hero-guest-note">{t.hero.guestNote}</p>
     </section>
   );
 }

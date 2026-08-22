@@ -1,16 +1,13 @@
-// Genera il report PDF aprendo una finestra con una pagina HTML pronta per
+﻿// Genera il report PDF aprendo una finestra con una pagina HTML pronta per
 // la stampa e richiamando window.print(): l'utente la salva come PDF dal
 // dialogo nativo del browser. Nessuna libreria PDF da installare.
 import type { AnalysisResult, Finding, Severity, SourceFile } from "../../../src/types.js";
 import type { AutofixResult } from "../../../src/analyze.js";
+import { translations, type Lang } from "../i18n/translations.js";
+import { interpolate } from "../i18n/richText.js";
+import { translateCheckText } from "../i18n/checkTranslations.js";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
-const SEVERITY_LABEL: Record<Severity, string> = {
-  critical: "Critico",
-  high: "Alto",
-  medium: "Medio",
-  low: "Basso",
-};
 const SEVERITY_COLOR: Record<Severity, string> = {
   critical: "#e05353",
   high: "#e5772a",
@@ -27,9 +24,9 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function guessProjectName(files: SourceFile[]): string {
+function guessProjectName(files: SourceFile[], fallback: string): string {
   const roots = new Set(files.filter((f) => f.path.includes("/")).map((f) => f.path.split("/")[0]));
-  return roots.size === 1 ? [...roots][0]! : "Analisi codice";
+  return roots.size === 1 ? [...roots][0]! : fallback;
 }
 
 function makeReportId(): string {
@@ -41,8 +38,8 @@ function makeReportId(): string {
   return `JX-${y}${m}${d}-${rand}`;
 }
 
-function formatTimestamp(): string {
-  return new Date().toLocaleString("it-IT", {
+function formatTimestamp(dateLocale: string): string {
+  return new Date().toLocaleString(dateLocale, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -51,36 +48,43 @@ function formatTimestamp(): string {
   });
 }
 
-function findingHtml(finding: Finding): string {
+function findingHtml(finding: Finding, lang: Lang, t: (typeof translations)["it"]): string {
   const sev = finding.severity;
   const location = escapeHtml(finding.file) + (finding.line > 0 ? `:${finding.line}` : "");
+  const text = translateCheckText(finding.checkId, finding, lang);
   return `
     <div class="finding finding-${sev}">
       <div class="finding-top">
         <div>
-          <p class="finding-title">${escapeHtml(finding.title)}</p>
+          <p class="finding-title">${escapeHtml(text.title)}</p>
           <p class="finding-loc">${location}</p>
         </div>
-        <span class="sev-badge">${SEVERITY_LABEL[sev]}</span>
+        <span class="sev-badge">${t.common.severity[sev]}</span>
       </div>
-      <p class="finding-text">${escapeHtml(finding.description)}</p>
+      <p class="finding-text">${escapeHtml(text.description)}</p>
       <div class="diff">
         <div class="diff-block diff-before">
-          <p class="diff-label">Prima</p>
-          <pre class="diff-code">${escapeHtml(finding.fix.before)}</pre>
+          <p class="diff-label">${t.common.before}</p>
+          <pre class="diff-code">${escapeHtml(text.fix.before)}</pre>
         </div>
         <div class="diff-block diff-after">
-          <p class="diff-label">Dopo</p>
-          <pre class="diff-code">${escapeHtml(finding.fix.after)}</pre>
+          <p class="diff-label">${t.common.after}</p>
+          <pre class="diff-code">${escapeHtml(text.fix.after)}</pre>
         </div>
       </div>
     </div>`;
 }
 
-export function buildReportHtml(result: AnalysisResult, files: SourceFile[], autofix: AutofixResult | null): string {
-  const projectName = escapeHtml(guessProjectName(files));
+export function buildReportHtml(
+  result: AnalysisResult,
+  files: SourceFile[],
+  autofix: AutofixResult | null,
+  lang: Lang = "it"
+): string {
+  const t = translations[lang];
+  const projectName = escapeHtml(guessProjectName(files, t.report.projectFallback));
   const reportId = makeReportId();
-  const timestamp = formatTimestamp();
+  const timestamp = formatTimestamp(t.meta.dateLocale);
 
   const fixableCount = autofix
     ? result.findings.filter((f) => autofix.fixedCheckIds.has(f.checkId)).length
@@ -88,16 +92,16 @@ export function buildReportHtml(result: AnalysisResult, files: SourceFile[], aut
 
   const findingsHtml =
     result.findings.length === 0
-      ? `<p class="empty-state">Nessun problema trovato nei 21 controlli.</p>`
+      ? `<p class="empty-state">${t.report.emptyState}</p>`
       : SEVERITY_ORDER.filter((sev) => result.findings.some((f) => f.severity === sev))
-          .flatMap((sev) => result.findings.filter((f) => f.severity === sev).map(findingHtml))
+          .flatMap((sev) => result.findings.filter((f) => f.severity === sev).map((f) => findingHtml(f, lang, t)))
           .join("");
 
   const tallyHtml = SEVERITY_ORDER.map(
     (sev) => `
       <span class="tally-pill">
         <span class="tally-dot" style="background:${SEVERITY_COLOR[sev]}"></span>
-        ${SEVERITY_LABEL[sev]} <span class="tally-count">${result.summary[sev]}</span>
+        ${t.common.severity[sev]} <span class="tally-count">${result.summary[sev]}</span>
       </span>`
   ).join("");
 
@@ -105,16 +109,26 @@ export function buildReportHtml(result: AnalysisResult, files: SourceFile[], aut
     autofix && fixableCount > 0
       ? `<p class="autofix-note">${
           fixableCount === 1
-            ? `1 problema su ${result.findings.length} può essere corretto in automatico da JoJoX.`
-            : `${fixableCount} problemi su ${result.findings.length} possono essere corretti in automatico da JoJoX.`
-        } Il file corretto è scaricabile dal sito come archivio .zip, separatamente da questo report.</p>`
+            ? interpolate(t.report.autofixNoteOne, { total: String(result.findings.length) })
+            : interpolate(t.report.autofixNoteMany, {
+                count: String(fixableCount),
+                total: String(result.findings.length),
+              })
+        }${t.report.autofixNoteSuffix}</p>`
       : "";
 
+  const summaryTitle =
+    result.findings.length === 0
+      ? t.report.noProblems
+      : result.findings.length === 1
+        ? t.report.oneProblem
+        : interpolate(t.report.manyProblems, { count: String(result.findings.length) });
+
   return `<!doctype html>
-<html lang="it">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8" />
-<title>Report JoJoX — ${projectName}</title>
+<title>Report JoJoX â€” ${projectName}</title>
 <style>
   * { box-sizing: border-box; }
 
@@ -364,8 +378,8 @@ export function buildReportHtml(result: AnalysisResult, files: SourceFile[], aut
 </head>
 <body>
   <div class="toolbar">
-    <button type="button" onclick="window.print()">Stampa / Salva come PDF</button>
-    <span>Se la finestra di stampa non si apre da sola, usa Ctrl+P (Cmd+P su Mac).</span>
+    <button type="button" onclick="window.print()">${t.report.printBtn}</button>
+    <span>${t.report.printHint}</span>
   </div>
 
   <div class="page">
@@ -374,20 +388,24 @@ export function buildReportHtml(result: AnalysisResult, files: SourceFile[], aut
         <div class="brand-mark">JX</div>
         <div>
           <div class="brand-name">JoJoX</div>
-          <div class="brand-sub">Report di sicurezza del codice</div>
+          <div class="brand-sub">${t.report.brandSub}</div>
         </div>
       </div>
       <div class="header-meta">
-        <div class="report-id">Report #${reportId}</div>
-        <div>Generato il ${escapeHtml(timestamp)}</div>
-        <div>21 controlli · nessun LLM</div>
+        <div class="report-id">${t.report.reportLabel} #${reportId}</div>
+        <div>${interpolate(t.report.generatedOn, { date: escapeHtml(timestamp) })}</div>
+        <div>${t.report.controlsNoLLM}</div>
       </div>
     </div>
 
     <div class="body">
       <div class="project-line">
         <h1>${projectName}</h1>
-        <span class="files-scanned">${files.length} file analizzati</span>
+        <span class="files-scanned">${
+          files.length === 1
+            ? t.report.filesScannedOne
+            : interpolate(t.report.filesScannedMany, { count: String(files.length) })
+        }</span>
       </div>
 
       <div class="score-row">
@@ -395,22 +413,14 @@ export function buildReportHtml(result: AnalysisResult, files: SourceFile[], aut
           <div class="score-dial-value">${result.score}<span>/ 100</span></div>
         </div>
         <div>
-          <p class="score-summary-title">
-            ${
-              result.findings.length === 0
-                ? "Nessun problema trovato"
-                : result.findings.length === 1
-                  ? "1 problema trovato"
-                  : `${result.findings.length} problemi trovati, di gravità diversa`
-            }
-          </p>
+          <p class="score-summary-title">${summaryTitle}</p>
           <div class="severity-tally">${tallyHtml}</div>
         </div>
       </div>
 
       ${autofixNote}
 
-      <p class="section-label">Risultati</p>
+      <p class="section-label">${t.report.resultsLabel}</p>
       <div class="findings">${findingsHtml}</div>
     </div>
 
@@ -423,11 +433,16 @@ export function buildReportHtml(result: AnalysisResult, files: SourceFile[], aut
 </html>`;
 }
 
-export function openReportWindow(result: AnalysisResult, files: SourceFile[], autofix: AutofixResult | null): void {
-  const html = buildReportHtml(result, files, autofix);
+export function openReportWindow(
+  result: AnalysisResult,
+  files: SourceFile[],
+  autofix: AutofixResult | null,
+  lang: Lang = "it"
+): void {
+  const html = buildReportHtml(result, files, autofix, lang);
   const win = window.open("", "_blank");
   if (!win) {
-    window.alert("Il browser ha bloccato l'apertura della finestra. Consenti i popup per questo sito e riprova.");
+    window.alert(translations[lang].report.popupBlocked);
     return;
   }
   win.document.open();

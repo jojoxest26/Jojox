@@ -1,7 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { supabase } from "../lib/supabaseClient.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
 
 export function LoginPanel({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -15,12 +17,10 @@ export function LoginPanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="login-panel card">
       {status === "sent" ? (
-        <p className="login-msg">
-          Controlla la tua email: ti abbiamo mandato un link per accedere. Puoi chiudere questo popup.
-        </p>
+        <p className="login-msg">{t.login.sent}</p>
       ) : (
         <form onSubmit={handleSubmit}>
-          <p className="login-msg">Accedi con la tua email — nessuna password, ti mandiamo un link.</p>
+          <p className="login-msg">{t.login.prompt}</p>
           <input
             type="email"
             required
@@ -29,13 +29,13 @@ export function LoginPanel({ onClose }: { onClose: () => void }) {
             onChange={(e) => setEmail(e.target.value)}
           />
           <button type="submit" className="btn btn-primary" disabled={status === "sending"} style={{ width: "100%" }}>
-            {status === "sending" ? "Invio…" : "Invia link di accesso"}
+            {status === "sending" ? t.login.sending : t.login.send}
           </button>
-          {status === "error" && <p className="login-msg">Qualcosa è andato storto. Riprova.</p>}
+          {status === "error" && <p className="login-msg">{t.login.error}</p>}
         </form>
       )}
       <button type="button" onClick={onClose} className="btn btn-secondary" style={{ width: "100%", marginTop: "0.5rem" }}>
-        Chiudi
+        {t.login.close}
       </button>
     </div>
   );

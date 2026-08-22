@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createCheckoutSession, createPortalSession, fetchProfile, type Plan } from "../lib/api.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
 
 function openLogin() {
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -12,6 +13,7 @@ function openAnalyzer() {
 }
 
 export function Pricing({ session }: { session: Session | null }) {
+  const { t } = useTranslation();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [busy, setBusy] = useState<"pro" | "team" | "portal" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function Pricing({ session }: { session: Session | null }) {
       const { url } = await createCheckoutSession(target, session.access_token);
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore nell'attivazione del piano");
+      setError(err instanceof Error ? err.message : t.pricing.errorActivation);
       setBusy(null);
     }
   }
@@ -72,86 +74,78 @@ export function Pricing({ session }: { session: Session | null }) {
       const { url } = await createPortalSession(session.access_token);
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore nell'apertura del portale abbonamento");
+      setError(err instanceof Error ? err.message : t.pricing.errorPortal);
       setBusy(null);
     }
   }
 
   return (
     <section className="pricing-section container" id="pricing">
-      <h2>Paghi il monitoraggio continuo, non le singole analisi</h2>
-      <p>Prova 1 analisi senza dare nulla. Poi basta l'email, nessuna password: fino a 5 analisi al mese gratis.</p>
+      <h2>{t.pricing.title}</h2>
+      <p>{t.pricing.subtitle}</p>
 
       {checkoutNotice === "success" && (
-        <p className="pricing-notice pricing-notice-success">
-          ✓ Pagamento ricevuto, stiamo attivando il piano — qualche secondo e questa pagina si aggiorna da sola.
-        </p>
+        <p className="pricing-notice pricing-notice-success">{t.pricing.noticeSuccess}</p>
       )}
-      {checkoutNotice === "cancel" && (
-        <p className="pricing-notice">Attivazione annullata, nessun addebito. Riprova quando vuoi.</p>
-      )}
+      {checkoutNotice === "cancel" && <p className="pricing-notice">{t.pricing.noticeCancel}</p>}
 
       <div className="card guest-callout">
         <div>
           <div className="guest-title">
-            <span>👤</span>
-            <h3>Modalità ospite</h3>
+            <span>ðŸ‘¤</span>
+            <h3>{t.pricing.guestTitle}</h3>
           </div>
           <ul>
-            <li>✓ 1 analisi gratuita, senza email</li>
-            <li>✓ Tutti i 21 controlli con esempi di correzione</li>
-            <li>✓ Punteggio di sicurezza</li>
-            <li>✓ Un solo tentativo per visitatore, imposto dal nostro server</li>
+            {t.pricing.guestList.map((item) => (
+              <li key={item}>âœ“ {item}</li>
+            ))}
           </ul>
         </div>
         <button type="button" className="btn btn-secondary hard-border hard-shadow" onClick={openAnalyzer}>
-          Prova senza registrarti
+          {t.pricing.guestCta}
         </button>
       </div>
 
       <div className="pricing-grid">
         <div className="card price-card">
-          <h3>Gratis</h3>
-          <div className="price-amount">0€</div>
+          <h3>{t.pricing.freeTitle}</h3>
+          <div className="price-amount">0â‚¬</div>
           <ul>
-            <li>✓ 5 analisi al mese</li>
-            <li>✓ Tutti i 21 controlli, con esempi di correzione</li>
-            <li>✓ Punteggio di sicurezza + badge da scaricare (.svg)</li>
-            <li>✓ Cronologia delle ultime 20 analisi</li>
+            {t.pricing.freeList.map((item) => (
+              <li key={item}>âœ“ {item}</li>
+            ))}
           </ul>
           {session && plan === "free" ? (
-            <span className="pill pill-plain price-card-active">Piano attivo</span>
+            <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
           ) : (
             <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={openLogin}>
-              Inizia gratis
+              {t.pricing.freeCta}
             </button>
           )}
-          <p className="price-card-note">Per chi analizza progetti una tantum</p>
+          <p className="price-card-note">{t.pricing.freeNote}</p>
         </div>
 
         <div className="card price-card featured">
-          <span className="pill pill-amber price-card-badge">MONITORING</span>
-          <h3>Pro</h3>
+          <span className="pill pill-amber price-card-badge">{t.pricing.proBadge}</span>
+          <h3>{t.pricing.proTitle}</h3>
           <div className="price-amount">
-            9,99€ <span className="per">/mese</span>
+            9,99â‚¬ <span className="per">{t.pricing.proPer}</span>
           </div>
           <ul>
-            <li>✓ Analisi e cronologia illimitate</li>
-            <li>✓ Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose</li>
-            <li>✓ Commenti automatici sulle pull request</li>
-            <li>✓ Correzioni automatiche proposte come pull request</li>
-            <li>✓ Badge che si aggiorna da solo a ogni push</li>
+            {t.pricing.proList.map((item) => (
+              <li key={item}>âœ“ {item}</li>
+            ))}
           </ul>
           {session && plan === "pro" ? (
             <>
-              <span className="pill pill-plain price-card-active">Piano attivo</span>
+              <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
               <button
                 type="button"
                 className="btn btn-secondary hard-border hard-shadow-sm"
                 onClick={handleManage}
                 disabled={busy === "portal"}
               >
-                {busy === "portal" ? "Apertura..." : "Gestisci abbonamento"}
+                {busy === "portal" ? t.pricing.opening : t.pricing.manageSubscription}
               </button>
             </>
           ) : (
@@ -161,35 +155,33 @@ export function Pricing({ session }: { session: Session | null }) {
               onClick={() => handleActivate("pro")}
               disabled={busy === "pro"}
             >
-              {busy === "pro" ? "Attivazione..." : "Attiva Pro"}
+              {busy === "pro" ? t.pricing.proActivating : t.pricing.proCta}
             </button>
           )}
-          <p className="price-card-note">Per monitoraggio continuo su ogni push</p>
+          <p className="price-card-note">{t.pricing.proNote}</p>
         </div>
 
         <div className="card price-card">
-          <span className="pill pill-mint price-card-badge">TEAM</span>
-          <h3>Team</h3>
+          <span className="pill pill-mint price-card-badge">{t.pricing.teamBadge}</span>
+          <h3>{t.pricing.teamTitle}</h3>
           <div className="price-amount">
-            24,99€ <span className="per">/mese</span>
+            24,99â‚¬ <span className="per">{t.pricing.teamPer}</span>
           </div>
           <ul>
-            <li>✓ Analisi e cronologia illimitate</li>
-            <li>✓ Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose</li>
-            <li>✓ Commenti automatici sulle pull request</li>
-            <li>✓ Correzioni automatiche proposte come pull request</li>
-            <li>✓ Badge che si aggiorna da solo a ogni push</li>
+            {t.pricing.teamList.map((item) => (
+              <li key={item}>âœ“ {item}</li>
+            ))}
           </ul>
           {session && plan === "team" ? (
             <>
-              <span className="pill pill-plain price-card-active">Piano attivo</span>
+              <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
               <button
                 type="button"
                 className="btn btn-secondary hard-border hard-shadow-sm"
                 onClick={handleManage}
                 disabled={busy === "portal"}
               >
-                {busy === "portal" ? "Apertura..." : "Gestisci abbonamento"}
+                {busy === "portal" ? t.pricing.opening : t.pricing.manageSubscription}
               </button>
             </>
           ) : (
@@ -199,18 +191,16 @@ export function Pricing({ session }: { session: Session | null }) {
               onClick={() => handleActivate("team")}
               disabled={busy === "team"}
             >
-              {busy === "team" ? "Attivazione..." : "Attiva Team"}
+              {busy === "team" ? t.pricing.teamActivating : t.pricing.teamCta}
             </button>
           )}
-          <p className="price-card-note">Per team con più repo</p>
+          <p className="price-card-note">{t.pricing.teamNote}</p>
         </div>
       </div>
 
       {error && <p className="pricing-error">{error}</p>}
 
-      <p className="pricing-disclaimer">
-        Disdici quando vuoi, senza vincoli — l'abbonamento si gestisce da solo, direttamente dal tuo account.
-      </p>
+      <p className="pricing-disclaimer">{t.pricing.disclaimer}</p>
     </section>
   );
 }

@@ -1,5 +1,7 @@
-import { useRef, useState } from "react";
+﻿import { useRef, useState } from "react";
 import type { AnalysisHistoryEntry } from "../lib/api.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
+import { interpolate } from "../i18n/richText.js";
 
 const WIDTH = 600;
 const HEIGHT = 100;
@@ -8,16 +10,17 @@ const PAD_RIGHT = 10;
 const PAD_TOP = 10;
 const PAD_BOTTOM = 20;
 
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
+function formatShortDate(iso: string, dateLocale: string): string {
+  return new Date(iso).toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit" });
 }
 
 export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[] }) {
+  const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  // L'API ritorna le analisi più recenti per prime: il grafico si legge da
-  // sinistra (più vecchia) a destra (più recente).
+  // L'API ritorna le analisi piÃ¹ recenti per prime: il grafico si legge da
+  // sinistra (piÃ¹ vecchia) a destra (piÃ¹ recente).
   const points = [...history].reverse();
   if (points.length < 2) return null;
 
@@ -46,9 +49,9 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
   return (
     <div className="score-chart">
       <div className="score-chart-header">
-        <p className="score-chart-title">Andamento del punteggio</p>
+        <p className="score-chart-title">{t.scoreChart.title}</p>
         <p className="score-chart-readout">
-          <strong>{shown.score}/100</strong> · {formatShortDate(shown.created_at)}
+          <strong>{shown.score}/100</strong> Â· {formatShortDate(shown.created_at, t.meta.dateLocale)}
         </p>
       </div>
       <svg
@@ -56,7 +59,11 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="score-chart-svg"
         role="img"
-        aria-label={`Andamento del punteggio di sicurezza nelle ultime ${points.length} analisi: da ${points[0].score} a ${lastPoint.score} su 100`}
+        aria-label={interpolate(t.scoreChart.ariaLabel, {
+          count: String(points.length),
+          from: String(points[0].score),
+          to: String(lastPoint.score),
+        })}
       >
         {[0, 50, 100].map((tick) => (
           <g key={tick}>
@@ -86,16 +93,16 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
           if (!isLast && !isHovered) return null;
           return (
             <circle key={p.id} cx={xAt(i)} cy={yAt(p.score)} r={5} className="score-chart-dot">
-              <title>{`${formatShortDate(p.created_at)} — ${p.score}/100`}</title>
+              <title>{`${formatShortDate(p.created_at, t.meta.dateLocale)} â€” ${p.score}/100`}</title>
             </circle>
           );
         })}
 
         <text x={xAt(0)} y={HEIGHT - 6} className="score-chart-axis-label" textAnchor="start">
-          {formatShortDate(points[0].created_at)}
+          {formatShortDate(points[0].created_at, t.meta.dateLocale)}
         </text>
         <text x={xAt(points.length - 1)} y={HEIGHT - 6} className="score-chart-axis-label" textAnchor="end">
-          {formatShortDate(lastPoint.created_at)}
+          {formatShortDate(lastPoint.created_at, t.meta.dateLocale)}
         </text>
 
         <rect

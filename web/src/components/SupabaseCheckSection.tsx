@@ -1,29 +1,28 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { SUPABASE_SNAPSHOT_FILENAME, SUPABASE_SNAPSHOT_QUERY } from "../../../src/analyze.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
+import { renderWithTokens } from "../i18n/richText.js";
 
 export function SupabaseCheckSection() {
+  const { t } = useTranslation();
   const [showQuery, setShowQuery] = useState(false);
 
   return (
     <section className="supabase-check-section container">
       <div className="card supabase-check-card">
         <div className="supabase-check-title">
-          <h2>Controllo Supabase</h2>
-          <span className="pill pill-mint">DISPONIBILE</span>
+          <h2>{t.supabase.title}</h2>
+          <span className="pill pill-mint">{t.supabase.badge}</span>
         </div>
+        <p>{t.supabase.body1}</p>
         <p>
-          Gli altri controlli leggono il codice e deducono cosa dovrebbe succedere a runtime. Questo invece si
-          collega al tuo vero progetto Supabase e verifica cosa succede davvero: Row Level Security attiva o no,
-          almeno una policy presente, bucket di storage pubblici o privati.
-        </p>
-        <p>
-          Non ti chiediamo mai le tue credenziali Supabase. Esegui tu stesso questa query di sola lettura (nessuna
-          scrittura possibile) nell'<strong>SQL Editor</strong> del tuo progetto, copia il risultato in un file
-          chiamato esattamente <code>{SUPABASE_SNAPSHOT_FILENAME}</code>, e caricalo insieme al resto del codice
-          nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 21 controlli.
+          {renderWithTokens(t.supabase.body2, {
+            sqlEditor: <strong>{t.supabase.sqlEditor}</strong>,
+            filename: <code>{SUPABASE_SNAPSHOT_FILENAME}</code>,
+          })}
         </p>
         <button type="button" className="supabase-check-toggle" onClick={() => setShowQuery((v) => !v)}>
-          {showQuery ? "▲ Nascondi la query" : "▼ Mostra la query"}
+          {showQuery ? t.supabase.toggleHide : t.supabase.toggleShow}
         </button>
         {showQuery && <pre className="supabase-check-snippet">{SUPABASE_SNAPSHOT_QUERY}</pre>}
       </div>
