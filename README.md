@@ -1,4 +1,4 @@
-﻿# JoJoX — motore, backend e sito
+﻿﻿# JoJoX — motore, backend e sito
 
 Sicurezza per codice scritto (anche) da AI: 21 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — gira sia lato server sia nel browser, non solo in teoria: il sito lo importa direttamente per l'analisi in modalità ospite.
 
@@ -56,6 +56,7 @@ Espone `analyze_code`, `fix_code` e `list_checks` — un agente può controllars
 - Notifiche Slack: chi ha collegato GitHub può impostare un Incoming Webhook per ricevere un avviso quando una pull request viene bloccata o corretta in automatico
 - Scheda "Controllo Supabase": verifica la configurazione reale di un progetto (RLS, policy, bucket), non solo quella dedotta dal codice
 - Elenco dei 21 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
+- Sito disponibile in italiano e inglese, incluso il testo dei 21 controlli e il report PDF (`web/src/i18n/`)
 
 ## Uso
 
@@ -94,5 +95,4 @@ Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md
 
 In ordine di quanto restano da costruire:
 - **Gestione team con più seat** — in arrivo a inizio settembre
-- **Sito in più lingue** — non solo italiano
 - **Correzioni che aggiungono codice mancante** — oggi JoJoX corregge solo righe già presenti; in arrivo la capacità di aggiungere codice che manca del tutto (una policy di sicurezza, un controllo assente)

@@ -8,7 +8,7 @@ function detectInitialLang(): Lang {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "it" || saved === "en") return saved;
   } catch {
-    // localStorage non disponibile (es. modalitÃ  privata): va bene l'italiano di default.
+    // localStorage non disponibile (es. modalità privata): va bene l'italiano di default.
   }
   return navigator.language.toLowerCase().startsWith("en") ? "en" : "it";
 }

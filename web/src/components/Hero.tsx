@@ -28,9 +28,9 @@ export function Hero() {
 
       <div className="hero-pills">
         <span className="pill pill-mint">{t.hero.pill1}</span>
-        <span className="sep">Â·</span>
+        <span className="sep">·</span>
         <span className="pill pill-amber">{t.hero.pill2}</span>
-        <span className="sep">Â·</span>
+        <span className="sep">·</span>
         <span className="pill pill-plain">{t.hero.pill3}</span>
       </div>
 

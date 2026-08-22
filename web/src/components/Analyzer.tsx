@@ -76,7 +76,7 @@ export function Analyzer({
         const analysisResult = await analyzeViaApi(files, session.access_token);
         setResult(analysisResult);
         // La correzione gira sempre nel browser, sui file originali: mai
-        // inviata al server, anche se l'analisi lo Ã¨.
+        // inviata al server, anche se l'analisi lo è.
         setAutofix(applyAutofixes(files));
         onAnalysisSaved?.();
         return;

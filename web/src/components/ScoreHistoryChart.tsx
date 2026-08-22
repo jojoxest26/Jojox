@@ -19,8 +19,8 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  // L'API ritorna le analisi piÃ¹ recenti per prime: il grafico si legge da
-  // sinistra (piÃ¹ vecchia) a destra (piÃ¹ recente).
+  // L'API ritorna le analisi più recenti per prime: il grafico si legge da
+  // sinistra (più vecchia) a destra (più recente).
   const points = [...history].reverse();
   if (points.length < 2) return null;
 
@@ -51,7 +51,7 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
       <div className="score-chart-header">
         <p className="score-chart-title">{t.scoreChart.title}</p>
         <p className="score-chart-readout">
-          <strong>{shown.score}/100</strong> Â· {formatShortDate(shown.created_at, t.meta.dateLocale)}
+          <strong>{shown.score}/100</strong> · {formatShortDate(shown.created_at, t.meta.dateLocale)}
         </p>
       </div>
       <svg
@@ -93,7 +93,7 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
           if (!isLast && !isHovered) return null;
           return (
             <circle key={p.id} cx={xAt(i)} cy={yAt(p.score)} r={5} className="score-chart-dot">
-              <title>{`${formatShortDate(p.created_at, t.meta.dateLocale)} â€” ${p.score}/100`}</title>
+              <title>{`${formatShortDate(p.created_at, t.meta.dateLocale)} — ${p.score}/100`}</title>
             </circle>
           );
         })}

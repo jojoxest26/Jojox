@@ -128,7 +128,7 @@ export function buildReportHtml(
 <html lang="${lang}">
 <head>
 <meta charset="utf-8" />
-<title>Report JoJoX â€” ${projectName}</title>
+<title>Report JoJoX — ${projectName}</title>
 <style>
   * { box-sizing: border-box; }
 

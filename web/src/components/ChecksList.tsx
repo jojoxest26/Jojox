@@ -22,7 +22,7 @@ export function ChecksList() {
             <span className={`pill pill-${sev}`}>
               {t.common.severity[sev]} ({ALL_CHECKS.filter((c) => c.severity === sev).length})
             </span>
-            <span className="chevron">âŒ„</span>
+            <span className="chevron">⌄</span>
           </summary>
           <div className="check-group-body">
             {ALL_CHECKS.filter((c) => c.severity === sev).map((check) => {

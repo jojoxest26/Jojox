@@ -1,7 +1,7 @@
 ﻿// Traduzioni in inglese dei 21 controlli. Il motore (src/checks/) resta
-// l'unica fonte di veritÃ  per id, gravitÃ  e logica di rilevamento â€” qui
+// l'unica fonte di verità per id, gravità e logica di rilevamento — qui
 // traduciamo solo il testo pensato per chi legge, tenuto in un file separato
-// cosÃ¬ il motore condiviso (CLI, MCP, server) resta invariato e in italiano.
+// così il motore condiviso (CLI, MCP, server) resta invariato e in italiano.
 export interface CheckTranslation {
   title: string;
   description: string;
@@ -9,10 +9,10 @@ export interface CheckTranslation {
 }
 
 /**
- * L'italiano Ã¨ la lingua "nativa" del motore (src/checks/), quindi in
- * italiano restituiamo sempre il testo originale del Check/Finding cosÃ¬
- * com'Ã¨. In inglese, applichiamo la traduzione se esiste per quel checkId
- * â€” altrimenti (caso limite: id sconosciuto) restituiamo l'italiano invece
+ * L'italiano è la lingua "nativa" del motore (src/checks/), quindi in
+ * italiano restituiamo sempre il testo originale del Check/Finding così
+ * com'è. In inglese, applichiamo la traduzione se esiste per quel checkId
+ * — altrimenti (caso limite: id sconosciuto) restituiamo l'italiano invece
  * di mostrare un testo mancante.
  */
 export function translateCheckText<T extends { title: string; description: string; fix: { before: string; after: string } }>(
@@ -56,7 +56,7 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
   "missing-row-level-security": {
     title: "Anyone can read or modify every user's data",
     description:
-      "Row Level Security is disabled, or a policy allows access to anyone (USING (true)) without checking who's making the request. Every authenticated user â€” or even an anonymous one â€” can read or modify everyone else's data.",
+      "Row Level Security is disabled, or a policy allows access to anyone (USING (true)) without checking who's making the request. Every authenticated user — or even an anonymous one — can read or modify everyone else's data.",
     fix: {
       before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
       after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
@@ -65,7 +65,7 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
   "sql-injection": {
     title: "A value entered by the user is pasted directly into a database query",
     description:
-      "A SQL query is built by concatenating or interpolating a string directly instead of using parameters. If that text comes (even indirectly) from a user, it can alter the query itself â€” SQL injection.",
+      "A SQL query is built by concatenating or interpolating a string directly instead of using parameters. If that text comes (even indirectly) from a user, it can alter the query itself — SQL injection.",
     fix: {
       before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
       after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
@@ -128,7 +128,7 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
   ssrf: {
     title: "The site can be forced to run external code",
     description:
-      "An outgoing HTTP request (fetch, axios) directly uses a value coming from a user's request as the destination URL. A malicious user can make your server call internal or arbitrary addresses â€” Server-Side Request Forgery.",
+      "An outgoing HTTP request (fetch, axios) directly uses a value coming from a user's request as the destination URL. A malicious user can make your server call internal or arbitrary addresses — Server-Side Request Forgery.",
     fix: {
       before: `const data = await fetch(req.query.url)`,
       after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL not allowed")\nconst data = await fetch(req.query.url)`,
@@ -155,7 +155,7 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
   "public-storage-bucket": {
     title: "The space for uploaded files is visible to anyone",
     description:
-      "A storage bucket (Supabase Storage, S3) is configured as public. If it contains documents, photos, or files uploaded by users, anyone who knows â€” or guesses â€” the path can access them without authentication.",
+      "A storage bucket (Supabase Storage, S3) is configured as public. If it contains documents, photos, or files uploaded by users, anyone who knows — or guesses — the path can access them without authentication.",
     fix: {
       before: `supabase.storage.createBucket("uploads", { public: true })`,
       after: `supabase.storage.createBucket("uploads", { public: false })\n// serve files with time-limited signed URLs: createSignedUrl(path, 60)`,
@@ -164,7 +164,7 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
   "csrf-state-changing-get": {
     title: "A single link is enough to delete or change data",
     description:
-      "A GET route performs an operation that changes data (the path contains delete/remove/update/edit). GET requests run just by visiting a link or loading an image from an external site â€” the classic stepping stone for a CSRF attack.",
+      "A GET route performs an operation that changes data (the path contains delete/remove/update/edit). GET requests run just by visiting a link or loading an image from an external site — the classic stepping stone for a CSRF attack.",
     fix: {
       before: `router.get("/posts/:id/delete", deletePost)`,
       after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
@@ -191,7 +191,7 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
   idor: {
     title: "Changing a number in the address could show someone else's data",
     description:
-      "A database query directly uses an identifier taken from the URL (req.params.id) without checking, in the nearby lines, that it belongs to the user making the request. Changing the id in the address could give access to another user's data â€” Insecure Direct Object Reference.",
+      "A database query directly uses an identifier taken from the URL (req.params.id) without checking, in the nearby lines, that it belongs to the user making the request. Changing the id in the address could give access to another user's data — Insecure Direct Object Reference.",
     fix: {
       before: `const order = await Order.findById(req.params.id)`,
       after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,

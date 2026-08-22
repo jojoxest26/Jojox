@@ -92,12 +92,12 @@ export function Pricing({ session }: { session: Session | null }) {
       <div className="card guest-callout">
         <div>
           <div className="guest-title">
-            <span>ðŸ‘¤</span>
+            <span>👤</span>
             <h3>{t.pricing.guestTitle}</h3>
           </div>
           <ul>
             {t.pricing.guestList.map((item) => (
-              <li key={item}>âœ“ {item}</li>
+              <li key={item}>✓ {item}</li>
             ))}
           </ul>
         </div>
@@ -109,10 +109,10 @@ export function Pricing({ session }: { session: Session | null }) {
       <div className="pricing-grid">
         <div className="card price-card">
           <h3>{t.pricing.freeTitle}</h3>
-          <div className="price-amount">0â‚¬</div>
+          <div className="price-amount">0€</div>
           <ul>
             {t.pricing.freeList.map((item) => (
-              <li key={item}>âœ“ {item}</li>
+              <li key={item}>✓ {item}</li>
             ))}
           </ul>
           {session && plan === "free" ? (
@@ -129,11 +129,11 @@ export function Pricing({ session }: { session: Session | null }) {
           <span className="pill pill-amber price-card-badge">{t.pricing.proBadge}</span>
           <h3>{t.pricing.proTitle}</h3>
           <div className="price-amount">
-            9,99â‚¬ <span className="per">{t.pricing.proPer}</span>
+            9,99€ <span className="per">{t.pricing.proPer}</span>
           </div>
           <ul>
             {t.pricing.proList.map((item) => (
-              <li key={item}>âœ“ {item}</li>
+              <li key={item}>✓ {item}</li>
             ))}
           </ul>
           {session && plan === "pro" ? (
@@ -165,11 +165,11 @@ export function Pricing({ session }: { session: Session | null }) {
           <span className="pill pill-mint price-card-badge">{t.pricing.teamBadge}</span>
           <h3>{t.pricing.teamTitle}</h3>
           <div className="price-amount">
-            24,99â‚¬ <span className="per">{t.pricing.teamPer}</span>
+            24,99€ <span className="per">{t.pricing.teamPer}</span>
           </div>
           <ul>
             {t.pricing.teamList.map((item) => (
-              <li key={item}>âœ“ {item}</li>
+              <li key={item}>✓ {item}</li>
             ))}
           </ul>
           {session && plan === "team" ? (

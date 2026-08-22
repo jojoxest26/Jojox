@@ -4,7 +4,7 @@ const TOKEN_PATTERN = /(\{\{\w+\}\})/g;
 
 /**
  * Divide una stringa di traduzione contenente segnaposto tipo "{{nome}}" e
- * sostituisce ciascuno con l'elemento React corrispondente â€” usato per le
+ * sostituisce ciascuno con l'elemento React corrispondente — usato per le
  * poche frasi che hanno bisogno di uno <span> o <code> in mezzo al testo,
  * senza dover mettere JSX dentro le tabelle di traduzione.
  */
