@@ -1,4 +1,4 @@
-﻿﻿# JoJoX — motore, backend e sito
+﻿﻿﻿# JoJoX — motore, backend e sito
 
 Sicurezza per codice scritto (anche) da AI: 21 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — gira sia lato server sia nel browser, non solo in teoria: il sito lo importa direttamente per l'analisi in modalità ospite.
 
@@ -95,4 +95,5 @@ Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md
 
 In ordine di quanto restano da costruire:
 - **Gestione team con più seat** — in arrivo a inizio settembre
+- **Sito in più lingue** — già disponibile in italiano e inglese, altre lingue in arrivo più avanti
 - **Correzioni che aggiungono codice mancante** — oggi JoJoX corregge solo righe già presenti; in arrivo la capacità di aggiungere codice che manca del tutto (una policy di sicurezza, un controllo assente)

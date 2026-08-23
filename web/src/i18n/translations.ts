@@ -1,4 +1,4 @@
-﻿export type Lang = "it" | "en";
+﻿﻿export type Lang = "it" | "en";
 
 interface FeatureItem {
   icon: string;
@@ -401,6 +401,11 @@ const it: TranslationTree = {
         text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — in arrivo a inizio settembre.",
       },
       {
+        icon: "🌍",
+        title: "Sito in più lingue",
+        text: "Già disponibile in italiano e inglese, sito e i 21 controlli inclusi. Altre lingue in arrivo più avanti.",
+      },
+      {
         icon: "➕",
         title: "Correzioni che aggiungono codice mancante",
         text: "Oggi JoJoX corregge solo righe già presenti. In arrivo: la capacità di aggiungere da solo il codice che manca — una policy di sicurezza, un controllo assente — così ogni analisi diventa un progetto già pronto all'uso, non solo un elenco di cose da sistemare a mano.",
@@ -644,6 +649,11 @@ const en: TranslationTree = {
         icon: "👥",
         title: "Team management with more seats",
         text: "Multiple people connected to a single Team subscription, with seats to add and a shared dashboard — coming in early September.",
+      },
+      {
+        icon: "🌍",
+        title: "Site in more languages",
+        text: "Already available in Italian and English, site and all 21 checks included. More languages coming later.",
       },
       {
         icon: "➕",
