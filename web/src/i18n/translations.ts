@@ -410,6 +410,11 @@ const it: TranslationTree = {
         title: "Correzioni che aggiungono codice mancante",
         text: "Oggi JoJoX corregge solo righe già presenti. In arrivo: la capacità di aggiungere da solo il codice che manca — una policy di sicurezza, un controllo assente — così ogni analisi diventa un progetto già pronto all'uso, non solo un elenco di cose da sistemare a mano.",
       },
+      {
+        icon: "🎨",
+        title: "Nuovo stile del sito",
+        text: "Stiamo lavorando a un nuovo look, più diretto e meno \"da startup\" — in arrivo, ancora non pubblicato.",
+      },
     ],
     emailPlaceholder: "tua@email.com",
     submit: "Unisciti alla lista d'attesa",
@@ -659,6 +664,11 @@ const en: TranslationTree = {
         icon: "➕",
         title: "Fixes that add missing code",
         text: "Today JoJoX only fixes lines that already exist. Coming soon: the ability to add missing code on its own — a security policy, a missing check — so every analysis becomes a project that's already ready to use, not just a list of things to fix by hand.",
+      },
+      {
+        icon: "🎨",
+        title: "New site design",
+        text: "We're working on a new look, more direct and less \"startup-y\" — coming soon, not published yet.",
       },
     ],
     emailPlaceholder: "you@email.com",

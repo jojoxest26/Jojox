@@ -97,3 +97,4 @@ In ordine di quanto restano da costruire:
 - **Gestione team con più seat** — in arrivo a inizio settembre
 - **Sito in più lingue** — già disponibile in italiano e inglese, altre lingue in arrivo più avanti
 - **Correzioni che aggiungono codice mancante** — oggi JoJoX corregge solo righe già presenti; in arrivo la capacità di aggiungere codice che manca del tutto (una policy di sicurezza, un controllo assente)
+- **Nuovo stile del sito** — in lavorazione, non ancora pubblicato
