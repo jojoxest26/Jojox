@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { translations, type Lang, type TranslationTree } from "./translations.js";
 
 const STORAGE_KEY = "jojox_lang";

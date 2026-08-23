@@ -1,4 +1,4 @@
-﻿import { useTranslation } from "../i18n/LanguageContext.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
 
 export function Footer() {
   const { t } = useTranslation();

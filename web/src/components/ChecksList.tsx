@@ -1,4 +1,4 @@
-﻿import { ALL_CHECKS } from "../../../src/checks/index.js";
+import { ALL_CHECKS } from "../../../src/checks/index.js";
 import type { Severity } from "../../../src/types.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";

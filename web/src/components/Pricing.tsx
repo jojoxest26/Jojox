@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createCheckoutSession, createPortalSession, fetchProfile, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";

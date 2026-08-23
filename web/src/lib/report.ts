@@ -1,4 +1,4 @@
-﻿// Genera il report PDF aprendo una finestra con una pagina HTML pronta per
+// Genera il report PDF aprendo una finestra con una pagina HTML pronta per
 // la stampa e richiamando window.print(): l'utente la salva come PDF dal
 // dialogo nativo del browser. Nessuna libreria PDF da installare.
 import type { AnalysisResult, Finding, Severity, SourceFile } from "../../../src/types.js";

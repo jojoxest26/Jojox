@@ -1,4 +1,4 @@
-﻿import { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { AnalysisHistoryEntry } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";

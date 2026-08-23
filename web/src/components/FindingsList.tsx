@@ -1,4 +1,4 @@
-﻿import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
+import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
 import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";

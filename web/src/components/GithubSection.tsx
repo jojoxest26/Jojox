@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { saveSlackWebhook, type GithubInstallation } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { SUPABASE_SNAPSHOT_FILENAME, SUPABASE_SNAPSHOT_QUERY } from "../../../src/analyze.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";

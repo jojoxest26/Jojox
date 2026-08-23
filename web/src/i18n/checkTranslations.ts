@@ -1,4 +1,4 @@
-﻿// Traduzioni in inglese dei 21 controlli. Il motore (src/checks/) resta
+// Traduzioni in inglese dei 21 controlli. Il motore (src/checks/) resta
 // l'unica fonte di verità per id, gravità e logica di rilevamento — qui
 // traduciamo solo il testo pensato per chi legge, tenuto in un file separato
 // così il motore condiviso (CLI, MCP, server) resta invariato e in italiano.

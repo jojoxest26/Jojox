@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { fetchHistory, type AnalysisHistoryEntry } from "../lib/api.js";
 import { ScoreHistoryChart } from "./ScoreHistoryChart.js";

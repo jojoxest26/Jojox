@@ -1,4 +1,4 @@
-﻿﻿﻿# JoJoX — motore, backend e sito
+# JoJoX — motore, backend e sito
 
 Sicurezza per codice scritto (anche) da AI: 21 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — gira sia lato server sia nel browser, non solo in teoria: il sito lo importa direttamente per l'analisi in modalità ospite.
 

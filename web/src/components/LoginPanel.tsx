@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabaseClient.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 

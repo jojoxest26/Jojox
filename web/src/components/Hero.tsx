@@ -1,4 +1,4 @@
-﻿import { useTranslation } from "../i18n/LanguageContext.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
 
 export function Hero() {

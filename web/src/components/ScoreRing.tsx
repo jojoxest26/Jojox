@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "../i18n/LanguageContext.js";
 
 const RADIUS = 42;

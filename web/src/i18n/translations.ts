@@ -1,4 +1,4 @@
-﻿﻿export type Lang = "it" | "en";
+export type Lang = "it" | "en";
 
 interface FeatureItem {
   icon: string;
