@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Header } from "./components/Header.js";
 import { Hero } from "./components/Hero.js";
 import { Features } from "./components/Features.js";
+import { WhyNotAiSection } from "./components/WhyNotAiSection.js";
 import { Analyzer } from "./components/Analyzer.js";
 import { HistoryPanel } from "./components/HistoryPanel.js";
 import { Pricing } from "./components/Pricing.js";
@@ -86,6 +87,7 @@ function App() {
       <Header session={session} installations={installations} />
       <Hero />
       <Features />
+      <WhyNotAiSection />
       <Pricing session={session} />
       {analyzerOpen && (
         <>

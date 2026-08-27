@@ -47,6 +47,13 @@ export interface TranslationTree {
     guestNote: string;
   };
   features: FeatureItem[];
+  whyNotAi: {
+    question: string;
+    point1: string;
+    point2: string;
+    point3: string;
+    closing: string;
+  };
   pricing: {
     title: string;
     subtitle: string;
@@ -255,6 +262,13 @@ const it: TranslationTree = {
       text: "Un punteggio da 0 a 100, calcolato con una formula che vedi per intero, più un badge da mettere nel README del progetto.",
     },
   ],
+  whyNotAi: {
+    question: "Non basta già chiedere alla mia AI di controllare il codice?",
+    point1: "Puoi chiederlo. Ma nella pratica quasi nessuno lo fa ogni volta, su ogni file, dopo ogni modifica — e basta dimenticarsene una volta per lasciare un buco aperto. JoJoX non aspetta che te ne ricordi: controlla da solo, a ogni push.",
+    point2: "Chiedere \"è sicuro?\" a un modello è come chiedere un parere: cambia ogni volta e non lascia una prova. JoJoX esegue sempre gli stessi 21 controlli pubblici, identici per tutti, verificabili riga per riga nel codice — un responso, non un'opinione.",
+    point3: "Nessun LLM, nessuna allucinazione, nessun costo che cresce con l'uso: pattern matching puro, istantaneo, pensato per girare su ogni pull request quante volte serve.",
+    closing: "JoJoX non scrive il tuo codice. Lo sorveglia — sempre, allo stesso modo, senza che tu debba chiederlo.",
+  },
   pricing: {
     title: "Paghi il monitoraggio continuo, non le singole analisi",
     subtitle: "Prova 1 analisi senza dare nulla. Poi basta l'email, nessuna password: fino a 5 analisi al mese gratis.",
@@ -510,6 +524,13 @@ const en: TranslationTree = {
       text: "A score from 0 to 100, calculated with a formula you can see in full, plus a badge to put in your project's README.",
     },
   ],
+  whyNotAi: {
+    question: "Can't I just ask my AI to check my code?",
+    point1: "You can. But almost no one does it every time, on every file, after every change — and it only takes one missed check to leave a hole open. JoJoX doesn't wait for you to remember: it checks on its own, on every push.",
+    point2: "Asking a model \"is this secure?\" is like asking for an opinion: it changes every time and leaves no proof. JoJoX runs the same 21 public checks every time, identical for everyone, verifiable line by line in the code — a verdict, not an opinion.",
+    point3: "No LLM, no hallucinations, no cost that grows with usage: pure pattern matching, instant, built to run on every pull request as often as you need.",
+    closing: "JoJoX doesn't write your code. It keeps watch — always, the same way, without you having to ask.",
+  },
   pricing: {
     title: "You pay for continuous monitoring, not for individual analyses",
     subtitle: "Try 1 analysis with nothing to give. Then just an email, no password: up to 5 free analyses a month.",
