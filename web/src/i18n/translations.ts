@@ -413,7 +413,7 @@ const it: TranslationTree = {
       {
         icon: "🎨",
         title: "Nuovo stile del sito",
-        text: "Stiamo lavorando a un nuovo look, più diretto e meno \"da startup\" — in arrivo, ancora non pubblicato.",
+        text: "Stiamo lavorando a un nuovo look, più diretto — in arrivo, ancora non pubblicato.",
       },
     ],
     emailPlaceholder: "tua@email.com",
@@ -668,7 +668,7 @@ const en: TranslationTree = {
       {
         icon: "🎨",
         title: "New site design",
-        text: "We're working on a new look, more direct and less \"startup-y\" — coming soon, not published yet.",
+        text: "We're working on a new look, more direct — coming soon, not published yet.",
       },
     ],
     emailPlaceholder: "you@email.com",
