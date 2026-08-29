@@ -263,7 +263,7 @@ const it: TranslationTree = {
     },
   ],
   whyNotAi: {
-    question: "Non basta già chiedere alla mia AI di controllare il codice?",
+    question: "Il mio agente AI già scrive il codice. Non può controllarlo anche lui?",
     point1: "Puoi chiederlo. Ma nella pratica quasi nessuno lo fa ogni volta, su ogni file, dopo ogni modifica — e basta dimenticarsene una volta per lasciare un buco aperto. JoJoX non aspetta che te ne ricordi: controlla da solo, a ogni push.",
     point2: "Chiedere \"è sicuro?\" a un modello è come chiedere un parere: cambia ogni volta e non lascia una prova. JoJoX esegue sempre gli stessi 21 controlli pubblici, identici per tutti, verificabili riga per riga nel codice — un responso, non un'opinione.",
     point3: "Nessun LLM, nessuna allucinazione, nessun costo che cresce con l'uso: pattern matching puro, istantaneo, pensato per girare su ogni pull request quante volte serve.",
@@ -525,7 +525,7 @@ const en: TranslationTree = {
     },
   ],
   whyNotAi: {
-    question: "Can't I just ask my AI to check my code?",
+    question: "My AI agent already writes the code. Can't it check it too?",
     point1: "You can. But almost no one does it every time, on every file, after every change — and it only takes one missed check to leave a hole open. JoJoX doesn't wait for you to remember: it checks on its own, on every push.",
     point2: "Asking a model \"is this secure?\" is like asking for an opinion: it changes every time and leaves no proof. JoJoX runs the same 21 public checks every time, identical for everyone, verifiable line by line in the code — a verdict, not an opinion.",
     point3: "No LLM, no hallucinations, no cost that grows with usage: pure pattern matching, instant, built to run on every pull request as often as you need.",
