@@ -327,7 +327,7 @@ const it: TranslationTree = {
     intro: "*Per l'analisi manuale:",
     items: [
       "Se salvi lo storico, inviamo solo un frammento minimo della riga interessata da ogni problema — mai la riga intera, mai il file.",
-      "In modalità ospite, senza salvataggio, nulla lascia mai il tuo browser.",
+      "In modalità ospite, il codice passa comunque dai nostri server per l'analisi (serve per far rispettare il limite di un tentativo gratuito), ma non viene mai salvato: resta solo il risultato che vedi tu, e un'impronta anonima del tuo indirizzo IP per riconoscere il tentativo già usato.",
       "L'integrazione GitHub, invece, elabora il codice sui nostri server.",
     ],
   },
@@ -588,7 +588,7 @@ const en: TranslationTree = {
     intro: "*For manual analysis:",
     items: [
       "If you save your history, we only send a minimal fragment of the line affected by each issue — never the whole line, never the file.",
-      "In guest mode, without saving, nothing ever leaves your browser.",
+      "In guest mode, the code still goes through our servers for analysis (needed to enforce the one-free-try limit), but it's never saved: only the result you see is kept, plus an anonymous fingerprint of your IP address to recognize a try you've already used.",
       "The GitHub integration, instead, processes the code on our servers.",
     ],
   },
