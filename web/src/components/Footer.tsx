@@ -11,6 +11,11 @@ export function Footer() {
           <li key={item}>{item}</li>
         ))}
       </ul>
+      <div className="footer-legal-links">
+        <a href="/privacy">{t.footer.privacyLink}</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/termini">{t.footer.termsLink}</a>
+      </div>
     </footer>
   );
 }

@@ -11,11 +11,13 @@ import { SupabaseCheckSection } from "./components/SupabaseCheckSection.js";
 import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
+import { PrivacyPolicyPage, TermsOfServicePage } from "./components/LegalPage.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 
 function App() {
   const { session, loading } = useSession();
+  const [path, setPath] = useState(window.location.pathname);
   const [analyzerOpen, setAnalyzerOpen] = useState(false);
   const [pendingScroll, setPendingScroll] = useState(false);
   // Incrementato a ogni analisi salvata: HistoryPanel lo osserva per
@@ -80,7 +82,18 @@ function App() {
       });
   }, [session]);
 
+  // Il sito non usa un router: privacy e termini sono le uniche altre pagine,
+  // raggiunte anche da link diretti, quindi bastano pathname + popstate.
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   if (loading) return null;
+
+  if (path === "/privacy") return <PrivacyPolicyPage />;
+  if (path === "/termini") return <TermsOfServicePage />;
 
   return (
     <>

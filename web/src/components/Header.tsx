@@ -8,7 +8,7 @@ import type { Lang } from "../i18n/translations.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 
-function LanguageSwitcher() {
+export function LanguageSwitcher() {
   const { lang, setLang } = useTranslation();
 
   function toggle(next: Lang) {

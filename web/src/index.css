@@ -1059,6 +1059,60 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+.footer-legal-links {
+  margin-top: 1.2rem;
+}
+.footer-legal-links a {
+  text-decoration: underline;
+}
+.footer-legal-links a:hover {
+  color: var(--text);
+}
+
+/* ---------- legal pages (privacy / termini) ---------- */
+.legal-page {
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+.legal-page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+.legal-back {
+  font-weight: 600;
+}
+.legal-doc {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.legal-doc h1 {
+  margin-bottom: 0.25rem;
+}
+.legal-updated {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 0;
+}
+.legal-intro {
+  color: var(--text-muted);
+}
+.legal-doc h2 {
+  margin-top: 2rem;
+  font-size: 1.1rem;
+}
+.legal-doc ul {
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.legal-doc p,
+.legal-doc li {
+  color: var(--text);
+  line-height: 1.6;
+}
 
 /* ---------- login panel ---------- */
 .login-panel-anchor {
