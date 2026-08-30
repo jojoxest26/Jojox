@@ -39,7 +39,7 @@ const it: LegalPagesTree = {
         heading: "Titolare del trattamento",
         blocks: [
           p(
-            "Il titolare del trattamento è [Nome e Cognome], persona fisica che sviluppa e gestisce JoJoX come attività individuale (al momento senza Partita IVA). Per qualsiasi richiesta relativa ai tuoi dati personali, o per esercitare i diritti descritti più sotto, scrivi a jojoxest26@gmail.com."
+            "Il titolare del trattamento è Jacopo Bochicchio, persona fisica che sviluppa e gestisce JoJoX come attività individuale (al momento senza Partita IVA). Per qualsiasi richiesta relativa ai tuoi dati personali, o per esercitare i diritti descritti più sotto, scrivi a jojoxest26@gmail.com."
           ),
         ],
       },
@@ -264,7 +264,7 @@ const en: LegalPagesTree = {
         heading: "Data controller",
         blocks: [
           p(
-            "The data controller is [Full Name], an individual who develops and runs JoJoX as a sole activity (currently without a registered VAT number). For any request about your personal data, or to exercise the rights described below, write to jojoxest26@gmail.com."
+            "The data controller is Jacopo Bochicchio, an individual who develops and runs JoJoX as a sole activity (currently without a registered VAT number). For any request about your personal data, or to exercise the rights described below, write to jojoxest26@gmail.com."
           ),
         ],
       },
