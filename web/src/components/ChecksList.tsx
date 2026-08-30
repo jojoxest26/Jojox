@@ -39,7 +39,6 @@ export function ChecksList() {
           </div>
         </details>
       ))}
-      <p className="checks-note">{t.checksList.note}</p>
     </section>
   );
 }

@@ -95,7 +95,6 @@ export interface TranslationTree {
     title: string;
     body: string;
     subLabel: string;
-    note: string;
   };
   login: {
     sent: string;
@@ -334,9 +333,8 @@ const it: TranslationTree = {
   },
   checksList: {
     title: "Tutti i controlli, senza segreti",
-    body: "Il valore di JoJoX non sta nel nascondere come funziona, ma nel curare bene ogni controllo, testarlo e tenerlo aggiornato. Qui sotto trovi la lista completa: cosa controlliamo, quanto è grave ogni problema, e quanto siamo sicuri di ogni segnalazione.",
+    body: "JoJoX non nasconde come funziona: qui sotto trovi tutti i 21 controlli, quanto sono gravi, e quanto siamo sicuri di ognuno — «confermato» quando il problema è certo, «da verificare» quando manca un segnale nel codice ma potrebbe essere gestito altrove (il controllo viene comunque sempre eseguito).",
     subLabel: "{{count}} controlli, in 4 livelli di gravità",
-    note: "«Confermato» = troviamo il problema per certo nel codice · «Da verificare» = sembra mancare una protezione, ma potrebbe essere gestita altrove: controlla prima di preoccuparti.",
   },
   login: {
     sent: "Controlla la tua email: ti abbiamo mandato un link per accedere. Puoi chiudere questo popup.",
@@ -596,9 +594,8 @@ const en: TranslationTree = {
   },
   checksList: {
     title: "Every check, no secrets",
-    body: "JoJoX's value isn't in hiding how it works, but in taking good care of every check, testing it and keeping it up to date. Below is the full list: what we check, how severe each issue is, and how confident we are in each finding.",
+    body: "JoJoX doesn't hide how it works: below is the full list of all 21 checks, how severe each is, and how confident we are in each — \"confirmed\" when the problem is certain, \"to verify\" when a signal is missing from the code but it might be handled elsewhere (the check still always runs).",
     subLabel: "{{count}} checks, across 4 severity levels",
-    note: "\"Confirmed\" = we find the problem for certain in the code · \"To verify\" = a protection seems to be missing, but it might be handled elsewhere: check before worrying.",
   },
   login: {
     sent: "Check your email: we've sent you a link to sign in. You can close this popup.",
