@@ -194,13 +194,26 @@ export function Analyzer({
       )}
 
       {result && (
-        <div style={{ textAlign: "center", margin: "1rem 0" }}>
+        <div style={{ textAlign: "center", margin: "1rem 0", display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
           <button
             type="button"
             className="btn btn-secondary hard-border hard-shadow-sm"
             onClick={() => openReportWindow(result, files, autofix, lang)}
           >
             {t.analyzer.downloadPdf}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary hard-border hard-shadow-sm"
+            onClick={() => {
+              setFiles([]);
+              setResult(null);
+              setAutofix(null);
+              setError(null);
+              document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            {t.analyzer.newAnalysis}
           </button>
         </div>
       )}

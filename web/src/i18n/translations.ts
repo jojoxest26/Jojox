@@ -126,6 +126,7 @@ export interface TranslationTree {
     autofixManualOnly: string;
     downloadZip: string;
     downloadPdf: string;
+    newAnalysis: string;
   };
   history: {
     title: string;
@@ -368,6 +369,7 @@ const it: TranslationTree = {
     autofixManualOnly: "I problemi trovati richiedono decisioni sul tuo progetto che non possiamo correggere in automatico — guarda gli esempi \"prima/dopo\" qui sotto.",
     downloadZip: "Scarica file corretti (.zip)",
     downloadPdf: "Scarica report PDF",
+    newAnalysis: "🔁 Nuova analisi",
   },
   history: {
     title: "Il tuo storico",
@@ -631,6 +633,7 @@ const en: TranslationTree = {
     autofixManualOnly: "The issues found need decisions about your project we can't fix automatically — see the \"before/after\" examples below.",
     downloadZip: "Download fixed files (.zip)",
     downloadPdf: "Download PDF report",
+    newAnalysis: "🔁 New analysis",
   },
   history: {
     title: "Your history",
