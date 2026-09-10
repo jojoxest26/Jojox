@@ -433,6 +433,11 @@ const it: TranslationTree = {
         title: "Nuovo stile del sito",
         text: "Stiamo lavorando a un nuovo look, più diretto — in arrivo, ancora non pubblicato.",
       },
+      {
+        icon: "🧠",
+        title: "Livello AI per i bug difficilissimi",
+        text: "I 21 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare.",
+      },
     ],
     emailPlaceholder: "tua@email.com",
     submit: "Unisciti alla lista d'attesa",
@@ -696,6 +701,11 @@ const en: TranslationTree = {
         icon: "🎨",
         title: "New site design",
         text: "We're working on a new look, more direct — coming soon, not published yet.",
+      },
+      {
+        icon: "🧠",
+        title: "AI layer for the hardest bugs",
+        text: "The 21 checks stay the heart of JoJoX: always the same, always verifiable — the score you can count on. Coming soon: an extra AI layer, built to catch the logic bugs that are hardest to find, the ones no pattern can catch.",
       },
     ],
     emailPlaceholder: "you@email.com",
