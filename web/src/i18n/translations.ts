@@ -45,6 +45,7 @@ export interface TranslationTree {
     badge: string;
     cta: string;
     guestNote: string;
+    scanTag: string;
   };
   features: FeatureItem[];
   whyNotAi: {
@@ -243,6 +244,7 @@ const it: TranslationTree = {
     badge: "Per progetti costruiti con Claude Code · Cursor · Lovable · Bolt",
     cta: "Analizza il tuo codice — gratis",
     guestNote: "1 analisi gratuita senza email. Poi basta la mail — 5 analisi/mese gratis.",
+    scanTag: "CRITICO",
   },
   features: [
     {
@@ -512,6 +514,7 @@ const en: TranslationTree = {
     badge: "For projects built with Claude Code · Cursor · Lovable · Bolt",
     cta: "Analyze your code — free",
     guestNote: "1 free analysis with no email. Then just an email — 5 free analyses/month.",
+    scanTag: "CRITICAL",
   },
   features: [
     {
