@@ -5,18 +5,21 @@ export function WhyNotAiSection() {
 
   return (
     <section className="why-not-ai-section container">
-      <details className="card why-not-ai-card">
+      <p className="why-not-ai-eyebrow">{t.whyNotAi.eyebrow}</p>
+      <h2 className="why-not-ai-question">{t.whyNotAi.question}</h2>
+      <details className="why-not-ai-details">
         <summary>
-          <span className="why-not-ai-question">{t.whyNotAi.question}</span>
-          <span className="chevron">⌄</span>
+          {t.whyNotAi.readMore} <span className="chevron">⌄</span>
         </summary>
         <div className="why-not-ai-body">
           <p>{t.whyNotAi.point1}</p>
           <p>{t.whyNotAi.point2}</p>
           <p>{t.whyNotAi.point3}</p>
-          <p className="why-not-ai-closing">{t.whyNotAi.closing}</p>
         </div>
       </details>
+      <p className="why-not-ai-closing">
+        {t.whyNotAi.closingLead} <b>{t.whyNotAi.closingPunch}</b>
+      </p>
     </section>
   );
 }

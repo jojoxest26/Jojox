@@ -91,7 +91,13 @@ export function GithubSection({
   const connected = installations !== null && installations.length > 0;
 
   return (
-    <section className="github-section container">
+    <>
+      <div className="section-divider container">
+        <div className="trace"></div>
+        <span className="tag">{t.dividers.integrations}</span>
+        <div className="trace right"></div>
+      </div>
+      <section className="github-section container">
       <div className="card github-card">
         <div className="github-title">
           <h2>{t.github.title}</h2>
@@ -161,6 +167,7 @@ export function GithubSection({
           </>
         )}
       </div>
-    </section>
+      </section>
+    </>
   );
 }

@@ -59,15 +59,6 @@ export function Header({ session, installations }: { session: Session | null; in
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
         >
-          <svg viewBox="0 0 100 100" width="32" height="32" aria-hidden="true">
-            <line x1="63" y1="63" x2="90" y2="90" stroke="#171717" strokeWidth="11" strokeLinecap="round" />
-            <line x1="64" y1="64" x2="86" y2="86" stroke="#f59e0b" strokeWidth="6" strokeLinecap="round" />
-            <circle cx="41" cy="41" r="30" fill="#f59e0b" stroke="#171717" strokeWidth="6" />
-            <circle cx="41" cy="41" r="20" fill="#fff" stroke="#171717" strokeWidth="5" />
-            <circle cx="34" cy="38" r="3.2" fill="#171717" />
-            <circle cx="49" cy="38" r="3.2" fill="#171717" />
-            <path d="M32 46c3 5 12 5 15 0" fill="none" stroke="#171717" strokeWidth="3.4" strokeLinecap="round" />
-          </svg>
           <span className="logo font-logo">JoJoX</span>
         </a>
         <div className="header-actions">

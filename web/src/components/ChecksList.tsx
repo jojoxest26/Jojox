@@ -10,7 +10,13 @@ export function ChecksList() {
   const { t, lang } = useTranslation();
 
   return (
-    <section className="checks-section container">
+    <>
+      <div className="section-divider container">
+        <div className="trace"></div>
+        <span className="tag">{t.dividers.checks}</span>
+        <div className="trace right"></div>
+      </div>
+      <section className="checks-section container">
       <h2>{t.checksList.title}</h2>
       <p>{t.checksList.body}</p>
       <p className="checks-sub">
@@ -39,6 +45,7 @@ export function ChecksList() {
           </div>
         </details>
       ))}
-    </section>
+      </section>
+    </>
   );
 }

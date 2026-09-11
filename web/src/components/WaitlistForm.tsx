@@ -20,7 +20,13 @@ export function WaitlistForm() {
   }
 
   return (
-    <section className="waitlist-section container">
+    <>
+      <div className="section-divider container">
+        <div className="trace"></div>
+        <span className="tag">{t.dividers.roadmap}</span>
+        <div className="trace right"></div>
+      </div>
+      <section className="waitlist-section container">
       <div className="card waitlist-card">
         <h2>{t.waitlist.title}</h2>
         <p>{t.waitlist.subtitle}</p>
@@ -51,6 +57,7 @@ export function WaitlistForm() {
         {status === "done" && <p className="waitlist-msg">{t.waitlist.done}</p>}
         {status === "error" && <p className="waitlist-msg">{t.waitlist.error}</p>}
       </div>
-    </section>
+      </section>
+    </>
   );
 }

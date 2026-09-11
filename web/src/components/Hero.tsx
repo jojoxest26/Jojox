@@ -10,42 +10,10 @@ export function Hero() {
 
   return (
     <section className="hero container">
-      <div className="hero-grid">
-        <div className="hero-copy">
-          <h1>
-            {t.hero.titleLine1}
-            <br />
-            <span className="blue-highlight">
-              <span className="font-logo">JoJoX</span> {t.hero.titleLine2Suffix}
-            </span>
-          </h1>
+      <h1 className="poster-line top">JoJoX</h1>
 
-          <p>
-            {renderWithTokens(t.hero.body, {
-              monitoring: <span className="marker-highlight">{t.hero.bodyMonitoring}</span>,
-              score: <span className="marker-highlight">{t.hero.bodyScore}</span>,
-            })}
-          </p>
-          <p className="hero-sub">{t.hero.sub}</p>
-
-          <div className="hero-pills">
-            <span className="pill pill-mint">{t.hero.pill1}</span>
-            <span className="sep">·</span>
-            <span className="pill pill-amber">{t.hero.pill2}</span>
-            <span className="sep">·</span>
-            <span className="pill pill-plain">{t.hero.pill3}</span>
-          </div>
-
-          <p className="hero-badge">{t.hero.badge}</p>
-
-          <div className="hero-actions">
-            <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToPricing}>
-              {t.hero.cta}
-            </button>
-          </div>
-          <p className="hero-guest-note">{t.hero.guestNote}</p>
-        </div>
-
+      <div className="panel-wrap">
+        <div className="trace"></div>
         <div className="scanpanel">
           <div className="scanpanel-winctl">
             <span></span>
@@ -87,6 +55,51 @@ export function Hero() {
               </span>
             </div>
           </div>
+        </div>
+        <div className="trace right"></div>
+      </div>
+
+      <p className="poster-line bottom">{t.hero.titleLine2Suffix}</p>
+
+      <div className="hero-pills">
+        <span>{t.hero.pill1}</span>
+        <span className="sep">·</span>
+        <span>{t.hero.pill2}</span>
+        <span className="sep">·</span>
+        <span>
+          <b>{t.hero.pill3}</b>
+        </span>
+      </div>
+
+      <div className="herofoot">
+        <div className="hero-stats">
+          <div className="stat">
+            <b>21</b>
+            <span>{t.hero.statChecksLabel}</span>
+          </div>
+          <div className="stat">
+            <b>0–100</b>
+            <span>{t.hero.statScoreLabel}</span>
+          </div>
+          <div className="stat">
+            <b>5</b>
+            <span>{t.hero.statFreeLabel}</span>
+          </div>
+        </div>
+        <div className="hero-pitch">
+          <p>
+            <b>{t.hero.titleLine1}</b>{" "}
+            {renderWithTokens(t.hero.body, {
+              monitoring: t.hero.bodyMonitoring,
+              score: t.hero.bodyScore,
+            })}
+          </p>
+          <div className="hero-actions">
+            <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToPricing}>
+              {t.hero.cta}
+            </button>
+          </div>
+          <p className="hero-guest-note">{t.hero.guestNote}</p>
         </div>
       </div>
     </section>

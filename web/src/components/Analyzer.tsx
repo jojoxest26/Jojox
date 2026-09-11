@@ -104,6 +104,8 @@ export function Analyzer({
 
   return (
     <section className="analyzer container" id="analyzer">
+      <p className="section-eyebrow">{t.analyzer.sectionEyebrow}</p>
+      <h2 className="section-title">{t.analyzer.sectionTitle}</h2>
       {showGate ? (
         <div className="card" style={{ padding: "2.5rem 1.5rem", textAlign: "center" }}>
           <strong>{t.analyzer.gateTitle}</strong>

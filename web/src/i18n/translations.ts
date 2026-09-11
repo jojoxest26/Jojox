@@ -46,14 +46,32 @@ export interface TranslationTree {
     cta: string;
     guestNote: string;
     scanTag: string;
+    statChecksLabel: string;
+    statScoreLabel: string;
+    statFreeLabel: string;
   };
-  features: FeatureItem[];
+  features: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    items: FeatureItem[];
+  };
   whyNotAi: {
+    eyebrow: string;
     question: string;
+    readMore: string;
     point1: string;
     point2: string;
     point3: string;
-    closing: string;
+    closingLead: string;
+    closingPunch: string;
+  };
+  dividers: {
+    features: string;
+    pricing: string;
+    integrations: string;
+    roadmap: string;
+    checks: string;
   };
   pricing: {
     title: string;
@@ -115,6 +133,8 @@ export interface TranslationTree {
     dropzoneHintLoggedIn: string;
     dropzoneHintGuest: string;
     dropzoneHintAny: string;
+    sectionEyebrow: string;
+    sectionTitle: string;
     moreFiles: string;
     analyzeButton: string;
     analyzeButtonCount: string;
@@ -245,33 +265,51 @@ const it: TranslationTree = {
     cta: "Analizza il tuo codice — gratis",
     guestNote: "1 analisi gratuita senza email. Poi basta la mail — 5 analisi/mese gratis.",
     scanTag: "CRITICO",
+    statChecksLabel: "controlli pubblici",
+    statScoreLabel: "punteggio",
+    statFreeLabel: "analisi gratis / mese",
   },
-  features: [
-    {
-      icon: "🛡️",
-      accent: "blue",
-      title: "Il codice non viene mai salvato",
-      text: "L'analisi che carichi a mano passa dai nostri server (per salvare punteggio e storico), ma il testo dei file non viene mai conservato — solo i risultati. Le correzioni automatiche, invece, restano sempre e solo nel tuo browser.",
-    },
-    {
-      icon: "🔧",
-      accent: "amber",
-      title: "Non solo l'errore, anche come risolverlo",
-      text: "Ogni problema è accompagnato da un esempio di correzione, mostrato come un prima/dopo: capisci subito cosa cambiare.",
-    },
-    {
-      icon: "📊",
-      accent: "mint",
-      title: "Punteggio di sicurezza + badge",
-      text: "Un punteggio da 0 a 100, calcolato con una formula che vedi per intero, più un badge da mettere nel README del progetto.",
-    },
-  ],
+  features: {
+    eyebrow: "Nessuna sorpresa",
+    title: "Vedi esattamente cosa succede al tuo codice.",
+    subtitle: "Tre cose vere, non promesse generiche: dove resta il codice, come vedi le correzioni, come si calcola il punteggio.",
+    items: [
+      {
+        icon: "🛡️",
+        accent: "blue",
+        title: "Il codice non viene mai salvato",
+        text: "L'analisi che carichi a mano passa dai nostri server (per salvare punteggio e storico), ma il testo dei file non viene mai conservato — solo i risultati. Le correzioni automatiche, invece, restano sempre e solo nel tuo browser.",
+      },
+      {
+        icon: "🔧",
+        accent: "amber",
+        title: "Non solo l'errore, anche come risolverlo",
+        text: "Ogni problema è accompagnato da un esempio di correzione, mostrato come un prima/dopo: capisci subito cosa cambiare.",
+      },
+      {
+        icon: "📊",
+        accent: "mint",
+        title: "Punteggio di sicurezza + badge",
+        text: "Un punteggio da 0 a 100, calcolato con una formula che vedi per intero, più un badge da mettere nel README del progetto.",
+      },
+    ],
+  },
   whyNotAi: {
+    eyebrow: "La domanda che ci fanno sempre",
     question: "Il mio agente AI già scrive il codice. Non può controllarlo anche lui?",
+    readMore: "Leggi la risposta completa",
     point1: "Puoi chiederlo. Ma nella pratica quasi nessuno lo fa ogni volta, su ogni file, dopo ogni modifica — e basta dimenticarsene una volta per lasciare un buco aperto. JoJoX non aspetta che te ne ricordi: controlla da solo, a ogni push.",
     point2: "Chiedere \"è sicuro?\" a un modello è come chiedere un parere: cambia ogni volta e non lascia una prova. JoJoX esegue sempre gli stessi 21 controlli pubblici, identici per tutti, verificabili riga per riga nel codice — un responso, non un'opinione.",
     point3: "Nessun LLM, nessuna allucinazione, nessun costo che cresce con l'uso: pattern matching puro, istantaneo, pensato per girare su ogni pull request quante volte serve.",
-    closing: "JoJoX non scrive il tuo codice. Lo sorveglia — sempre, allo stesso modo, senza che tu debba chiederlo.",
+    closingLead: "JoJoX non scrive il tuo codice.",
+    closingPunch: "Lo sorveglia.",
+  },
+  dividers: {
+    features: "Cosa vedi dopo l'analisi",
+    pricing: "Prezzi",
+    integrations: "Integrazioni",
+    roadmap: "In arrivo",
+    checks: "I 21 controlli",
   },
   pricing: {
     title: "Paghi il monitoraggio continuo, non le singole analisi",
@@ -359,6 +397,8 @@ const it: TranslationTree = {
     dropzoneHintLoggedIn: "Sei loggato: l'analisi viene salvata nel tuo storico.",
     dropzoneHintGuest: "Modalità ospite: 1 analisi gratuita, senza email. Dopo, basta la mail per continuare (5 al mese, gratis).",
     dropzoneHintAny: "Funziona su qualsiasi codice — anche scritto interamente a mano, non solo generato dall'AI.",
+    sectionEyebrow: "L'analyzer",
+    sectionTitle: "Carica il codice, guarda cosa trova.",
     moreFiles: "+{{count}} altri",
     analyzeButton: "Analizza",
     analyzeButtonCount: "Analizza {{count}} file",
@@ -429,11 +469,6 @@ const it: TranslationTree = {
         icon: "➕",
         title: "Correzioni che aggiungono codice mancante",
         text: "Oggi JoJoX corregge solo righe già presenti. In arrivo: la capacità di aggiungere da solo il codice che manca — una policy di sicurezza, un controllo assente — così ogni analisi diventa un progetto già pronto all'uso, non solo un elenco di cose da sistemare a mano.",
-      },
-      {
-        icon: "🎨",
-        title: "Nuovo stile del sito",
-        text: "Stiamo lavorando a un nuovo look, più diretto — in arrivo, ancora non pubblicato.",
       },
       {
         icon: "🧠",
@@ -515,33 +550,51 @@ const en: TranslationTree = {
     cta: "Analyze your code — free",
     guestNote: "1 free analysis with no email. Then just an email — 5 free analyses/month.",
     scanTag: "CRITICAL",
+    statChecksLabel: "public checks",
+    statScoreLabel: "score",
+    statFreeLabel: "free analyses / month",
   },
-  features: [
-    {
-      icon: "🛡️",
-      accent: "blue",
-      title: "Your code is never stored",
-      text: "The analysis you upload passes through our servers (to save the score and history), but the file contents are never kept — only the results. Automatic fixes, on the other hand, always stay in your browser.",
-    },
-    {
-      icon: "🔧",
-      accent: "amber",
-      title: "Not just the problem, also how to fix it",
-      text: "Every issue comes with a fix example, shown as a before/after: you immediately see what to change.",
-    },
-    {
-      icon: "📊",
-      accent: "mint",
-      title: "Security score + badge",
-      text: "A score from 0 to 100, calculated with a formula you can see in full, plus a badge to put in your project's README.",
-    },
-  ],
+  features: {
+    eyebrow: "No surprises",
+    title: "See exactly what happens to your code.",
+    subtitle: "Three true things, not generic promises: where the code stays, how you see the fixes, how the score is calculated.",
+    items: [
+      {
+        icon: "🛡️",
+        accent: "blue",
+        title: "Your code is never stored",
+        text: "The analysis you upload passes through our servers (to save the score and history), but the file contents are never kept — only the results. Automatic fixes, on the other hand, always stay in your browser.",
+      },
+      {
+        icon: "🔧",
+        accent: "amber",
+        title: "Not just the problem, also how to fix it",
+        text: "Every issue comes with a fix example, shown as a before/after: you immediately see what to change.",
+      },
+      {
+        icon: "📊",
+        accent: "mint",
+        title: "Security score + badge",
+        text: "A score from 0 to 100, calculated with a formula you can see in full, plus a badge to put in your project's README.",
+      },
+    ],
+  },
   whyNotAi: {
+    eyebrow: "The question we always get",
     question: "My AI agent already writes the code. Can't it check it too?",
+    readMore: "Read the full answer",
     point1: "You can. But almost no one does it every time, on every file, after every change — and it only takes one missed check to leave a hole open. JoJoX doesn't wait for you to remember: it checks on its own, on every push.",
     point2: "Asking a model \"is this secure?\" is like asking for an opinion: it changes every time and leaves no proof. JoJoX runs the same 21 public checks every time, identical for everyone, verifiable line by line in the code — a verdict, not an opinion.",
     point3: "No LLM, no hallucinations, no cost that grows with usage: pure pattern matching, instant, built to run on every pull request as often as you need.",
-    closing: "JoJoX doesn't write your code. It keeps watch — always, the same way, without you having to ask.",
+    closingLead: "JoJoX doesn't write your code.",
+    closingPunch: "It keeps watch.",
+  },
+  dividers: {
+    features: "What you see after the analysis",
+    pricing: "Pricing",
+    integrations: "Integrations",
+    roadmap: "Coming soon",
+    checks: "The 21 checks",
   },
   pricing: {
     title: "You pay for continuous monitoring, not for individual analyses",
@@ -629,6 +682,8 @@ const en: TranslationTree = {
     dropzoneHintLoggedIn: "You're signed in: the analysis is saved to your history.",
     dropzoneHintGuest: "Guest mode: 1 free analysis, no email. After that, just an email to continue (5 a month, free).",
     dropzoneHintAny: "Works on any code — even written entirely by hand, not just AI-generated.",
+    sectionEyebrow: "The analyzer",
+    sectionTitle: "Upload the code, see what it finds.",
     moreFiles: "+{{count}} more",
     analyzeButton: "Analyze",
     analyzeButtonCount: "Analyze {{count}} files",
@@ -699,11 +754,6 @@ const en: TranslationTree = {
         icon: "➕",
         title: "Fixes that add missing code",
         text: "Today JoJoX only fixes lines that already exist. Coming soon: the ability to add missing code on its own — a security policy, a missing check — so every analysis becomes a project that's already ready to use, not just a list of things to fix by hand.",
-      },
-      {
-        icon: "🎨",
-        title: "New site design",
-        text: "We're working on a new look, more direct — coming soon, not published yet.",
       },
       {
         icon: "🧠",

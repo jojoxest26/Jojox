@@ -80,7 +80,13 @@ export function Pricing({ session }: { session: Session | null }) {
   }
 
   return (
-    <section className="pricing-section container" id="pricing">
+    <>
+      <div className="section-divider container">
+        <div className="trace"></div>
+        <span className="tag">{t.dividers.pricing}</span>
+        <div className="trace right"></div>
+      </div>
+      <section className="pricing-section container" id="pricing">
       <h2>{t.pricing.title}</h2>
       <p>{t.pricing.subtitle}</p>
 
@@ -201,6 +207,7 @@ export function Pricing({ session }: { session: Session | null }) {
       {error && <p className="pricing-error">{error}</p>}
 
       <p className="pricing-disclaimer">{t.pricing.disclaimer}</p>
-    </section>
+      </section>
+    </>
   );
 }
