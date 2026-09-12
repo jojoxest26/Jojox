@@ -260,7 +260,7 @@ export interface TranslationTree {
 const it: TranslationTree = {
   meta: {
     dateLocale: "it-IT",
-    title: "JoJoX — Sicurezza per codice scritto dall'IA",
+    title: "JoJoX — Sicurezza per il tuo codice",
   },
   common: {
     severity: {
@@ -590,7 +590,7 @@ const it: TranslationTree = {
 const en: TranslationTree = {
   meta: {
     dateLocale: "en-GB",
-    title: "JoJoX — Security for AI-written code",
+    title: "JoJoX — Security for your code",
   },
   common: {
     severity: {
