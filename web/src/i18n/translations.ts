@@ -220,6 +220,8 @@ export interface TranslationTree {
   waitlist: {
     title: string;
     subtitle: string;
+    toggleShow: string;
+    toggleHide: string;
     roadmap: RoadmapItem[];
     emailPlaceholder: string;
     submit: string;
@@ -529,6 +531,8 @@ const it: TranslationTree = {
   waitlist: {
     title: "In arrivo",
     subtitle: "Ancora in lavorazione — te lo diciamo chiaramente, invece di fingere che esista già:",
+    toggleShow: "▼ Vedi la roadmap",
+    toggleHide: "▲ Nascondi la roadmap",
     roadmap: [
       {
         icon: "👥",
@@ -542,8 +546,13 @@ const it: TranslationTree = {
       },
       {
         icon: "➕",
-        title: "Correzioni che aggiungono codice mancante",
-        text: "Oggi JoJoX corregge solo righe già presenti. In arrivo: la capacità di aggiungere da solo il codice che manca — una policy di sicurezza, un controllo assente — così ogni analisi diventa un progetto già pronto all'uso, non solo un elenco di cose da sistemare a mano.",
+        title: "Sempre più correzioni automatiche",
+        text: "Oggi l'autofix corregge in automatico solo quando la risposta giusta è certa e non dipende dal tuo progetto — mai indovinando le tue regole di accesso. In arrivo: correzioni più sofisticate, anche su blocchi di codice interi e non solo righe singole, estese a sempre più problemi man mano che crescono i controlli — sempre con logica deterministica, mai un modello che indovina.",
+      },
+      {
+        icon: "🧩",
+        title: "Controlli per altri linguaggi",
+        text: "Oggi JoJoX è tarato su JavaScript/TypeScript e SQL/Supabase. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede settimane di lavoro dedicato. Coprire seriamente 3-4 linguaggi in più (Python, Java, PHP): realisticamente 3-6 mesi di lavoro concentrato, se diventa la priorità.",
       },
       {
         icon: "🧠",
@@ -859,6 +868,8 @@ const en: TranslationTree = {
   waitlist: {
     title: "Coming soon",
     subtitle: "Still in progress — we tell you clearly, instead of pretending it already exists:",
+    toggleShow: "▼ See the roadmap",
+    toggleHide: "▲ Hide the roadmap",
     roadmap: [
       {
         icon: "👥",
@@ -872,8 +883,13 @@ const en: TranslationTree = {
       },
       {
         icon: "➕",
-        title: "Fixes that add missing code",
-        text: "Today JoJoX only fixes lines that already exist. Coming soon: the ability to add missing code on its own — a security policy, a missing check — so every analysis becomes a project that's already ready to use, not just a list of things to fix by hand.",
+        title: "More and more automatic fixes",
+        text: "Today autofix only corrects automatically when the right answer is certain and doesn't depend on your project — never guessing your access rules. Coming soon: more sophisticated fixes, including whole blocks of code and not just single lines, extended to more and more issues as the checks grow — always with deterministic logic, never a model guessing.",
+      },
+      {
+        icon: "🧩",
+        title: "Checks for more languages",
+        text: "Today JoJoX is tuned for JavaScript/TypeScript and SQL/Supabase. A new language done properly — checks and tests to avoid false positives — takes weeks of dedicated work. Seriously covering 3-4 more languages (Python, Java, PHP): realistically 3-6 months of focused work, if it becomes the priority.",
       },
       {
         icon: "🧠",

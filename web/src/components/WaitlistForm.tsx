@@ -6,6 +6,7 @@ export function WaitlistForm() {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [showRoadmap, setShowRoadmap] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,16 +32,22 @@ export function WaitlistForm() {
         <h2>{t.waitlist.title}</h2>
         <p>{t.waitlist.subtitle}</p>
 
-        <div className="roadmap-grid">
-          {t.waitlist.roadmap.map((item) => (
-            <div key={item.title} className="roadmap-item">
-              <p>
-                {item.icon} {item.title}
-              </p>
-              <p>{item.text}</p>
-            </div>
-          ))}
-        </div>
+        <button type="button" className="supabase-check-toggle" onClick={() => setShowRoadmap((v) => !v)}>
+          {showRoadmap ? t.waitlist.toggleHide : t.waitlist.toggleShow}
+        </button>
+
+        {showRoadmap && (
+          <div className="roadmap-grid">
+            {t.waitlist.roadmap.map((item) => (
+              <div key={item.title} className="roadmap-item">
+                <p>
+                  {item.icon} {item.title}
+                </p>
+                <p>{item.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <form className="waitlist-form" onSubmit={handleSubmit}>
           <input
