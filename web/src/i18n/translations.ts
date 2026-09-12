@@ -174,6 +174,8 @@ export interface TranslationTree {
   };
   history: {
     title: string;
+    toggleShow: string;
+    toggleHide: string;
     manualSource: string;
     error: string;
   };
@@ -485,6 +487,8 @@ const it: TranslationTree = {
   },
   history: {
     title: "Il tuo storico",
+    toggleShow: "▼ Vedi lo storico",
+    toggleHide: "▲ Nascondi lo storico",
     manualSource: "Analisi manuale",
     error: "Errore nel caricamento dello storico",
   },
@@ -822,6 +826,8 @@ const en: TranslationTree = {
   },
   history: {
     title: "Your history",
+    toggleShow: "▼ See history",
+    toggleHide: "▲ Hide history",
     manualSource: "Manual analysis",
     error: "Error loading history",
   },
