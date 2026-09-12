@@ -607,6 +607,83 @@ body {
   border-width: 1px;
   box-shadow: none;
 }
+/* ---------- how it works ---------- */
+.how-it-works-section {
+  padding: 0 0 3rem;
+}
+.how-it-works-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+@media (min-width: 640px) {
+  .how-it-works-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.how-it-works-step {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.how-it-works-step .step-number {
+  font-family: "Anton", "Inter", sans-serif;
+  font-weight: 400;
+  font-size: 1.8rem;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.how-it-works-step h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.how-it-works-step p {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ---------- audience ---------- */
+.audience-section {
+  padding: 0 0 3rem;
+}
+.audience-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+@media (min-width: 640px) {
+  .audience-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.audience-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.audience-card .audience-icon {
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 0.6rem;
+}
+.audience-card h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+.audience-card p {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* ---------- feature cards ---------- */
 .features-section {
   padding: 0 0 3rem;
@@ -1209,6 +1286,45 @@ body {
 .github-section {
   padding: 2.5rem 0 3rem;
   border-top: 1px solid var(--border);
+}
+.github-flow-title {
+  font-family: "Anton", "Inter", sans-serif;
+  text-transform: uppercase;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+  margin: 0 0 0.5rem;
+}
+.github-flow-body {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem;
+  max-width: 60ch;
+}
+.github-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.4rem;
+  margin-bottom: 1.75rem;
+}
+.github-flow .flow-step {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  background: var(--surface);
+  white-space: nowrap;
+}
+.github-flow .flow-step-final {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.github-flow .flow-arrow {
+  color: var(--text-muted);
 }
 .github-card {
   padding: 1.75rem 2rem;

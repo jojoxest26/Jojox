@@ -13,6 +13,12 @@ interface RoadmapItem {
   text: string;
 }
 
+interface AudienceItem {
+  icon: string;
+  title: string;
+  text: string;
+}
+
 export interface TranslationTree {
   meta: {
     dateLocale: string;
@@ -50,6 +56,16 @@ export interface TranslationTree {
     statScoreLabel: string;
     statFreeLabel: string;
   };
+  howItWorks: {
+    eyebrow: string;
+    title: string;
+    step1Title: string;
+    step1Text: string;
+    step2Title: string;
+    step2Text: string;
+    step3Title: string;
+    step3Text: string;
+  };
   features: {
     eyebrow: string;
     title: string;
@@ -67,11 +83,18 @@ export interface TranslationTree {
     closingPunch: string;
   };
   dividers: {
+    howItWorks: string;
     features: string;
+    audience: string;
     pricing: string;
     integrations: string;
     roadmap: string;
     checks: string;
+  };
+  audience: {
+    eyebrow: string;
+    title: string;
+    items: AudienceItem[];
   };
   pricing: {
     title: string;
@@ -165,6 +188,13 @@ export interface TranslationTree {
   github: {
     title: string;
     badge: string;
+    flowTitle: string;
+    flowBody: string;
+    flowStep1: string;
+    flowStep2: string;
+    flowStep3: string;
+    flowStep4: string;
+    flowStep5: string;
     body1: string;
     body2: string;
     note: string;
@@ -269,6 +299,16 @@ const it: TranslationTree = {
     statScoreLabel: "punteggio",
     statFreeLabel: "analisi gratis / mese",
   },
+  howItWorks: {
+    eyebrow: "In 3 passaggi",
+    title: "Come funziona, dall'inizio alla fine.",
+    step1Title: "Analizza",
+    step1Text: "Carica il codice, o collega il tuo repository GitHub.",
+    step2Title: "Rileva",
+    step2Text: "JoJoX esegue i 21 controlli e trova i problemi di sicurezza.",
+    step3Title: "Correggi",
+    step3Text: "Ricevi spiegazione, gravità e una correzione pronta da copiare.",
+  },
   features: {
     eyebrow: "Nessuna sorpresa",
     title: "Vedi esattamente cosa succede al tuo codice.",
@@ -277,7 +317,7 @@ const it: TranslationTree = {
       {
         icon: "🛡️",
         accent: "blue",
-        title: "Il codice non viene mai salvato",
+        title: "Il tuo codice resta tuo",
         text: "L'analisi che carichi a mano passa dai nostri server (per salvare punteggio e storico), ma il testo dei file non viene mai conservato — solo i risultati. Le correzioni automatiche, invece, restano sempre e solo nel tuo browser.",
       },
       {
@@ -305,11 +345,39 @@ const it: TranslationTree = {
     closingPunch: "Lo sorveglia.",
   },
   dividers: {
+    howItWorks: "Come funziona",
     features: "Cosa vedi dopo l'analisi",
+    audience: "Per chi è",
     pricing: "Prezzi",
     integrations: "Integrazioni",
     roadmap: "In arrivo",
     checks: "I 21 controlli",
+  },
+  audience: {
+    eyebrow: "Per chi è",
+    title: "Che tu scriva codice da solo o in team.",
+    items: [
+      {
+        icon: "👨‍💻",
+        title: "Developer",
+        text: "Controlla il codice prima che diventi un problema — da terminale, VS Code, o dal sito.",
+      },
+      {
+        icon: "🚀",
+        title: "Startup",
+        text: "Proteggi il prodotto mentre il team sviluppa veloce, senza fermarsi per una revisione manuale.",
+      },
+      {
+        icon: "👥",
+        title: "Team",
+        text: "Monitora ogni push e pull request su più repository, con blocco automatico dei problemi critici.",
+      },
+      {
+        icon: "🤖",
+        title: "Sviluppo con AI",
+        text: "Controlla il codice scritto o modificato da agenti AI come Claude Code, prima che finisca in produzione.",
+      },
+    ],
   },
   pricing: {
     title: "Paghi il monitoraggio continuo, non le singole analisi",
@@ -429,6 +497,13 @@ const it: TranslationTree = {
   github: {
     title: "GitHub App + CI",
     badge: "DISPONIBILE",
+    flowTitle: "Non solo scansione. Monitoraggio.",
+    flowBody: "Collega GitHub e lascia che JoJoX analizzi ogni modifica rilevante al tuo codice.",
+    flowStep1: "GitHub",
+    flowStep2: "JoJoX",
+    flowStep3: "Analisi di sicurezza",
+    flowStep4: "Rischio rilevato",
+    flowStep5: "Correzione / Pull request",
     body1: "Collega GitHub. A ogni push e a ogni pull request JoJoX controlla il codice. Se trova un problema critico, blocca la pull request e lascia un commento chiaro con il riepilogo.",
     body2: "Basta impostarlo come controllo obbligatorio nelle impostazioni del branch: le modifiche rischiose non potranno più essere unite.",
     note: "Stesso motore dell'analisi manuale, nessun LLM. Gira sui nostri server per poter intervenire in automatico a ogni push.",
@@ -554,6 +629,16 @@ const en: TranslationTree = {
     statScoreLabel: "score",
     statFreeLabel: "free analyses / month",
   },
+  howItWorks: {
+    eyebrow: "In 3 steps",
+    title: "How it works, start to finish.",
+    step1Title: "Analyze",
+    step1Text: "Upload the code, or connect your GitHub repository.",
+    step2Title: "Detect",
+    step2Text: "JoJoX runs the 21 checks and finds the security issues.",
+    step3Title: "Fix",
+    step3Text: "Get an explanation, severity, and a fix ready to copy.",
+  },
   features: {
     eyebrow: "No surprises",
     title: "See exactly what happens to your code.",
@@ -562,7 +647,7 @@ const en: TranslationTree = {
       {
         icon: "🛡️",
         accent: "blue",
-        title: "Your code is never stored",
+        title: "Your code stays yours",
         text: "The analysis you upload passes through our servers (to save the score and history), but the file contents are never kept — only the results. Automatic fixes, on the other hand, always stay in your browser.",
       },
       {
@@ -590,11 +675,39 @@ const en: TranslationTree = {
     closingPunch: "It keeps watch.",
   },
   dividers: {
+    howItWorks: "How it works",
     features: "What you see after the analysis",
+    audience: "Who it's for",
     pricing: "Pricing",
     integrations: "Integrations",
     roadmap: "Coming soon",
     checks: "The 21 checks",
+  },
+  audience: {
+    eyebrow: "Who it's for",
+    title: "Whether you code solo or with a team.",
+    items: [
+      {
+        icon: "👨‍💻",
+        title: "Developers",
+        text: "Check your code before it becomes a problem — from the terminal, VS Code, or the site.",
+      },
+      {
+        icon: "🚀",
+        title: "Startups",
+        text: "Protect the product while the team ships fast, without stopping for a manual review.",
+      },
+      {
+        icon: "👥",
+        title: "Teams",
+        text: "Monitor every push and pull request across multiple repositories, with automatic blocking of critical issues.",
+      },
+      {
+        icon: "🤖",
+        title: "AI-powered development",
+        text: "Check code written or modified by AI agents like Claude Code, before it reaches production.",
+      },
+    ],
   },
   pricing: {
     title: "You pay for continuous monitoring, not for individual analyses",
@@ -714,6 +827,13 @@ const en: TranslationTree = {
   github: {
     title: "GitHub App + CI",
     badge: "AVAILABLE",
+    flowTitle: "Don't just scan. Monitor.",
+    flowBody: "Connect GitHub and let JoJoX analyze every relevant change to your code.",
+    flowStep1: "GitHub",
+    flowStep2: "JoJoX",
+    flowStep3: "Security analysis",
+    flowStep4: "Risk detected",
+    flowStep5: "Fix / Pull request",
     body1: "Connect GitHub. On every push and every pull request, JoJoX checks the code. If it finds a critical issue, it blocks the pull request and leaves a clear comment with the summary.",
     body2: "Just set it as a required check in your branch settings: risky changes won't be mergeable anymore.",
     note: "Same engine as the manual analysis, no LLM. It runs on our servers so it can act automatically on every push.",

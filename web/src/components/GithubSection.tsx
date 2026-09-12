@@ -98,6 +98,19 @@ export function GithubSection({
         <div className="trace right"></div>
       </div>
       <section className="github-section container">
+      <p className="github-flow-title">{t.github.flowTitle}</p>
+      <p className="github-flow-body">{t.github.flowBody}</p>
+      <div className="github-flow">
+        <span className="flow-step">{t.github.flowStep1}</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-step">{t.github.flowStep2}</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-step">{t.github.flowStep3}</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-step">{t.github.flowStep4}</span>
+        <span className="flow-arrow">→</span>
+        <span className="flow-step flow-step-final">{t.github.flowStep5}</span>
+      </div>
       <div className="card github-card">
         <div className="github-title">
           <h2>{t.github.title}</h2>
