@@ -21,24 +21,26 @@ export function HistoryPanel({ session, refreshKey }: { session: Session; refres
 
   return (
     <section className="history-section container">
-      <button type="button" className="supabase-check-toggle" onClick={() => setShowHistory((v) => !v)}>
-        {showHistory ? t.history.toggleHide : t.history.toggleShow}
-      </button>
-      {showHistory && (
-        <div className="card" style={{ padding: "1.25rem 1.5rem", marginTop: "1rem" }}>
-          <ScoreHistoryChart history={history} />
-          <h3 style={{ margin: "0 0 0.5rem" }}>{t.history.title}</h3>
-          {history.map((entry) => (
-            <div key={entry.id} className="history-row">
-              <span>
-                {entry.source === "github" ? entry.repo_full_name : t.history.manualSource} —{" "}
-                {new Date(entry.created_at).toLocaleDateString(t.meta.dateLocale)}
-              </span>
-              <strong>{entry.score}/100</strong>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
+        <ScoreHistoryChart history={history} />
+        <button type="button" className="supabase-check-toggle" onClick={() => setShowHistory((v) => !v)}>
+          {showHistory ? t.history.toggleHide : t.history.toggleShow}
+        </button>
+        {showHistory && (
+          <>
+            <h3 style={{ margin: "1rem 0 0.5rem" }}>{t.history.title}</h3>
+            {history.map((entry) => (
+              <div key={entry.id} className="history-row">
+                <span>
+                  {entry.source === "github" ? entry.repo_full_name : t.history.manualSource} —{" "}
+                  {new Date(entry.created_at).toLocaleDateString(t.meta.dateLocale)}
+                </span>
+                <strong>{entry.score}/100</strong>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
     </section>
   );
 }
