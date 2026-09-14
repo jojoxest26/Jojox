@@ -7,6 +7,16 @@ const SERVER_ONLY_PATH = /(^|\/)(api|server|edge-functions?|functions)(\/|\.)/i;
 
 const PLACEHOLDER_VALUE = /^(process\.env|import\.meta\.env|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
 
+// Nomi di variabile che, assegnati a un valore letterale, indicano quasi sempre un segreto.
+// Condiviso tra detect() e autofix() così restano sempre allineati.
+const SECRET_LIKE_NAMES =
+  "apiKey|api_key|secret|secretKey|apiSecret|clientSecret|accessToken|refreshToken|privateKey|dbPassword|password|token|authToken";
+
+// Valori che, oltre a essere hardcoded, hanno un formato riconoscibile di chiave reale
+// (AKIA…, sk_live_/sk_test_…): vanno anche revocati presso il fornitore, non solo tolti
+// dal codice — l'autofix li lascia quindi segnalati soltanto, mai riscritti in automatico.
+const HIGH_CONFIDENCE_SECRET_VALUE = /AKIA[0-9A-Z]{16}|sk_(live|test)_[0-9a-zA-Z]{16,}/;
+
 export const criticalChecks: Check[] = [
   {
     id: "supabase-service-role-in-client",
@@ -51,8 +61,7 @@ export const criticalChecks: Check[] = [
       ];
 
       const alreadyFlaggedLines = new Set(highConfidenceMatches.map((m) => m.line));
-      const assignmentPattern =
-        /\b(apiKey|api_key|secret|secretKey|password|token|authToken)\s*[:=]\s*["'`]([^"'`]{12,})["'`]/gi;
+      const assignmentPattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})\\s*[:=]\\s*["'\`]([^"'\`]{12,})["'\`]`, "gi");
       const lines = file.content.split("\n");
       const assignmentMatches = scanLines(file, assignmentPattern).filter((m) => {
         if (alreadyFlaggedLines.has(m.line)) return false;
@@ -71,10 +80,10 @@ export const criticalChecks: Check[] = [
       // (AKIA…, sk_live_…, blocchi PRIVATE KEY) restano segnalate soltanto:
       // vanno anche revocate, non solo tolte dal codice — se sono finite in
       // un commit, potrebbero già essere compromesse.
-      const pattern =
-        /\b(apiKey|api_key|secret|secretKey|password|token|authToken)(\s*[:=]\s*)["'`][^"'`]{12,}["'`]/gi;
+      const pattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})(\\s*[:=]\\s*)["'\`][^"'\`]{12,}["'\`]`, "gi");
       const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
         if (/process\.env|import\.meta\.env/.test(line)) return null;
+        if (HIGH_CONFIDENCE_SECRET_VALUE.test(line)) return null;
         const [, varName, operator] = m;
         const replacement = `${varName}${operator}process.env.${toEnvName(varName)}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);

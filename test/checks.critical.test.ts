@@ -39,6 +39,34 @@ describe("critical checks", () => {
     expect(detect(check, clean)).toHaveLength(0);
   });
 
+  it("hardcoded-secret: flags other common secret-like variable names", () => {
+    const check = checkById("hardcoded-secret");
+    const names = ["clientSecret", "accessToken", "refreshToken", "privateKey", "dbPassword", "apiSecret"];
+    for (const name of names) {
+      const vulnerable = file("src/config.ts", `const ${name} = "abcdefghijklmnop123456"`);
+      expect(detect(check, vulnerable), `expected ${name} to be flagged`).toHaveLength(1);
+    }
+  });
+
+  it("hardcoded-secret autofix: replaces a hardcoded clientSecret with process.env, converted to SCREAMING_SNAKE_CASE", () => {
+    const check = checkById("hardcoded-secret");
+    const vulnerable = file("src/config.ts", 'const clientSecret = "abcdefghijklmnop123456"');
+    const fixed = check.autofix?.(vulnerable);
+    expect(fixed).toBe("const clientSecret = process.env.CLIENT_SECRET");
+  });
+
+  it("hardcoded-secret autofix: does not touch a value already read from process.env", () => {
+    const check = checkById("hardcoded-secret");
+    const clean = file("src/payments.ts", "const apiKey = process.env.STRIPE_SECRET_KEY");
+    expect(check.autofix?.(clean)).toBeNull();
+  });
+
+  it("hardcoded-secret autofix: leaves format-detected keys (sk_live_…) alone — those must be revoked, not just removed", () => {
+    const check = checkById("hardcoded-secret");
+    const vulnerable = file("src/payments.ts", 'const apiKey = "sk_live_51H8x9K2eZvKYlo2Cxxxxxxxxxxxxxxxx"');
+    expect(check.autofix?.(vulnerable)).toBeNull();
+  });
+
   it("env-file-with-real-values: flags a committed .env with real values", () => {
     const check = checkById("env-file-with-real-values");
     const vulnerable = file(".env", "DATABASE_URL=postgres://user:realpassword@db.host/prod\nJWT_SECRET=abcdef123456");
