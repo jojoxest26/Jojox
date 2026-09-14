@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createInterface } from "node:readline";
+import { fileURLToPath } from "node:url";
 import { analyzeFiles, applyAutofixes } from "../analyze.js";
 import { ALL_CHECKS } from "../checks/index.js";
 import type { SourceFile } from "../types.js";
@@ -42,7 +43,7 @@ const FILES_SCHEMA = {
   required: ["files"],
 } as const;
 
-const TOOLS = [
+export const TOOLS = [
   {
     name: "analyze_code",
     description:
@@ -75,7 +76,7 @@ function parseFiles(args: unknown): SourceFile[] {
   });
 }
 
-function callTool(name: string, args: unknown): unknown {
+export function callTool(name: string, args: unknown): unknown {
   switch (name) {
     case "analyze_code":
       return analyzeFiles(parseFiles(args));
@@ -106,11 +107,13 @@ function callTool(name: string, args: unknown): unknown {
   }
 }
 
-function send(message: Record<string, unknown>): void {
-  process.stdout.write(`${JSON.stringify(message)}\n`);
-}
-
-function handleRequest(req: JsonRpcRequest): void {
+/**
+ * Elabora una singola richiesta JSON-RPC e restituisce il messaggio di risposta
+ * da inviare, oppure `undefined` per una notifica (nessuna risposta prevista).
+ * Non scrive mai direttamente su stdout: lo fa solo chi la chiama, così questa
+ * funzione resta testabile senza avviare un vero processo.
+ */
+export function handleRequest(req: JsonRpcRequest): Record<string, unknown> | undefined {
   const { id, method, params } = req;
   const isNotification = id === undefined;
 
@@ -118,64 +121,71 @@ function handleRequest(req: JsonRpcRequest): void {
     switch (method) {
       case "initialize": {
         const protocolVersion = (params as { protocolVersion?: string } | undefined)?.protocolVersion ?? "2024-11-05";
-        if (!isNotification) {
-          send({
-            jsonrpc: "2.0",
-            id,
-            result: {
-              protocolVersion,
-              capabilities: { tools: {} },
-              serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
-            },
-          });
-        }
-        return;
+        if (isNotification) return undefined;
+        return {
+          jsonrpc: "2.0",
+          id,
+          result: {
+            protocolVersion,
+            capabilities: { tools: {} },
+            serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
+          },
+        };
       }
       case "notifications/initialized":
       case "ping":
-        if (!isNotification) send({ jsonrpc: "2.0", id, result: {} });
-        return;
+        return isNotification ? undefined : { jsonrpc: "2.0", id, result: {} };
       case "tools/list":
-        if (!isNotification) send({ jsonrpc: "2.0", id, result: { tools: TOOLS } });
-        return;
+        return isNotification ? undefined : { jsonrpc: "2.0", id, result: { tools: TOOLS } };
       case "tools/call": {
         const { name, arguments: args } = (params ?? {}) as { name?: string; arguments?: unknown };
         if (typeof name !== "string") throw new Error("Parametro 'name' mancante");
         const result = callTool(name, args);
-        if (!isNotification) {
-          send({
-            jsonrpc: "2.0",
-            id,
-            result: { content: [{ type: "text", text: JSON.stringify(result, null, 2) }], isError: false },
-          });
-        }
-        return;
+        if (isNotification) return undefined;
+        return {
+          jsonrpc: "2.0",
+          id,
+          result: { content: [{ type: "text", text: JSON.stringify(result, null, 2) }], isError: false },
+        };
       }
       default:
-        if (!isNotification) {
-          send({ jsonrpc: "2.0", id, error: { code: -32601, message: `Metodo sconosciuto: ${method}` } });
-        }
+        return isNotification
+          ? undefined
+          : { jsonrpc: "2.0", id, error: { code: -32601, message: `Metodo sconosciuto: ${method}` } };
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (method === "tools/call" && !isNotification) {
-      send({ jsonrpc: "2.0", id, result: { content: [{ type: "text", text: message }], isError: true } });
-    } else if (!isNotification) {
-      send({ jsonrpc: "2.0", id, error: { code: -32603, message } });
+    if (isNotification) return undefined;
+    if (method === "tools/call") {
+      return { jsonrpc: "2.0", id, result: { content: [{ type: "text", text: message }], isError: true } };
     }
+    return { jsonrpc: "2.0", id, error: { code: -32603, message } };
   }
 }
 
-const rl = createInterface({ input: process.stdin });
-rl.on("line", (line) => {
-  const trimmed = line.trim();
-  if (!trimmed) return;
-  let req: JsonRpcRequest;
-  try {
-    req = JSON.parse(trimmed);
-  } catch {
-    send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "JSON non valido" } });
-    return;
-  }
-  handleRequest(req);
-});
+function send(message: Record<string, unknown>): void {
+  process.stdout.write(`${JSON.stringify(message)}\n`);
+}
+
+/** Avvia il ciclo che legge richieste JSON-RPC da stdin, una per riga, e risponde su stdout. */
+function startStdioServer(): void {
+  const rl = createInterface({ input: process.stdin });
+  rl.on("line", (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    let req: JsonRpcRequest;
+    try {
+      req = JSON.parse(trimmed);
+    } catch {
+      send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "JSON non valido" } });
+      return;
+    }
+    const response = handleRequest(req);
+    if (response) send(response);
+  });
+}
+
+// Avvia il server solo quando questo file viene eseguito direttamente (`npm run mcp`),
+// non quando viene importato — ad esempio dai test, che vogliono solo le funzioni pure.
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMainModule) startStdioServer();

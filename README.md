@@ -26,6 +26,21 @@ npm run mcp   # avvia il server MCP su stdio
 
 Espone `analyze_code`, `fix_code` e `list_checks` — un agente può controllarsi da solo mentre scrive codice, prima ancora di proporre una modifica.
 
+Per collegarlo a **Claude Code** in un altro progetto, aggiungi al suo `.mcp.json` (sostituendo il percorso con quello reale di questa cartella sul tuo computer):
+
+```json
+{
+  "mcpServers": {
+    "jojox": {
+      "command": "npx",
+      "args": ["tsx", "/percorso/assoluto/a/Jojox/src/mcp/server.ts"]
+    }
+  }
+}
+```
+
+Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (Impostazioni → Sviluppatore → Modifica configurazione).
+
 **Backend** (`src/server/`):
 - `src/server/app.ts` / `index.ts` — server Express, CORS ristretto a `ALLOWED_ORIGINS`
 - `src/server/routes/analyze.ts` — `POST /api/analyze`, con limite mensile per il piano free e storico salvato per utenti autenticati
@@ -62,7 +77,7 @@ Espone `analyze_code`, `fix_code` e `list_checks` — un agente può controllars
 
 ```bash
 npm install
-npm test                                    # 102 test: engine + backend
+npm test                                    # 122 test: engine + backend + server MCP
 npm run cli -- ./path/al/progetto           # analizza una cartella locale
 npm run cli -- ./path/al/progetto --fix     # corregge in automatico quello che si può
 npm run cli -- install-hook ./path/al/repo  # installa il controllo automatico prima di ogni commit
