@@ -108,8 +108,8 @@ Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md
 
 ## Prossimi passi
 
-In ordine di quanto restano da costruire:
-- **Gestione team con più seat** — in arrivo a inizio settembre
+- **Controlli per altri linguaggi** — oggi JoJoX è tarato su JavaScript/TypeScript e SQL/Supabase; coprire seriamente Python, Java o PHP richiede settimane di lavoro dedicato per linguaggio (test, niente falsi positivi) — realisticamente 3-6 mesi per 3-4 linguaggi in più, se diventa priorità
+- **Sempre più correzioni automatiche** — estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
+- **Gestione team con più seat** — nessuna data ancora
+- **Un livello aggiuntivo con l'intelligenza artificiale** per i problemi più difficili da individuare — sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da sola
 - **Sito in più lingue** — già disponibile in italiano e inglese, altre lingue in arrivo più avanti
-- **Correzioni che aggiungono codice mancante** — oggi JoJoX corregge solo righe già presenti; in arrivo la capacità di aggiungere codice che manca del tutto (una policy di sicurezza, un controllo assente)
-- **Nuovo stile del sito** — in lavorazione, non ancora pubblicato
