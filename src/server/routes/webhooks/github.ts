@@ -24,10 +24,63 @@ interface PullRequestPayload {
   pull_request: { number: number; head: { sha: string; ref: string } };
 }
 
+type InstallationOctokit = Awaited<ReturnType<Awaited<ReturnType<typeof getGithubApp>>["getInstallationOctokit"]>>;
+
 export const githubWebhookRouter = Router();
 
 const HANDLED_PR_ACTIONS = new Set(["opened", "synchronize", "reopened"]);
 const FIX_BRANCH_PREFIX = "jojox-fixes/";
+
+// Oltre questo numero di file GitHub stesso smette di fornire i diff per una PR:
+// è una guardia di sicurezza, non un limite che ci aspettiamo di raggiungere spesso.
+const MAX_FILES_PER_PR = 3000;
+// Quante richieste di contenuto file teniamo in volo insieme: abbastanza per
+// essere veloci, abbastanza poco per non rischiare i rate limit "secondari" di
+// GitHub su PR con centinaia di file.
+const FILE_FETCH_CONCURRENCY = 8;
+
+/** Esegue `fn` su ogni elemento con al massimo `limit` chiamate in parallelo. */
+export async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+export interface ChangedFile {
+  filename: string;
+  status: string;
+  patch?: string;
+}
+
+/**
+ * Elenca tutti i file cambiati in una PR, seguendo la paginazione di GitHub
+ * (l'endpoint ne restituisce al massimo 100 per richiesta) fino a un tetto di
+ * sicurezza: le PR con migliaia di file sono rarissime e comunque GitHub
+ * stesso smette di fornire diff utili oltre una certa dimensione.
+ */
+export async function listChangedFiles(
+  octokit: Pick<InstallationOctokit, "request">,
+  params: { owner: string; repo: string; pull_number: number }
+): Promise<ChangedFile[]> {
+  const files: ChangedFile[] = [];
+  for (let page = 1; files.length < MAX_FILES_PER_PR; page++) {
+    const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}/files", {
+      ...params,
+      per_page: 100,
+      page,
+    });
+    files.push(...data);
+    if (data.length < 100) break;
+  }
+  return files;
+}
 
 githubWebhookRouter.post("/webhooks/github", raw({ type: "application/json" }), async (req, res) => {
   const signature = req.header("x-hub-signature-256");
@@ -75,28 +128,34 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
   const app = getGithubApp();
   const octokit = await app.getInstallationOctokit(installationId);
 
-  const { data: changedFiles } = await octokit.request(
-    "GET /repos/{owner}/{repo}/pulls/{pull_number}/files",
-    { owner, repo, pull_number: pullNumber, per_page: 100 }
-  );
+  const changedFiles = await listChangedFiles(octokit, { owner, repo, pull_number: pullNumber });
 
-  const files: SourceFile[] = await Promise.all(
-    changedFiles
-      .filter((f) => f.status !== "removed")
-      .map(async (f): Promise<SourceFile> => {
-        const { data } = await octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
-          owner,
-          repo,
-          path: f.filename,
-          ref: headSha,
-        });
-        const content =
-          !Array.isArray(data) && data.type === "file" && typeof data.content === "string"
-            ? Buffer.from(data.content, "base64").toString("utf8")
-            : "";
-        return { path: f.filename, content };
-      })
-  );
+  // Ignoriamo i file rimossi (niente da analizzare) e quelli senza un "patch" testuale:
+  // GitHub omette il patch per i file binari o troppo grandi per essere confrontati riga
+  // per riga — provare comunque a leggerli come codice produrrebbe solo rumore o errori.
+  const filesToAnalyze = changedFiles.filter((f) => f.status !== "removed" && f.patch !== undefined);
+
+  const fetchedFiles = await mapWithConcurrency(filesToAnalyze, FILE_FETCH_CONCURRENCY, async (f): Promise<SourceFile | null> => {
+    try {
+      const { data } = await octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
+        owner,
+        repo,
+        path: f.filename,
+        ref: headSha,
+      });
+      // Sopra 1 MB l'API di GitHub non include il contenuto in base64: niente da leggere,
+      // meglio saltare il file che analizzarlo a metà.
+      if (!Array.isArray(data) && data.type === "file" && typeof data.content === "string" && data.size <= 1_000_000) {
+        return { path: f.filename, content: Buffer.from(data.content, "base64").toString("utf8") };
+      }
+      return null;
+    } catch (err) {
+      console.error(`impossibile leggere ${f.filename} nella PR #${pullNumber} di ${owner}/${repo}`, err);
+      return null;
+    }
+  });
+
+  const files: SourceFile[] = fetchedFiles.filter((f): f is SourceFile => f !== null);
 
   const result = analyzeFiles(files);
 
@@ -202,7 +261,7 @@ function buildFixPrBody(fixedCheckIds: Set<string>, filesChanged: number): strin
  * della PR originale. Non tocca mai direttamente il branch dell'autore.
  */
 async function openOrUpdateFixPr(
-  octokit: Awaited<ReturnType<Awaited<ReturnType<typeof getGithubApp>>["getInstallationOctokit"]>>,
+  octokit: InstallationOctokit,
   params: {
     owner: string;
     repo: string;
@@ -273,7 +332,7 @@ async function openOrUpdateFixPr(
 
 /** Chiude ed elimina una PR/branch di fix rimasti da un push precedente, se ora non serve più. */
 async function closeStaleFixPr(
-  octokit: Awaited<ReturnType<Awaited<ReturnType<typeof getGithubApp>>["getInstallationOctokit"]>>,
+  octokit: InstallationOctokit,
   params: { owner: string; repo: string; pullNumber: number }
 ): Promise<void> {
   const { owner, repo, pullNumber } = params;
