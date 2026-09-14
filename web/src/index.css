@@ -291,7 +291,7 @@ body {
   position: relative;
   z-index: 2;
   color: var(--text);
-  -webkit-text-stroke: 2px var(--accent);
+  -webkit-text-stroke: 1.2px var(--accent);
 }
 .hero-pills {
   display: flex;
