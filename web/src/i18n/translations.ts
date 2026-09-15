@@ -541,7 +541,7 @@ const it: TranslationTree = {
       {
         icon: "👥",
         title: "Gestione team con più seat",
-        text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — in arrivo a inizio settembre.",
+        text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — nessuna data ancora, arriva quando il disegno lato pagamenti/permessi è pronto.",
       },
       {
         icon: "🌍",
@@ -561,7 +561,7 @@ const it: TranslationTree = {
       {
         icon: "🧠",
         title: "Livello AI per i bug difficilissimi",
-        text: "I 21 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare.",
+        text: "I 21 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare — ma sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da solo.",
       },
     ],
     emailPlaceholder: "tua@email.com",
@@ -880,7 +880,7 @@ const en: TranslationTree = {
       {
         icon: "👥",
         title: "Team management with more seats",
-        text: "Multiple people connected to a single Team subscription, with seats to add and a shared dashboard — coming in early September.",
+        text: "Multiple people connected to a single Team subscription, with seats to add and a shared dashboard — no date yet, coming once the billing/permissions design is ready.",
       },
       {
         icon: "🌍",
@@ -900,7 +900,7 @@ const en: TranslationTree = {
       {
         icon: "🧠",
         title: "AI layer for the hardest bugs",
-        text: "The 21 checks stay the heart of JoJoX: always the same, always verifiable — the score you can count on. Coming soon: an extra AI layer, built to catch the logic bugs that are hardest to find, the ones no pattern can catch.",
+        text: "The 21 checks stay the heart of JoJoX: always the same, always verifiable — the score you can count on. Coming soon: an extra AI layer, built to catch the logic bugs that are hardest to find, the ones no pattern can catch — but always with a person reviewing before code is actually changed, never on its own.",
       },
     ],
     emailPlaceholder: "you@email.com",
