@@ -544,6 +544,11 @@ const it: TranslationTree = {
         text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — nessuna data ancora, arriva quando il disegno lato pagamenti/permessi è pronto.",
       },
       {
+        icon: "🏢",
+        title: "Piani Business / Enterprise",
+        text: "Sappiamo che alcune aziende più grandi hanno esigenze diverse da Pro e Team — fatturazione dedicata, contratti, supporto prioritario. Non abbiamo ancora deciso cosa includere di preciso: preferiamo dirlo chiaramente ora, piuttosto che promettere dettagli che non esistono ancora.",
+      },
+      {
         icon: "🌍",
         title: "Sito in più lingue",
         text: "Già disponibile in italiano e inglese, sito e i 21 controlli inclusi. Altre lingue in arrivo più avanti.",
@@ -881,6 +886,11 @@ const en: TranslationTree = {
         icon: "👥",
         title: "Team management with more seats",
         text: "Multiple people connected to a single Team subscription, with seats to add and a shared dashboard — no date yet, coming once the billing/permissions design is ready.",
+      },
+      {
+        icon: "🏢",
+        title: "Business / Enterprise plans",
+        text: "We know some larger companies need something different from Pro and Team — dedicated billing, contracts, priority support. We haven't decided exactly what's included yet: we'd rather say that clearly now than promise details that don't exist.",
       },
       {
         icon: "🌍",
