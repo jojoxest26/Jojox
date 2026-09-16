@@ -566,6 +566,16 @@ const it: TranslationTree = {
         text: "Oggi JoJoX è tarato su JavaScript/TypeScript e SQL/Supabase. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede settimane di lavoro dedicato. Coprire seriamente 3-4 linguaggi in più (Python, Java, PHP): realisticamente 3-6 mesi di lavoro concentrato, se diventa la priorità.",
       },
       {
+        icon: "📦",
+        title: "Controllo delle librerie che usi",
+        text: "Oggi JoJoX controlla il codice che scrivi tu. In arrivo: un controllo in più che guarda le librerie esterne del tuo progetto (es. il tuo package.json) e verifica, contro database pubblici come OSV.dev e GitHub Advisory, se una versione che usi ha una vulnerabilità già nota — l'unico controllo che, per funzionare, deve contattare un servizio esterno (mai il tuo codice, solo nome e versione della libreria).",
+      },
+      {
+        icon: "🧱",
+        title: "Controllo dell'infrastruttura (Terraform, Kubernetes)",
+        text: "Stessa logica di pattern matching di oggi, applicata a un tipo di file diverso: configurazioni Terraform o Kubernetes, per trovare errori come un database lasciato accessibile a tutti per sbaglio.",
+      },
+      {
         icon: "🧠",
         title: "Livello AI per i bug difficilissimi",
         text: "I 21 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare — ma sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da solo.",
@@ -909,6 +919,16 @@ const en: TranslationTree = {
         icon: "🧩",
         title: "Checks for more languages",
         text: "Today JoJoX is tuned for JavaScript/TypeScript and SQL/Supabase. A new language done properly — checks and tests to avoid false positives — takes weeks of dedicated work. Seriously covering 3-4 more languages (Python, Java, PHP): realistically 3-6 months of focused work, if it becomes the priority.",
+      },
+      {
+        icon: "📦",
+        title: "Checking the libraries you use",
+        text: "Today JoJoX checks the code you write. Coming soon: an extra check that looks at your project's external libraries (e.g. your package.json) and verifies, against public databases like OSV.dev and GitHub Advisory, whether a version you use has a known vulnerability — the only check that, to work, needs to contact an external service (never your code, only the library's name and version).",
+      },
+      {
+        icon: "🧱",
+        title: "Infrastructure checks (Terraform, Kubernetes)",
+        text: "Same pattern-matching logic as today, applied to a different kind of file: Terraform or Kubernetes configuration, to catch mistakes like a database accidentally left open to everyone.",
       },
       {
         icon: "🧠",
