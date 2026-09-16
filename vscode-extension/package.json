@@ -5,6 +5,12 @@
   "version": "0.1.0",
   "publisher": "jojox",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jojoxest26/Jojox.git",
+    "directory": "vscode-extension"
+  },
+  "keywords": ["security", "sicurezza", "linter", "AI", "supabase", "code review"],
   "engines": {
     "vscode": "^1.85.0"
   },
