@@ -287,9 +287,9 @@ const it: TranslationTree = {
     login: "Accedi",
   },
   hero: {
-    titleLine1: "Il tuo agente AI scrive codice ogni giorno.",
+    titleLine1: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu.",
     titleLine2Suffix: "lo sorveglia.",
-    body: "Non un controllo una tantum. {{monitoring}}. 21 controlli pubblici sugli errori più comuni nel codice — scritto a mano o dall'IA — un {{score}} chiaro, e correzioni pronte da copiare.",
+    body: "Non un controllo una tantum. {{monitoring}}. 21 controlli pubblici sugli errori più comuni nel codice, un {{score}} chiaro, e correzioni pronte da copiare.",
     bodyMonitoring: "Monitoraggio continuo",
     bodyScore: "punteggio di sicurezza",
     sub: "Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.",
@@ -632,9 +632,9 @@ const en: TranslationTree = {
     login: "Log in",
   },
   hero: {
-    titleLine1: "Your AI agent writes code every day.",
+    titleLine1: "Your AI agent writes code every day, or do you write it yourself?",
     titleLine2Suffix: "keeps watch.",
-    body: "Not a one-off check. {{monitoring}}. 21 public checks for the most common mistakes in your code — hand-written or AI-generated — a clear {{score}}, and fixes ready to copy.",
+    body: "Not a one-off check. {{monitoring}}. 21 public checks for the most common mistakes in your code, a clear {{score}}, and fixes ready to copy.",
     bodyMonitoring: "Continuous monitoring",
     bodyScore: "security score",
     sub: "The checks that normally take hours, automated and always on.",
