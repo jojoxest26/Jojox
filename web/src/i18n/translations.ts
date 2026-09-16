@@ -287,7 +287,7 @@ const it: TranslationTree = {
     login: "Accedi",
   },
   hero: {
-    titleLine1: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu.",
+    titleLine1: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu?",
     titleLine2Suffix: "lo sorveglia.",
     body: "Non un controllo una tantum. {{monitoring}}. 21 controlli pubblici sugli errori più comuni nel codice, un {{score}} chiaro, e correzioni pronte da copiare.",
     bodyMonitoring: "Monitoraggio continuo",
