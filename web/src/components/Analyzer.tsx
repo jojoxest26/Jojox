@@ -145,6 +145,7 @@ export function Analyzer({
               {session ? t.analyzer.dropzoneHintLoggedIn : t.analyzer.dropzoneHintGuest}
             </div>
             <div className="dropzone-hint">{t.analyzer.dropzoneHintAny}</div>
+            <div className="dropzone-hint">{t.analyzer.dropzoneHintLanguages}</div>
             {files.length > 0 && (
               <div className="file-chip-row" onClick={(e) => e.stopPropagation()}>
                 {files.slice(0, 12).map((f) => (

@@ -156,6 +156,7 @@ export interface TranslationTree {
     dropzoneHintLoggedIn: string;
     dropzoneHintGuest: string;
     dropzoneHintAny: string;
+    dropzoneHintLanguages: string;
     sectionEyebrow: string;
     sectionTitle: string;
     moreFiles: string;
@@ -469,6 +470,7 @@ const it: TranslationTree = {
     dropzoneHintLoggedIn: "Sei loggato: l'analisi viene salvata nel tuo storico.",
     dropzoneHintGuest: "Modalità ospite: 1 analisi gratuita, senza email. Dopo, basta la mail per continuare (5 al mese, gratis).",
     dropzoneHintAny: "Funziona su qualsiasi codice — anche scritto interamente a mano, non solo generato dall'AI.",
+    dropzoneHintLanguages: "Oggi i 21 controlli sono tarati su JavaScript/TypeScript e SQL/Supabase: su altri linguaggi (Python, Java, PHP...) alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
     sectionEyebrow: "L'analyzer",
     sectionTitle: "Carica il codice, guarda cosa trova.",
     moreFiles: "+{{count}} altri",
@@ -813,6 +815,7 @@ const en: TranslationTree = {
     dropzoneHintLoggedIn: "You're signed in: the analysis is saved to your history.",
     dropzoneHintGuest: "Guest mode: 1 free analysis, no email. After that, just an email to continue (5 a month, free).",
     dropzoneHintAny: "Works on any code — even written entirely by hand, not just AI-generated.",
+    dropzoneHintLanguages: "Today the 21 checks are tuned for JavaScript/TypeScript and SQL/Supabase: on other languages (Python, Java, PHP...) some generic checks may still help, but coverage isn't complete yet.",
     sectionEyebrow: "The analyzer",
     sectionTitle: "Upload the code, see what it finds.",
     moreFiles: "+{{count}} more",
