@@ -18,6 +18,7 @@ export function Pricing({ session }: { session: Session | null }) {
   const [busy, setBusy] = useState<"pro" | "team" | "portal" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkoutNotice, setCheckoutNotice] = useState<"success" | "cancel" | null>(null);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -58,7 +59,7 @@ export function Pricing({ session }: { session: Session | null }) {
     setError(null);
     setBusy(target);
     try {
-      const { url } = await createCheckoutSession(target, session.access_token);
+      const { url } = await createCheckoutSession(target, session.access_token, billingInterval);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : t.pricing.errorActivation);
@@ -112,6 +113,24 @@ export function Pricing({ session }: { session: Session | null }) {
         </button>
       </div>
 
+      <div className="billing-toggle" role="group" aria-label="Ciclo di fatturazione">
+        <button
+          type="button"
+          className={`billing-toggle-btn${billingInterval === "monthly" ? " active" : ""}`}
+          onClick={() => setBillingInterval("monthly")}
+        >
+          {t.pricing.billingMonthly}
+        </button>
+        <button
+          type="button"
+          className={`billing-toggle-btn${billingInterval === "annual" ? " active" : ""}`}
+          onClick={() => setBillingInterval("annual")}
+        >
+          {t.pricing.billingAnnual}
+          <span className="billing-toggle-badge">{t.pricing.billingAnnualBadge}</span>
+        </button>
+      </div>
+
       <div className="pricing-grid">
         <div className="card price-card">
           <h3>{t.pricing.freeTitle}</h3>
@@ -135,7 +154,8 @@ export function Pricing({ session }: { session: Session | null }) {
           <span className="pill pill-amber price-card-badge">{t.pricing.proBadge}</span>
           <h3>{t.pricing.proTitle}</h3>
           <div className="price-amount">
-            9,99€ <span className="per">{t.pricing.proPer}</span>
+            {billingInterval === "annual" ? t.pricing.proPriceAnnual : "9,99€"}{" "}
+            <span className="per">{billingInterval === "annual" ? t.pricing.proPerAnnual : t.pricing.proPer}</span>
           </div>
           <ul>
             {t.pricing.proList.map((item) => (
@@ -171,7 +191,8 @@ export function Pricing({ session }: { session: Session | null }) {
           <span className="pill pill-mint price-card-badge">{t.pricing.teamBadge}</span>
           <h3>{t.pricing.teamTitle}</h3>
           <div className="price-amount">
-            24,99€ <span className="per">{t.pricing.teamPer}</span>
+            {billingInterval === "annual" ? t.pricing.teamPriceAnnual : "24,99€"}{" "}
+            <span className="per">{billingInterval === "annual" ? t.pricing.teamPerAnnual : t.pricing.teamPer}</span>
           </div>
           <ul>
             {t.pricing.teamList.map((item) => (

@@ -196,12 +196,12 @@ Supabase, ma ancora più delicato.
    assicurati che l'interruttore **Test mode** in alto a destra sia attivo:
    con le chiavi di test si prova tutto con carte finte, senza soldi veri e
    senza dover completare subito la verifica legale dell'azienda
-2. **Product catalog** → **Add product** → crea due prodotti con un prezzo
-   **ricorrente mensile**:
-   - "JoJoX Pro" — 9,99€/mese
-   - "JoJoX Team" — 24,99€/mese
-   Per ognuno, apri il prezzo appena creato e copia il suo **ID** (inizia
-   con `price_`)
+2. **Product catalog** → **Add product** → crea due prodotti, ognuno con
+   **due prezzi ricorrenti** (mensile e annuale):
+   - "JoJoX Pro" — 9,99€/mese e 99€/anno
+   - "JoJoX Team" — 24,99€/mese e 249€/anno
+   Per ognuno dei 4 prezzi, apri il prezzo appena creato e copia il suo
+   **ID** (inizia con `price_`)
 3. **Settings → Billing → Customer portal**: attiva la possibilità per i
    clienti di **cancellare l'abbonamento** e di **cambiare piano** (aggiungi
    entrambi i prezzi appena creati come opzioni disponibili) — è quello che
@@ -220,8 +220,10 @@ Supabase, ma ancora più delicato.
    tu stesso queste chiavi (non a me):
    - `STRIPE_SECRET_KEY` — la secret key del punto 5
    - `STRIPE_WEBHOOK_SECRET` — il signing secret del punto 4
-   - `STRIPE_PRICE_ID_PRO` — l'ID del prezzo "Pro" dal punto 2
-   - `STRIPE_PRICE_ID_TEAM` — l'ID del prezzo "Team" dal punto 2
+   - `STRIPE_PRICE_ID_PRO` — l'ID del prezzo "Pro" mensile dal punto 2
+   - `STRIPE_PRICE_ID_TEAM` — l'ID del prezzo "Team" mensile dal punto 2
+   - `STRIPE_PRICE_ID_PRO_ANNUAL` — l'ID del prezzo "Pro" annuale dal punto 2
+   - `STRIPE_PRICE_ID_TEAM_ANNUAL` — l'ID del prezzo "Team" annuale dal punto 2 (le due varianti annuali sono facoltative: finché non le imposti, il sito mostra comunque il pulsante "Annuale", ma l'attivazione risponderà con un errore di configurazione)
    - `APP_URL` — il dominio vero del sito (es. `https://jojox.it`, o quello
      provvisorio di Vercel se non ci sei ancora arrivato)
 7. Prova subito: sul sito, da loggato, clicca **Attiva Pro** → nel checkout

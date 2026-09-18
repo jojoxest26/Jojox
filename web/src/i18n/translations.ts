@@ -104,6 +104,9 @@ export interface TranslationTree {
     guestTitle: string;
     guestList: string[];
     guestCta: string;
+    billingMonthly: string;
+    billingAnnual: string;
+    billingAnnualBadge: string;
     freeTitle: string;
     freeList: string[];
     freeCta: string;
@@ -111,6 +114,8 @@ export interface TranslationTree {
     proBadge: string;
     proTitle: string;
     proPer: string;
+    proPerAnnual: string;
+    proPriceAnnual: string;
     proList: string[];
     proCta: string;
     proActivating: string;
@@ -118,6 +123,8 @@ export interface TranslationTree {
     teamBadge: string;
     teamTitle: string;
     teamPer: string;
+    teamPerAnnual: string;
+    teamPriceAnnual: string;
     teamList: string[];
     teamCta: string;
     teamActivating: string;
@@ -397,6 +404,9 @@ const it: TranslationTree = {
       "Un solo tentativo per visitatore, imposto dal nostro server",
     ],
     guestCta: "Prova senza registrarti",
+    billingMonthly: "Mensile",
+    billingAnnual: "Annuale",
+    billingAnnualBadge: "risparmi ~17%",
     freeTitle: "Gratis",
     freeList: [
       "5 analisi al mese",
@@ -409,6 +419,8 @@ const it: TranslationTree = {
     proBadge: "MONITORING",
     proTitle: "Pro",
     proPer: "/mese",
+    proPerAnnual: "/anno",
+    proPriceAnnual: "99€",
     proList: [
       "Analisi e cronologia illimitate",
       "Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose",
@@ -422,6 +434,8 @@ const it: TranslationTree = {
     teamBadge: "TEAM",
     teamTitle: "Team",
     teamPer: "/mese",
+    teamPerAnnual: "/anno",
+    teamPriceAnnual: "249€",
     teamList: [
       "Analisi e cronologia illimitate",
       "Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose",
@@ -752,6 +766,9 @@ const en: TranslationTree = {
       "One attempt per visitor, enforced by our server",
     ],
     guestCta: "Try it without signing up",
+    billingMonthly: "Monthly",
+    billingAnnual: "Annual",
+    billingAnnualBadge: "save ~17%",
     freeTitle: "Free",
     freeList: [
       "5 analyses a month",
@@ -764,6 +781,8 @@ const en: TranslationTree = {
     proBadge: "MONITORING",
     proTitle: "Pro",
     proPer: "/month",
+    proPerAnnual: "/year",
+    proPriceAnnual: "€99",
     proList: [
       "Unlimited analyses and history",
       "GitHub integration: checks every push and blocks the riskiest changes",
@@ -777,6 +796,8 @@ const en: TranslationTree = {
     teamBadge: "TEAM",
     teamTitle: "Team",
     teamPer: "/month",
+    teamPerAnnual: "/year",
+    teamPriceAnnual: "€249",
     teamList: [
       "Unlimited analyses and history",
       "GitHub integration: checks every push and blocks the riskiest changes",

@@ -85,10 +85,14 @@ export async function fetchProfile(accessToken: string): Promise<Plan> {
 }
 
 /** Crea una sessione di Stripe Checkout e restituisce l'URL a cui reindirizzare per attivare un piano a pagamento. */
-export function createCheckoutSession(plan: "pro" | "team", accessToken: string): Promise<{ url: string }> {
+export function createCheckoutSession(
+  plan: "pro" | "team",
+  accessToken: string,
+  interval: "monthly" | "annual" = "monthly"
+): Promise<{ url: string }> {
   return apiFetch<{ url: string }>("/api/stripe/create-checkout-session", {
     method: "POST",
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify({ plan, interval }),
     accessToken,
   });
 }

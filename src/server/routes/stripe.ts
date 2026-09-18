@@ -8,7 +8,10 @@ import { priceIdForPlan } from "../stripe/plans.js";
 
 export const stripeRouter = Router();
 
-const checkoutSchema = z.object({ plan: z.enum(["pro", "team"]) });
+const checkoutSchema = z.object({
+  plan: z.enum(["pro", "team"]),
+  interval: z.enum(["monthly", "annual"]).default("monthly"),
+});
 
 interface StripeCustomer {
   id: string;
@@ -51,7 +54,7 @@ stripeRouter.post("/api/stripe/create-checkout-session", requireAuth, async (req
     return;
   }
 
-  const priceId = priceIdForPlan(parsed.data.plan);
+  const priceId = priceIdForPlan(parsed.data.plan, parsed.data.interval);
   if (!priceId) {
     res.status(503).json({ error: "Pagamenti non ancora configurati" });
     return;
