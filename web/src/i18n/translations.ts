@@ -141,6 +141,7 @@ export interface TranslationTree {
     items: string[];
     privacyLink: string;
     termsLink: string;
+    securityLink: string;
   };
   checksList: {
     title: string;
@@ -462,6 +463,7 @@ const it: TranslationTree = {
     ],
     privacyLink: "Informativa sulla Privacy",
     termsLink: "Termini di Servizio",
+    securityLink: "Sicurezza e segnalazione vulnerabilità",
   },
   checksList: {
     title: "Tutti i controlli, senza segreti",
@@ -824,6 +826,7 @@ const en: TranslationTree = {
     ],
     privacyLink: "Privacy Policy",
     termsLink: "Terms of Service",
+    securityLink: "Security & vulnerability disclosure",
   },
   checksList: {
     title: "Every check, no secrets",

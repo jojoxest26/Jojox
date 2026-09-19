@@ -18,6 +18,7 @@ interface LegalPagesTree {
   backHome: string;
   privacy: LegalDoc;
   terms: LegalDoc;
+  security: LegalDoc;
 }
 
 function p(text: string): LegalBlock {
@@ -250,6 +251,57 @@ const it: LegalPagesTree = {
       },
     ],
   },
+  security: {
+    title: "Sicurezza e segnalazione di vulnerabilità",
+    lastUpdated: "19 settembre 2026",
+    intro:
+      "JoJoX è uno strumento di sicurezza: se un problema di sicurezza riguardasse JoJoX stesso, vogliamo saperlo il prima possibile, prima che lo scopra qualcun altro. Questa pagina spiega come segnalarcelo e cosa puoi aspettarti da noi dopo averlo fatto.",
+    sections: [
+      {
+        heading: "Come segnalare una vulnerabilità",
+        blocks: [
+          p(
+            "Scrivi a jojoxest26@gmail.com con oggetto che inizia con \"[Sicurezza]\". Descrivi il problema, i passaggi per riprodurlo e, se possibile, il suo impatto potenziale. Non serve nessuna procedura complicata: una email chiara è tutto quello che ci serve per iniziare."
+          ),
+          p(
+            "Ti chiediamo di non divulgare pubblicamente il problema (social, forum, bug bounty platform, ecc.) finché non l'abbiamo risolto insieme a te, o finché non è passato un tempo ragionevole concordato."
+          ),
+        ],
+      },
+      {
+        heading: "Cosa puoi aspettarti da noi",
+        blocks: [
+          list([
+            "conferma di ricezione entro 5 giorni lavorativi;",
+            "una valutazione iniziale della gravità e una stima di massima dei tempi di correzione, appena possibile;",
+            "aggiornamenti periodici finché il problema non è risolto;",
+            "un avviso quando la correzione è stata rilasciata, così puoi verificarla se vuoi.",
+          ]),
+        ],
+      },
+      {
+        heading: "Cosa è coperto",
+        blocks: [
+          p("Sono in ambito: il sito jojox.it, il server che esegue le analisi, la GitHub App, l'estensione VS Code e il server MCP."),
+          p(
+            "Non sono in ambito i servizi di terze parti che usiamo (Supabase, Stripe, Railway, Vercel, GitHub): un problema di sicurezza in quei servizi va segnalato direttamente a loro, non a noi. Se non sei sicuro se un problema riguardi JoJoX o uno di questi fornitori, scrivici comunque: ti indirizziamo noi."
+          ),
+        ],
+      },
+      {
+        heading: "Nessun programma di ricompense per ora",
+        blocks: [
+          p(
+            "Essendo JoJoX un progetto avviato in autofinanziamento da una sola persona, oggi non possiamo offrire ricompense in denaro per le segnalazioni. Quello che possiamo offrire è gratitudine reale, una risposta rapida e onesta, e — se lo desideri — un ringraziamento pubblico per il tuo contributo una volta risolto il problema."
+          ),
+        ],
+      },
+      {
+        heading: "Contatti",
+        blocks: [p("Per qualsiasi segnalazione o domanda su questa pagina, scrivi a jojoxest26@gmail.com.")],
+      },
+    ],
+  },
 };
 
 const en: LegalPagesTree = {
@@ -468,6 +520,57 @@ const en: LegalPagesTree = {
       {
         heading: "Contact",
         blocks: [p("For any question about these terms, write to jojoxest26@gmail.com.")],
+      },
+    ],
+  },
+  security: {
+    title: "Security and Vulnerability Disclosure",
+    lastUpdated: "September 19, 2026",
+    intro:
+      "JoJoX is a security tool: if a security issue ever affected JoJoX itself, we want to know as soon as possible — before anyone else finds it. This page explains how to report it to us and what you can expect from us afterward.",
+    sections: [
+      {
+        heading: "How to report a vulnerability",
+        blocks: [
+          p(
+            "Write to jojoxest26@gmail.com with a subject line starting with \"[Security]\". Describe the issue, the steps to reproduce it, and, if possible, its potential impact. No complicated process is needed — a clear email is all we need to get started."
+          ),
+          p(
+            "Please don't publicly disclose the issue (social media, forums, bug bounty platforms, etc.) until we've resolved it together with you, or until a reasonable agreed-upon time has passed."
+          ),
+        ],
+      },
+      {
+        heading: "What you can expect from us",
+        blocks: [
+          list([
+            "acknowledgment of receipt within 5 business days;",
+            "an initial severity assessment and a rough timeline estimate for a fix, as soon as we can provide one;",
+            "periodic updates until the issue is resolved;",
+            "notice once the fix has shipped, so you can verify it if you'd like.",
+          ]),
+        ],
+      },
+      {
+        heading: "What's in scope",
+        blocks: [
+          p("In scope: the jojox.it website, the server that runs analyses, the GitHub App, the VS Code extension, and the MCP server."),
+          p(
+            "Third-party services we rely on (Supabase, Stripe, Railway, Vercel, GitHub) are out of scope: a security issue in those services should be reported directly to them, not to us. If you're not sure whether an issue is on JoJoX's side or one of these providers, write to us anyway — we'll point you in the right direction."
+          ),
+        ],
+      },
+      {
+        heading: "No bounty program yet",
+        blocks: [
+          p(
+            "Since JoJoX is a self-funded, one-person project, we can't offer monetary rewards for reports today. What we can offer is genuine gratitude, a fast and honest response, and — if you'd like — public credit for your contribution once the issue is fixed."
+          ),
+        ],
+      },
+      {
+        heading: "Contact",
+        blocks: [p("For any report or question about this page, write to jojoxest26@gmail.com.")],
       },
     ],
   },

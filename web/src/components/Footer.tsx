@@ -15,6 +15,8 @@ export function Footer() {
         <a href="/privacy">{t.footer.privacyLink}</a>
         <span aria-hidden="true"> · </span>
         <a href="/termini">{t.footer.termsLink}</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/sicurezza">{t.footer.securityLink}</a>
       </div>
     </footer>
   );

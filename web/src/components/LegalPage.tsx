@@ -68,3 +68,20 @@ export function TermsOfServicePage() {
     </div>
   );
 }
+
+export function SecurityPolicyPage() {
+  const { lang } = useTranslation();
+  return (
+    <div className="legal-page">
+      <div className="container legal-page-nav">
+        <a href="/" onClick={goHome} className="legal-back">
+          {legalPages[lang].backHome}
+        </a>
+        <LanguageSwitcher />
+      </div>
+      <div className="container">
+        <LegalDocView doc={legalPages[lang].security} />
+      </div>
+    </div>
+  );
+}
