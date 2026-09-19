@@ -1199,6 +1199,11 @@ body {
   color: var(--accent);
   border: 1px solid var(--accent);
 }
+.price-card-badge.pill-low {
+  background: var(--bg);
+  color: var(--low);
+  border: 1px solid var(--low);
+}
 .price-card-badge.pill-mint {
   background: var(--bg);
   color: #6bcf9e;
@@ -1219,6 +1224,9 @@ body {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-muted);
+}
+.price-amount-compact {
+  font-size: 1.65rem;
 }
 .price-card ul {
   list-style: none;

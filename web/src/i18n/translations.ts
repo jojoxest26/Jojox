@@ -129,6 +129,13 @@ export interface TranslationTree {
     teamCta: string;
     teamActivating: string;
     teamNote: string;
+    enterpriseBadge: string;
+    enterpriseTitle: string;
+    enterprisePrice: string;
+    enterprisePer: string;
+    enterpriseList: string[];
+    enterpriseCta: string;
+    enterpriseNote: string;
     activePlan: string;
     manageSubscription: string;
     opening: string;
@@ -447,6 +454,18 @@ const it: TranslationTree = {
     teamCta: "Attiva Team",
     teamActivating: "Attivazione...",
     teamNote: "Per team con più repo",
+    enterpriseBadge: "ENTERPRISE",
+    enterpriseTitle: "Enterprise",
+    enterprisePrice: "Da 499€",
+    enterprisePer: "/mese",
+    enterpriseList: [
+      "Tutto quanto incluso in Team",
+      "Controlli avanzati su dipendenze e infrastruttura",
+      "Supporto dedicato con SLA",
+      "Onboarding e fatturazione su misura",
+    ],
+    enterpriseCta: "Contattaci",
+    enterpriseNote: "Per aziende con esigenze di sicurezza e compliance specifiche",
     activePlan: "Piano attivo",
     manageSubscription: "Gestisci abbonamento",
     opening: "Apertura...",
@@ -810,6 +829,18 @@ const en: TranslationTree = {
     teamCta: "Activate Team",
     teamActivating: "Activating...",
     teamNote: "For teams with multiple repos",
+    enterpriseBadge: "ENTERPRISE",
+    enterpriseTitle: "Enterprise",
+    enterprisePrice: "From €499",
+    enterprisePer: "/month",
+    enterpriseList: [
+      "Everything included in Team",
+      "Advanced checks on dependencies and infrastructure",
+      "Dedicated support with SLA",
+      "Custom onboarding and billing",
+    ],
+    enterpriseCta: "Contact us",
+    enterpriseNote: "For companies with specific security and compliance needs",
     activePlan: "Active plan",
     manageSubscription: "Manage subscription",
     opening: "Opening...",
