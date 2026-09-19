@@ -448,7 +448,7 @@ const it: TranslationTree = {
     ],
     teamCta: "Attiva Team",
     teamActivating: "Attivazione...",
-    teamNote: "Per team con più repo",
+    teamNote: "Per team con più repo — oggi un account per abbonamento",
     enterpriseContactQuestion: "Esigenze diverse o un team più grande?",
     enterpriseContactLink: "Scrivici",
     activePlan: "Piano attivo",
@@ -563,7 +563,7 @@ const it: TranslationTree = {
       {
         icon: "👥",
         title: "Gestione team con più seat",
-        text: "Più persone collegate a un solo abbonamento Team, con seat da aggiungere e dashboard condivisa — nessuna data ancora, arriva quando il disegno lato pagamenti/permessi è pronto.",
+        text: "Fino a 5 persone incluse nello stesso abbonamento Team, con seat da aggiungere e dashboard condivisa — nessuna data ancora, arriva quando il disegno lato pagamenti/permessi è pronto.",
       },
       {
         icon: "🏢",
@@ -813,7 +813,7 @@ const en: TranslationTree = {
     ],
     teamCta: "Activate Team",
     teamActivating: "Activating...",
-    teamNote: "For teams with multiple repos",
+    teamNote: "For teams with multiple repos — one account per subscription today",
     enterpriseContactQuestion: "Need something custom for a larger team?",
     enterpriseContactLink: "Get in touch",
     activePlan: "Active plan",
@@ -928,7 +928,7 @@ const en: TranslationTree = {
       {
         icon: "👥",
         title: "Team management with more seats",
-        text: "Multiple people connected to a single Team subscription, with seats to add and a shared dashboard — no date yet, coming once the billing/permissions design is ready.",
+        text: "Up to 5 people included in the same Team subscription, with seats to add and a shared dashboard — no date yet, coming once the billing/permissions design is ready.",
       },
       {
         icon: "🏢",

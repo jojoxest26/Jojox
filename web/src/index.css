@@ -214,6 +214,21 @@ body {
   background: var(--surface-muted);
 }
 
+.btn-mint {
+  background: #34d399;
+  color: #062017;
+  border-color: transparent;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35), 0 10px 26px -10px rgba(52, 211, 153, 0.55);
+}
+.btn-mint:hover {
+  background: #4ee0ac;
+}
+.btn-mint:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ---------- header ---------- */
 .header {
   position: sticky;

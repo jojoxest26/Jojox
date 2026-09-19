@@ -214,7 +214,7 @@ export function Pricing({ session }: { session: Session | null }) {
           ) : (
             <button
               type="button"
-              className="btn btn-secondary hard-border hard-shadow-sm"
+              className="btn btn-mint hard-border hard-shadow-sm"
               onClick={() => handleActivate("team")}
               disabled={busy === "team"}
             >
