@@ -223,27 +223,14 @@ export function Pricing({ session }: { session: Session | null }) {
           )}
           <p className="price-card-note">{t.pricing.teamNote}</p>
         </div>
-
-        <div className="card price-card">
-          <span className="pill pill-low price-card-badge">{t.pricing.enterpriseBadge}</span>
-          <h3>{t.pricing.enterpriseTitle}</h3>
-          <div className="price-amount price-amount-compact">
-            {t.pricing.enterprisePrice} <span className="per">{t.pricing.enterprisePer}</span>
-          </div>
-          <ul>
-            {t.pricing.enterpriseList.map((item) => (
-              <li key={item}>✓ {item}</li>
-            ))}
-          </ul>
-          <a
-            href={`mailto:jojoxest26@gmail.com?subject=${encodeURIComponent("[Enterprise]")}`}
-            className="btn btn-secondary hard-border hard-shadow-sm"
-          >
-            {t.pricing.enterpriseCta}
-          </a>
-          <p className="price-card-note">{t.pricing.enterpriseNote}</p>
-        </div>
       </div>
+
+      <p className="pricing-enterprise-note">
+        {t.pricing.enterpriseContactQuestion}{" "}
+        <a href={`mailto:jojoxest26@gmail.com?subject=${encodeURIComponent("[Enterprise]")}`}>
+          {t.pricing.enterpriseContactLink}
+        </a>
+      </p>
 
       {error && <p className="pricing-error">{error}</p>}
 
