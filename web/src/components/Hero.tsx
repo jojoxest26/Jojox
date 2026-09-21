@@ -10,6 +10,7 @@ export function Hero() {
 
   return (
     <section className="hero container">
+      <p className="hero-eyebrow">{t.hero.badge}</p>
       <h1 className="poster-line top">JoJoX</h1>
 
       <div className="panel-wrap">

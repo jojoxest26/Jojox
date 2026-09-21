@@ -284,6 +284,14 @@ body {
   position: relative;
   padding: 2rem 0 3rem;
 }
+.hero-eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  margin: 0 0 0.5rem;
+}
 .poster-line {
   font-family: "Anton", "Inter", sans-serif;
   text-transform: uppercase;
