@@ -14,6 +14,7 @@ import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
 import { PrivacyPolicyPage, TermsOfServicePage, SecurityPolicyPage } from "./components/LegalPage.js";
+import { PublicScorePage } from "./components/PublicScorePage.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 
@@ -84,8 +85,9 @@ function App() {
       });
   }, [session]);
 
-  // Il sito non usa un router: privacy, termini e sicurezza sono le uniche
-  // altre pagine, raggiunte anche da link diretti, quindi bastano pathname + popstate.
+  // Il sito non usa un router: privacy, termini, sicurezza e il punteggio
+  // pubblico sono le uniche altre pagine, raggiunte anche da link diretti,
+  // quindi bastano pathname + popstate.
   useEffect(() => {
     const onPopState = () => setPath(window.location.pathname);
     window.addEventListener("popstate", onPopState);
@@ -97,6 +99,10 @@ function App() {
   if (path === "/privacy") return <PrivacyPolicyPage />;
   if (path === "/termini") return <TermsOfServicePage />;
   if (path === "/sicurezza") return <SecurityPolicyPage />;
+  if (path.startsWith("/r/")) {
+    const [owner, repo] = path.slice(3).split("/");
+    if (owner && repo) return <PublicScorePage owner={owner} repo={repo} />;
+  }
 
   return (
     <>

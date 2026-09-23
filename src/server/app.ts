@@ -5,6 +5,7 @@ import { analyzeRouter } from "./routes/analyze.js";
 import { analysesRouter } from "./routes/analyses.js";
 import { waitlistRouter } from "./routes/waitlist.js";
 import { badgeRouter } from "./routes/badge.js";
+import { publicScoreRouter } from "./routes/publicScore.js";
 import { guestAnalyzeRouter } from "./routes/guestAnalyze.js";
 import { githubWebhookRouter } from "./routes/webhooks/github.js";
 import { stripeWebhookRouter } from "./routes/webhooks/stripe.js";
@@ -41,6 +42,7 @@ export function createApp(): Express {
   app.use(analysesRouter);
   app.use(waitlistRouter);
   app.use(badgeRouter);
+  app.use(publicScoreRouter);
   app.use(guestAnalyzeRouter);
   app.use(stripeRouter);
   app.use(profileRouter);

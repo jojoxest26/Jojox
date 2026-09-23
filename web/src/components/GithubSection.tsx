@@ -158,6 +158,12 @@ export function GithubSection({
             </div>
 
             <div className="github-badge-howto">
+              <p className="github-badge-title">{t.github.publicScoreTitle}</p>
+              <p>{t.github.publicScoreBody}</p>
+              <pre className="github-badge-snippet">{`${window.location.origin}/r/proprietario/repo`}</pre>
+            </div>
+
+            <div className="github-badge-howto">
               <p className="github-badge-title">{t.github.terminalTitle}</p>
               <p>
                 {renderWithTokens(t.github.terminalBody, {
