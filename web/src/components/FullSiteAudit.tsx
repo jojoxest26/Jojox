@@ -221,7 +221,10 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                       <ScoreRing score={result.score} />
                       <div className="score-compare-label">{t.fullSiteAudit.scoreBefore}</div>
                     </div>
-                    <div className="score-compare-arrow">→</div>
+                    <div className="score-compare-arrow">
+                      <span className="score-compare-delta">+{afterFixScore - result.score}</span>
+                      <span>→</span>
+                    </div>
                     <div className="score-compare-item">
                       <ScoreRing score={afterFixScore} />
                       <div className="score-compare-label">{t.fullSiteAudit.scoreAfter}</div>
@@ -256,12 +259,12 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
           {result && <FindingsList result={result} />}
         </>
       ) : (
-        <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
+        <div className="card full-site-audit-card">
           <div className="price-amount">
             {t.fullSiteAudit.priceLabel}
           </div>
           <p className="price-card-note">{t.fullSiteAudit.priceNote}</p>
-          <ul style={{ textAlign: "left", maxWidth: 480, margin: "1rem auto" }}>
+          <ul className="full-site-audit-features">
             {t.fullSiteAudit.features.map((item) => (
               <li key={item}>✓ {item}</li>
             ))}
