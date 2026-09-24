@@ -211,7 +211,7 @@ export function Analyzer({
         </div>
       )}
 
-      {result && <FindingsList result={result} />}
+      {result && <FindingsList result={result} autofix={autofix} />}
     </section>
   );
 }

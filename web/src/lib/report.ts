@@ -48,7 +48,12 @@ function formatTimestamp(dateLocale: string): string {
   });
 }
 
-function findingHtml(finding: Finding, lang: Lang, t: (typeof translations)["it"]): string {
+function findingHtml(
+  finding: Finding,
+  lang: Lang,
+  t: (typeof translations)["it"],
+  autoFixed: boolean
+): string {
   const sev = finding.severity;
   const location = escapeHtml(finding.file) + (finding.line > 0 ? `:${finding.line}` : "");
   const text = translateCheckText(finding.checkId, finding, lang);
@@ -61,6 +66,7 @@ function findingHtml(finding: Finding, lang: Lang, t: (typeof translations)["it"
         </div>
         <span class="sev-badge">${t.common.severity[sev]}</span>
       </div>
+      ${autoFixed ? `<p class="autofixed-tag">${t.findingsList.autoFixed}</p>` : ""}
       <p class="finding-text">${escapeHtml(text.description)}</p>
       <div class="diff">
         <div class="diff-block diff-before">
@@ -94,7 +100,11 @@ export function buildReportHtml(
     result.findings.length === 0
       ? `<p class="empty-state">${t.report.emptyState}</p>`
       : SEVERITY_ORDER.filter((sev) => result.findings.some((f) => f.severity === sev))
-          .flatMap((sev) => result.findings.filter((f) => f.severity === sev).map((f) => findingHtml(f, lang, t)))
+          .flatMap((sev) =>
+            result.findings
+              .filter((f) => f.severity === sev)
+              .map((f) => findingHtml(f, lang, t, autofix?.fixedCheckIds.has(f.checkId) ?? false))
+          )
           .join("");
 
   const tallyHtml = SEVERITY_ORDER.map(
@@ -327,6 +337,7 @@ export function buildReportHtml(
   }
 
   .finding-text { font-size: 0.82rem; color: #57534e; margin: 0 0 0.6rem; line-height: 1.5; }
+  .autofixed-tag { font-size: 0.75rem; font-weight: 700; color: #2f8f5b; margin: 0.2rem 0 0.5rem; }
 
   .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
   .diff-block { border-radius: 5px; overflow: hidden; border: 1px solid #e7e2d6; }

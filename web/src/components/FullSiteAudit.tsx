@@ -256,7 +256,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
             </div>
           )}
 
-          {result && <FindingsList result={result} />}
+          {result && <FindingsList result={result} autofix={autofix} />}
         </>
       ) : (
         <div className="card full-site-audit-card">

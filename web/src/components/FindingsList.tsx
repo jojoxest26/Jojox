@@ -1,4 +1,5 @@
 import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
+import type { AutofixResult } from "../../../src/analyze.js";
 import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
@@ -15,7 +16,7 @@ function groupBySeverity(findings: Finding[]): Map<Severity, Finding[]> {
   return map;
 }
 
-export function FindingsList({ result }: { result: AnalysisResult }) {
+export function FindingsList({ result, autofix }: { result: AnalysisResult; autofix?: AutofixResult | null }) {
   const { t, lang } = useTranslation();
   const grouped = groupBySeverity(result.findings);
 
@@ -56,6 +57,9 @@ export function FindingsList({ result }: { result: AnalysisResult }) {
                   </div>
                   <div className="finding-confidence">
                     {finding.confidence === "confirmed" ? t.common.confirmed : t.common.heuristic}
+                    {autofix?.fixedCheckIds.has(finding.checkId) && (
+                      <span className="finding-autofixed"> · {t.findingsList.autoFixed}</span>
+                    )}
                   </div>
                   <p className="finding-desc">{text.description}</p>
                   <div className="finding-snippet">{finding.snippet}</div>

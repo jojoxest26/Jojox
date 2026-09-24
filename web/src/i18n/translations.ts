@@ -197,6 +197,7 @@ export interface TranslationTree {
   findingsList: {
     scoreLabel: string;
     emptyState: string;
+    autoFixed: string;
   };
   github: {
     title: string;
@@ -562,6 +563,7 @@ const it: TranslationTree = {
   findingsList: {
     scoreLabel: "Punteggio di sicurezza",
     emptyState: "Nessun problema trovato nei 21 controlli. 🎉",
+    autoFixed: "🔧 già corretto nel file scaricabile",
   },
   github: {
     title: "GitHub App + CI",
@@ -973,6 +975,7 @@ const en: TranslationTree = {
   findingsList: {
     scoreLabel: "Security score",
     emptyState: "No problems found across the 21 checks. 🎉",
+    autoFixed: "🔧 already fixed in the downloadable file",
   },
   github: {
     title: "GitHub App + CI",

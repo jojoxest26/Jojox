@@ -1039,6 +1039,10 @@ body {
   font-size: 0.72rem;
   color: var(--text-muted);
 }
+.finding-autofixed {
+  font-weight: 700;
+  color: #4caf7d;
+}
 .finding-desc {
   font-size: 0.88rem;
   color: var(--text-muted);
