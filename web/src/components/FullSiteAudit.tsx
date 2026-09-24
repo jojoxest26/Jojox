@@ -133,11 +133,13 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       <h2 className="section-title">{t.fullSiteAudit.title}</h2>
       <p>{t.fullSiteAudit.subtitle}</p>
 
-      {credits != null && credits > 0 ? (
+      {result || (credits != null && credits > 0) ? (
         <>
-          <p className="dropzone-hint" style={{ textAlign: "center" }}>
-            {interpolate(t.fullSiteAudit.creditsAvailable, { count: String(credits) })}
-          </p>
+          {!result && (
+            <p className="dropzone-hint" style={{ textAlign: "center" }}>
+              {interpolate(t.fullSiteAudit.creditsAvailable, { count: String(credits) })}
+            </p>
+          )}
 
           {!result && (
             <>
