@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeAuditViaApi, createAuditCheckoutSession, fetchAuditCredits } from "../lib/api.js";
-import { readFileAsText, downloadZip } from "../lib/fileUpload.js";
+import { readFileAsText, downloadZip, collectFilesFromDataTransfer } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -77,10 +77,28 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
 
   async function loadFiles(fileList: FileList) {
     const entries = Array.from(fileList)
-      .filter((f) => !SKIP_PATH.test(f.webkitRelativePath || f.name))
+      .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
+      .filter(({ path }) => !SKIP_PATH.test(path))
       .slice(0, MAX_FILES);
-    const loaded = await Promise.all(entries.map(readFileAsText));
+    const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);
+    setResult(null);
+    setAutofix(null);
+    setError(null);
+  }
+
+  async function loadFromDrop(dataTransfer: DataTransfer) {
+    const collected = await collectFilesFromDataTransfer(dataTransfer);
+    const entries = collected.filter(({ path }) => !SKIP_PATH.test(path)).slice(0, MAX_FILES);
+    const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
+    setFiles(loaded);
+    setResult(null);
+    setAutofix(null);
+    setError(null);
+  }
+
+  function clearFiles() {
+    setFiles([]);
     setResult(null);
     setAutofix(null);
     setError(null);
@@ -133,7 +151,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                 onDrop={(e) => {
                   e.preventDefault();
                   setDragOver(false);
-                  if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+                  loadFromDrop(e.dataTransfer);
                 }}
                 onClick={() => document.getElementById("audit-file-input")?.click()}
                 role="button"
@@ -143,6 +161,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   id="audit-file-input"
                   type="file"
                   multiple
+                  // @ts-expect-error -- non standard, ma è ciò che permette di scegliere un'intera cartella dal click
+                  webkitdirectory=""
                   onChange={(e) => e.target.files && loadFiles(e.target.files)}
                 />
                 <strong>{t.fullSiteAudit.dropzoneCta}</strong>
@@ -159,7 +179,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                 )}
               </div>
 
-              <div style={{ textAlign: "center", marginTop: "1rem" }}>
+              <div style={{ textAlign: "center", marginTop: "1rem", display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
                 <button type="button" className="btn btn-primary" disabled={files.length === 0 || analyzing} onClick={runAudit}>
                   {analyzing
                     ? t.fullSiteAudit.analyzing
@@ -167,6 +187,11 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                       ? interpolate(t.fullSiteAudit.analyzeButtonCount, { count: String(files.length) })
                       : t.fullSiteAudit.analyzeButton}
                 </button>
+                {files.length > 0 && !analyzing && (
+                  <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={clearFiles}>
+                    {t.fullSiteAudit.changeFiles}
+                  </button>
+                )}
               </div>
             </>
           )}

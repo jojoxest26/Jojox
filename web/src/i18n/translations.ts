@@ -306,6 +306,7 @@ export interface TranslationTree {
     downloadPdf: string;
     downloadZip: string;
     newAudit: string;
+    changeFiles: string;
   };
 }
 
@@ -713,6 +714,7 @@ const it: TranslationTree = {
     downloadPdf: "Scarica report PDF",
     downloadZip: "Scarica file corretti (.zip)",
     newAudit: "🔁 Nuovo Full Site Audit",
+    changeFiles: "Cambia file",
   },
 };
 
@@ -1120,6 +1122,7 @@ const en: TranslationTree = {
     downloadPdf: "Download PDF report",
     downloadZip: "Download fixed files (.zip)",
     newAudit: "🔁 New Full Site Audit",
+    changeFiles: "Change files",
   },
 };
 

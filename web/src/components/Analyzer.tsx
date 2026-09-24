@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeViaApi, guestAnalyzeViaApi } from "../lib/api.js";
-import { readFileAsText, downloadZip } from "../lib/fileUpload.js";
+import { readFileAsText, downloadZip, collectFilesFromDataTransfer } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -36,9 +36,20 @@ export function Analyzer({
 
   const loadFiles = useCallback(async (fileList: FileList) => {
     const entries = Array.from(fileList)
-      .filter((f) => !SKIP_PATH.test(f.webkitRelativePath || f.name))
+      .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
+      .filter(({ path }) => !SKIP_PATH.test(path))
       .slice(0, MAX_FILES);
-    const loaded = await Promise.all(entries.map(readFileAsText));
+    const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
+    setFiles(loaded);
+    setResult(null);
+    setAutofix(null);
+    setError(null);
+  }, []);
+
+  const loadFromDrop = useCallback(async (dataTransfer: DataTransfer) => {
+    const collected = await collectFilesFromDataTransfer(dataTransfer);
+    const entries = collected.filter(({ path }) => !SKIP_PATH.test(path)).slice(0, MAX_FILES);
+    const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);
     setResult(null);
     setAutofix(null);
@@ -111,7 +122,7 @@ export function Analyzer({
             onDrop={(e) => {
               e.preventDefault();
               setDragOver(false);
-              if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+              loadFromDrop(e.dataTransfer);
             }}
             onClick={() => document.getElementById("file-input")?.click()}
             role="button"
