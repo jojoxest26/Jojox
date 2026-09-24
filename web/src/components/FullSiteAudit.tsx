@@ -260,19 +260,19 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
         </>
       ) : (
         <div className="card full-site-audit-card">
-          <div className="price-amount">
-            {t.fullSiteAudit.priceLabel}
-          </div>
-          <p className="price-card-note">{t.fullSiteAudit.priceNote}</p>
           <ul className="full-site-audit-features">
             {t.fullSiteAudit.features.map((item) => (
               <li key={item}>✓ {item}</li>
             ))}
           </ul>
-          <button type="button" className="btn btn-primary hard-border hard-shadow" disabled={buying} onClick={buyAudit}>
-            {buying ? t.fullSiteAudit.buying : t.fullSiteAudit.ctaBuy}
-          </button>
-          {purchaseError && <p style={{ color: "var(--critical)", marginTop: "0.75rem" }}>{purchaseError}</p>}
+          <div className="full-site-audit-cta">
+            <div className="price-amount">{t.fullSiteAudit.priceLabel}</div>
+            <p className="price-card-note">{t.fullSiteAudit.priceNote}</p>
+            <button type="button" className="btn btn-primary hard-border hard-shadow" disabled={buying} onClick={buyAudit}>
+              {buying ? t.fullSiteAudit.buying : t.fullSiteAudit.ctaBuy}
+            </button>
+            {purchaseError && <p style={{ color: "var(--critical)", marginTop: "0.75rem" }}>{purchaseError}</p>}
+          </div>
         </div>
       )}
     </section>
