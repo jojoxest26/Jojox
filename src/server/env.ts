@@ -39,4 +39,6 @@ export const env = {
   /** Prezzi annuali: opzionali come i mensili — se mancanti, l'opzione annuale resta indisponibile invece di rompere il sito. */
   stripePriceIdProAnnual: process.env.STRIPE_PRICE_ID_PRO_ANNUAL ?? null,
   stripePriceIdTeamAnnual: process.env.STRIPE_PRICE_ID_TEAM_ANNUAL ?? null,
+  /** Prezzo one-time per il Full Site Audit — pagamento singolo, non abbonamento. */
+  stripePriceIdAudit: process.env.STRIPE_PRICE_ID_AUDIT ?? null,
 };

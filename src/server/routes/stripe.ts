@@ -80,6 +80,35 @@ stripeRouter.post("/api/stripe/create-checkout-session", requireAuth, async (req
   }
 });
 
+stripeRouter.post("/api/stripe/create-audit-checkout-session", requireAuth, async (req: AuthedRequest, res) => {
+  if (!env.stripePriceIdAudit) {
+    res.status(503).json({ error: "Pagamenti non ancora configurati" });
+    return;
+  }
+
+  try {
+    const customerId = await getOrCreateStripeCustomer(req.userId!);
+    const session = await stripeRequest<StripeCheckoutSession>("POST", "/checkout/sessions", {
+      customer: customerId,
+      mode: "payment",
+      line_items: [{ price: env.stripePriceIdAudit, quantity: 1 }],
+      // Pagamento singolo, non un piano: il webhook usa questi metadata per
+      // capire che deve accreditare un Full Site Audit, non aggiornare un abbonamento.
+      metadata: { supabase_user_id: req.userId!, product: "audit" },
+      success_url: `${env.appUrl}/?audit=success`,
+      cancel_url: `${env.appUrl}/?audit=cancel`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    if (err instanceof StripeNotConfiguredError) {
+      res.status(503).json({ error: err.message });
+      return;
+    }
+    console.error("errore nella creazione della sessione di checkout per il Full Site Audit", err);
+    res.status(500).json({ error: "Errore nella creazione del pagamento" });
+  }
+});
+
 stripeRouter.post("/api/stripe/create-portal-session", requireAuth, async (req: AuthedRequest, res) => {
   const { data: profile } = await supabaseAdmin
     .from("profiles")

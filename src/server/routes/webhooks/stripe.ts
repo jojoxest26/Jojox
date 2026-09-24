@@ -10,6 +10,12 @@ interface SubscriptionEventObject {
   items: { data: { price: { id: string } }[] };
 }
 
+interface CheckoutSessionEventObject {
+  id: string;
+  mode: string;
+  metadata?: { supabase_user_id?: string; product?: string };
+}
+
 export const stripeWebhookRouter = Router();
 
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
@@ -28,13 +34,18 @@ stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), 
     return;
   }
 
-  const event = JSON.parse(payload) as { type: string; data: { object: SubscriptionEventObject } };
+  const event = JSON.parse(payload) as {
+    type: string;
+    data: { object: SubscriptionEventObject | CheckoutSessionEventObject };
+  };
 
   try {
     if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
-      await syncPlanFromSubscription(event.data.object);
+      await syncPlanFromSubscription(event.data.object as SubscriptionEventObject);
     } else if (event.type === "customer.subscription.deleted") {
-      await setPlanForCustomer(event.data.object.customer, "free");
+      await setPlanForCustomer((event.data.object as SubscriptionEventObject).customer, "free");
+    } else if (event.type === "checkout.session.completed") {
+      await handleCheckoutCompleted(event.data.object as CheckoutSessionEventObject);
     }
     res.json({ received: true });
   } catch (err) {
@@ -57,4 +68,21 @@ async function syncPlanFromSubscription(subscription: SubscriptionEventObject): 
 
 async function setPlanForCustomer(stripeCustomerId: string, plan: "free" | "pro" | "team"): Promise<void> {
   await supabaseAdmin.from("profiles").update({ plan }).eq("stripe_customer_id", stripeCustomerId);
+}
+
+/**
+ * Pagamento singolo per un Full Site Audit (mode "payment", non "subscription").
+ * Riconosciuto dai metadata impostati alla creazione della sessione — un
+ * abbonamento normale non ha mai product: "audit" nei suoi metadata.
+ */
+async function handleCheckoutCompleted(session: CheckoutSessionEventObject): Promise<void> {
+  if (session.mode !== "payment" || session.metadata?.product !== "audit") return;
+
+  const userId = session.metadata?.supabase_user_id;
+  if (!userId) return;
+
+  await supabaseAdmin.from("audit_credits").insert({
+    user_id: userId,
+    stripe_checkout_session_id: session.id,
+  });
 }

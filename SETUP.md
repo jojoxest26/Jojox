@@ -202,6 +202,11 @@ Supabase, ma ancora più delicato.
    - "JoJoX Team" — 24,99€/mese e 249€/anno
    Per ognuno dei 4 prezzi, apri il prezzo appena creato e copia il suo
    **ID** (inizia con `price_`)
+
+   Crea anche un terzo prodotto, con un **prezzo singolo, non ricorrente**
+   (scegli "One time" invece di "Recurring" quando crei il prezzo):
+   - "JoJoX Full Site Audit" — 49€ una tantum
+   Copia anche qui l'ID del prezzo.
 3. **Settings → Billing → Customer portal**: attiva la possibilità per i
    clienti di **cancellare l'abbonamento** e di **cambiare piano** (aggiungi
    entrambi i prezzi appena creati come opzioni disponibili) — è quello che
@@ -211,7 +216,9 @@ Supabase, ma ancora più delicato.
 4. **Developers → Webhooks → Add endpoint**:
    - **Endpoint URL**: `https://<il-tuo-dominio-railway>/webhooks/stripe`
    - **Eventi da ascoltare**: `customer.subscription.created`,
-     `customer.subscription.updated`, `customer.subscription.deleted`
+     `customer.subscription.updated`, `customer.subscription.deleted`,
+     `checkout.session.completed` (questo ultimo serve per accreditare il
+     Full Site Audit, che è un pagamento singolo e non un abbonamento)
    - Crea l'endpoint, poi apri **Signing secret** e copialo (inizia con
      `whsec_`)
 5. **Developers → API keys** → copia la **Secret key** (in modalità test
@@ -224,6 +231,7 @@ Supabase, ma ancora più delicato.
    - `STRIPE_PRICE_ID_TEAM` — l'ID del prezzo "Team" mensile dal punto 2
    - `STRIPE_PRICE_ID_PRO_ANNUAL` — l'ID del prezzo "Pro" annuale dal punto 2
    - `STRIPE_PRICE_ID_TEAM_ANNUAL` — l'ID del prezzo "Team" annuale dal punto 2 (le due varianti annuali sono facoltative: finché non le imposti, il sito mostra comunque il pulsante "Annuale", ma l'attivazione risponderà con un errore di configurazione)
+   - `STRIPE_PRICE_ID_AUDIT` — l'ID del prezzo "Full Site Audit" dal punto 2 (facoltativo: finché manca, la sezione resta visibile ma l'acquisto risponde con un errore di configurazione)
    - `APP_URL` — il dominio vero del sito (es. `https://jojox.it`, o quello
      provvisorio di Vercel se non ci sei ancora arrivato)
 7. Prova subito: sul sito, da loggato, clicca **Attiva Pro** → nel checkout

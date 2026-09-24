@@ -105,6 +105,29 @@ export function createPortalSession(accessToken: string): Promise<{ url: string 
   });
 }
 
+/** Crea una sessione di Stripe Checkout a pagamento singolo per un Full Site Audit — non un abbonamento. */
+export function createAuditCheckoutSession(accessToken: string): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-audit-checkout-session", {
+    method: "POST",
+    accessToken,
+  });
+}
+
+/** Quanti Full Site Audit pagati e non ancora usati ha l'utente. */
+export async function fetchAuditCredits(accessToken: string): Promise<number> {
+  const { available } = await apiFetch<{ available: number }>("/api/audit-credits", { accessToken });
+  return available;
+}
+
+/** Esegue un Full Site Audit — consuma un credito acquistato, limite file più alto dell'analisi normale. */
+export function analyzeAuditViaApi(files: SourceFile[], accessToken: string): Promise<AnalysisResult> {
+  return apiFetch<AnalysisResult>("/api/analyze-audit", {
+    method: "POST",
+    body: JSON.stringify({ files }),
+    accessToken,
+  });
+}
+
 export interface GithubInstallation {
   installation_id: number;
   account_login: string;

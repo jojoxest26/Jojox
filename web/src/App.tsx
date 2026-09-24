@@ -15,6 +15,7 @@ import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
 import { PrivacyPolicyPage, TermsOfServicePage, SecurityPolicyPage } from "./components/LegalPage.js";
 import { PublicScorePage } from "./components/PublicScorePage.js";
+import { FullSiteAudit } from "./components/FullSiteAudit.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 
@@ -113,6 +114,7 @@ function App() {
       <WhyNotAiSection />
       <AudienceSection />
       <Pricing session={session} />
+      <FullSiteAudit session={session} />
       {analyzerOpen && (
         <>
           <Analyzer session={session} onAnalysisSaved={() => setHistoryVersion((v) => v + 1)} />

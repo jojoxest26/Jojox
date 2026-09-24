@@ -12,6 +12,8 @@ import { stripeWebhookRouter } from "./routes/webhooks/stripe.js";
 import { stripeRouter } from "./routes/stripe.js";
 import { profileRouter } from "./routes/profile.js";
 import { githubRouter } from "./routes/github.js";
+import { auditCreditsRouter } from "./routes/auditCredits.js";
+import { analyzeAuditRouter } from "./routes/analyzeAudit.js";
 
 export function createApp(): Express {
   const app = express();
@@ -35,6 +37,12 @@ export function createApp(): Express {
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
+
+  // Un Full Site Audit carica un intero progetto, non poche modifiche: gli
+  // serve un limite di corpo più alto del resto dell'API. Va montato prima
+  // del parser generico, altrimenti quello con il limite più basso avrebbe
+  // già troncato/rifiutato la richiesta.
+  app.use("/api/analyze-audit", express.json({ limit: "20mb" }));
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
@@ -47,6 +55,8 @@ export function createApp(): Express {
   app.use(stripeRouter);
   app.use(profileRouter);
   app.use(githubRouter);
+  app.use(auditCreditsRouter);
+  app.use(analyzeAuditRouter);
 
   return app;
 }

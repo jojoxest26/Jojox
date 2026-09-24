@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeViaApi, guestAnalyzeViaApi } from "../lib/api.js";
-import { createZip } from "../lib/zip.js";
+import { readFileAsText, downloadZip } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -16,28 +16,6 @@ const GUEST_USED_KEY = "jojox_guest_used";
 function openLogin() {
   window.dispatchEvent(new Event("jojox-open-login"));
   window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function readFileAsText(file: File): Promise<SourceFile> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () =>
-      resolve({ path: file.webkitRelativePath || file.name, content: String(reader.result ?? "") });
-    reader.onerror = () => reject(reader.error);
-    reader.readAsText(file);
-  });
-}
-
-function downloadZip(files: SourceFile[]) {
-  const blob = createZip(files);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "jojox-corretto.zip";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
 }
 
 export function Analyzer({

@@ -1,0 +1,222 @@
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import type { AnalysisResult, SourceFile } from "../../../src/types.js";
+import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
+import { analyzeAuditViaApi, createAuditCheckoutSession, fetchAuditCredits } from "../lib/api.js";
+import { readFileAsText, downloadZip } from "../lib/fileUpload.js";
+import { openReportWindow } from "../lib/report.js";
+import { FindingsList } from "./FindingsList.js";
+import { useTranslation } from "../i18n/LanguageContext.js";
+import { interpolate } from "../i18n/richText.js";
+
+const MAX_FILES = 2000;
+const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
+
+function openLogin() {
+  window.dispatchEvent(new Event("jojox-open-login"));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+export function FullSiteAudit({ session }: { session: Session | null }) {
+  const { t, lang } = useTranslation();
+  const [credits, setCredits] = useState<number | null>(null);
+  const [buying, setBuying] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+
+  const [files, setFiles] = useState<SourceFile[]>([]);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [autofix, setAutofix] = useState<AutofixResult | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("audit")) {
+      params.delete("audit");
+      const query = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setCredits(null);
+      return;
+    }
+    fetchAuditCredits(session.access_token)
+      .then(setCredits)
+      .catch(() => setCredits(0));
+
+    // Il credito arriva via webhook Stripe dopo il redirect di ritorno: un
+    // secondo giro dopo qualche secondo evita di mostrare ancora "0 audit
+    // disponibili" appena tornati dal pagamento, mentre il webhook arriva.
+    const timeout = setTimeout(() => {
+      fetchAuditCredits(session.access_token)
+        .then(setCredits)
+        .catch(() => {});
+    }, 2500);
+    return () => clearTimeout(timeout);
+  }, [session]);
+
+  async function buyAudit() {
+    if (!session) {
+      openLogin();
+      return;
+    }
+    setPurchaseError(null);
+    setBuying(true);
+    try {
+      const { url } = await createAuditCheckoutSession(session.access_token);
+      window.location.href = url;
+    } catch (err) {
+      setPurchaseError(err instanceof Error ? err.message : t.fullSiteAudit.errorPurchase);
+      setBuying(false);
+    }
+  }
+
+  async function loadFiles(fileList: FileList) {
+    const entries = Array.from(fileList)
+      .filter((f) => !SKIP_PATH.test(f.webkitRelativePath || f.name))
+      .slice(0, MAX_FILES);
+    const loaded = await Promise.all(entries.map(readFileAsText));
+    setFiles(loaded);
+    setResult(null);
+    setAutofix(null);
+    setError(null);
+  }
+
+  async function runAudit() {
+    if (!session || files.length === 0) return;
+    setAnalyzing(true);
+    setError(null);
+    try {
+      const analysisResult = await analyzeAuditViaApi(files, session.access_token);
+      setResult(analysisResult);
+      setAutofix(applyAutofixes(files));
+      setCredits((c) => (c != null ? Math.max(0, c - 1) : c));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.fullSiteAudit.errorGeneric);
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  function startNewAudit() {
+    setFiles([]);
+    setResult(null);
+    setAutofix(null);
+    setError(null);
+  }
+
+  return (
+    <section className="full-site-audit container" id="full-site-audit">
+      <p className="section-eyebrow">{t.fullSiteAudit.eyebrow}</p>
+      <h2 className="section-title">{t.fullSiteAudit.title}</h2>
+      <p>{t.fullSiteAudit.subtitle}</p>
+
+      {credits != null && credits > 0 ? (
+        <>
+          <p className="dropzone-hint" style={{ textAlign: "center" }}>
+            {interpolate(t.fullSiteAudit.creditsAvailable, { count: String(credits) })}
+          </p>
+
+          {!result && (
+            <>
+              <div
+                className={`dropzone${dragOver ? " dragover" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+                }}
+                onClick={() => document.getElementById("audit-file-input")?.click()}
+                role="button"
+                tabIndex={0}
+              >
+                <input
+                  id="audit-file-input"
+                  type="file"
+                  multiple
+                  onChange={(e) => e.target.files && loadFiles(e.target.files)}
+                />
+                <strong>{t.fullSiteAudit.dropzoneCta}</strong>
+                <div className="dropzone-hint">{t.fullSiteAudit.dropzoneHint}</div>
+                {files.length > 0 && (
+                  <div className="file-chip-row" onClick={(e) => e.stopPropagation()}>
+                    {files.slice(0, 12).map((f) => (
+                      <span key={f.path} className="file-chip">
+                        {f.path}
+                      </span>
+                    ))}
+                    {files.length > 12 && <span className="file-chip">+{files.length - 12}</span>}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                <button type="button" className="btn btn-primary" disabled={files.length === 0 || analyzing} onClick={runAudit}>
+                  {analyzing
+                    ? t.fullSiteAudit.analyzing
+                    : files.length > 0
+                      ? interpolate(t.fullSiteAudit.analyzeButtonCount, { count: String(files.length) })
+                      : t.fullSiteAudit.analyzeButton}
+                </button>
+              </div>
+            </>
+          )}
+
+          {error && <p style={{ color: "var(--critical)", textAlign: "center", marginTop: "0.75rem" }}>{error}</p>}
+
+          {result && autofix && (
+            <div className="card autofix-card">
+              {autofix.fixedCheckIds.size > 0 ? (
+                <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={() => downloadZip(autofix.files, "jojox-full-site-audit.zip")}>
+                  {t.fullSiteAudit.downloadZip}
+                </button>
+              ) : null}
+            </div>
+          )}
+
+          {result && (
+            <div style={{ textAlign: "center", margin: "1rem 0", display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn btn-secondary hard-border hard-shadow-sm"
+                onClick={() => openReportWindow(result, files, autofix, lang)}
+              >
+                {t.fullSiteAudit.downloadPdf}
+              </button>
+              <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={startNewAudit}>
+                {t.fullSiteAudit.newAudit}
+              </button>
+            </div>
+          )}
+
+          {result && <FindingsList result={result} />}
+        </>
+      ) : (
+        <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
+          <div className="price-amount">
+            {t.fullSiteAudit.priceLabel}
+          </div>
+          <p className="price-card-note">{t.fullSiteAudit.priceNote}</p>
+          <ul style={{ textAlign: "left", maxWidth: 480, margin: "1rem auto" }}>
+            {t.fullSiteAudit.features.map((item) => (
+              <li key={item}>✓ {item}</li>
+            ))}
+          </ul>
+          <button type="button" className="btn btn-primary hard-border hard-shadow" disabled={buying} onClick={buyAudit}>
+            {buying ? t.fullSiteAudit.buying : t.fullSiteAudit.ctaBuy}
+          </button>
+          {purchaseError && <p style={{ color: "var(--critical)", marginTop: "0.75rem" }}>{purchaseError}</p>}
+        </div>
+      )}
+    </section>
+  );
+}
