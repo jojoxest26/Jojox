@@ -1,6 +1,17 @@
 import type { SourceFile } from "../../../src/types.js";
 import { createZip } from "./zip.js";
 
+// File binari (immagini, font, media, archivi...): leggerli come testo non
+// serve ai controlli e può superare il limite di byte per file per via della
+// decodifica UTF-8 che allunga i byte non validi in caratteri di sostituzione.
+export const BINARY_EXTENSIONS =
+  /\.(png|jpe?g|gif|ico|webp|bmp|tiff?|svgz|avif|heic|woff2?|ttf|eot|otf|pdf|zip|gz|tgz|tar|rar|7z|mp3|mp4|wav|avi|mov|mkv|webm|ogg|flac|exe|dll|so|dylib|wasm|sqlite3?|db|class|jar|node|bin)$/i;
+
+// Deve restare allineato al limite lato server (src/server/routes/analyze*.ts):
+// un file più grande di così viene comunque rifiutato dalla validazione, ma
+// scartarlo qui prima evita che faccia fallire l'intera richiesta.
+export const MAX_FILE_BYTES = 200_000;
+
 export function readFileAsText(file: File, pathOverride?: string): Promise<SourceFile> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

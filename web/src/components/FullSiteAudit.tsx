@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeAuditViaApi, createAuditCheckoutSession, fetchAuditCredits } from "../lib/api.js";
-import { readFileAsText, downloadZip, collectFilesFromDataTransfer } from "../lib/fileUpload.js";
+import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -11,6 +11,7 @@ import { interpolate } from "../i18n/richText.js";
 
 const MAX_FILES = 2000;
 const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
+const shouldSkip = (path: string, size: number) => SKIP_PATH.test(path) || BINARY_EXTENSIONS.test(path) || size > MAX_FILE_BYTES;
 
 function openLogin() {
   window.dispatchEvent(new Event("jojox-open-login"));
@@ -78,7 +79,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   async function loadFiles(fileList: FileList) {
     const entries = Array.from(fileList)
       .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
-      .filter(({ path }) => !SKIP_PATH.test(path))
+      .filter(({ path, file }) => !shouldSkip(path, file.size))
       .slice(0, MAX_FILES);
     const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);
@@ -89,7 +90,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
 
   async function loadFromDrop(dataTransfer: DataTransfer) {
     const collected = await collectFilesFromDataTransfer(dataTransfer);
-    const entries = collected.filter(({ path }) => !SKIP_PATH.test(path)).slice(0, MAX_FILES);
+    const entries = collected.filter(({ path, file }) => !shouldSkip(path, file.size)).slice(0, MAX_FILES);
     const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);
     setResult(null);
