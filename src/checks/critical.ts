@@ -31,6 +31,8 @@ export const criticalChecks: Check[] = [
     },
     detect(file) {
       if (SERVER_ONLY_PATH.test(file.path)) return [];
+      const basename = file.path.split("/").pop() ?? "";
+      if (/\.(example|sample|template)$/.test(basename)) return [];
       const pattern = new RegExp(
         `${PUBLIC_ENV_PREFIX.source}\\w*(SERVICE_ROLE|SUPABASE_SECRET)\\w*|SUPABASE_SERVICE_ROLE_KEY`,
         "gi"

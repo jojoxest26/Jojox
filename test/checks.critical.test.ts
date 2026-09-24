@@ -27,6 +27,12 @@ describe("critical checks", () => {
     expect(detect(check, clean)).toHaveLength(0);
   });
 
+  it("supabase-service-role-in-client: does not flag an empty placeholder in .env.example", () => {
+    const check = checkById("supabase-service-role-in-client");
+    const clean = file(".env.example", "SUPABASE_SERVICE_ROLE_KEY=");
+    expect(detect(check, clean)).toHaveLength(0);
+  });
+
   it("hardcoded-secret: flags a literal Stripe secret key", () => {
     const check = checkById("hardcoded-secret");
     const vulnerable = file("src/payments.ts", 'const apiKey = "sk_live_51H8x9K2eZvKYlo2Cxxxxxxxxxxxxxxxx"');
