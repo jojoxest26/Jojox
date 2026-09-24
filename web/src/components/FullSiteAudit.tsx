@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
-import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
+import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeAuditViaApi, createAuditCheckoutSession, fetchAuditCredits } from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
+import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";
 
@@ -27,6 +28,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [files, setFiles] = useState<SourceFile[]>([]);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [autofix, setAutofix] = useState<AutofixResult | null>(null);
+  const [afterFixScore, setAfterFixScore] = useState<number | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -85,6 +87,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setFiles(loaded);
     setResult(null);
     setAutofix(null);
+    setAfterFixScore(null);
     setError(null);
   }
 
@@ -95,6 +98,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setFiles(loaded);
     setResult(null);
     setAutofix(null);
+    setAfterFixScore(null);
     setError(null);
   }
 
@@ -102,6 +106,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setFiles([]);
     setResult(null);
     setAutofix(null);
+    setAfterFixScore(null);
     setError(null);
   }
 
@@ -112,7 +117,12 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     try {
       const analysisResult = await analyzeAuditViaApi(files, session.access_token);
       setResult(analysisResult);
-      setAutofix(applyAutofixes(files));
+      const autofixResult = applyAutofixes(files);
+      setAutofix(autofixResult);
+      // Ricalcoliamo il punteggio sui file corretti solo per mostrare il
+      // miglioramento reale ottenuto dalla correzione automatica — non è mai
+      // il punteggio "finale": i problemi senza correzione automatica restano.
+      setAfterFixScore(autofixResult.fixedCheckIds.size > 0 ? analyzeFiles(autofixResult.files).score : null);
       setCredits((c) => (c != null ? Math.max(0, c - 1) : c));
     } catch (err) {
       setError(err instanceof Error ? err.message : t.fullSiteAudit.errorGeneric);
@@ -125,6 +135,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setFiles([]);
     setResult(null);
     setAutofix(null);
+    setAfterFixScore(null);
     setError(null);
   }
 
@@ -201,13 +212,29 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
 
           {error && <p style={{ color: "var(--critical)", textAlign: "center", marginTop: "0.75rem" }}>{error}</p>}
 
-          {result && autofix && (
-            <div className="card autofix-card">
-              {autofix.fixedCheckIds.size > 0 ? (
+          {result && autofix && autofix.fixedCheckIds.size > 0 && (
+            <div className="card autofix-card score-compare">
+              {afterFixScore != null && (
+                <>
+                  <div className="score-compare-row">
+                    <div className="score-compare-item">
+                      <ScoreRing score={result.score} />
+                      <div className="score-compare-label">{t.fullSiteAudit.scoreBefore}</div>
+                    </div>
+                    <div className="score-compare-arrow">→</div>
+                    <div className="score-compare-item">
+                      <ScoreRing score={afterFixScore} />
+                      <div className="score-compare-label">{t.fullSiteAudit.scoreAfter}</div>
+                    </div>
+                  </div>
+                  <p className="dropzone-hint" style={{ textAlign: "center" }}>{t.fullSiteAudit.scoreAfterNote}</p>
+                </>
+              )}
+              <div style={{ textAlign: "center", marginTop: afterFixScore != null ? "0.75rem" : 0 }}>
                 <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={() => downloadZip(autofix.files, "jojox-full-site-audit.zip")}>
                   {t.fullSiteAudit.downloadZip}
                 </button>
-              ) : null}
+              </div>
             </div>
           )}
 

@@ -307,6 +307,9 @@ export interface TranslationTree {
     downloadZip: string;
     newAudit: string;
     changeFiles: string;
+    scoreBefore: string;
+    scoreAfter: string;
+    scoreAfterNote: string;
   };
 }
 
@@ -715,6 +718,9 @@ const it: TranslationTree = {
     downloadZip: "Scarica file corretti (.zip)",
     newAudit: "🔁 Nuovo Full Site Audit",
     changeFiles: "Cambia file",
+    scoreBefore: "Prima",
+    scoreAfter: "Dopo la correzione automatica",
+    scoreAfterNote: "Solo i problemi corretti automaticamente sono già risolti nei file scaricabili — quelli senza correzione automatica restano da sistemare a mano.",
   },
 };
 
@@ -1123,6 +1129,9 @@ const en: TranslationTree = {
     downloadZip: "Download fixed files (.zip)",
     newAudit: "🔁 New Full Site Audit",
     changeFiles: "Change files",
+    scoreBefore: "Before",
+    scoreAfter: "After the automatic fixes",
+    scoreAfterNote: "Only the automatically fixed issues are already resolved in the downloadable files — anything without an automatic fix still needs a manual fix.",
   },
 };
 
