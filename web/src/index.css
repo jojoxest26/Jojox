@@ -937,6 +937,17 @@ body {
   justify-content: space-between;
   background: var(--surface-muted);
 }
+.trial-offer {
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  background: var(--surface-muted);
+  border: 1px solid var(--accent);
+}
+.trial-offer .dropzone-hint {
+  max-width: 560px;
+  margin: 0.4rem auto 1rem;
+}
 .autofix-summary {
   margin: 0;
   font-size: 0.9rem;

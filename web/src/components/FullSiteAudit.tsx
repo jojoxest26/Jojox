@@ -8,8 +8,11 @@ import {
   fetchAuditCredits,
   fetchGithubInstallations,
   fetchGithubRepos,
+  fetchProfileDetails,
+  startMonitoringTrial,
   type GithubInstallation,
   type GithubRepo,
+  type ProfileDetails,
 } from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
@@ -48,6 +51,11 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [prSkipped, setPrSkipped] = useState<"mismatch" | null>(null);
 
+  const [profile, setProfile] = useState<ProfileDetails | null>(null);
+  const [activatingTrial, setActivatingTrial] = useState(false);
+  const [trialError, setTrialError] = useState<string | null>(null);
+  const [trialJustActivated, setTrialJustActivated] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.has("audit")) {
@@ -73,6 +81,10 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
         // click a chi ha un solo account collegato, il caso più comune.
         if (list.length === 1) setSelectedInstallationId(list[0].installation_id);
       })
+      .catch(() => {});
+
+    fetchProfileDetails(session.access_token)
+      .then(setProfile)
       .catch(() => {});
 
     // Il credito arriva via webhook Stripe dopo il redirect di ritorno: un
@@ -190,6 +202,21 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setPrUrl(null);
     setPrSkipped(null);
     setError(null);
+  }
+
+  async function activateTrial() {
+    if (!session) return;
+    setTrialError(null);
+    setActivatingTrial(true);
+    try {
+      const { planTrialExpiresAt } = await startMonitoringTrial(session.access_token);
+      setProfile((p) => (p ? { ...p, plan: "pro", planTrialUsed: true, planTrialExpiresAt } : p));
+      setTrialJustActivated(true);
+    } catch (err) {
+      setTrialError(err instanceof Error ? err.message : t.fullSiteAudit.trialError);
+    } finally {
+      setActivatingTrial(false);
+    }
   }
 
   return (
@@ -352,6 +379,21 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                 {t.fullSiteAudit.newAudit}
               </button>
             </div>
+          )}
+
+          {result && profile && !profile.planTrialUsed && (
+            <div className="card trial-offer">
+              <strong>{t.fullSiteAudit.trialOfferTitle}</strong>
+              <p className="dropzone-hint">{t.fullSiteAudit.trialOfferBody}</p>
+              <button type="button" className="btn btn-primary hard-border hard-shadow-sm" disabled={activatingTrial} onClick={activateTrial}>
+                {activatingTrial ? t.fullSiteAudit.trialActivating : t.fullSiteAudit.trialCta}
+              </button>
+              {trialError && <p style={{ color: "var(--critical)", marginTop: "0.5rem" }}>{trialError}</p>}
+            </div>
+          )}
+
+          {result && trialJustActivated && (
+            <p className="dropzone-hint" style={{ textAlign: "center" }}>{t.fullSiteAudit.trialActivated}</p>
           )}
 
           {result && <FindingsList result={result} autofix={autofix} />}

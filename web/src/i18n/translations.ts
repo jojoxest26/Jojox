@@ -317,6 +317,12 @@ export interface TranslationTree {
     viewPr: string;
     prFailedNote: string;
     prMismatchNote: string;
+    trialOfferTitle: string;
+    trialOfferBody: string;
+    trialCta: string;
+    trialActivating: string;
+    trialActivated: string;
+    trialError: string;
   };
 }
 
@@ -735,6 +741,12 @@ const it: TranslationTree = {
     viewPr: "Vedi la Pull Request su GitHub",
     prFailedNote: "Non siamo riusciti ad aprire la Pull Request su GitHub — puoi comunque scaricare i file corretti qui sopra.",
     prMismatchNote: "I file caricati non sembrano corrispondere al repository scelto — controlla di aver selezionato quello giusto. Non abbiamo aperto nessuna Pull Request, ma puoi comunque scaricare i file corretti qui sopra.",
+    trialOfferTitle: "Vuoi vedere JoJoX controllare ogni tuo push in automatico?",
+    trialOfferBody: "Attiva 30 giorni gratuiti di monitoraggio continuo (piano Pro) — nessuna carta di credito richiesta. Alla fine dei 30 giorni torni al piano Free senza addebiti automatici.",
+    trialCta: "Attiva 30 giorni gratis",
+    trialActivating: "Attivazione...",
+    trialActivated: "✓ Prova attivata — hai il piano Pro per i prossimi 30 giorni.",
+    trialError: "Non siamo riusciti ad attivare la prova gratuita, riprova.",
   },
 };
 
@@ -1153,6 +1165,12 @@ const en: TranslationTree = {
     viewPr: "View the Pull Request on GitHub",
     prFailedNote: "We couldn't open the Pull Request on GitHub — you can still download the fixed files above.",
     prMismatchNote: "The uploaded files don't seem to match the chosen repository — check you picked the right one. We didn't open a Pull Request, but you can still download the fixed files above.",
+    trialOfferTitle: "Want to see JoJoX check every one of your pushes automatically?",
+    trialOfferBody: "Activate 30 free days of continuous monitoring (Pro plan) — no credit card required. After 30 days you're back on the Free plan, no automatic charges.",
+    trialCta: "Activate 30 days free",
+    trialActivating: "Activating...",
+    trialActivated: "✓ Trial activated — you have the Pro plan for the next 30 days.",
+    trialError: "We couldn't activate the free trial, try again.",
   },
 };
 

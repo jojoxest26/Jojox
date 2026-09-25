@@ -7,6 +7,7 @@ import { ALL_CHECKS } from "../../../checks/index.js";
 import { checkRunConclusion, formatPrComment } from "../../github/report.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import { notifySlack } from "../../slack/notify.js";
+import { getPlanForUser } from "../../plan.js";
 import type { SourceFile } from "../../../types.js";
 
 interface InstallationPayload {
@@ -128,6 +129,29 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
   const app = getGithubApp();
   const octokit = await app.getInstallationOctokit(installationId);
 
+  // Il monitoraggio continuo è una funzionalità Pro/Team: un'installazione
+  // non ancora collegata a nessun account, o collegata a un account sul
+  // piano Free, non lo attiva — evita che basti installare la GitHub App per
+  // avere il monitoraggio illimitato gratis per sempre.
+  const installationForPlan = await getInstallation(installationId);
+  const plan = installationForPlan?.installed_by ? await getPlanForUser(installationForPlan.installed_by) : "free";
+  if (plan === "free") {
+    await octokit.request("POST /repos/{owner}/{repo}/check-runs", {
+      owner,
+      repo,
+      name: "JoJoX security check",
+      head_sha: headSha,
+      status: "completed",
+      conclusion: "neutral",
+      output: {
+        title: "Monitoraggio continuo disponibile con il piano Pro",
+        summary:
+          "Questo repository ha la GitHub App di JoJoX installata, ma il monitoraggio automatico a ogni pull request richiede il piano Pro o Team. Passa a un piano a pagamento su jojox.it per attivarlo qui.",
+      },
+    });
+    return;
+  }
+
   const changedFiles = await listChangedFiles(octokit, { owner, repo, pull_number: pullNumber });
 
   // Ignoriamo i file rimossi (niente da analizzare) e quelli senza un "patch" testuale:
@@ -205,7 +229,7 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
     body: formatPrComment(result, fixPrUrl),
   });
 
-  const installation = await getInstallation(installationId);
+  const installation = installationForPlan;
   await supabaseAdmin.from("analyses").insert({
     user_id: installation?.installed_by ?? null,
     source: "github",

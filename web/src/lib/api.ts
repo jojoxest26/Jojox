@@ -84,6 +84,26 @@ export async function fetchProfile(accessToken: string): Promise<Plan> {
   return plan;
 }
 
+export interface ProfileDetails {
+  plan: Plan;
+  /** true se la prova gratuita del monitoraggio continuo è già stata usata (attiva o scaduta). */
+  planTrialUsed: boolean;
+  /** Data di scadenza della prova, solo se ancora attiva — altrimenti null. */
+  planTrialExpiresAt: string | null;
+}
+
+export function fetchProfileDetails(accessToken: string): Promise<ProfileDetails> {
+  return apiFetch<ProfileDetails>("/api/profile", { accessToken });
+}
+
+/** Attiva, una sola volta per account, 30 giorni gratuiti di monitoraggio continuo (piano Pro). */
+export function startMonitoringTrial(accessToken: string): Promise<{ planTrialExpiresAt: string }> {
+  return apiFetch<{ planTrialExpiresAt: string }>("/api/start-monitoring-trial", {
+    method: "POST",
+    accessToken,
+  });
+}
+
 /** Crea una sessione di Stripe Checkout e restituisce l'URL a cui reindirizzare per attivare un piano a pagamento. */
 export function createCheckoutSession(
   plan: "pro" | "team",
