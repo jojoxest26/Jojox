@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/analyze.js";
-import { analyzeAuditViaApi, createAuditCheckoutSession, fetchAuditCredits } from "../lib/api.js";
+import {
+  analyzeAuditViaApi,
+  createAuditCheckoutSession,
+  fetchAuditCredits,
+  fetchGithubInstallations,
+  fetchGithubRepos,
+  type GithubInstallation,
+  type GithubRepo,
+} from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
@@ -33,6 +41,12 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  const [installations, setInstallations] = useState<GithubInstallation[]>([]);
+  const [selectedInstallationId, setSelectedInstallationId] = useState<number | null>(null);
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const [selectedRepoFullName, setSelectedRepoFullName] = useState<string | null>(null);
+  const [prUrl, setPrUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.has("audit")) {
@@ -51,6 +65,15 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       .then(setCredits)
       .catch(() => setCredits(0));
 
+    fetchGithubInstallations(session.access_token)
+      .then((list) => {
+        setInstallations(list);
+        // Con una sola installazione la selezioniamo subito: risparmia un
+        // click a chi ha un solo account collegato, il caso più comune.
+        if (list.length === 1) setSelectedInstallationId(list[0].installation_id);
+      })
+      .catch(() => {});
+
     // Il credito arriva via webhook Stripe dopo il redirect di ritorno: un
     // secondo giro dopo qualche secondo evita di mostrare ancora "0 audit
     // disponibili" appena tornati dal pagamento, mentre il webhook arriva.
@@ -61,6 +84,17 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     }, 2500);
     return () => clearTimeout(timeout);
   }, [session]);
+
+  useEffect(() => {
+    if (!session || selectedInstallationId == null) {
+      setRepos([]);
+      return;
+    }
+    setSelectedRepoFullName(null);
+    fetchGithubRepos(selectedInstallationId, session.access_token)
+      .then(setRepos)
+      .catch(() => setRepos([]));
+  }, [session, selectedInstallationId]);
 
   async function buyAudit() {
     if (!session) {
@@ -88,6 +122,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setResult(null);
     setAutofix(null);
     setAfterFixScore(null);
+    setPrUrl(null);
     setError(null);
   }
 
@@ -99,6 +134,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setResult(null);
     setAutofix(null);
     setAfterFixScore(null);
+    setPrUrl(null);
     setError(null);
   }
 
@@ -107,6 +143,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setResult(null);
     setAutofix(null);
     setAfterFixScore(null);
+    setPrUrl(null);
     setError(null);
   }
 
@@ -115,8 +152,17 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAnalyzing(true);
     setError(null);
     try {
-      const analysisResult = await analyzeAuditViaApi(files, session.access_token);
+      const githubTarget =
+        selectedInstallationId != null && selectedRepoFullName
+          ? {
+              installationId: selectedInstallationId,
+              owner: selectedRepoFullName.split("/")[0]!,
+              repo: selectedRepoFullName.split("/")[1]!,
+            }
+          : undefined;
+      const analysisResult = await analyzeAuditViaApi(files, session.access_token, githubTarget);
       setResult(analysisResult);
+      setPrUrl(analysisResult.prUrl);
       const autofixResult = applyAutofixes(files);
       setAutofix(autofixResult);
       // Ricalcoliamo il punteggio sui file corretti solo per mostrare il
@@ -136,6 +182,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setResult(null);
     setAutofix(null);
     setAfterFixScore(null);
+    setPrUrl(null);
     setError(null);
   }
 
@@ -193,6 +240,41 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                 )}
               </div>
 
+              {installations.length > 0 && (
+                <div className="github-target-picker">
+                  <label htmlFor="github-target-repo">{t.fullSiteAudit.githubTargetLabel}</label>
+                  <div className="github-target-selects">
+                    {installations.length > 1 && (
+                      <select
+                        aria-label={t.fullSiteAudit.githubTargetChooseAccount}
+                        value={selectedInstallationId ?? ""}
+                        onChange={(e) => setSelectedInstallationId(e.target.value ? Number(e.target.value) : null)}
+                      >
+                        <option value="">{t.fullSiteAudit.githubTargetChooseAccount}</option>
+                        {installations.map((inst) => (
+                          <option key={inst.installation_id} value={inst.installation_id}>
+                            {inst.account_login}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <select
+                      id="github-target-repo"
+                      value={selectedRepoFullName ?? ""}
+                      onChange={(e) => setSelectedRepoFullName(e.target.value || null)}
+                      disabled={selectedInstallationId == null}
+                    >
+                      <option value="">{t.fullSiteAudit.githubTargetNone}</option>
+                      {repos.map((r) => (
+                        <option key={r.fullName} value={r.fullName}>
+                          {r.fullName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div style={{ textAlign: "center", marginTop: "1rem", display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
                 <button type="button" className="btn btn-primary" disabled={files.length === 0 || analyzing} onClick={runAudit}>
                   {analyzing
@@ -233,11 +315,21 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   <p className="dropzone-hint" style={{ textAlign: "center" }}>{t.fullSiteAudit.scoreAfterNote}</p>
                 </>
               )}
-              <div style={{ textAlign: "center", marginTop: afterFixScore != null ? "0.75rem" : 0 }}>
+              <div style={{ textAlign: "center", marginTop: afterFixScore != null ? "0.75rem" : 0, display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
                 <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={() => downloadZip(autofix.files, "jojox-full-site-audit.zip")}>
                   {t.fullSiteAudit.downloadZip}
                 </button>
+                {prUrl && (
+                  <a href={prUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary hard-border hard-shadow-sm">
+                    {t.fullSiteAudit.viewPr}
+                  </a>
+                )}
               </div>
+              {selectedRepoFullName && !prUrl && (
+                <p className="dropzone-hint" style={{ textAlign: "center", marginTop: "0.6rem" }}>
+                  {t.fullSiteAudit.prFailedNote}
+                </p>
+              )}
             </div>
           )}
 

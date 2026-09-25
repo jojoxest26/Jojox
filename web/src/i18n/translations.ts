@@ -311,6 +311,11 @@ export interface TranslationTree {
     scoreBefore: string;
     scoreAfter: string;
     scoreAfterNote: string;
+    githubTargetLabel: string;
+    githubTargetChooseAccount: string;
+    githubTargetNone: string;
+    viewPr: string;
+    prFailedNote: string;
   };
 }
 
@@ -723,6 +728,11 @@ const it: TranslationTree = {
     scoreBefore: "Prima",
     scoreAfter: "Dopo la correzione automatica",
     scoreAfterNote: "Solo i problemi corretti automaticamente sono già risolti nei file scaricabili — quelli senza correzione automatica restano da sistemare a mano.",
+    githubTargetLabel: "Vuoi anche una Pull Request su GitHub con le correzioni? (opzionale)",
+    githubTargetChooseAccount: "Scegli un account collegato",
+    githubTargetNone: "Nessuno — solo file da scaricare",
+    viewPr: "Vedi la Pull Request su GitHub",
+    prFailedNote: "Non siamo riusciti ad aprire la Pull Request su GitHub — puoi comunque scaricare i file corretti qui sopra.",
   },
 };
 
@@ -1135,6 +1145,11 @@ const en: TranslationTree = {
     scoreBefore: "Before",
     scoreAfter: "After the automatic fixes",
     scoreAfterNote: "Only the automatically fixed issues are already resolved in the downloadable files — anything without an automatic fix still needs a manual fix.",
+    githubTargetLabel: "Also want a GitHub Pull Request with the fixes? (optional)",
+    githubTargetChooseAccount: "Choose a connected account",
+    githubTargetNone: "None — just the downloadable files",
+    viewPr: "View the Pull Request on GitHub",
+    prFailedNote: "We couldn't open the Pull Request on GitHub — you can still download the fixed files above.",
   },
 };
 

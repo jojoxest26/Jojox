@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
+import { getGithubApp } from "../github/app.js";
+import { listInstallationRepos } from "../github/auditFixPr.js";
 
 export const githubRouter = Router();
 
@@ -57,6 +59,33 @@ githubRouter.post("/api/github/installations/:installationId/claim", requireAuth
   }
 
   res.json({ ok: true });
+});
+
+// Elenca i repository accessibili a un'installazione dell'utente loggato —
+// usato per lasciargli scegliere su quale repo aprire una Pull Request di
+// correzione dopo un Full Site Audit.
+githubRouter.get("/api/github/installations/:installationId/repos", requireAuth, async (req: AuthedRequest, res) => {
+  const installationId = Number(req.params.installationId);
+
+  const { data: installation } = await supabaseAdmin
+    .from("github_installations")
+    .select("installed_by")
+    .eq("installation_id", installationId)
+    .single();
+
+  if (!installation || installation.installed_by !== req.userId) {
+    res.status(404).json({ error: "Installazione non trovata" });
+    return;
+  }
+
+  try {
+    const octokit = await getGithubApp().getInstallationOctokit(installationId);
+    const repos = await listInstallationRepos(octokit);
+    res.json({ repos });
+  } catch (err) {
+    console.error(`impossibile elencare i repository dell'installazione ${installationId}`, err);
+    res.status(500).json({ error: "Errore nel recupero dei repository" });
+  }
 });
 
 githubRouter.put("/api/github/installations/:installationId/slack-webhook", requireAuth, async (req: AuthedRequest, res) => {

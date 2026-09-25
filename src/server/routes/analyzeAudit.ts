@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
-import { analyzeFiles } from "../../analyze.js";
+import { analyzeFiles, applyAutofixes } from "../../analyze.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
+import { getGithubApp } from "../github/app.js";
+import { openAuditFixPr } from "../github/auditFixPr.js";
 
 // Un Full Site Audit copre un intero progetto, non poche modifiche: limite
 // più alto dell'analisi normale (300), ma comunque un tetto per evitare
@@ -20,6 +22,16 @@ const requestSchema = z.object({
     )
     .min(1)
     .max(MAX_FILES),
+  // Facoltativo: se il cliente sceglie un repository GitHub collegato, invece
+  // (o oltre) di scaricare lo zip apriamo una Pull Request con le correzioni
+  // automatiche direttamente su quel repository.
+  githubTarget: z
+    .object({
+      installationId: z.number(),
+      owner: z.string().min(1),
+      repo: z.string().min(1),
+    })
+    .optional(),
 });
 
 export const analyzeAuditRouter = Router();
@@ -29,6 +41,20 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
   if (!parsed.success) {
     res.status(400).json({ error: "Richiesta non valida", details: parsed.error.flatten() });
     return;
+  }
+
+  const { githubTarget } = parsed.data;
+  if (githubTarget) {
+    const { data: installation } = await supabaseAdmin
+      .from("github_installations")
+      .select("installed_by")
+      .eq("installation_id", githubTarget.installationId)
+      .single();
+
+    if (!installation || installation.installed_by !== req.userId) {
+      res.status(403).json({ error: "Installazione GitHub non trovata o non collegata al tuo account" });
+      return;
+    }
   }
 
   const { data: credit, error: creditError } = await supabaseAdmin
@@ -68,5 +94,37 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     findings: result.findings,
   });
 
-  res.json(result);
+  let prUrl: string | null = null;
+  if (githubTarget) {
+    // La correzione qui gira sempre lato server (a differenza dell'analisi
+    // manuale nel browser): serve il contenuto corretto per poterlo davvero
+    // pushare su GitHub tramite l'installazione della GitHub App.
+    const autofix = applyAutofixes(parsed.data.files);
+    const changedFiles = parsed.data.files
+      .map((original, i) => ({ original, fixed: autofix.files[i] }))
+      .filter(({ original, fixed }) => fixed.content !== original.content)
+      .map(({ fixed }) => fixed);
+
+    if (changedFiles.length > 0) {
+      try {
+        const octokit = await getGithubApp().getInstallationOctokit(githubTarget.installationId);
+        prUrl = await openAuditFixPr(octokit, {
+          owner: githubTarget.owner,
+          repo: githubTarget.repo,
+          changedFiles,
+          fixedCheckIds: autofix.fixedCheckIds,
+          filesChanged: autofix.filesChanged,
+        });
+      } catch (err) {
+        console.error(
+          `impossibile aprire la pull request di correzione su ${githubTarget.owner}/${githubTarget.repo}`,
+          err
+        );
+        // Non facciamo fallire l'intera risposta per questo: l'analisi e il
+        // credito sono comunque validi, l'utente ha comunque lo zip da scaricare.
+      }
+    }
+  }
+
+  res.json({ ...result, prUrl });
 });

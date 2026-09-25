@@ -119,11 +119,22 @@ export async function fetchAuditCredits(accessToken: string): Promise<number> {
   return available;
 }
 
+export interface GithubTarget {
+  installationId: number;
+  owner: string;
+  repo: string;
+}
+
+export interface AuditResult extends AnalysisResult {
+  /** URL della Pull Request di correzione aperta su GitHub, se è stato scelto un repository. */
+  prUrl: string | null;
+}
+
 /** Esegue un Full Site Audit — consuma un credito acquistato, limite file più alto dell'analisi normale. */
-export function analyzeAuditViaApi(files: SourceFile[], accessToken: string): Promise<AnalysisResult> {
-  return apiFetch<AnalysisResult>("/api/analyze-audit", {
+export function analyzeAuditViaApi(files: SourceFile[], accessToken: string, githubTarget?: GithubTarget): Promise<AuditResult> {
+  return apiFetch<AuditResult>("/api/analyze-audit", {
     method: "POST",
-    body: JSON.stringify({ files }),
+    body: JSON.stringify({ files, githubTarget }),
     accessToken,
   });
 }
@@ -140,6 +151,20 @@ export async function fetchGithubInstallations(accessToken: string): Promise<Git
     accessToken,
   });
   return installations;
+}
+
+export interface GithubRepo {
+  owner: string;
+  repo: string;
+  fullName: string;
+}
+
+/** I repository accessibili a una specifica installazione della GitHub App. */
+export async function fetchGithubRepos(installationId: number, accessToken: string): Promise<GithubRepo[]> {
+  const { repos } = await apiFetch<{ repos: GithubRepo[] }>(`/api/github/installations/${installationId}/repos`, {
+    accessToken,
+  });
+  return repos;
 }
 
 /** Collega un'installazione GitHub appena creata all'utente loggato (vedi App.tsx, callback dopo l'installazione). */

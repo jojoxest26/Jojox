@@ -884,6 +884,30 @@ body {
   font-size: 0.85rem;
   margin-top: 0.4rem;
 }
+.github-target-picker {
+  margin-top: 1rem;
+  text-align: center;
+}
+.github-target-picker label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.github-target-selects {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.github-target-selects select {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
 .file-chip-row {
   display: flex;
   flex-wrap: wrap;
