@@ -15,6 +15,42 @@ function buildAuditFixPrBody(fixedCheckIds: Set<string>, filesChanged: number): 
   ].join("\n");
 }
 
+/** Branch predefinito di un repository e lo sha del suo ultimo commit. */
+async function getDefaultBranchHead(
+  octokit: InstallationOctokit,
+  params: { owner: string; repo: string }
+): Promise<{ branch: string; sha: string }> {
+  const { owner, repo } = params;
+  const { data: repoInfo } = await octokit.request("GET /repos/{owner}/{repo}", { owner, repo });
+  const branch = repoInfo.default_branch;
+
+  const { data: baseRef } = await octokit.request("GET /repos/{owner}/{repo}/git/ref/{ref}", {
+    owner,
+    repo,
+    ref: `heads/${branch}`,
+  });
+  return { branch, sha: baseRef.object.sha };
+}
+
+/**
+ * Tutti i percorsi dei file già presenti nel branch predefinito del
+ * repository — usato per controllare che i file caricati per un Full Site
+ * Audit corrispondano davvero a quel repository, prima di aprirci una Pull
+ * Request. Senza questo controllo, scegliere per sbaglio il repository
+ * sbagliato nel menu aprirebbe comunque una PR con contenuti a caso.
+ */
+export async function getRepoFilePaths(octokit: InstallationOctokit, params: { owner: string; repo: string }): Promise<Set<string>> {
+  const { owner, repo } = params;
+  const { sha } = await getDefaultBranchHead(octokit, { owner, repo });
+  const { data: tree } = await octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
+    owner,
+    repo,
+    tree_sha: sha,
+    recursive: "true",
+  });
+  return new Set(tree.tree.filter((entry) => entry.type === "blob" && entry.path).map((entry) => entry.path!));
+}
+
 /**
  * Apre una Pull Request con le correzioni automatiche del Full Site Audit
  * verso il branch principale del repository — a differenza del fix del
@@ -34,15 +70,7 @@ export async function openAuditFixPr(
 ): Promise<string> {
   const { owner, repo, changedFiles, fixedCheckIds, filesChanged } = params;
 
-  const { data: repoInfo } = await octokit.request("GET /repos/{owner}/{repo}", { owner, repo });
-  const baseBranch = repoInfo.default_branch;
-
-  const { data: baseRef } = await octokit.request("GET /repos/{owner}/{repo}/git/ref/{ref}", {
-    owner,
-    repo,
-    ref: `heads/${baseBranch}`,
-  });
-  const baseSha = baseRef.object.sha;
+  const { branch: baseBranch, sha: baseSha } = await getDefaultBranchHead(octokit, { owner, repo });
 
   const { data: tree } = await octokit.request("POST /repos/{owner}/{repo}/git/trees", {
     owner,

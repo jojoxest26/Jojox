@@ -316,6 +316,7 @@ export interface TranslationTree {
     githubTargetNone: string;
     viewPr: string;
     prFailedNote: string;
+    prMismatchNote: string;
   };
 }
 
@@ -733,6 +734,7 @@ const it: TranslationTree = {
     githubTargetNone: "Nessuno — solo file da scaricare",
     viewPr: "Vedi la Pull Request su GitHub",
     prFailedNote: "Non siamo riusciti ad aprire la Pull Request su GitHub — puoi comunque scaricare i file corretti qui sopra.",
+    prMismatchNote: "I file caricati non sembrano corrispondere al repository scelto — controlla di aver selezionato quello giusto. Non abbiamo aperto nessuna Pull Request, ma puoi comunque scaricare i file corretti qui sopra.",
   },
 };
 
@@ -1150,6 +1152,7 @@ const en: TranslationTree = {
     githubTargetNone: "None — just the downloadable files",
     viewPr: "View the Pull Request on GitHub",
     prFailedNote: "We couldn't open the Pull Request on GitHub — you can still download the fixed files above.",
+    prMismatchNote: "The uploaded files don't seem to match the chosen repository — check you picked the right one. We didn't open a Pull Request, but you can still download the fixed files above.",
   },
 };
 

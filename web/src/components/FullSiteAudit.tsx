@@ -46,6 +46,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [selectedRepoFullName, setSelectedRepoFullName] = useState<string | null>(null);
   const [prUrl, setPrUrl] = useState<string | null>(null);
+  const [prSkipped, setPrSkipped] = useState<"mismatch" | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -123,6 +124,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAutofix(null);
     setAfterFixScore(null);
     setPrUrl(null);
+    setPrSkipped(null);
     setError(null);
   }
 
@@ -135,6 +137,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAutofix(null);
     setAfterFixScore(null);
     setPrUrl(null);
+    setPrSkipped(null);
     setError(null);
   }
 
@@ -144,6 +147,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAutofix(null);
     setAfterFixScore(null);
     setPrUrl(null);
+    setPrSkipped(null);
     setError(null);
   }
 
@@ -163,6 +167,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       const analysisResult = await analyzeAuditViaApi(files, session.access_token, githubTarget);
       setResult(analysisResult);
       setPrUrl(analysisResult.prUrl);
+      setPrSkipped(analysisResult.prSkipped);
       const autofixResult = applyAutofixes(files);
       setAutofix(autofixResult);
       // Ricalcoliamo il punteggio sui file corretti solo per mostrare il
@@ -183,6 +188,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAutofix(null);
     setAfterFixScore(null);
     setPrUrl(null);
+    setPrSkipped(null);
     setError(null);
   }
 
@@ -327,7 +333,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
               </div>
               {selectedRepoFullName && !prUrl && (
                 <p className="dropzone-hint" style={{ textAlign: "center", marginTop: "0.6rem" }}>
-                  {t.fullSiteAudit.prFailedNote}
+                  {prSkipped === "mismatch" ? t.fullSiteAudit.prMismatchNote : t.fullSiteAudit.prFailedNote}
                 </p>
               )}
             </div>

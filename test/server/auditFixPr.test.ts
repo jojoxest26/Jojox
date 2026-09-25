@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { openAuditFixPr, listInstallationRepos } from "../../src/server/github/auditFixPr.js";
+import { openAuditFixPr, listInstallationRepos, getRepoFilePaths } from "../../src/server/github/auditFixPr.js";
 
 describe("openAuditFixPr", () => {
   it("crea un branch dal branch predefinito del repo e apre una PR verso di esso", async () => {
@@ -38,6 +38,31 @@ describe("openAuditFixPr", () => {
 
     const pullCall = request.mock.calls[5];
     expect(pullCall[1].base).toBe("main");
+  });
+});
+
+describe("getRepoFilePaths", () => {
+  it("restituisce i percorsi di tutti i file (blob) dell'albero del branch predefinito", async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { default_branch: "main" } }) // GET repo
+      .mockResolvedValueOnce({ data: { object: { sha: "base-sha" } } }) // GET ref
+      .mockResolvedValueOnce({
+        data: {
+          tree: [
+            { path: "src/index.ts", type: "blob" },
+            { path: "src", type: "tree" },
+            { path: "README.md", type: "blob" },
+          ],
+        },
+      }); // GET tree recursive
+
+    const paths = await getRepoFilePaths({ request } as any, { owner: "acme", repo: "app" });
+
+    expect(paths).toEqual(new Set(["src/index.ts", "README.md"]));
+    const treeCall = request.mock.calls[2];
+    expect(treeCall[1].tree_sha).toBe("base-sha");
+    expect(treeCall[1].recursive).toBe("true");
   });
 });
 

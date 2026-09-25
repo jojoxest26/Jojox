@@ -4,7 +4,12 @@ import { analyzeFiles, applyAutofixes } from "../../analyze.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
-import { openAuditFixPr } from "../github/auditFixPr.js";
+import { openAuditFixPr, getRepoFilePaths } from "../github/auditFixPr.js";
+
+// Sotto questa quota di file caricati già presenti nel repository scelto,
+// consideriamo probabile uno scambio di repository (es. selezionato quello
+// sbagliato dal menu) e non apriamo la Pull Request in automatico.
+const MIN_REPO_OVERLAP_RATIO = 0.3;
 
 // Un Full Site Audit copre un intero progetto, non poche modifiche: limite
 // più alto dell'analisi normale (300), ma comunque un tetto per evitare
@@ -95,6 +100,7 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
   });
 
   let prUrl: string | null = null;
+  let prSkipped: "mismatch" | null = null;
   if (githubTarget) {
     // La correzione qui gira sempre lato server (a differenza dell'analisi
     // manuale nel browser): serve il contenuto corretto per poterlo davvero
@@ -108,13 +114,25 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     if (changedFiles.length > 0) {
       try {
         const octokit = await getGithubApp().getInstallationOctokit(githubTarget.installationId);
-        prUrl = await openAuditFixPr(octokit, {
-          owner: githubTarget.owner,
-          repo: githubTarget.repo,
-          changedFiles,
-          fixedCheckIds: autofix.fixedCheckIds,
-          filesChanged: autofix.filesChanged,
-        });
+
+        // I file caricati dovrebbero essere il codice di quello stesso
+        // repository: controlliamo la sovrapposizione prima di aprire una PR,
+        // per non proporre correzioni a caso se è stato scelto il repository
+        // sbagliato dal menu.
+        const repoPaths = await getRepoFilePaths(octokit, { owner: githubTarget.owner, repo: githubTarget.repo });
+        const overlap = parsed.data.files.filter((f) => repoPaths.has(f.path)).length / parsed.data.files.length;
+
+        if (overlap < MIN_REPO_OVERLAP_RATIO) {
+          prSkipped = "mismatch";
+        } else {
+          prUrl = await openAuditFixPr(octokit, {
+            owner: githubTarget.owner,
+            repo: githubTarget.repo,
+            changedFiles,
+            fixedCheckIds: autofix.fixedCheckIds,
+            filesChanged: autofix.filesChanged,
+          });
+        }
       } catch (err) {
         console.error(
           `impossibile aprire la pull request di correzione su ${githubTarget.owner}/${githubTarget.repo}`,
@@ -126,5 +144,5 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     }
   }
 
-  res.json({ ...result, prUrl });
+  res.json({ ...result, prUrl, prSkipped });
 });

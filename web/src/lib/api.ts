@@ -128,6 +128,8 @@ export interface GithubTarget {
 export interface AuditResult extends AnalysisResult {
   /** URL della Pull Request di correzione aperta su GitHub, se è stato scelto un repository. */
   prUrl: string | null;
+  /** "mismatch": i file caricati non sembravano corrispondere al repository scelto, PR non aperta per sicurezza. */
+  prSkipped: "mismatch" | null;
 }
 
 /** Esegue un Full Site Audit — consuma un credito acquistato, limite file più alto dell'analisi normale. */
