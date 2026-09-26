@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
-import { applyAutofixes, type AutofixResult } from "../../../src/analyze.js";
+import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/analyze.js";
 import { analyzeViaApi, guestAnalyzeViaApi } from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
+import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -176,7 +177,14 @@ export function Analyzer({
                 {autofix.manualCheckIds.size > 0 &&
                   interpolate(t.analyzer.autofixManualSuffix, { count: String(autofix.manualCheckIds.size) })}
               </p>
-              <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={() => downloadZip(autofix.files)}>
+              <button
+                type="button"
+                className="btn btn-primary hard-border hard-shadow-sm"
+                onClick={() => {
+                  const afterFindings = analyzeFiles(autofix.files).findings;
+                  downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t), "jojox-correzioni.zip");
+                }}
+              >
                 {t.analyzer.downloadZip}
               </button>
             </>

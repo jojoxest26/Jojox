@@ -83,12 +83,8 @@ export function callTool(name: string, args: unknown): unknown {
     case "fix_code": {
       const files = parseFiles(args);
       const autofix = applyAutofixes(files);
-      const changed = files
-        .map((original, i) => ({ original, fixed: autofix.files[i] }))
-        .filter(({ original, fixed }) => fixed.content !== original.content)
-        .map(({ fixed }) => fixed);
       return {
-        files: changed,
+        files: autofix.changedFiles,
         filesChanged: autofix.filesChanged,
         fixedCheckIds: [...autofix.fixedCheckIds],
         manualCheckIds: [...autofix.manualCheckIds],

@@ -106,10 +106,7 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     // manuale nel browser): serve il contenuto corretto per poterlo davvero
     // pushare su GitHub tramite l'installazione della GitHub App.
     const autofix = applyAutofixes(parsed.data.files);
-    const changedFiles = parsed.data.files
-      .map((original, i) => ({ original, fixed: autofix.files[i] }))
-      .filter(({ original, fixed }) => fixed.content !== original.content)
-      .map(({ fixed }) => fixed);
+    const changedFiles = autofix.changedFiles;
 
     if (changedFiles.length > 0) {
       try {

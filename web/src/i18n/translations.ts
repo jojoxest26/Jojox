@@ -30,6 +30,14 @@ export interface TranslationTree {
     heuristic: string;
     before: string;
     after: string;
+    correctionsManifest: {
+      title: string;
+      filesIntro: string;
+      filesHeader: string;
+      manualHeader: string;
+      manualNone: string;
+      occurrences: string;
+    };
   };
   header: {
     connect: string;
@@ -312,6 +320,8 @@ export interface TranslationTree {
     scoreAfter: string;
     scoreAfterNote: string;
     scoreStuckNote: string;
+    zipHelp: string;
+    zipHelpWithPr: string;
     githubTargetLabel: string;
     githubTargetChooseAccount: string;
     githubTargetNone: string;
@@ -343,6 +353,16 @@ const it: TranslationTree = {
     heuristic: "da verificare",
     before: "Prima",
     after: "Dopo",
+    correctionsManifest: {
+      title: "Correzioni automatiche di JoJoX",
+      filesIntro:
+        "Questo zip contiene SOLO i file che sono stati modificati, non l'intero progetto. Copia questi file dentro il tuo progetto reale, sovrascrivendo quelli con lo stesso percorso — non sostituire l'intera cartella.",
+      filesHeader: "File corretti ({{count}}):",
+      manualHeader:
+        "Problemi che restano da correggere a mano nel tuo codice sorgente ({{count}} tipi — vedi il report PDF per l'elenco completo con file e riga):",
+      manualNone: "Nessun problema residuo: JoJoX ha corretto automaticamente tutto quello che aveva trovato.",
+      occurrences: "{{count}} casi",
+    },
   },
   header: {
     connect: "Collega GitHub",
@@ -737,6 +757,8 @@ const it: TranslationTree = {
     scoreAfter: "Dopo la correzione automatica",
     scoreAfterNote: "Solo i problemi corretti automaticamente sono già risolti nei file scaricabili — quelli senza correzione automatica restano da sistemare a mano.",
     scoreStuckNote: "Il punteggio non si è ancora spostato, ma abbiamo corretto comunque {{fixed}} problemi su {{total}}: restano problemi critici che il correttore automatico non può risolvere da solo (es. SQL injection) e servono modifiche manuali. I problemi già corretti restano corretti nei file scaricabili qui sotto.",
+    zipHelp: "Lo zip contiene solo i file corretti (non l'intero progetto), più un file CORREZIONI.txt che elenca cosa copiare nel tuo progetto e cosa resta da sistemare a mano. Per un progetto reale su GitHub conviene comunque collegare il repository qui sopra prima di avviare l'audit: la Pull Request mostra le stesse modifiche come diff, pronte da unire con un click.",
+    zipHelpWithPr: "Lo zip contiene solo i file corretti (non l'intero progetto), più un file CORREZIONI.txt con i dettagli. Le stesse modifiche sono già pronte come diff nella Pull Request qui sopra.",
     githubTargetLabel: "Vuoi anche una Pull Request su GitHub con le correzioni? (opzionale)",
     githubTargetChooseAccount: "Scegli un account collegato",
     githubTargetNone: "Nessuno — solo file da scaricare",
@@ -768,6 +790,16 @@ const en: TranslationTree = {
     heuristic: "to verify",
     before: "Before",
     after: "After",
+    correctionsManifest: {
+      title: "JoJoX automatic corrections",
+      filesIntro:
+        "This zip contains ONLY the files that were changed, not the whole project. Copy these files into your real project, overwriting the ones with the same path — don't replace the whole folder.",
+      filesHeader: "Fixed files ({{count}}):",
+      manualHeader:
+        "Issues that still need a manual fix in your source code ({{count}} types — see the PDF report for the full list with file and line):",
+      manualNone: "Nothing left to fix: JoJoX automatically fixed everything it found.",
+      occurrences: "{{count}} occurrences",
+    },
   },
   header: {
     connect: "Connect GitHub",
@@ -1162,6 +1194,8 @@ const en: TranslationTree = {
     scoreAfter: "After the automatic fixes",
     scoreAfterNote: "Only the automatically fixed issues are already resolved in the downloadable files — anything without an automatic fix still needs a manual fix.",
     scoreStuckNote: "The score hasn't moved yet, but we still fixed {{fixed}} of {{total}} issues: there are critical issues left that the automatic fixer can't resolve on its own (e.g. SQL injection) and need manual changes. The issues already fixed stay fixed in the downloadable files below.",
+    zipHelp: "The zip only contains the fixed files (not the whole project), plus a CORREZIONI.txt file listing what to copy into your project and what's still left to fix by hand. For a real GitHub project, connecting the repository above before starting the audit is still the smoother path: the Pull Request shows the same changes as a diff, ready to merge with one click.",
+    zipHelpWithPr: "The zip only contains the fixed files (not the whole project), plus a CORREZIONI.txt file with the details. The same changes are already there as a diff in the Pull Request above.",
     githubTargetLabel: "Also want a GitHub Pull Request with the fixes? (optional)",
     githubTargetChooseAccount: "Choose a connected account",
     githubTargetNone: "None — just the downloadable files",

@@ -4,6 +4,8 @@ import { ALL_CHECKS } from "./checks/index.js";
 export interface AutofixResult {
   /** I file con le correzioni applicate — stessa forma dei file in ingresso. */
   files: SourceFile[];
+  /** Solo i file il cui contenuto è stato davvero modificato (sottoinsieme di `files`). */
+  changedFiles: SourceFile[];
   /** id dei controlli per cui è stata applicata almeno una correzione. */
   fixedCheckIds: Set<string>;
   /** id dei controlli con problemi trovati ma senza correzione automatica disponibile. */
@@ -20,6 +22,7 @@ export interface AutofixResult {
 export function applyAutofixes(files: readonly SourceFile[]): AutofixResult {
   const fixedCheckIds = new Set<string>();
   const manualCheckIds = new Set<string>();
+  const changedFiles: SourceFile[] = [];
   let filesChanged = 0;
 
   const result = files.map((file) => {
@@ -46,9 +49,12 @@ export function applyAutofixes(files: readonly SourceFile[]): AutofixResult {
       fileWasChanged = true;
     }
 
-    if (fileWasChanged) filesChanged++;
+    if (fileWasChanged) {
+      filesChanged++;
+      changedFiles.push(current);
+    }
     return current;
   });
 
-  return { files: result, fixedCheckIds, manualCheckIds, filesChanged };
+  return { files: result, changedFiles, fixedCheckIds, manualCheckIds, filesChanged };
 }

@@ -15,6 +15,7 @@ import {
   type ProfileDetails,
 } from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
+import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
 import { ScoreRing } from "./ScoreRing.js";
@@ -380,7 +381,14 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                 </>
               )}
               <div style={{ textAlign: "center", marginTop: afterFixScore != null ? "0.75rem" : 0, display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
-                <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={() => downloadZip(autofix.files, "jojox-full-site-audit.zip")}>
+                <button
+                  type="button"
+                  className="btn btn-primary hard-border hard-shadow-sm"
+                  onClick={() => {
+                    const afterFindings = analyzeFiles(autofix.files).findings;
+                    downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t), "jojox-correzioni.zip");
+                  }}
+                >
                   {t.fullSiteAudit.downloadZip}
                 </button>
                 {prUrl && (
@@ -389,6 +397,9 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   </a>
                 )}
               </div>
+              <p className="dropzone-hint" style={{ textAlign: "center", marginTop: "0.6rem" }}>
+                {prUrl ? t.fullSiteAudit.zipHelpWithPr : t.fullSiteAudit.zipHelp}
+              </p>
               {selectedRepoFullName && !prUrl && (
                 <p className="dropzone-hint" style={{ textAlign: "center", marginTop: "0.6rem" }}>
                   {prSkipped === "mismatch" ? t.fullSiteAudit.prMismatchNote : t.fullSiteAudit.prFailedNote}

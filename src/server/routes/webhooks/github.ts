@@ -188,10 +188,7 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
   // separata verso lo stesso branch, così chi ha aperto la PR resta libero
   // di accettarli o no invece di ritrovarsi commit non richiesti.
   const autofix = applyAutofixes(files);
-  const changedForFix = files
-    .map((original, i) => ({ original, fixed: autofix.files[i] }))
-    .filter(({ original, fixed }) => fixed.content !== original.content)
-    .map(({ fixed }) => fixed);
+  const changedForFix = autofix.changedFiles;
 
   let fixPrUrl: string | null = null;
   if (changedForFix.length > 0) {

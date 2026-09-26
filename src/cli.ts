@@ -136,11 +136,9 @@ async function main() {
 async function runFix(root: string, files: { path: string; content: string }[], asJson: boolean): Promise<void> {
   const before = analyzeFiles(files);
   const autofix = applyAutofixes(files);
-  const changed = files
-    .map((original, i) => ({ original, fixed: autofix.files[i] }))
-    .filter(({ original, fixed }) => fixed.content !== original.content);
+  const changed = autofix.changedFiles;
 
-  await Promise.all(changed.map(({ fixed }) => writeFile(resolve(root, fixed.path), fixed.content, "utf8")));
+  await Promise.all(changed.map((fixed) => writeFile(resolve(root, fixed.path), fixed.content, "utf8")));
 
   const after = analyzeFiles(autofix.files);
 
@@ -150,7 +148,7 @@ async function runFix(root: string, files: { path: string; content: string }[], 
         {
           scoreBefore: before.score,
           scoreAfter: after.score,
-          filesChanged: changed.map(({ fixed }) => fixed.path),
+          filesChanged: changed.map((fixed) => fixed.path),
           fixedCheckIds: [...autofix.fixedCheckIds],
           manualCheckIds: [...autofix.manualCheckIds],
         },
@@ -165,7 +163,7 @@ async function runFix(root: string, files: { path: string; content: string }[], 
     console.log("\nNessuna correzione automatica applicabile su questo codice.\n");
   } else {
     console.log(`\nJoJoX — corretti ${changed.length} file (punteggio: ${before.score} → ${after.score}/100)\n`);
-    for (const { fixed } of changed) {
+    for (const fixed of changed) {
       console.log(`  ✓ ${fixed.path}`);
     }
     console.log("");
