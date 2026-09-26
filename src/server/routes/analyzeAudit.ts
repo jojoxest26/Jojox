@@ -81,15 +81,30 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     return;
   }
 
-  const result = analyzeFiles(parsed.data.files);
-
-  // Segna il credito come usato prima di rispondere: se qualcosa fallisce
-  // dopo, meglio un credito consumato senza risultato (raro, va contattato
-  // il supporto) che uno stesso credito riusabile all'infinito per errore.
-  await supabaseAdmin
+  // Reclama il credito con una update condizionata sullo stesso stato letto
+  // sopra: se due richieste arrivano in parallelo (due schede aperte, doppio
+  // click) possono leggere entrambe lo stesso credito "unused" prima che
+  // l'altra lo segni come usato — qui la condizione WHERE status = 'unused'
+  // fa sì che solo una delle due update tocchi davvero la riga; l'altra non
+  // trova più corrispondenza e lo scopriamo da `claimed` vuoto.
+  const { data: claimed, error: claimErr } = await supabaseAdmin
     .from("audit_credits")
     .update({ status: "used", used_at: new Date().toISOString() })
-    .eq("id", credit.id);
+    .eq("id", credit.id)
+    .eq("status", "unused")
+    .select("id");
+
+  if (claimErr) {
+    res.status(500).json({ error: "Errore nel controllo dei Full Site Audit disponibili" });
+    return;
+  }
+
+  if (!claimed || claimed.length === 0) {
+    res.status(402).json({ error: "Nessun Full Site Audit disponibile — acquistane uno per continuare." });
+    return;
+  }
+
+  const result = analyzeFiles(parsed.data.files);
 
   await supabaseAdmin.from("analyses").insert({
     user_id: req.userId,

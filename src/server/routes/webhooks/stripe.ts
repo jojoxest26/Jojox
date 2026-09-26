@@ -81,8 +81,19 @@ async function handleCheckoutCompleted(session: CheckoutSessionEventObject): Pro
   const userId = session.metadata?.supabase_user_id;
   if (!userId) return;
 
-  await supabaseAdmin.from("audit_credits").insert({
+  const { error } = await supabaseAdmin.from("audit_credits").insert({
     user_id: userId,
     stripe_checkout_session_id: session.id,
   });
+
+  // Stripe dichiara esplicitamente che lo stesso evento webhook può arrivare
+  // più di una volta: il codice 23505 (violazione del vincolo di unicità su
+  // stripe_checkout_session_id) significa che questo pagamento è già stato
+  // accreditato in precedenza — non è un errore, non va accreditato due
+  // volte. Qualsiasi altro errore va invece rilanciato: la richiesta risponde
+  // 500 e Stripe riprova, così un fallimento di rete o del database non
+  // lascia un cliente che ha pagato senza il suo credito.
+  if (error && error.code !== "23505") {
+    throw new Error(`impossibile accreditare il Full Site Audit per la sessione ${session.id}: ${error.message}`);
+  }
 }
