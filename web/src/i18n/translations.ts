@@ -322,6 +322,7 @@ export interface TranslationTree {
     scoreStuckNote: string;
     zipHelp: string;
     zipHelpWithPr: string;
+    connectGithubSuggestion: string;
     githubTargetLabel: string;
     githubTargetChooseAccount: string;
     githubTargetNone: string;
@@ -759,6 +760,7 @@ const it: TranslationTree = {
     scoreStuckNote: "Il punteggio non si è ancora spostato, ma abbiamo corretto comunque {{fixed}} problemi su {{total}}: restano problemi critici che il correttore automatico non può risolvere da solo (es. SQL injection) e servono modifiche manuali. I problemi già corretti restano corretti nei file scaricabili qui sotto.",
     zipHelp: "Lo zip contiene solo i file corretti (non l'intero progetto), più un file CORREZIONI.txt che elenca cosa copiare nel tuo progetto e cosa resta da sistemare a mano. Per un progetto reale su GitHub conviene comunque collegare il repository qui sopra prima di avviare l'audit: la Pull Request mostra le stesse modifiche come diff, pronte da unire con un click.",
     zipHelpWithPr: "Lo zip contiene solo i file corretti (non l'intero progetto), più un file CORREZIONI.txt con i dettagli. Le stesse modifiche sono già pronte come diff nella Pull Request qui sopra.",
+    connectGithubSuggestion: "Hai un repository GitHub? Collegalo prima di iniziare per ricevere le correzioni come Pull Request pronta da un merge, invece che come zip da copiare a mano nel tuo progetto.",
     githubTargetLabel: "Vuoi anche una Pull Request su GitHub con le correzioni? (opzionale)",
     githubTargetChooseAccount: "Scegli un account collegato",
     githubTargetNone: "Nessuno — solo file da scaricare",
@@ -1196,6 +1198,7 @@ const en: TranslationTree = {
     scoreStuckNote: "The score hasn't moved yet, but we still fixed {{fixed}} of {{total}} issues: there are critical issues left that the automatic fixer can't resolve on its own (e.g. SQL injection) and need manual changes. The issues already fixed stay fixed in the downloadable files below.",
     zipHelp: "The zip only contains the fixed files (not the whole project), plus a CORREZIONI.txt file listing what to copy into your project and what's still left to fix by hand. For a real GitHub project, connecting the repository above before starting the audit is still the smoother path: the Pull Request shows the same changes as a diff, ready to merge with one click.",
     zipHelpWithPr: "The zip only contains the fixed files (not the whole project), plus a CORREZIONI.txt file with the details. The same changes are already there as a diff in the Pull Request above.",
+    connectGithubSuggestion: "Have a GitHub repository? Connect it before you start to get the fixes as a Pull Request ready to merge, instead of a zip to copy by hand into your project.",
     githubTargetLabel: "Also want a GitHub Pull Request with the fixes? (optional)",
     githubTargetChooseAccount: "Choose a connected account",
     githubTargetNone: "None — just the downloadable files",

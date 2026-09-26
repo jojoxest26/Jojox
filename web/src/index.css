@@ -888,6 +888,20 @@ body {
   margin-top: 1rem;
   text-align: center;
 }
+.github-connect-suggestion {
+  margin-top: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+.github-connect-suggestion p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 480px;
+  margin: 0;
+}
 .github-target-picker label {
   display: block;
   font-size: 0.85rem;

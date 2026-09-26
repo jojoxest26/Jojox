@@ -22,6 +22,7 @@ import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";
 
+const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const MAX_FILES = 2000;
 const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
 const shouldSkip = (path: string, size: number) => SKIP_PATH.test(path) || BINARY_EXTENSIONS.test(path) || size > MAX_FILE_BYTES;
@@ -47,6 +48,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [dragOver, setDragOver] = useState(false);
 
   const [installations, setInstallations] = useState<GithubInstallation[]>([]);
+  const [installationsLoaded, setInstallationsLoaded] = useState(false);
   const [selectedInstallationId, setSelectedInstallationId] = useState<number | null>(null);
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [selectedRepoFullName, setSelectedRepoFullName] = useState<string | null>(null);
@@ -83,7 +85,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
         // click a chi ha un solo account collegato, il caso più comune.
         if (list.length === 1) setSelectedInstallationId(list[0].installation_id);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setInstallationsLoaded(true));
 
     fetchProfileDetails(session.access_token)
       .then(setProfile)
@@ -287,6 +290,20 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   </div>
                 )}
               </div>
+
+              {installations.length === 0 && installationsLoaded && (
+                <div className="github-connect-suggestion">
+                  <p>{t.fullSiteAudit.connectGithubSuggestion}</p>
+                  <a
+                    className="btn btn-secondary hard-border hard-shadow-sm"
+                    href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t.header.connect}
+                  </a>
+                </div>
+              )}
 
               {installations.length > 0 && (
                 <div className="github-target-picker">
