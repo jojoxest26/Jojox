@@ -24,6 +24,7 @@ function App() {
   const [path, setPath] = useState(window.location.pathname);
   const [analyzerOpen, setAnalyzerOpen] = useState(false);
   const [pendingScroll, setPendingScroll] = useState(false);
+  const [githubClaimError, setGithubClaimError] = useState<string | null>(null);
   // Incrementato a ogni analisi salvata: HistoryPanel lo osserva per
   // ricaricare storico e grafico senza dover ricaricare la pagina.
   const [historyVersion, setHistoryVersion] = useState(0);
@@ -77,7 +78,7 @@ function App() {
 
     claimGithubInstallation(Number(installationId), session.access_token)
       .then(() => fetchGithubInstallations(session.access_token).then(setInstallations))
-      .catch(() => {})
+      .catch((err) => setGithubClaimError(err instanceof Error ? err.message : null))
       .finally(() => {
         params.delete("installation_id");
         params.delete("setup_action");
@@ -121,7 +122,7 @@ function App() {
           {session && <HistoryPanel session={session} refreshKey={historyVersion} />}
         </>
       )}
-      <GithubSection session={session} installations={installations} />
+      <GithubSection session={session} installations={installations} claimError={githubClaimError} />
       <SupabaseCheckSection />
       <WaitlistForm />
       <ChecksList />

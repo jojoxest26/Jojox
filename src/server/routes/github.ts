@@ -3,10 +3,16 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
 import { listInstallationRepos } from "../github/auditFixPr.js";
+import { getPlanForUser } from "../plan.js";
 
 export const githubRouter = Router();
 
 const SLACK_WEBHOOK_PATTERN = /^https:\/\/hooks\.slack\.com\/services\/.+/;
+
+// Unica vera differenza tra Pro e Team: quanti account/organizzazioni GitHub
+// si possono collegare per il monitoraggio continuo. Team ne collega quanti
+// vuole, Pro (e free) si fermano a uno.
+const MAX_INSTALLATIONS_NON_TEAM = 1;
 
 githubRouter.get("/api/github/installations", requireAuth, async (req: AuthedRequest, res) => {
   const { data, error } = await supabaseAdmin
@@ -45,6 +51,25 @@ githubRouter.post("/api/github/installations/:installationId/claim", requireAuth
   if (installation.installed_by && installation.installed_by !== req.userId) {
     res.status(409).json({ error: "Questa installazione è già collegata a un altro account" });
     return;
+  }
+
+  // Un nuovo collegamento (non un ri-collegamento allo stesso account): il
+  // piano Pro può averne al massimo uno, solo Team può collegarne quanti vuole.
+  if (!installation.installed_by) {
+    const plan = await getPlanForUser(req.userId!);
+    if (plan !== "team") {
+      const { count } = await supabaseAdmin
+        .from("github_installations")
+        .select("installation_id", { count: "exact", head: true })
+        .eq("installed_by", req.userId);
+
+      if ((count ?? 0) >= MAX_INSTALLATIONS_NON_TEAM) {
+        res.status(403).json({
+          error: "Il piano Pro può collegare un solo account/organizzazione GitHub. Passa a Team per collegarne quanti vuoi.",
+        });
+        return;
+      }
+    }
   }
 
   const { error } = await supabaseAdmin

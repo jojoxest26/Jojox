@@ -82,9 +82,11 @@ function SlackNotifications({ session, installations }: { session: Session; inst
 export function GithubSection({
   session,
   installations,
+  claimError,
 }: {
   session: Session | null;
   installations: GithubInstallation[] | null;
+  claimError?: string | null;
 }) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
@@ -119,6 +121,7 @@ export function GithubSection({
         <p>{t.github.body1}</p>
         <p>{t.github.body2}</p>
         <p className="github-note">{t.github.note}</p>
+        {claimError && <p style={{ color: "var(--critical)" }}>{claimError}</p>}
         {connected && (
           <p className="github-connected">
             <span className="pill pill-mint">{t.github.connectedLabel}</span>{" "}

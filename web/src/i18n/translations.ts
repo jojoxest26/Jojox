@@ -503,6 +503,7 @@ const it: TranslationTree = {
     proList: [
       "Analisi e cronologia illimitate",
       "Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose",
+      "Un account/organizzazione GitHub collegato",
       "Commenti automatici sulle pull request",
       "Correzioni automatiche proposte come pull request",
       "Badge che si aggiorna da solo a ogni push",
@@ -518,6 +519,7 @@ const it: TranslationTree = {
     teamList: [
       "Analisi e cronologia illimitate",
       "Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose",
+      "Account/organizzazioni GitHub collegati: quanti vuoi",
       "Commenti automatici sulle pull request",
       "Correzioni automatiche proposte come pull request",
       "Badge che si aggiorna da solo a ogni push",
@@ -941,6 +943,7 @@ const en: TranslationTree = {
     proList: [
       "Unlimited analyses and history",
       "GitHub integration: checks every push and blocks the riskiest changes",
+      "One connected GitHub account/organization",
       "Automatic comments on pull requests",
       "Automatic fixes proposed as pull requests",
       "Badge that updates itself on every push",
@@ -956,6 +959,7 @@ const en: TranslationTree = {
     teamList: [
       "Unlimited analyses and history",
       "GitHub integration: checks every push and blocks the riskiest changes",
+      "As many connected GitHub accounts/organizations as you need",
       "Automatic comments on pull requests",
       "Automatic fixes proposed as pull requests",
       "Badge that updates itself on every push",
