@@ -40,6 +40,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [autofix, setAutofix] = useState<AutofixResult | null>(null);
   const [afterFixScore, setAfterFixScore] = useState<number | null>(null);
+  const [afterFixFindingsCount, setAfterFixFindingsCount] = useState<number | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -158,6 +159,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setResult(null);
     setAutofix(null);
     setAfterFixScore(null);
+    setAfterFixFindingsCount(null);
     setPrUrl(null);
     setPrSkipped(null);
     setError(null);
@@ -182,10 +184,21 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       setPrSkipped(analysisResult.prSkipped);
       const autofixResult = applyAutofixes(files);
       setAutofix(autofixResult);
-      // Ricalcoliamo il punteggio sui file corretti solo per mostrare il
-      // miglioramento reale ottenuto dalla correzione automatica — non è mai
-      // il punteggio "finale": i problemi senza correzione automatica restano.
-      setAfterFixScore(autofixResult.fixedCheckIds.size > 0 ? analyzeFiles(autofixResult.files).score : null);
+      // Ricalcoliamo il punteggio (e il numero di problemi) sui file corretti
+      // solo per mostrare il miglioramento reale ottenuto dalla correzione
+      // automatica — non è mai il risultato "finale": i problemi senza
+      // correzione automatica restano, e con molti problemi critici il
+      // punteggio può restare fermo (es. a 0) anche se sono stati corretti
+      // decine di problemi — per questo mostriamo anche il conteggio, che si
+      // muove sempre quando qualcosa è stato davvero corretto.
+      if (autofixResult.fixedCheckIds.size > 0) {
+        const afterAnalysis = analyzeFiles(autofixResult.files);
+        setAfterFixScore(afterAnalysis.score);
+        setAfterFixFindingsCount(afterAnalysis.findings.length);
+      } else {
+        setAfterFixScore(null);
+        setAfterFixFindingsCount(null);
+      }
       setCredits((c) => (c != null ? Math.max(0, c - 1) : c));
     } catch (err) {
       setError(err instanceof Error ? err.message : t.fullSiteAudit.errorGeneric);
@@ -199,6 +212,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setResult(null);
     setAutofix(null);
     setAfterFixScore(null);
+    setAfterFixFindingsCount(null);
     setPrUrl(null);
     setPrSkipped(null);
     setError(null);
@@ -329,6 +343,14 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
 
           {result && autofix && autofix.fixedCheckIds.size > 0 && (
             <div className="card autofix-card score-compare">
+              <p className="autofix-summary" style={{ textAlign: "center" }}>
+                {interpolate(
+                  autofix.fixedCheckIds.size === 1 ? t.analyzer.autofixFixedOne : t.analyzer.autofixFixedMany,
+                  { files: String(autofix.filesChanged), types: String(autofix.fixedCheckIds.size) }
+                )}
+                {autofix.manualCheckIds.size > 0 &&
+                  interpolate(t.analyzer.autofixManualSuffix, { count: String(autofix.manualCheckIds.size) })}
+              </p>
               {afterFixScore != null && (
                 <>
                   <div className="score-compare-row">
@@ -337,7 +359,9 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                       <div className="score-compare-label">{t.fullSiteAudit.scoreBefore}</div>
                     </div>
                     <div className="score-compare-arrow">
-                      <span className="score-compare-delta">+{afterFixScore - result.score}</span>
+                      <span className="score-compare-delta">
+                        {afterFixScore > result.score ? `+${afterFixScore - result.score}` : "="}
+                      </span>
                       <span>→</span>
                     </div>
                     <div className="score-compare-item">
@@ -345,7 +369,14 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                       <div className="score-compare-label">{t.fullSiteAudit.scoreAfter}</div>
                     </div>
                   </div>
-                  <p className="dropzone-hint" style={{ textAlign: "center" }}>{t.fullSiteAudit.scoreAfterNote}</p>
+                  <p className="dropzone-hint" style={{ textAlign: "center" }}>
+                    {afterFixScore === result.score && afterFixFindingsCount != null
+                      ? interpolate(t.fullSiteAudit.scoreStuckNote, {
+                          fixed: String(result.findings.length - afterFixFindingsCount),
+                          total: String(result.findings.length),
+                        })
+                      : t.fullSiteAudit.scoreAfterNote}
+                  </p>
                 </>
               )}
               <div style={{ textAlign: "center", marginTop: afterFixScore != null ? "0.75rem" : 0, display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>

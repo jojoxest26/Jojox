@@ -311,6 +311,7 @@ export interface TranslationTree {
     scoreBefore: string;
     scoreAfter: string;
     scoreAfterNote: string;
+    scoreStuckNote: string;
     githubTargetLabel: string;
     githubTargetChooseAccount: string;
     githubTargetNone: string;
@@ -735,6 +736,7 @@ const it: TranslationTree = {
     scoreBefore: "Prima",
     scoreAfter: "Dopo la correzione automatica",
     scoreAfterNote: "Solo i problemi corretti automaticamente sono già risolti nei file scaricabili — quelli senza correzione automatica restano da sistemare a mano.",
+    scoreStuckNote: "Il punteggio non si è ancora spostato, ma abbiamo corretto comunque {{fixed}} problemi su {{total}}: restano problemi critici che il correttore automatico non può risolvere da solo (es. SQL injection) e servono modifiche manuali. I problemi già corretti restano corretti nei file scaricabili qui sotto.",
     githubTargetLabel: "Vuoi anche una Pull Request su GitHub con le correzioni? (opzionale)",
     githubTargetChooseAccount: "Scegli un account collegato",
     githubTargetNone: "Nessuno — solo file da scaricare",
@@ -1159,6 +1161,7 @@ const en: TranslationTree = {
     scoreBefore: "Before",
     scoreAfter: "After the automatic fixes",
     scoreAfterNote: "Only the automatically fixed issues are already resolved in the downloadable files — anything without an automatic fix still needs a manual fix.",
+    scoreStuckNote: "The score hasn't moved yet, but we still fixed {{fixed}} of {{total}} issues: there are critical issues left that the automatic fixer can't resolve on its own (e.g. SQL injection) and need manual changes. The issues already fixed stay fixed in the downloadable files below.",
     githubTargetLabel: "Also want a GitHub Pull Request with the fixes? (optional)",
     githubTargetChooseAccount: "Choose a connected account",
     githubTargetNone: "None — just the downloadable files",
