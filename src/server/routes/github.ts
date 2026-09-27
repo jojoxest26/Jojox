@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
 import { listInstallationRepos } from "../github/auditFixPr.js";
 import { getPlanForUser } from "../plan.js";
+import { getTeamUserIds } from "../team.js";
 
 export const githubRouter = Router();
 
@@ -15,10 +16,13 @@ const SLACK_WEBHOOK_PATTERN = /^https:\/\/hooks\.slack\.com\/services\/.+/;
 const MAX_INSTALLATIONS_NON_TEAM = 1;
 
 githubRouter.get("/api/github/installations", requireAuth, async (req: AuthedRequest, res) => {
+  // Team condivide i repository collegati tra tutti i membri, non solo chi
+  // li ha collegati di persona — è la dashboard condivisa del piano Team.
+  const teamUserIds = await getTeamUserIds(req.userId!);
   const { data, error } = await supabaseAdmin
     .from("github_installations")
     .select("installation_id, account_login, slack_webhook_url")
-    .eq("installed_by", req.userId);
+    .in("installed_by", teamUserIds);
 
   if (error) {
     res.status(500).json({ error: "Errore nel recupero delle installazioni" });
@@ -98,7 +102,8 @@ githubRouter.get("/api/github/installations/:installationId/repos", requireAuth,
     .eq("installation_id", installationId)
     .single();
 
-  if (!installation || installation.installed_by !== req.userId) {
+  const teamUserIds = await getTeamUserIds(req.userId!);
+  if (!installation || !installation.installed_by || !teamUserIds.includes(installation.installed_by)) {
     res.status(404).json({ error: "Installazione non trovata" });
     return;
   }
@@ -128,7 +133,8 @@ githubRouter.put("/api/github/installations/:installationId/slack-webhook", requ
     .eq("installation_id", installationId)
     .single();
 
-  if (!installation || installation.installed_by !== req.userId) {
+  const teamUserIds = await getTeamUserIds(req.userId!);
+  if (!installation || !installation.installed_by || !teamUserIds.includes(installation.installed_by)) {
     res.status(404).json({ error: "Installazione non trovata" });
     return;
   }

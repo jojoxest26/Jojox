@@ -18,8 +18,29 @@ export function effectivePlan(plan: Plan, trialExpiresAt: string | null, now: Da
 
 export async function getPlanForUser(userId: string): Promise<Plan> {
   const { data } = await supabaseAdmin.from("profiles").select("plan, plan_trial_expires_at").eq("id", userId).single();
-  const plan = (data?.plan as Plan | undefined) ?? "free";
-  return effectivePlan(plan, data?.plan_trial_expires_at ?? null);
+  const ownPlan = effectivePlan((data?.plan as Plan | undefined) ?? "free", data?.plan_trial_expires_at ?? null);
+  if (ownPlan !== "free") return ownPlan;
+
+  // Un membro (non proprietario) di un team eredita il piano Team finché il
+  // proprietario ha un abbonamento attivo — i seat non pagano separatamente.
+  // Il piano del proprietario si controlla sul valore grezzo (non via
+  // effectivePlan): una sua prova gratuita del Pro non deve propagarsi ai
+  // membri, solo un vero abbonamento Team.
+  const { data: membership } = await supabaseAdmin
+    .from("team_members")
+    .select("teams:teams!inner(owner_id)")
+    .eq("user_id", userId)
+    .not("joined_at", "is", null)
+    .neq("role", "owner")
+    .maybeSingle();
+
+  const ownerId = membership?.teams ? (membership.teams as unknown as { owner_id: string }).owner_id : null;
+  if (ownerId) {
+    const { data: ownerProfile } = await supabaseAdmin.from("profiles").select("plan").eq("id", ownerId).single();
+    if (ownerProfile?.plan === "team") return "team";
+  }
+
+  return "free";
 }
 
 export function startOfCurrentMonthUtc(): Date {

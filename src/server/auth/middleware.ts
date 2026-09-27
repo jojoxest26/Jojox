@@ -3,6 +3,7 @@ import { supabaseAdmin } from "../db/supabase.js";
 
 export interface AuthedRequest extends Request {
   userId?: string;
+  userEmail?: string;
 }
 
 function extractBearerToken(req: Request): string | null {
@@ -25,6 +26,7 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
   }
 
   req.userId = data.user.id;
+  req.userEmail = data.user.email;
   next();
 }
 

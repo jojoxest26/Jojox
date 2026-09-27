@@ -5,6 +5,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
 import { openAuditFixPr, getRepoFilePaths } from "../github/auditFixPr.js";
+import { getTeamUserIds } from "../team.js";
 
 // Sotto questa quota di file caricati già presenti nel repository scelto,
 // consideriamo probabile uno scambio di repository (es. selezionato quello
@@ -56,7 +57,8 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
       .eq("installation_id", githubTarget.installationId)
       .single();
 
-    if (!installation || installation.installed_by !== req.userId) {
+    const teamUserIds = await getTeamUserIds(req.userId!);
+    if (!installation || !installation.installed_by || !teamUserIds.includes(installation.installed_by)) {
       res.status(403).json({ error: "Installazione GitHub non trovata o non collegata al tuo account" });
       return;
     }

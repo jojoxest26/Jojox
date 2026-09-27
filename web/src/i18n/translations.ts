@@ -96,6 +96,7 @@ export interface TranslationTree {
     audience: string;
     pricing: string;
     integrations: string;
+    team: string;
     roadmap: string;
     checks: string;
   };
@@ -157,6 +158,21 @@ export interface TranslationTree {
     title: string;
     body: string;
     subLabel: string;
+  };
+  team: {
+    title: string;
+    body: string;
+    seatsCount: string;
+    seatsFull: string;
+    roleOwner: string;
+    roleMember: string;
+    roleInvited: string;
+    invitePlaceholder: string;
+    inviteCta: string;
+    inviting: string;
+    remove: string;
+    errorInvite: string;
+    errorRemove: string;
   };
   login: {
     sent: string;
@@ -441,6 +457,7 @@ const it: TranslationTree = {
     audience: "Per chi è",
     pricing: "Prezzi",
     integrations: "Integrazioni",
+    team: "Il tuo team",
     roadmap: "In arrivo",
     checks: "I 21 controlli",
   },
@@ -551,6 +568,21 @@ const it: TranslationTree = {
     title: "Tutti i controlli, senza segreti",
     body: "JoJoX non nasconde come funziona: qui sotto trovi tutti i 21 controlli, quanto sono gravi, e quanto siamo sicuri di ognuno — «confermato» quando il problema è certo, «da verificare» quando manca un segnale nel codice ma potrebbe essere gestito altrove (il controllo viene comunque sempre eseguito).",
     subLabel: "{{count}} controlli, in 4 livelli di gravità",
+  },
+  team: {
+    title: "Il tuo team",
+    body: "Repository collegati e storico analisi condivisi tra tutti i membri — fino a 5 persone incluse nel piano Team.",
+    seatsCount: "{{used}} di {{max}} persone incluse nel piano",
+    seatsFull: "Hai raggiunto il numero massimo di persone incluse nel piano Team.",
+    roleOwner: "Proprietario",
+    roleMember: "Membro",
+    roleInvited: "Invito in sospeso",
+    invitePlaceholder: "email@esempio.com",
+    inviteCta: "Invita",
+    inviting: "Invio invito...",
+    remove: "Rimuovi",
+    errorInvite: "Errore nell'invio dell'invito",
+    errorRemove: "Errore nella rimozione",
   },
   login: {
     sent: "Controlla la tua email: ti abbiamo mandato un link per accedere. Puoi chiudere questo popup.",
@@ -881,6 +913,7 @@ const en: TranslationTree = {
     audience: "Who it's for",
     pricing: "Pricing",
     integrations: "Integrations",
+    team: "Your team",
     roadmap: "Coming soon",
     checks: "The 21 checks",
   },
@@ -991,6 +1024,21 @@ const en: TranslationTree = {
     title: "Every check, no secrets",
     body: "JoJoX doesn't hide how it works: below is the full list of all 21 checks, how severe each is, and how confident we are in each — \"confirmed\" when the problem is certain, \"to verify\" when a signal is missing from the code but it might be handled elsewhere (the check still always runs).",
     subLabel: "{{count}} checks, across 4 severity levels",
+  },
+  team: {
+    title: "Your team",
+    body: "Connected repositories and analysis history shared across every member — up to 5 people included in the Team plan.",
+    seatsCount: "{{used}} of {{max}} people included in the plan",
+    seatsFull: "You've reached the maximum number of people included in the Team plan.",
+    roleOwner: "Owner",
+    roleMember: "Member",
+    roleInvited: "Invite pending",
+    invitePlaceholder: "email@example.com",
+    inviteCta: "Invite",
+    inviting: "Sending invite...",
+    remove: "Remove",
+    errorInvite: "Error sending the invite",
+    errorRemove: "Error removing member",
   },
   login: {
     sent: "Check your email: we've sent you a link to sign in. You can close this popup.",

@@ -209,3 +209,45 @@ export function saveSlackWebhook(
     accessToken,
   });
 }
+
+export interface TeamMember {
+  email: string;
+  role: "owner" | "member";
+  invitedAt: string;
+  joinedAt: string | null;
+}
+
+export interface TeamInfo {
+  isOwner: boolean;
+  members: TeamMember[];
+}
+
+/** Il team dell'utente loggato (come proprietario o come membro), o null se non ne fa parte. */
+export async function fetchTeam(accessToken: string): Promise<TeamInfo | null> {
+  const { team } = await apiFetch<{
+    team: { isOwner: boolean; members: { email: string; role: "owner" | "member"; invited_at: string; joined_at: string | null }[] } | null;
+  }>("/api/team", { accessToken });
+
+  if (!team) return null;
+  return {
+    isOwner: team.isOwner,
+    members: team.members.map((m) => ({ email: m.email, role: m.role, invitedAt: m.invited_at, joinedAt: m.joined_at })),
+  };
+}
+
+/** Invita una persona nel team (solo il proprietario del piano Team può farlo). */
+export function inviteTeamMember(email: string, accessToken: string): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>("/api/team/invite", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+    accessToken,
+  });
+}
+
+/** Rimuove una persona dal team (solo il proprietario). */
+export function removeTeamMember(email: string, accessToken: string): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>(`/api/team/members/${encodeURIComponent(email)}`, {
+    method: "DELETE",
+    accessToken,
+  });
+}

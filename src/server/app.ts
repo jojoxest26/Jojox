@@ -15,6 +15,7 @@ import { githubRouter } from "./routes/github.js";
 import { auditCreditsRouter } from "./routes/auditCredits.js";
 import { analyzeAuditRouter } from "./routes/analyzeAudit.js";
 import { planTrialRouter } from "./routes/planTrial.js";
+import { teamRouter } from "./routes/team.js";
 
 export function createApp(): Express {
   const app = express();
@@ -59,6 +60,7 @@ export function createApp(): Express {
   app.use(auditCreditsRouter);
   app.use(analyzeAuditRouter);
   app.use(planTrialRouter);
+  app.use(teamRouter);
 
   return app;
 }

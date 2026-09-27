@@ -9,6 +9,7 @@ import { Analyzer } from "./components/Analyzer.js";
 import { HistoryPanel } from "./components/HistoryPanel.js";
 import { Pricing } from "./components/Pricing.js";
 import { GithubSection } from "./components/GithubSection.js";
+import { TeamSection } from "./components/TeamSection.js";
 import { SupabaseCheckSection } from "./components/SupabaseCheckSection.js";
 import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
@@ -123,6 +124,7 @@ function App() {
         </>
       )}
       <GithubSection session={session} installations={installations} claimError={githubClaimError} />
+      <TeamSection session={session} />
       <SupabaseCheckSection />
       <WaitlistForm />
       <ChecksList />
