@@ -538,6 +538,7 @@ const it: TranslationTree = {
       "Analisi e cronologia illimitate",
       "Integrazione con GitHub: controlla ogni push e blocca le modifiche più rischiose",
       "Account/organizzazioni GitHub collegati: quanti vuoi",
+      "Fino a 5 persone incluse, con repository e storico condivisi",
       "Commenti automatici sulle pull request",
       "Correzioni automatiche proposte come pull request",
       "Badge che si aggiorna da solo a ogni push",
@@ -675,11 +676,6 @@ const it: TranslationTree = {
     toggleShow: "▼ Vedi la roadmap",
     toggleHide: "▲ Nascondi la roadmap",
     roadmap: [
-      {
-        icon: "👥",
-        title: "Gestione team con più seat",
-        text: "Fino a 5 persone incluse nello stesso abbonamento Team, con seat da aggiungere e dashboard condivisa — nessuna data ancora, arriva quando il disegno lato pagamenti/permessi è pronto.",
-      },
       {
         icon: "🏢",
         title: "Piani Business / Enterprise",
@@ -995,6 +991,7 @@ const en: TranslationTree = {
       "Unlimited analyses and history",
       "GitHub integration: checks every push and blocks the riskiest changes",
       "As many connected GitHub accounts/organizations as you need",
+      "Up to 5 people included, with shared repositories and history",
       "Automatic comments on pull requests",
       "Automatic fixes proposed as pull requests",
       "Badge that updates itself on every push",
@@ -1132,11 +1129,6 @@ const en: TranslationTree = {
     toggleShow: "▼ See the roadmap",
     toggleHide: "▲ Hide the roadmap",
     roadmap: [
-      {
-        icon: "👥",
-        title: "Team management with more seats",
-        text: "Up to 5 people included in the same Team subscription, with seats to add and a shared dashboard — no date yet, coming once the billing/permissions design is ready.",
-      },
       {
         icon: "🏢",
         title: "Business / Enterprise plans",
