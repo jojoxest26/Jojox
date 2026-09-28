@@ -35,7 +35,7 @@ export function createApp(): Express {
   app.use(
     cors({
       origin: env.allowedOrigins,
-      methods: ["GET", "POST", "PUT"],
+      methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
