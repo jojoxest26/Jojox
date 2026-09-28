@@ -12,12 +12,20 @@ export const MAX_TEAM_SEATS = 5;
 export async function getTeamUserIds(userId: string): Promise<string[]> {
   const { data: membership } = await supabaseAdmin
     .from("team_members")
-    .select("team_id")
+    .select("team_id, teams:teams!inner(owner_id)")
     .eq("user_id", userId)
     .not("joined_at", "is", null)
     .maybeSingle();
 
   if (!membership) return [userId];
+
+  // Se il proprietario del team ha cancellato l'abbonamento o è sceso a Pro,
+  // la condivisione deve fermarsi subito — senza questo controllo, owner e
+  // membri continuerebbero a vedersi storico e repository a vicenda anche
+  // senza più pagare il piano Team che dà diritto a quella condivisione.
+  const ownerId = (membership.teams as unknown as { owner_id: string }).owner_id;
+  const { data: ownerProfile } = await supabaseAdmin.from("profiles").select("plan").eq("id", ownerId).single();
+  if (ownerProfile?.plan !== "team") return [userId];
 
   const { data: members } = await supabaseAdmin
     .from("team_members")

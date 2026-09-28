@@ -81,6 +81,14 @@ teamRouter.post("/api/team/invite", requireAuth, async (req: AuthedRequest, res)
       res.status(409).json({ error: "Questa persona è già stata invitata" });
       return;
     }
+    // Scatta solo nella rara finestra in cui due inviti arrivano nello stesso
+    // istante e superano il controllo sopra prima che l'altro abbia scritto:
+    // il trigger a livello di database (migrazione 0010) blocca comunque il
+    // sesto posto, qui traduciamo il suo errore in un messaggio leggibile.
+    if (error.message?.includes("team seat limit reached")) {
+      res.status(409).json({ error: `Il piano Team include al massimo ${MAX_TEAM_SEATS} persone` });
+      return;
+    }
     res.status(500).json({ error: "Errore nell'invito" });
     return;
   }
