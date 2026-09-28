@@ -32,7 +32,12 @@ export function HistoryPanel({ session, refreshKey }: { session: Session; refres
             {history.map((entry) => (
               <div key={entry.id} className="history-row">
                 <span>
-                  {entry.source === "github" ? entry.repo_full_name : t.history.manualSource} —{" "}
+                  {entry.source === "github"
+                    ? entry.repo_full_name
+                    : entry.source === "audit"
+                      ? t.history.auditSource
+                      : t.history.manualSource}{" "}
+                  —{" "}
                   {new Date(entry.created_at).toLocaleDateString(t.meta.dateLocale)}
                 </span>
                 <strong>{entry.score}/100</strong>

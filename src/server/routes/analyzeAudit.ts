@@ -110,7 +110,10 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
 
   await supabaseAdmin.from("analyses").insert({
     user_id: req.userId,
-    source: "manual",
+    // "audit", non "manual": distingue nello storico un Full Site Audit
+    // pagato da una normale analisi manuale gratuita — prima finivano
+    // mescolati sotto la stessa etichetta generica.
+    source: "audit",
     score: result.score,
     summary: result.summary,
     findings: result.findings,

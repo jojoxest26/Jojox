@@ -212,6 +212,7 @@ export interface TranslationTree {
     toggleShow: string;
     toggleHide: string;
     manualSource: string;
+    auditSource: string;
     error: string;
   };
   scoreChart: {
@@ -622,6 +623,7 @@ const it: TranslationTree = {
     toggleShow: "▼ Vedi lo storico",
     toggleHide: "▲ Nascondi lo storico",
     manualSource: "Analisi manuale",
+    auditSource: "Controllo Completo del Sito",
     error: "Errore nel caricamento dello storico",
   },
   scoreChart: {
@@ -1078,6 +1080,7 @@ const en: TranslationTree = {
     toggleShow: "▼ See history",
     toggleHide: "▲ Hide history",
     manualSource: "Manual analysis",
+    auditSource: "Full Site Audit",
     error: "Error loading history",
   },
   scoreChart: {

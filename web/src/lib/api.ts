@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export interface AnalysisHistoryEntry {
   id: string;
-  source: "manual" | "github";
+  source: "manual" | "github" | "audit";
   repo_full_name: string | null;
   score: number;
   summary: Record<Severity, number>;
