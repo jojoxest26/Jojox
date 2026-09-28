@@ -237,6 +237,7 @@ export interface TranslationTree {
     body1: string;
     body2: string;
     note: string;
+    teamShareNotice: string;
     connectedLabel: string;
     toggleShow: string;
     toggleHide: string;
@@ -649,6 +650,7 @@ const it: TranslationTree = {
     body1: "Collega GitHub. A ogni push e a ogni pull request JoJoX controlla il codice. Se trova un problema critico, blocca la pull request e lascia un commento chiaro con il riepilogo.",
     body2: "Basta impostarlo come controllo obbligatorio nelle impostazioni del branch: le modifiche rischiose non potranno più essere unite.",
     note: "Stesso motore dell'analisi manuale, nessun LLM. Gira sui nostri server per poter intervenire in automatico a ogni push.",
+    teamShareNotice: "Sei nel piano Team: il repository che colleghi sarà visibile a tutto il team, e resterà al team anche se in futuro lasci il gruppo.",
     connectedLabel: "✓ COLLEGATO",
     toggleShow: "▼ Vedi anche: notifiche Slack, badge, CLI, VS Code e agenti AI",
     toggleHide: "▲ Nascondi dettagli avanzati",
@@ -1102,6 +1104,7 @@ const en: TranslationTree = {
     body1: "Connect GitHub. On every push and every pull request, JoJoX checks the code. If it finds a critical issue, it blocks the pull request and leaves a clear comment with the summary.",
     body2: "Just set it as a required check in your branch settings: risky changes won't be mergeable anymore.",
     note: "Same engine as the manual analysis, no LLM. It runs on our servers so it can act automatically on every push.",
+    teamShareNotice: "You're on the Team plan: the repository you connect will be visible to your whole team, and will stay with the team even if you leave it later.",
     connectedLabel: "✓ CONNECTED",
     toggleShow: "▼ Also see: Slack notifications, badge, CLI, VS Code and AI agents",
     toggleHide: "▲ Hide advanced details",

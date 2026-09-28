@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { saveSlackWebhook, type GithubInstallation } from "../lib/api.js";
+import { fetchProfile, saveSlackWebhook, type GithubInstallation, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
 
@@ -90,7 +90,18 @@ export function GithubSection({
 }) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const connected = installations !== null && installations.length > 0;
+
+  useEffect(() => {
+    if (!session) {
+      setPlan(null);
+      return;
+    }
+    fetchProfile(session.access_token)
+      .then(setPlan)
+      .catch(() => {});
+  }, [session]);
 
   return (
     <>
@@ -128,6 +139,7 @@ export function GithubSection({
             {installations!.map((i) => i.account_login).join(", ")}
           </p>
         )}
+        {plan === "team" && <p className="github-note">{t.github.teamShareNotice}</p>}
         <a
           className="btn btn-primary"
           href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
