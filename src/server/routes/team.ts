@@ -109,6 +109,28 @@ teamRouter.delete("/api/team/members/:email", requireAuth, async (req: AuthedReq
     return;
   }
 
+  const { data: removedMember } = await supabaseAdmin
+    .from("team_members")
+    .select("user_id")
+    .eq("team_id", teamId)
+    .eq("email", email)
+    .maybeSingle();
+
+  // Se la persona rimossa aveva collegato lei stessa un'installazione GitHub,
+  // la passiamo al proprietario invece di lasciarla orfana: altrimenti il
+  // resto del team perderebbe di colpo la visibilità su quel repository,
+  // dato che la condivisione si basa su chi fa ancora parte del team.
+  if (removedMember?.user_id) {
+    const { error: transferError } = await supabaseAdmin
+      .from("github_installations")
+      .update({ installed_by: req.userId })
+      .eq("installed_by", removedMember.user_id);
+
+    if (transferError) {
+      console.error(`impossibile trasferire le installazioni GitHub di ${email} al proprietario`, transferError);
+    }
+  }
+
   const { error } = await supabaseAdmin.from("team_members").delete().eq("team_id", teamId).eq("email", email);
 
   if (error) {
