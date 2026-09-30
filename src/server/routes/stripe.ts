@@ -3,7 +3,7 @@ import { z } from "zod";
 import { env } from "../env.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { stripeRequest, StripeNotConfiguredError } from "../stripe/client.js";
+import { stripeRequest, StripeNotConfiguredError, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../stripe/client.js";
 import { priceIdForPlan } from "../stripe/plans.js";
 
 export const stripeRouter = Router();
@@ -19,6 +19,31 @@ interface StripeCustomer {
 
 interface StripeCheckoutSession {
   url: string;
+}
+
+interface StripeSubscriptionListItem {
+  id: string;
+  status: string;
+  items: { data: { id: string; price: { id: string } }[] };
+}
+
+/**
+ * L'abbonamento già attivo del cliente (Pro o Team), se esiste. Usata prima
+ * di creare un nuovo checkout per capire se si tratta di un cambio di piano
+ * (da aggiornare sull'abbonamento esistente) invece di un abbonamento nuovo —
+ * senza questo controllo un cliente che passa da Pro a Team si ritroverebbe
+ * con due abbonamenti attivi insieme, pagati entrambi ogni mese.
+ */
+async function findActiveSubscription(customerId: string): Promise<{ id: string; itemId: string } | null> {
+  const subscriptions = await stripeRequest<{ data: StripeSubscriptionListItem[] }>("GET", "/subscriptions", {
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+
+  const active = subscriptions.data.find((s) => STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(s.status));
+  const itemId = active?.items.data[0]?.id;
+  return active && itemId ? { id: active.id, itemId } : null;
 }
 
 interface StripePortalSession {
@@ -62,6 +87,20 @@ stripeRouter.post("/api/stripe/create-checkout-session", requireAuth, async (req
 
   try {
     const customerId = await getOrCreateStripeCustomer(req.userId!);
+
+    // Cliente già abbonato (Pro o Team): cambiamo il prezzo su quello stesso
+    // abbonamento invece di aprire un nuovo checkout — niente carta da
+    // inserire di nuovo, e soprattutto niente doppio abbonamento attivo.
+    const existingSubscription = await findActiveSubscription(customerId);
+    if (existingSubscription) {
+      await stripeRequest("POST", `/subscriptions/${existingSubscription.id}`, {
+        items: [{ id: existingSubscription.itemId, price: priceId }],
+        proration_behavior: "create_prorations",
+      });
+      res.json({ url: `${env.appUrl}/?checkout=success` });
+      return;
+    }
+
     const session = await stripeRequest<StripeCheckoutSession>("POST", "/checkout/sessions", {
       customer: customerId,
       mode: "subscription",

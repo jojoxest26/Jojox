@@ -2,6 +2,9 @@ import { env } from "../env.js";
 
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 
+/** Gli stati di un abbonamento Stripe che contano come "il cliente sta davvero pagando questo". */
+export const STRIPE_ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+
 export class StripeNotConfiguredError extends Error {
   constructor() {
     super("Stripe non è ancora configurato su questo server");

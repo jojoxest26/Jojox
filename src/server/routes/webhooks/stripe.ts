@@ -2,7 +2,7 @@ import { Router, raw } from "express";
 import { env } from "../../env.js";
 import { verifyStripeSignature } from "../../stripe/verifySignature.js";
 import { planForPriceId } from "../../stripe/plans.js";
-import { stripeRequest } from "../../stripe/client.js";
+import { stripeRequest, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../../stripe/client.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import type { Plan } from "../../plan.js";
 
@@ -23,8 +23,6 @@ interface CheckoutSessionEventObject {
 }
 
 export const stripeWebhookRouter = Router();
-
-const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
 stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), async (req, res) => {
   if (!env.stripeWebhookSecret) {
@@ -80,7 +78,7 @@ async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
 
   let highestPlan: Plan = "free";
   for (const subscription of subscriptions.data) {
-    if (!ACTIVE_STATUSES.has(subscription.status)) continue;
+    if (!STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)) continue;
     const priceId = subscription.items.data[0]?.price.id;
     const plan = priceId ? planForPriceId(priceId) : null;
     if (plan === "team") {
