@@ -2,12 +2,18 @@ import { Router, raw } from "express";
 import { env } from "../../env.js";
 import { verifyStripeSignature } from "../../stripe/verifySignature.js";
 import { planForPriceId } from "../../stripe/plans.js";
+import { stripeRequest } from "../../stripe/client.js";
 import { supabaseAdmin } from "../../db/supabase.js";
+import type { Plan } from "../../plan.js";
 
 interface SubscriptionEventObject {
   customer: string;
   status: string;
   items: { data: { price: { id: string } }[] };
+}
+
+interface StripeSubscriptionList {
+  data: { status: string; items: { data: { price: { id: string } }[] } }[];
 }
 
 interface CheckoutSessionEventObject {
@@ -40,10 +46,12 @@ stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), 
   };
 
   try {
-    if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
-      await syncPlanFromSubscription(event.data.object as SubscriptionEventObject);
-    } else if (event.type === "customer.subscription.deleted") {
-      await setPlanForCustomer((event.data.object as SubscriptionEventObject).customer, "free");
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
+      await resyncPlanForCustomer((event.data.object as SubscriptionEventObject).customer);
     } else if (event.type === "checkout.session.completed") {
       await handleCheckoutCompleted(event.data.object as CheckoutSessionEventObject);
     }
@@ -55,18 +63,37 @@ stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), 
   }
 });
 
-async function syncPlanFromSubscription(subscription: SubscriptionEventObject): Promise<void> {
-  if (!ACTIVE_STATUSES.has(subscription.status)) {
-    await setPlanForCustomer(subscription.customer, "free");
-    return;
+/**
+ * Ricalcola il piano di un cliente guardando TUTTI i suoi abbonamenti Stripe
+ * attivi, non solo quello coinvolto nell'evento appena arrivato — un cliente
+ * può finire con più abbonamenti attivi insieme (es. passa da Pro a Team
+ * senza cancellare il vecchio), e il piano giusto è sempre il più alto tra
+ * quelli davvero attivi, mai semplicemente "l'ultimo evento ricevuto".
+ * Tiene anche al riparo da eventi Stripe che arrivano fuori ordine.
+ */
+async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
+  const subscriptions = await stripeRequest<StripeSubscriptionList>("GET", "/subscriptions", {
+    customer: stripeCustomerId,
+    status: "all",
+    limit: 100,
+  });
+
+  let highestPlan: Plan = "free";
+  for (const subscription of subscriptions.data) {
+    if (!ACTIVE_STATUSES.has(subscription.status)) continue;
+    const priceId = subscription.items.data[0]?.price.id;
+    const plan = priceId ? planForPriceId(priceId) : null;
+    if (plan === "team") {
+      highestPlan = "team";
+      break;
+    }
+    if (plan === "pro" && highestPlan === "free") highestPlan = "pro";
   }
 
-  const priceId = subscription.items.data[0]?.price.id;
-  const plan = priceId ? planForPriceId(priceId) : null;
-  if (plan) await setPlanForCustomer(subscription.customer, plan);
+  await setPlanForCustomer(stripeCustomerId, highestPlan);
 }
 
-async function setPlanForCustomer(stripeCustomerId: string, plan: "free" | "pro" | "team"): Promise<void> {
+async function setPlanForCustomer(stripeCustomerId: string, plan: Plan): Promise<void> {
   await supabaseAdmin.from("profiles").update({ plan }).eq("stripe_customer_id", stripeCustomerId);
 }
 
