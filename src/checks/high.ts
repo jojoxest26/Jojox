@@ -1,11 +1,13 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile } from "../util/scan.js";
+import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile, isGoFile } from "../util/scan.js";
 
-// JS/Express (requireAuth, req.user...) e Python/Flask/Django (login_required,
-// request.user.is_staff...) insieme — un controllo di autenticazione o ruolo
-// riconoscibile in entrambi i mondi.
+// JS/Express (requireAuth, req.user...), Python/Flask/Django (login_required,
+// request.user.is_staff...) e Go/Gin (MustGet, AuthRequired...) insieme — un
+// controllo di autenticazione o ruolo riconoscibile in tutti e tre i mondi.
+// Case-insensitive: così la stessa lista copre sia lo stile camelCase di
+// JS/Python sia il PascalCase idiomatico di Go, senza doverle scrivere due volte.
 const ADMIN_AUTH_KEYWORDS =
-  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user/;
+  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user|MustGet|AuthRequired|Authorization/i;
 
 function findUnprotectedTables(content: string): string[] {
   const createRe = /CREATE TABLE\s+(?:IF NOT EXISTS\s+)?"?(?:\w+\.)?(\w+)"?/gi;
@@ -84,6 +86,10 @@ export const highChecks: Check[] = [
         ...scanLines(file, /\bCORS\(\s*\w+\s*\)/g),
         ...scanLines(file, /CORS_ORIGIN_ALLOW_ALL\s*=\s*True/g),
         ...scanLines(file, /CORS_ALLOWED_ORIGINS\s*=\s*\[\s*["']\*["']/g),
+        // Go: gin-contrib/cors — cors.Default() non applica nessuna
+        // restrizione, o AllowOrigins impostato esplicitamente a "*".
+        ...scanLines(file, /\bcors\.Default\(\s*\)/g),
+        ...scanLines(file, /AllowOrigins\s*[:=]\s*\[\]string\{\s*["']\*["']/g),
       ];
     },
     // Nessun autofix: non sappiamo qual è il tuo vero dominio. Un elenco di
@@ -153,6 +159,12 @@ export const highChecks: Check[] = [
           file,
           /\b(requests\.(get|post|put|request)|urllib\.request\.urlopen)\s*\(\s*request\.(args|form|json|GET|POST)/g
         ),
+        // Go: http.Get/http.Post con un valore preso da Gin (c.Query/c.PostForm)
+        // o da net/http puro (r.FormValue/r.URL.Query).
+        ...scanLines(
+          file,
+          /\bhttp\.(Get|Post)\s*\(\s*(c\.(Query|PostForm)|r\.(FormValue|URL\.Query\(\)\.Get))\s*\(/g
+        ),
       ];
     },
     // Nessun autofix: quali destinazioni siano legittime lo sai solo tu —
@@ -172,17 +184,24 @@ export const highChecks: Check[] = [
     },
     detect(file) {
       const pattern =
-        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\s*\(\s*password/gi;
+        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\.Sum\s*\(|\b(md5|sha1)\s*\(\s*password/gi;
       const lines = file.content.split("\n");
       return scanLines(file, pattern).filter((m) => /password/i.test(lines[m.line - 1] ?? ""));
     },
     autofix(file) {
       const python = isPythonFile(file);
+      const go = isGoFile(file);
       const note = python
         ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
-        : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+        : go
+          ? " // JoJoX: serve il pacchetto golang.org/x/crypto/bcrypt"
+          : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
       const hashCall = (value: string) =>
-        python ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())` : `await bcrypt.hash(${value}, 12)`;
+        python
+          ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())`
+          : go
+            ? `bcrypt.GenerateFromPassword([]byte(${value}), bcrypt.DefaultCost)`
+            : `await bcrypt.hash(${value}, 12)`;
 
       // Il valore passato può a sua volta contenere una chiamata con le sue
       // parentesi (es. Python password.encode()) — un semplice [^)]* si
@@ -206,6 +225,16 @@ export const highChecks: Check[] = [
         // rischierebbe di rompere la sintassi se il valore è usato altrove.
         const hashlibPattern = new RegExp(`hashlib\\.(?:md5|sha1)\\((${BALANCED_ARG})\\)`, "gi");
         result = replaceLines(file.content, hashlibPattern, (line, m) => {
+          if (!/password/i.test(line)) return null;
+          return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
+        });
+      }
+      if (!result.changed) {
+        // Go: md5.Sum([]byte(password)) — stessa logica dell'hashlib Python,
+        // sostituiamo solo la chiamata, quello che viene dopo (es. un
+        // ulteriore uso del risultato) resta intatto sulla riga.
+        const goSumPattern = new RegExp(`(?:md5|sha1)\\.Sum\\(\\s*(${BALANCED_ARG})\\s*\\)`, "gi");
+        result = replaceLines(file.content, goSumPattern, (line, m) => {
           if (!/password/i.test(line)) return null;
           return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
         });

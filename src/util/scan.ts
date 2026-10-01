@@ -5,6 +5,11 @@ export function isPythonFile(file: SourceFile): boolean {
   return /\.py$/.test(file.path);
 }
 
+/** True per un file Go — usato dai controlli che riconoscono anche questo linguaggio, non solo JS/TS/Python. */
+export function isGoFile(file: SourceFile): boolean {
+  return /\.go$/.test(file.path);
+}
+
 const CONTEXT_CHARS = 12;
 const MASK_CHAR = "•";
 

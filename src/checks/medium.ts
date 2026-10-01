@@ -1,8 +1,10 @@
 import type { Check, CheckMatch } from "../types.js";
 import { scanLines, redactLine, replaceLines } from "../util/scan.js";
 
-// JS (userId, req.user...) e Python/Django/Flask (request.user, user_id...) insieme.
-const OWNERSHIP_KEYWORDS = /userId|user_id|user\.id|owner|req\.user|request\.user|auth\.uid|current_user/;
+// JS (userId, req.user...), Python/Django/Flask (request.user, user_id...) e
+// Go (UserID, c.MustGet...) insieme — case-insensitive per coprire anche il
+// PascalCase idiomatico di Go senza doverlo scrivere due volte.
+const OWNERSHIP_KEYWORDS = /userId|user_id|user\.id|owner|req\.user|request\.user|auth\.uid|current_user|MustGet/i;
 const REDIRECT_REMOVED_NOTE =
   " /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */";
 
@@ -27,6 +29,9 @@ export const mediumChecks: Check[] = [
         // mark_safe() disattivano l'escape automatico dell'HTML.
         ...scanLines(file, /\{\{[^}]*\|\s*safe\s*\}\}/g),
         ...scanLines(file, /\bmark_safe\s*\(/g),
+        // Go: html/template — template.HTML(...) marca una stringa come HTML
+        // già sicuro, disattivando l'escape automatico del pacchetto.
+        ...scanLines(file, /\btemplate\.HTML\s*\(/g),
       ];
     },
     // Nessun autofix: non sappiamo se quell'HTML deve restare tale (e va
@@ -54,6 +59,8 @@ export const mediumChecks: Check[] = [
         // JS e Python insieme: boto3 (Python) e SDK JS di S3 usano entrambi
         // la stessa chiave "ACL" con lo stesso valore letterale.
         ...scanLines(file, /acl\s*[:=]\s*["']public-read["']/gi),
+        // Go: SDK AWS per Go, il valore è avvolto in aws.String(...).
+        ...scanLines(file, /ACL:\s*aws\.String\(\s*["']public-read["']\s*\)/g),
       ];
     },
     autofix(file) {
@@ -69,7 +76,10 @@ export const mediumChecks: Check[] = [
         const replacement = m[1] === "=" ? `ACL="private"` : `acl: "private"`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
-      return r1.changed || r2.changed || r3.changed ? r3.content : null;
+      const r4 = replaceLines(r3.content, /ACL:\s*aws\.String\(\s*["']public-read["']\s*\)/g, (line, m) => {
+        return line.slice(0, m.index) + `ACL: aws.String("private")` + line.slice(m.index + m[0].length);
+      });
+      return r1.changed || r2.changed || r3.changed || r4.changed ? r4.content : null;
     },
   },
 
@@ -124,10 +134,10 @@ export const mediumChecks: Check[] = [
     // server, cioè in un file diverso da quello dove vive questa riga —
     // non possiamo farlo senza sapere dov'è quel server.
     //
-    // Non esteso a Python: localStorage è un'API del browser, non ha un
-    // corrispondente lato server. Un backend Python che genera HTML/JS con
-    // la stessa riga (es. in un template) verrebbe comunque riconosciuto
-    // dal pattern così com'è, scansionando quel file come se fosse JS.
+    // Non esteso a Python o Go: localStorage è un'API del browser, non ha un
+    // corrispondente lato server in nessuno dei due. Un backend che genera
+    // HTML/JS con la stessa riga (es. in un template) verrebbe comunque
+    // riconosciuto dal pattern così com'è, scansionando quel file come se fosse JS.
   },
 
   {
@@ -148,6 +158,9 @@ export const mediumChecks: Check[] = [
         // Python/Flask: redirect(request.args[...]). Django: redirect(request.GET[...])
         // o HttpResponseRedirect(request.GET[...]).
         ...scanLines(file, /\b(redirect|HttpResponseRedirect)\s*\(\s*request\.(args|form|GET|POST)/g),
+        // Go/Gin: c.Redirect(status, c.Query(...)). net/http: http.Redirect(w, r, r.FormValue(...), status).
+        ...scanLines(file, /c\.Redirect\s*\(\s*[^,]+,\s*c\.(Query|PostForm)\s*\(/g),
+        ...scanLines(file, /http\.Redirect\s*\([^,]+,[^,]+,\s*r\.FormValue\s*\(/g),
       ];
     },
     autofix(file) {
@@ -178,7 +191,24 @@ export const mediumChecks: Check[] = [
           return line.slice(0, m.index) + `${m[1]}("/")${pythonNote}` + line.slice(m.index + m[0].length);
         }
       );
-      return r1.changed || r2.changed || r3.changed ? r3.content : null;
+      const goNote = REDIRECT_REMOVED_NOTE.replace("/*", "//").replace("*/", "");
+      const r4 = replaceLines(
+        r3.content,
+        /c\.Redirect\s*\(\s*([^,]+),\s*c\.(?:Query|PostForm)\s*\([^)]*\)\s*\)/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `c.Redirect(${m[1]}, "/")${goNote}` + line.slice(m.index + m[0].length);
+        }
+      );
+      const r5 = replaceLines(
+        r4.content,
+        /http\.Redirect\s*\(\s*([^,]+),\s*([^,]+),\s*r\.FormValue\s*\([^)]*\)\s*,\s*([^)]+)\)/g,
+        (line, m) => {
+          return (
+            line.slice(0, m.index) + `http.Redirect(${m[1]}, ${m[2]}, "/", ${m[3]})${goNote}` + line.slice(m.index + m[0].length)
+          );
+        }
+      );
+      return r1.changed || r2.changed || r3.changed || r4.changed || r5.changed ? r5.content : null;
     },
   },
 
@@ -195,7 +225,7 @@ export const mediumChecks: Check[] = [
     },
     detect(file) {
       const pattern =
-        /\.findById\(\s*req\.params\.id\s*\)|findOne\(\s*\{\s*_id:\s*req\.params\.id\s*\}\s*\)|\.objects\.get\(\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|get_object_or_404\([^,]+,\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)/g;
+        /\.findById\(\s*req\.params\.id\s*\)|findOne\(\s*\{\s*_id:\s*req\.params\.id\s*\}\s*\)|\.objects\.get\(\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|get_object_or_404\([^,]+,\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|\.(First|Find)\(\s*&\w+\s*,\s*c\.Param\(\s*["'][^"']+["']\s*\)\s*\)/g;
       const matches: CheckMatch[] = [];
       const lines = file.content.split("\n");
       lines.forEach((lineText, idx) => {

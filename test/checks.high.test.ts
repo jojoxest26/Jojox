@@ -181,4 +181,81 @@ describe("high checks", () => {
       expect(opens).toBe(closes);
     });
   });
+
+  describe("Go", () => {
+    it("permissive-cors: flags gin-contrib/cors used with no restriction", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("main.go", "r.Use(cors.Default())");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: flags AllowOrigins set to *", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("main.go", 'config.AllowOrigins = []string{"*"}');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: does not flag a restricted AllowOrigins list", () => {
+      const check = checkById("permissive-cors");
+      const clean = file("main.go", 'config.AllowOrigins = []string{"https://tuosito.com"}');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("admin-function-missing-auth: flags a Gin admin route (uppercase POST) with no nearby auth check", () => {
+      const check = checkById("admin-function-missing-auth");
+      const vulnerable = file(
+        "main.go",
+        'router.POST("/admin/delete-user", func(c *gin.Context) {\n  db.Delete(&user, c.PostForm("id"))\n})'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("admin-function-missing-auth: does not flag when MustGet (reading the authenticated user) guards the route", () => {
+      const check = checkById("admin-function-missing-auth");
+      const clean = file(
+        "main.go",
+        'router.POST("/admin/delete-user", func(c *gin.Context) {\n  user := c.MustGet("user")\n  db.Delete(&user, c.PostForm("id"))\n})'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("ssrf: flags http.Get built from a Gin query parameter", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("main.go", 'resp, _ := http.Get(c.Query("url"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: flags http.Get built from a net/http form value", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("main.go", 'resp, _ := http.Get(r.FormValue("url"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: does not flag a request to a fixed URL", () => {
+      const check = checkById("ssrf");
+      const clean = file("main.go", 'resp, _ := http.Get("https://api.example.com")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing: flags crypto/md5's Sum used near password handling", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("main.go", "hashed := md5.Sum([]byte(password))");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-password-hashing: does not flag bcrypt", () => {
+      const check = checkById("weak-password-hashing");
+      const clean = file("main.go", "hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing autofix: replaces md5.Sum with bcrypt.GenerateFromPassword, not JS/Python bcrypt", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("main.go", "hashed := md5.Sum([]byte(password))");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("bcrypt.GenerateFromPassword([]byte([]byte(password)), bcrypt.DefaultCost)");
+      expect(fixed).not.toContain("await bcrypt.hash");
+      expect(fixed).not.toContain("hashpw");
+    });
+  });
 });

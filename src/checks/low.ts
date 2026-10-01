@@ -1,5 +1,5 @@
 import type { Check } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile } from "../util/scan.js";
 
 const RATE_LIMIT_HELPER = `// JoJoX: limite tentativi di accesso (5 ogni 15 minuti), senza dipendenze esterne
 const __jojoxLoginAttempts = new Map();
@@ -64,12 +64,17 @@ export const lowChecks: Check[] = [
     },
     detect(file) {
       const python = isPythonFile(file);
+      const go = isGoFile(file);
       const routePattern = python
         ? /@\w+\.route\s*\(\s*["'][^"']*\/login[^"']*["']/i
-        : /\.post\s*\(\s*["'][^"']*\/login[^"']*["']/i;
+        : go
+          ? /\.(POST|post)\s*\(\s*["'][^"']*\/login[^"']*["']/
+          : /\.post\s*\(\s*["'][^"']*\/login[^"']*["']/i;
       const limiterPattern = python
         ? /rateLimit|rate-limit|rate_limit|flask_limiter|Limiter\(/i
-        : /rateLimit|rate-limit|rate_limit/i;
+        : go
+          ? /rate\.NewLimiter|tollbooth|ulule\/limiter|gin-contrib\/limiter|RateLimit|rate_limit/i
+          : /rateLimit|rate-limit|rate_limit/i;
 
       if (!fileMatch(file, routePattern)) return [];
       if (fileMatch(file, limiterPattern)) return [];
@@ -77,6 +82,15 @@ export const lowChecks: Check[] = [
     },
     autofix(file) {
       const python = isPythonFile(file);
+      const go = isGoFile(file);
+
+      // Per il Go non generiamo un rate limiter autonomo come per JS/Python:
+      // servirebbe un map condiviso tra goroutine, che senza sync.Mutex può
+      // andare in crash ("concurrent map writes"), e non possiamo aggiungere
+      // in sicurezza l'import "sync" senza rischiare un doppio import (in Go,
+      // a differenza di JS e Python, un import duplicato non compila). Per
+      // ora segnaliamo soltanto il problema senza un fix automatico.
+      if (go) return null;
 
       if (python) {
         if (!fileMatch(file, /@\w+\.route\s*\(\s*["'][^"']*\/login[^"']*["']/i)) return null;
@@ -125,18 +139,24 @@ export const lowChecks: Check[] = [
     },
     detect(file) {
       const python = isPythonFile(file);
+      const go = isGoFile(file);
       const pattern = python
         ? /\b(print|logging\.(debug|info|warning|error|critical)|logger\.(debug|info|warning|error|critical))\([^)]*\b(password|token|secret|api_key|apiKey)\b/gi
-        : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
+        : go
+          ? /\b(log\.(Println|Printf|Print|Fatal|Fatalln|Fatalf)|fmt\.(Println|Printf|Print))\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi
+          : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
       const commentPattern = python ? /^\s*#/ : /^\s*\/\//;
       const lines = file.content.split("\n");
       return scanLines(file, pattern).filter((m) => !commentPattern.test(lines[m.line - 1] ?? ""));
     },
     autofix(file) {
       const python = isPythonFile(file);
+      const go = isGoFile(file);
       const pattern = python
         ? /\b(print|logging\.(debug|info|warning|error|critical)|logger\.(debug|info|warning|error|critical))\([^)]*\b(password|token|secret|api_key|apiKey)\b/gi
-        : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
+        : go
+          ? /\b(log\.(Println|Printf|Print|Fatal|Fatalln|Fatalf)|fmt\.(Println|Printf|Print))\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi
+          : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
       const commentPrefix = python ? "#" : "//";
       const { content, changed } = replaceLines(file.content, pattern, (line) => {
         const indent = line.match(/^(\s*)/)?.[1] ?? "";

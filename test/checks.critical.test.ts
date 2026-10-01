@@ -256,4 +256,102 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Go", () => {
+    it("hardcoded-secret: flags a PascalCase secret (case-insensitive, same pattern as camelCase)", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("main.go", 'ApiSecret := "abcdefghijklmnop123456"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag a value read with os.Getenv", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("main.go", 'apiKey := os.Getenv("STRIPE_SECRET_KEY")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret autofix: replaces a hardcoded secret with os.Getenv, turning := into = (no longer a new declaration)", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("main.go", 'clientSecret := "abcdefghijklmnop123456"');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('clientSecret = os.Getenv("CLIENT_SECRET")');
+    });
+
+    it("sql-injection: flags a query built with fmt.Sprintf", () => {
+      const check = checkById("sql-injection");
+      const vulnerable = file("main.go", 'db.Query(fmt.Sprintf("SELECT * FROM users WHERE email = \'%s\'", email))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sql-injection: does not flag a parameterized query", () => {
+      const check = checkById("sql-injection");
+      const clean = file("main.go", 'db.Query("SELECT * FROM users WHERE email = $1", email)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage: flags a Gin c.PostForm password stored without hashing", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("main.go", 'user.Password = c.PostForm("password")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("plaintext-password-storage: flags a net/http r.FormValue password stored without hashing", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("main.go", 'user.Password = r.FormValue("password")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("plaintext-password-storage: does not flag when the file already uses bcrypt", () => {
+      const check = checkById("plaintext-password-storage");
+      const clean = file(
+        "main.go",
+        'hashed, _ := bcrypt.GenerateFromPassword([]byte(c.PostForm("password")), bcrypt.DefaultCost)\nuser.Password = string(hashed)'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage autofix: wraps the raw value in bcrypt.GenerateFromPassword, not JS/Python bcrypt", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("main.go", 'user.Password = c.PostForm("password")');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('bcrypt.GenerateFromPassword([]byte(c.PostForm("password")), bcrypt.DefaultCost)');
+    });
+
+    it("hardcoded-jwt-secret: flags a literal secret passed to golang-jwt's SignedString", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("main.go", 'tokenString, _ := token.SignedString([]byte("super-secret-key-123"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-jwt-secret: does not flag a secret read from os.Getenv", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const clean = file("main.go", 'tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-jwt-secret autofix: replaces the literal with os.Getenv, not process.env or os.environ", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("main.go", 'tokenString, _ := token.SignedString([]byte("super-secret-key-123"))');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))');
+    });
+
+    it("command-injection: flags exec.Command invoking a shell with fmt.Sprintf", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("main.go", 'exec.Command("sh", "-c", fmt.Sprintf("convert %s output.png", filename))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: flags exec.Command invoking a shell with string concatenation", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("main.go", 'exec.Command("bash", "-c", "rm -rf " + path)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: does not flag exec.Command with separate arguments (no shell involved)", () => {
+      const check = checkById("command-injection");
+      const clean = file("main.go", 'exec.Command("convert", filename, "output.png")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

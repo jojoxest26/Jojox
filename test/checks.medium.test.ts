@@ -196,4 +196,84 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Go", () => {
+    it("xss-dangerous-html: flags html/template's template.HTML()", () => {
+      const check = checkById("xss-dangerous-html");
+      const vulnerable = file("main.go", "data.Comment = template.HTML(comment.Text)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: flags an AWS SDK for Go object made public", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file(
+        "main.go",
+        '_, err := svc.PutObject(&s3.PutObjectInput{Bucket: aws.String("uploads"), ACL: aws.String("public-read")})'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: does not flag a private AWS SDK for Go object", () => {
+      const check = checkById("public-storage-bucket");
+      const clean = file(
+        "main.go",
+        '_, err := svc.PutObject(&s3.PutObjectInput{Bucket: aws.String("uploads"), ACL: aws.String("private")})'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("public-storage-bucket autofix: replaces aws.String(\"public-read\") with aws.String(\"private\")", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file("main.go", 'ACL: aws.String("public-read")');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('ACL: aws.String("private")');
+    });
+
+    it("csrf-state-changing-get: flags a Gin route (uppercase GET) that deletes data", () => {
+      const check = checkById("csrf-state-changing-get");
+      const vulnerable = file("main.go", 'router.GET("/posts/:id/delete", deletePost)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: flags a Gin redirect built from c.Query", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("main.go", 'c.Redirect(http.StatusFound, c.Query("next"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: flags a net/http redirect built from r.FormValue", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("main.go", 'http.Redirect(w, r, r.FormValue("next"), http.StatusFound)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: does not flag a redirect to a fixed path", () => {
+      const check = checkById("open-redirect");
+      const clean = file("main.go", 'c.Redirect(http.StatusFound, "/dashboard")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect autofix: replaces the Gin redirect with a fixed one, commented in Go style", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("main.go", 'c.Redirect(http.StatusFound, c.Query("next"))');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('c.Redirect(http.StatusFound, "/")');
+      expect(fixed).toContain("// JoJoX:");
+    });
+
+    it("idor: flags a GORM lookup by Gin's c.Param id with no ownership check nearby", () => {
+      const check = checkById("idor");
+      const vulnerable = file("main.go", 'db.First(&order, c.Param("id"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: does not flag when an ownership check (UserID) follows the lookup", () => {
+      const check = checkById("idor");
+      const clean = file(
+        "main.go",
+        'db.First(&order, c.Param("id"))\nif order.UserID != currentUser.ID {\n  panic("forbidden")\n}'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile } from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
@@ -7,9 +7,15 @@ const SERVER_ONLY_PATH = /(^|\/)(api|server|edge-functions?|functions)(\/|\.)/i;
 
 // Come si legge una variabile d'ambiente nel linguaggio del file — usato per
 // non segnalare un valore già letto correttamente, e per scrivere l'autofix.
-const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv/;
+const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv/;
 
-const PLACEHOLDER_VALUE = /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
+const PLACEHOLDER_VALUE =
+  /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
+
+// L'operatore di assegnazione: "=" o ":" in JS/Python, ma anche ":=" in Go
+// (dichiarazione breve di variabile) — va provato per primo, altrimenti il
+// solo ":" verrebbe consumato lasciando "=" sul posto e l'intero match fallirebbe.
+const ASSIGN_OP = ":=|[:=]";
 
 // Nomi di variabile che, assegnati a un valore letterale, indicano quasi sempre un segreto.
 // Sia in stile camelCase (JS/TS) sia snake_case (Python, lo stile idiomatico
@@ -28,12 +34,12 @@ const ALREADY_HASHES_PASSWORD =
   /bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2|werkzeug\.security|check_password_hash|generate_password_hash|make_password|passlib/i;
 
 // Il valore grezzo della password così come arriva dalla richiesta — Express (req.body),
-// Flask (request.form/request.json) e Django (request.POST) hanno ognuno il suo nome. Il
-// confine di parola (\b) sta solo sulle due forme che finiscono con un identificatore
-// semplice: le altre finiscono già con un carattere non alfanumerico (']', ')'), dove un
-// \b dopo non potrebbe mai combaciare.
+// Flask (request.form/request.json), Django (request.POST), Gin (c.PostForm) e net/http
+// (r.FormValue) hanno ognuno il suo nome. Il confine di parola (\b) sta solo sulle forme
+// che finiscono con un identificatore semplice: le altre finiscono già con un carattere
+// non alfanumerico (']', ')'), dove un \b dopo non potrebbe mai combaciare.
 const RAW_PASSWORD_VALUE =
-  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|password\\b';
+  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|c\\.PostForm\\(["\']password["\']\\)|r\\.FormValue\\(["\']password["\']\\)|password\\b';
 
 const PLAINTEXT_PASSWORD_ASSIGNMENT = new RegExp(`password\\s*[:=]\\s*(${RAW_PASSWORD_VALUE})`, "gi");
 
@@ -63,11 +69,11 @@ export const criticalChecks: Check[] = [
     // solo-server, una decisione architetturale che non possiamo prendere
     // al posto tuo senza rischiare di rompere il progetto.
     //
-    // Non esteso a Python: il problema che segnala è specifico dei bundler
-    // JS (Next.js, Vite...) che impacchettano variabili con prefisso
-    // pubblico dentro il codice spedito al browser. Un backend Python non
-    // ha un passaggio di bundling equivalente — non c'è un rischio
-    // paragonabile da riconoscere con lo stesso pattern.
+    // Non esteso a Python o Go: il problema che segnala è specifico dei
+    // bundler JS (Next.js, Vite...) che impacchettano variabili con prefisso
+    // pubblico dentro il codice spedito al browser. Un backend Python o un
+    // binario Go compilato non hanno un passaggio di bundling equivalente —
+    // non c'è un rischio paragonabile da riconoscere con lo stesso pattern.
   },
 
   {
@@ -89,7 +95,7 @@ export const criticalChecks: Check[] = [
       ];
 
       const alreadyFlaggedLines = new Set(highConfidenceMatches.map((m) => m.line));
-      const assignmentPattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})\\s*[:=]\\s*["'\`]([^"'\`]{12,})["'\`]`, "gi");
+      const assignmentPattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})\\s*(?:${ASSIGN_OP})\\s*["'\`]([^"'\`]{12,})["'\`]`, "gi");
       const lines = file.content.split("\n");
       const assignmentMatches = scanLines(file, assignmentPattern).filter((m) => {
         if (alreadyFlaggedLines.has(m.line)) return false;
@@ -108,15 +114,19 @@ export const criticalChecks: Check[] = [
       // (AKIA…, sk_live_…, blocchi PRIVATE KEY) restano segnalate soltanto:
       // vanno anche revocate, non solo tolte dal codice — se sono finite in
       // un commit, potrebbero già essere compromesse.
-      const pattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})(\\s*[:=]\\s*)["'\`][^"'\`]{12,}["'\`]`, "gi");
+      const pattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})(\\s*(?:${ASSIGN_OP})\\s*)["'\`][^"'\`]{12,}["'\`]`, "gi");
       const python = isPythonFile(file);
+      const go = isGoFile(file);
       const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
         if (ENV_READ_PATTERN.test(line)) return null;
         if (HIGH_CONFIDENCE_SECRET_VALUE.test(line)) return null;
         const [, varName, operator] = m;
         const envName = toEnvName(varName);
-        const envRead = python ? `os.environ["${envName}"]` : `process.env.${envName}`;
-        const replacement = `${varName}${operator}${envRead}`;
+        // Go: "name := value" diventa "name = os.Getenv(...)" — una volta
+        // letta da env non è più una nuova dichiarazione, serve "=" non ":=".
+        const goOperator = operator.replace(":=", "=");
+        const envRead = python ? `os.environ["${envName}"]` : go ? `os.Getenv("${envName}")` : `process.env.${envName}`;
+        const replacement = `${varName}${go ? goOperator : operator}${envRead}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
       return changed ? content : null;
@@ -211,8 +221,10 @@ export const criticalChecks: Check[] = [
         // Python: f-string con interpolazione f"...{...}" (gestisce anche un
         // apice dell'altro tipo dentro la stringa, es. f"...WHERE x = '{v}'").
         ...scanLines(file, /\.(query|raw|execute)\s*\(\s*(f"[^"]*\{|f'[^']*\{)/g),
-        // Concatenazione con "+": stessa sintassi in entrambi i linguaggi.
+        // Concatenazione con "+": stessa sintassi in JS/Python/Go.
         ...scanLines(file, /\.(query|raw|execute)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
+        // Go: database/sql, costruzione con fmt.Sprintf invece che parametri $1/?.
+        ...scanLines(file, /\.(Query|Exec|QueryRow)\s*\(\s*fmt\.Sprintf\s*\(/g),
       ];
     },
     // Nessun autofix: parametrizzare correttamente la query dipende dal
@@ -238,15 +250,22 @@ export const criticalChecks: Check[] = [
     autofix(file) {
       if (ALREADY_HASHES_PASSWORD.test(file.content)) return null;
       const python = isPythonFile(file);
+      const go = isGoFile(file);
       const note = python
         ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
-        : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+        : go
+          ? " // JoJoX: serve il pacchetto golang.org/x/crypto/bcrypt"
+          : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
       const { content, changed } = replaceLines(file.content, PLAINTEXT_PASSWORD_ASSIGNMENT, (line, m) => {
         const value = m[1];
         const prefix = m[0].slice(0, m[0].length - value.length);
+        // Go: GenerateFromPassword ritorna ([]byte, error) — qui mettiamo solo
+        // la chiamata, va comunque gestito l'errore secondo lo stile del file.
         const hashCall = python
           ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())`
-          : `await bcrypt.hash(${value}, 12)`;
+          : go
+            ? `bcrypt.GenerateFromPassword([]byte(${value}), bcrypt.DefaultCost)`
+            : `await bcrypt.hash(${value}, 12)`;
         const replacement = `${prefix}${hashCall}${note}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
@@ -271,12 +290,15 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /jwt\.(sign|verify)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
         // Python (PyJWT): jwt.encode(...)/jwt.decode(...).
         ...scanLines(file, /jwt\.(encode|decode)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
-        ...scanLines(file, /JWT_SECRET\s*=\s*["'][^"']+["']/g),
+        // Go (golang-jwt): token.SignedString([]byte("secret-letterale")).
+        ...scanLines(file, /\.SignedString\s*\(\s*\[\]byte\s*\(\s*["'`][^"'`]{6,}["'`]\s*\)\s*\)/g),
+        ...scanLines(file, /JWT_SECRET\s*(?:=|:=)\s*["'][^"']+["']/g),
       ];
     },
     autofix(file) {
       const python = isPythonFile(file);
-      const envRead = python ? 'os.environ["JWT_SECRET"]' : "process.env.JWT_SECRET";
+      const go = isGoFile(file);
+      const envRead = python ? 'os.environ["JWT_SECRET"]' : go ? 'os.Getenv("JWT_SECRET")' : "process.env.JWT_SECRET";
       const jsMethods = replaceLines(file.content, /jwt\.(sign|verify)\s*\(([^)]*),\s*["'][^"']{6,}["']/g, (line, m) => {
         const [, method, args] = m;
         const replacement = `jwt.${method}(${args}, ${envRead}`;
@@ -287,10 +309,18 @@ export const criticalChecks: Check[] = [
         const replacement = `jwt.${method}(${args}, ${envRead}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
-      const literal = replaceLines(pyMethods.content, /JWT_SECRET\s*=\s*["'][^"']+["']/g, (line, m) => {
-        return line.slice(0, m.index) + `JWT_SECRET = ${envRead}` + line.slice(m.index + m[0].length);
+      const goMethods = replaceLines(
+        pyMethods.content,
+        /\.SignedString\s*\(\s*\[\]byte\s*\(\s*["'`][^"'`]{6,}["'`]\s*\)\s*\)/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `.SignedString([]byte(${envRead}))` + line.slice(m.index + m[0].length);
+        }
+      );
+      const literal = replaceLines(goMethods.content, /JWT_SECRET\s*(=|:=)\s*["'][^"']+["']/g, (line, m) => {
+        const op = go ? m[1].replace(":=", "=") : m[1];
+        return line.slice(0, m.index) + `JWT_SECRET ${op} ${envRead}` + line.slice(m.index + m[0].length);
       });
-      return jsMethods.changed || pyMethods.changed || literal.changed ? literal.content : null;
+      return jsMethods.changed || pyMethods.changed || goMethods.changed || literal.changed ? literal.content : null;
     },
   },
 
@@ -329,6 +359,23 @@ export const criticalChecks: Check[] = [
             /\bsubprocess\.(call|run|Popen|check_output)\s*\(\s*(f"[^"]*\{[^)]*|f'[^']*\{[^)]*)shell\s*=\s*True/g
           ),
           ...scanLines(file, /\bsubprocess\.(call|run|Popen|check_output)\s*\([^)]*\+\s*\w[^)]*shell\s*=\s*True/g)
+        );
+      }
+
+      // Go: exec.Command con una lista di argomenti separati è sicuro di
+      // default — il rischio è specifico di invocare una shell (sh -c /
+      // bash -c / cmd /c) con un comando costruito per interpolazione o
+      // concatenazione, esattamente come per subprocess+shell=True in Python.
+      if (fileMatch(file, /exec\.Command\s*\(\s*["'`](sh|bash|cmd)["'`]\s*,\s*["'`](-c|\/c)["'`]/)) {
+        matches.push(
+          ...scanLines(
+            file,
+            /exec\.Command\s*\(\s*["'`](?:sh|bash|cmd)["'`]\s*,\s*["'`](?:-c|\/c)["'`]\s*,\s*fmt\.Sprintf\s*\(/g
+          ),
+          ...scanLines(
+            file,
+            /exec\.Command\s*\(\s*["'`](?:sh|bash|cmd)["'`]\s*,\s*["'`](?:-c|\/c)["'`]\s*,\s*["'`][^"'`]*["'`]\s*\+\s*\w/g
+          )
         );
       }
 

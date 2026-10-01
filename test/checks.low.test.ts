@@ -97,4 +97,58 @@ describe("low checks", () => {
       expect(fixed).toContain('# print("login attempt", password)  # rimossa da JoJoX');
     });
   });
+
+  describe("Go", () => {
+    it("no-login-rate-limit: flags a Gin login route (uppercase POST) with no rate limiter in the file", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file("main.go", 'router.POST("/login", loginHandler)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("no-login-rate-limit: does not flag a login route guarded by a rate limiter", () => {
+      const check = checkById("no-login-rate-limit");
+      const clean = file(
+        "main.go",
+        'limiter := tollbooth.NewLimiter(1, nil)\nrouter.POST("/login", tollbooth_gin.LimitHandler(limiter), loginHandler)'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("no-login-rate-limit autofix: does not attempt a fix (needs sync.Mutex / import merging we can't do safely)", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file("main.go", 'router.POST("/login", loginHandler)');
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+
+    it("sensitive-data-in-logs: flags a password logged with log.Printf", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("main.go", 'log.Printf("login attempt email=%s password=%s", email, password)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: flags a token logged with fmt.Println", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("main.go", 'fmt.Println("issued token", token)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: does not flag a log without sensitive fields", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("main.go", 'log.Println("login attempt", email)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs: does not flag a line already commented out with //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("main.go", '// log.Println("login attempt", password)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs autofix: comments the line out with //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("main.go", 'log.Println("login attempt", password)');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('// log.Println("login attempt", password)  // rimossa da JoJoX');
+    });
+  });
 });
