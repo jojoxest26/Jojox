@@ -116,8 +116,23 @@ export const criticalChecks: Check[] = [
 
       return [{ line: 1, snippet: `…${basename} contiene variabili con valori assegnati…` }];
     },
-    // Nessun autofix: spostare le credenziali fuori dal repo (.gitignore) e
-    // ruotarle è un'azione che deve fare una persona, non uno script.
+    // Niente autofix sul contenuto del .env stesso: riscrivere o cancellare
+    // credenziali vere senza sapere se servono ancora in locale sarebbe
+    // distruttivo, e ruotarle resta comunque un'azione che deve fare una
+    // persona. L'unica parte meccanica e sempre sicura — impedire che
+    // finisca di nuovo in un commit — la facciamo aggiungendolo al
+    // .gitignore, un file diverso da quello segnalato.
+    autofixOtherFile(file, allFiles) {
+      const gitignore = allFiles.find((f) => f.path === ".gitignore");
+      const entry = file.path;
+      const existingLines = (gitignore?.content ?? "").split("\n");
+      const alreadyIgnored = existingLines.some((line) => line.trim() === entry || line.trim() === `/${entry}`);
+      if (alreadyIgnored) return null;
+
+      const base = gitignore?.content ?? "";
+      const needsNewline = base.length > 0 && !base.endsWith("\n");
+      return { path: ".gitignore", content: `${base}${needsNewline ? "\n" : ""}${entry}\n` };
+    },
   },
 
   {

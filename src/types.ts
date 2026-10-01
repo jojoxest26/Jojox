@@ -46,6 +46,15 @@ export interface Check {
    * resta segnalato solo con l'esempio "prima/dopo".
    */
   autofix?: (file: SourceFile) => string | null;
+  /**
+   * Per correzioni che non toccano il file dove è stato trovato il problema,
+   * ma un file diverso del progetto (es. aggiungere una riga al
+   * `.gitignore` invece di modificare il `.env` segnalato). Riceve il file
+   * che ha fatto scattare il controllo e tutti i file del progetto, e
+   * ritorna il file da creare o aggiornare altrove — o null se non c'è
+   * nulla da fare (es. è già a posto).
+   */
+  autofixOtherFile?: (file: SourceFile, allFiles: readonly SourceFile[]) => SourceFile | null;
 }
 
 export interface AnalysisResult {

@@ -125,7 +125,9 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     // La correzione qui gira sempre lato server (a differenza dell'analisi
     // manuale nel browser): serve il contenuto corretto per poterlo davvero
     // pushare su GitHub tramite l'installazione della GitHub App.
-    const autofix = applyAutofixes(parsed.data.files);
+    // Il Full Site Audit carica l'intero progetto, non solo alcuni file: le
+    // correzioni che toccano un file diverso da quello segnalato (es. .gitignore) sono sicure qui.
+    const autofix = applyAutofixes(parsed.data.files, { fullProject: true });
     const changedFiles = autofix.changedFiles;
 
     if (changedFiles.length > 0) {

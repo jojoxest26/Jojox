@@ -135,7 +135,9 @@ async function main() {
  */
 async function runFix(root: string, files: { path: string; content: string }[], asJson: boolean): Promise<void> {
   const before = analyzeFiles(files);
-  const autofix = applyAutofixes(files);
+  // Scansione dell'intera cartella del progetto, non solo alcuni file: le
+  // correzioni che toccano un file diverso da quello segnalato (es. .gitignore) sono sicure qui.
+  const autofix = applyAutofixes(files, { fullProject: true });
   const changed = autofix.changedFiles;
 
   await Promise.all(changed.map((fixed) => writeFile(resolve(root, fixed.path), fixed.content, "utf8")));
