@@ -258,4 +258,84 @@ describe("high checks", () => {
       expect(fixed).not.toContain("hashpw");
     });
   });
+
+  describe("Java", () => {
+    it("permissive-cors: flags a bare @CrossOrigin with no restriction", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("AdminController.java", "@CrossOrigin\npublic class AdminController {}");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: flags origins set to *", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("AdminController.java", '@CrossOrigin(origins = "*")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: does not flag a restricted origins list", () => {
+      const check = checkById("permissive-cors");
+      const clean = file("AdminController.java", '@CrossOrigin(origins = "https://tuosito.com")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("admin-function-missing-auth: flags a Spring @PostMapping admin route with no nearby auth check", () => {
+      const check = checkById("admin-function-missing-auth");
+      const vulnerable = file(
+        "AdminController.java",
+        '@PostMapping("/admin/delete-user")\npublic void deleteUser(@RequestParam String id) {\n  userRepository.deleteById(id);\n}'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("admin-function-missing-auth: does not flag when @PreAuthorize guards the route", () => {
+      const check = checkById("admin-function-missing-auth");
+      const clean = file(
+        "AdminController.java",
+        '@PostMapping("/admin/delete-user")\n@PreAuthorize("hasRole(\'ADMIN\')")\npublic void deleteUser(@RequestParam String id) {\n  userRepository.deleteById(id);\n}'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("ssrf: flags RestTemplate built from request.getParameter", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("ProxyController.java", 'String data = restTemplate.getForObject(request.getParameter("url"), String.class);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: flags a new URL(...) built from request.getParameter", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("ProxyController.java", 'URL target = new URL(request.getParameter("url"));');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: does not flag a request to a fixed URL", () => {
+      const check = checkById("ssrf");
+      const clean = file("ProxyController.java", 'String data = restTemplate.getForObject("https://api.example.com", String.class);');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing: flags MessageDigest MD5 used near password handling", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("AuthService.java", "byte[] hashed = MessageDigest.getInstance(\"MD5\").digest(password.getBytes());");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-password-hashing: does not flag BCrypt", () => {
+      const check = checkById("weak-password-hashing");
+      const clean = file("AuthService.java", "String hashed = BCrypt.hashpw(password, BCrypt.gensalt());");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing autofix: replaces MessageDigest.getInstance(\"MD5\") with BCrypt.hashpw, not JS/Python/Go bcrypt", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("AuthService.java", "byte[] hashed = MessageDigest.getInstance(\"MD5\").digest(password.getBytes());");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("BCrypt.hashpw(password.getBytes(), BCrypt.gensalt())");
+      expect(fixed).not.toContain("await bcrypt.hash");
+      expect(fixed).not.toContain("GenerateFromPassword");
+      const opens = (fixed!.match(/\(/g) ?? []).length;
+      const closes = (fixed!.match(/\)/g) ?? []).length;
+      expect(opens).toBe(closes);
+    });
+  });
 });

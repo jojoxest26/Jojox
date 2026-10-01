@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile } from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
@@ -7,10 +7,10 @@ const SERVER_ONLY_PATH = /(^|\/)(api|server|edge-functions?|functions)(\/|\.)/i;
 
 // Come si legge una variabile d'ambiente nel linguaggio del file — usato per
 // non segnalare un valore già letto correttamente, e per scrivere l'autofix.
-const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv/;
+const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv/;
 
 const PLACEHOLDER_VALUE =
-  /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
+  /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
 
 // L'operatore di assegnazione: "=" o ":" in JS/Python, ma anche ":=" in Go
 // (dichiarazione breve di variabile) — va provato per primo, altrimenti il
@@ -34,12 +34,13 @@ const ALREADY_HASHES_PASSWORD =
   /bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2|werkzeug\.security|check_password_hash|generate_password_hash|make_password|passlib/i;
 
 // Il valore grezzo della password così come arriva dalla richiesta — Express (req.body),
-// Flask (request.form/request.json), Django (request.POST), Gin (c.PostForm) e net/http
-// (r.FormValue) hanno ognuno il suo nome. Il confine di parola (\b) sta solo sulle forme
-// che finiscono con un identificatore semplice: le altre finiscono già con un carattere
-// non alfanumerico (']', ')'), dove un \b dopo non potrebbe mai combaciare.
+// Flask (request.form/request.json), Django (request.POST), Gin (c.PostForm), net/http
+// (r.FormValue) e Servlet/Spring (request.getParameter) hanno ognuno il suo nome. Il
+// confine di parola (\b) sta solo sulle forme che finiscono con un identificatore
+// semplice: le altre finiscono già con un carattere non alfanumerico (']', ')'), dove un
+// \b dopo non potrebbe mai combaciare.
 const RAW_PASSWORD_VALUE =
-  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|c\\.PostForm\\(["\']password["\']\\)|r\\.FormValue\\(["\']password["\']\\)|password\\b';
+  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|c\\.PostForm\\(["\']password["\']\\)|r\\.FormValue\\(["\']password["\']\\)|request\\.getParameter\\(["\']password["\']\\)|password\\b';
 
 const PLAINTEXT_PASSWORD_ASSIGNMENT = new RegExp(`password\\s*[:=]\\s*(${RAW_PASSWORD_VALUE})`, "gi");
 
@@ -69,11 +70,12 @@ export const criticalChecks: Check[] = [
     // solo-server, una decisione architetturale che non possiamo prendere
     // al posto tuo senza rischiare di rompere il progetto.
     //
-    // Non esteso a Python o Go: il problema che segnala è specifico dei
+    // Non esteso a Python, Go o Java: il problema che segnala è specifico dei
     // bundler JS (Next.js, Vite...) che impacchettano variabili con prefisso
-    // pubblico dentro il codice spedito al browser. Un backend Python o un
-    // binario Go compilato non hanno un passaggio di bundling equivalente —
-    // non c'è un rischio paragonabile da riconoscere con lo stesso pattern.
+    // pubblico dentro il codice spedito al browser. Un backend Python, un
+    // binario Go compilato o un .jar Java non hanno un passaggio di bundling
+    // equivalente — non c'è un rischio paragonabile da riconoscere con lo
+    // stesso pattern.
   },
 
   {
@@ -117,6 +119,7 @@ export const criticalChecks: Check[] = [
       const pattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})(\\s*(?:${ASSIGN_OP})\\s*)["'\`][^"'\`]{12,}["'\`]`, "gi");
       const python = isPythonFile(file);
       const go = isGoFile(file);
+      const java = isJavaFile(file);
       const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
         if (ENV_READ_PATTERN.test(line)) return null;
         if (HIGH_CONFIDENCE_SECRET_VALUE.test(line)) return null;
@@ -125,7 +128,13 @@ export const criticalChecks: Check[] = [
         // Go: "name := value" diventa "name = os.Getenv(...)" — una volta
         // letta da env non è più una nuova dichiarazione, serve "=" non ":=".
         const goOperator = operator.replace(":=", "=");
-        const envRead = python ? `os.environ["${envName}"]` : go ? `os.Getenv("${envName}")` : `process.env.${envName}`;
+        const envRead = python
+          ? `os.environ["${envName}"]`
+          : go
+            ? `os.Getenv("${envName}")`
+            : java
+              ? `System.getenv("${envName}")`
+              : `process.env.${envName}`;
         const replacement = `${varName}${go ? goOperator : operator}${envRead}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
@@ -225,6 +234,10 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /\.(query|raw|execute)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
         // Go: database/sql, costruzione con fmt.Sprintf invece che parametri $1/?.
         ...scanLines(file, /\.(Query|Exec|QueryRow)\s*\(\s*fmt\.Sprintf\s*\(/g),
+        // Java: JDBC Statement.executeQuery/executeUpdate con concatenazione,
+        // invece di PreparedStatement con segnaposto "?" (".execute(" semplice
+        // è già coperto dal pattern generico qui sopra).
+        ...scanLines(file, /\.(executeQuery|executeUpdate)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
       ];
     },
     // Nessun autofix: parametrizzare correttamente la query dipende dal
@@ -251,11 +264,17 @@ export const criticalChecks: Check[] = [
       if (ALREADY_HASHES_PASSWORD.test(file.content)) return null;
       const python = isPythonFile(file);
       const go = isGoFile(file);
+      const java = isJavaFile(file);
+      // Nota a blocco /* */ per Java: a differenza di Go e JS, Java non ha
+      // l'inserimento automatico di ";" — un commento // a fine riga
+      // inghiottirebbe il punto e virgola che resta dopo, rompendo la sintassi.
       const note = python
         ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
         : go
           ? " // JoJoX: serve il pacchetto golang.org/x/crypto/bcrypt"
-          : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+          : java
+            ? " /* JoJoX: serve la libreria jBCrypt — org.mindrot:jbcrypt */"
+            : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
       const { content, changed } = replaceLines(file.content, PLAINTEXT_PASSWORD_ASSIGNMENT, (line, m) => {
         const value = m[1];
         const prefix = m[0].slice(0, m[0].length - value.length);
@@ -265,7 +284,9 @@ export const criticalChecks: Check[] = [
           ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())`
           : go
             ? `bcrypt.GenerateFromPassword([]byte(${value}), bcrypt.DefaultCost)`
-            : `await bcrypt.hash(${value}, 12)`;
+            : java
+              ? `BCrypt.hashpw(${value}, BCrypt.gensalt())`
+              : `await bcrypt.hash(${value}, 12)`;
         const replacement = `${prefix}${hashCall}${note}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
@@ -292,13 +313,24 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /jwt\.(encode|decode)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
         // Go (golang-jwt): token.SignedString([]byte("secret-letterale")).
         ...scanLines(file, /\.SignedString\s*\(\s*\[\]byte\s*\(\s*["'`][^"'`]{6,}["'`]\s*\)\s*\)/g),
+        // Java (jjwt): .signWith(SignatureAlgorithm.HS256, "secret") (API vecchia)
+        // o .signWith(Keys.hmacShaKeyFor("secret".getBytes())) (API 0.11+).
+        ...scanLines(file, /\.signWith\s*\(\s*SignatureAlgorithm\.\w+\s*,\s*["'][^"']{6,}["']\s*\)/g),
+        ...scanLines(file, /\.signWith\s*\(\s*Keys\.hmacShaKeyFor\s*\(\s*["'][^"']{6,}["']\s*\.getBytes\s*\(\s*\)\s*\)\s*\)/g),
         ...scanLines(file, /JWT_SECRET\s*(?:=|:=)\s*["'][^"']+["']/g),
       ];
     },
     autofix(file) {
       const python = isPythonFile(file);
       const go = isGoFile(file);
-      const envRead = python ? 'os.environ["JWT_SECRET"]' : go ? 'os.Getenv("JWT_SECRET")' : "process.env.JWT_SECRET";
+      const java = isJavaFile(file);
+      const envRead = python
+        ? 'os.environ["JWT_SECRET"]'
+        : go
+          ? 'os.Getenv("JWT_SECRET")'
+          : java
+            ? 'System.getenv("JWT_SECRET")'
+            : "process.env.JWT_SECRET";
       const jsMethods = replaceLines(file.content, /jwt\.(sign|verify)\s*\(([^)]*),\s*["'][^"']{6,}["']/g, (line, m) => {
         const [, method, args] = m;
         const replacement = `jwt.${method}(${args}, ${envRead}`;
@@ -316,11 +348,32 @@ export const criticalChecks: Check[] = [
           return line.slice(0, m.index) + `.SignedString([]byte(${envRead}))` + line.slice(m.index + m[0].length);
         }
       );
-      const literal = replaceLines(goMethods.content, /JWT_SECRET\s*(=|:=)\s*["'][^"']+["']/g, (line, m) => {
+      const javaOldApi = replaceLines(
+        goMethods.content,
+        /\.signWith\s*\(\s*(SignatureAlgorithm\.\w+)\s*,\s*["'][^"']{6,}["']\s*\)/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `.signWith(${m[1]}, ${envRead})` + line.slice(m.index + m[0].length);
+        }
+      );
+      const javaNewApi = replaceLines(
+        javaOldApi.content,
+        /\.signWith\s*\(\s*Keys\.hmacShaKeyFor\s*\(\s*["'][^"']{6,}["']\s*\.getBytes\s*\(\s*\)\s*\)\s*\)/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `.signWith(Keys.hmacShaKeyFor(${envRead}.getBytes()))` + line.slice(m.index + m[0].length);
+        }
+      );
+      const literal = replaceLines(javaNewApi.content, /JWT_SECRET\s*(=|:=)\s*["'][^"']+["']/g, (line, m) => {
         const op = go ? m[1].replace(":=", "=") : m[1];
         return line.slice(0, m.index) + `JWT_SECRET ${op} ${envRead}` + line.slice(m.index + m[0].length);
       });
-      return jsMethods.changed || pyMethods.changed || goMethods.changed || literal.changed ? literal.content : null;
+      return jsMethods.changed ||
+        pyMethods.changed ||
+        goMethods.changed ||
+        javaOldApi.changed ||
+        javaNewApi.changed ||
+        literal.changed
+        ? literal.content
+        : null;
     },
   },
 
@@ -375,6 +428,20 @@ export const criticalChecks: Check[] = [
           ...scanLines(
             file,
             /exec\.Command\s*\(\s*["'`](?:sh|bash|cmd)["'`]\s*,\s*["'`](?:-c|\/c)["'`]\s*,\s*["'`][^"'`]*["'`]\s*\+\s*\w/g
+          )
+        );
+      }
+
+      // Java: Runtime.getRuntime().exec("..." + x) è già coperto dal pattern
+      // generico qui sopra (".exec(" con stringa concatenata combacia
+      // comunque). new ProcessBuilder("sh","-c", comando) invece ha lo
+      // stesso problema di exec.Command("sh","-c", ...) in Go; con argomenti
+      // separati (senza shell -c) resta sicuro, non lo segnaliamo.
+      if (fileMatch(file, /new\s+ProcessBuilder\s*\(\s*["'`](sh|bash|cmd)["'`]\s*,\s*["'`](-c|\/c)["'`]/)) {
+        matches.push(
+          ...scanLines(
+            file,
+            /new\s+ProcessBuilder\s*\(\s*["'`](?:sh|bash|cmd)["'`]\s*,\s*["'`](?:-c|\/c)["'`]\s*,\s*["'][^"']*["']\s*\+\s*\w/g
           )
         );
       }

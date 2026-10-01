@@ -354,4 +354,124 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Java", () => {
+    it("hardcoded-secret: flags a Java constant assigned a literal secret", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("Config.java", 'private static final String apiKey = "abcdefghijklmnop123456";');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag a value read with System.getenv", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("Config.java", 'String apiKey = System.getenv("STRIPE_SECRET_KEY");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret autofix: replaces a hardcoded secret with System.getenv, not os.Getenv/process.env", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("Config.java", 'String clientSecret = "abcdefghijklmnop123456";');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('String clientSecret = System.getenv("CLIENT_SECRET");');
+    });
+
+    it("sql-injection: flags a JDBC executeQuery built with concatenation", () => {
+      const check = checkById("sql-injection");
+      const vulnerable = file("UserDao.java", 'stmt.executeQuery("SELECT * FROM users WHERE email = " + email)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sql-injection: does not flag a PreparedStatement with a placeholder", () => {
+      const check = checkById("sql-injection");
+      const clean = file("UserDao.java", 'stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage: flags a Servlet request.getParameter password stored without hashing", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("UserController.java", 'String password = request.getParameter("password");');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("plaintext-password-storage: does not flag when the file already uses BCryptPasswordEncoder", () => {
+      const check = checkById("plaintext-password-storage");
+      const clean = file(
+        "UserController.java",
+        'String hashed = passwordEncoder.encode(request.getParameter("password"));\nuser.setPassword(hashed);'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage autofix: wraps the raw value in BCrypt.hashpw, not JS/Python/Go bcrypt", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("UserController.java", 'password = request.getParameter("password")');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('BCrypt.hashpw(request.getParameter("password"), BCrypt.gensalt())');
+    });
+
+    it("hardcoded-jwt-secret: flags a literal secret passed to jjwt's signWith (old API)", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file(
+        "JwtUtil.java",
+        'String token = Jwts.builder().signWith(SignatureAlgorithm.HS256, "super-secret-key-123").compact();'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-jwt-secret: flags a literal secret passed to jjwt's signWith (Keys.hmacShaKeyFor API)", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file(
+        "JwtUtil.java",
+        'String token = Jwts.builder().signWith(Keys.hmacShaKeyFor("super-secret-key-123".getBytes())).compact();'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-jwt-secret: does not flag a secret read from System.getenv", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const clean = file(
+        "JwtUtil.java",
+        'String token = Jwts.builder().signWith(SignatureAlgorithm.HS256, System.getenv("JWT_SECRET")).compact();'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-jwt-secret autofix: replaces the literal with System.getenv (old API)", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file(
+        "JwtUtil.java",
+        'Jwts.builder().signWith(SignatureAlgorithm.HS256, "super-secret-key-123")'
+      );
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('Jwts.builder().signWith(SignatureAlgorithm.HS256, System.getenv("JWT_SECRET"))');
+    });
+
+    it("hardcoded-jwt-secret autofix: replaces the literal with System.getenv (Keys.hmacShaKeyFor API)", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file(
+        "JwtUtil.java",
+        'Jwts.builder().signWith(Keys.hmacShaKeyFor("super-secret-key-123".getBytes()))'
+      );
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('Jwts.builder().signWith(Keys.hmacShaKeyFor(System.getenv("JWT_SECRET").getBytes()))');
+    });
+
+    it("command-injection: flags Runtime.exec with string concatenation", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("Util.java", 'Runtime.getRuntime().exec("rm -rf " + path);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: flags ProcessBuilder invoking a shell with string concatenation", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("Util.java", 'new ProcessBuilder("sh", "-c", "rm -rf " + path);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: does not flag ProcessBuilder with separate arguments (no shell involved)", () => {
+      const check = checkById("command-injection");
+      const clean = file("Util.java", 'new ProcessBuilder("convert", filename, "output.png");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

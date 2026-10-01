@@ -603,7 +603,7 @@ const it: TranslationTree = {
     dropzoneHintLoggedIn: "Sei loggato: l'analisi viene salvata nel tuo storico.",
     dropzoneHintGuest: "Modalità ospite: 1 analisi gratuita, senza email. Dopo, basta la mail per continuare (5 al mese, gratis).",
     dropzoneHintAny: "Funziona su qualsiasi codice — anche scritto interamente a mano, non solo generato dall'AI.",
-    dropzoneHintLanguages: "I 21 controlli coprono JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django) e Go (Gin, net/http). Su altri linguaggi (Java, Rust, PHP...) alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
+    dropzoneHintLanguages: "I 21 controlli coprono JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http) e Java (Spring). Su altri linguaggi (Rust, PHP...) alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
     sectionEyebrow: "L'analyzer",
     sectionTitle: "Carica il codice, guarda cosa trova.",
     moreFiles: "+{{count}} altri",
@@ -696,7 +696,7 @@ const it: TranslationTree = {
       {
         icon: "🧩",
         title: "Controlli per altri linguaggi",
-        text: "Oltre a JavaScript/TypeScript e SQL/Supabase, i 21 controlli ora riconoscono anche Python (Flask, Django) e Go (Gin, net/http), testati su codice reale. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede giorni di lavoro dedicato per ognuno. Restano da coprire Java, Rust e PHP: uno alla volta, nello stesso modo.",
+        text: "Oltre a JavaScript/TypeScript e SQL/Supabase, i 21 controlli ora riconoscono anche Python (Flask, Django), Go (Gin, net/http) e Java (Spring), testati su codice reale. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede giorni di lavoro dedicato per ognuno. Restano da coprire Rust e PHP: uno alla volta, nello stesso modo.",
       },
       {
         icon: "📦",
@@ -1057,7 +1057,7 @@ const en: TranslationTree = {
     dropzoneHintLoggedIn: "You're signed in: the analysis is saved to your history.",
     dropzoneHintGuest: "Guest mode: 1 free analysis, no email. After that, just an email to continue (5 a month, free).",
     dropzoneHintAny: "Works on any code — even written entirely by hand, not just AI-generated.",
-    dropzoneHintLanguages: "The 21 checks cover JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django) and Go (Gin, net/http). On other languages (Java, Rust, PHP...) some generic checks may still help, but coverage isn't complete yet.",
+    dropzoneHintLanguages: "The 21 checks cover JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http) and Java (Spring). On other languages (Rust, PHP...) some generic checks may still help, but coverage isn't complete yet.",
     sectionEyebrow: "The analyzer",
     sectionTitle: "Upload the code, see what it finds.",
     moreFiles: "+{{count}} more",
@@ -1150,7 +1150,7 @@ const en: TranslationTree = {
       {
         icon: "🧩",
         title: "Checks for more languages",
-        text: "Besides JavaScript/TypeScript and SQL/Supabase, the 21 checks now also recognize Python (Flask, Django) and Go (Gin, net/http), tested on real code. A new language done properly — checks and tests to avoid false positives — takes days of dedicated work each. Java, Rust and PHP are still to cover, one at a time, the same way.",
+        text: "Besides JavaScript/TypeScript and SQL/Supabase, the 21 checks now also recognize Python (Flask, Django), Go (Gin, net/http) and Java (Spring), tested on real code. A new language done properly — checks and tests to avoid false positives — takes days of dedicated work each. Rust and PHP are still to cover, one at a time, the same way.",
       },
       {
         icon: "📦",

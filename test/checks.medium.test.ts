@@ -276,4 +276,116 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Java", () => {
+    it("xss-dangerous-html: flags Thymeleaf's th:utext", () => {
+      const check = checkById("xss-dangerous-html");
+      const vulnerable = file("comment.html", '<div th:utext="${comment.text}"></div>');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("xss-dangerous-html: does not flag Thymeleaf's escaped th:text", () => {
+      const check = checkById("xss-dangerous-html");
+      const clean = file("comment.html", '<div th:text="${comment.text}"></div>');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("public-storage-bucket: flags an AWS SDK for Java (v1) object made public", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file(
+        "StorageService.java",
+        "s3.putObject(new PutObjectRequest(bucket, key, file).withCannedAcl(CannedAccessControlList.PublicRead));"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: flags an AWS SDK for Java (v2) object made public", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file(
+        "StorageService.java",
+        "PutObjectRequest.builder().bucket(bucket).key(key).acl(ObjectCannedACL.PUBLIC_READ).build();"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: does not flag a private AWS SDK for Java object", () => {
+      const check = checkById("public-storage-bucket");
+      const clean = file(
+        "StorageService.java",
+        "s3.putObject(new PutObjectRequest(bucket, key, file).withCannedAcl(CannedAccessControlList.Private));"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("public-storage-bucket autofix: replaces CannedAccessControlList.PublicRead with .Private", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file("StorageService.java", "CannedAccessControlList.PublicRead");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe("CannedAccessControlList.Private");
+    });
+
+    it("public-storage-bucket autofix: replaces ObjectCannedACL.PUBLIC_READ with .PRIVATE", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file("StorageService.java", "ObjectCannedACL.PUBLIC_READ");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe("ObjectCannedACL.PRIVATE");
+    });
+
+    it("csrf-state-changing-get: flags a Spring @GetMapping route that deletes data", () => {
+      const check = checkById("csrf-state-changing-get");
+      const vulnerable = file("PostController.java", '@GetMapping("/posts/{id}/delete")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("csrf-state-changing-get: does not flag a @PostMapping route", () => {
+      const check = checkById("csrf-state-changing-get");
+      const clean = file("PostController.java", '@PostMapping("/posts/{id}/delete")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect: flags a Servlet redirect built from request.getParameter", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("AuthServlet.java", 'response.sendRedirect(request.getParameter("next"));');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: does not flag a redirect to a fixed path", () => {
+      const check = checkById("open-redirect");
+      const clean = file("AuthServlet.java", 'response.sendRedirect("/dashboard");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect autofix: replaces the Servlet redirect with a fixed one, using a block comment (Java has no automatic semicolon insertion)", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("AuthServlet.java", 'response.sendRedirect(request.getParameter("next"));');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('response.sendRedirect("/")');
+      expect(fixed).toContain("/* JoJoX:");
+      expect(fixed).toContain("*/;");
+    });
+
+    it("idor: flags a Spring Data JPA findById by request.getParameter id with no ownership check nearby", () => {
+      const check = checkById("idor");
+      const vulnerable = file("OrderController.java", 'Order order = orderRepository.findById(request.getParameter("id"));');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: flags a findById wrapped in Long.parseLong", () => {
+      const check = checkById("idor");
+      const vulnerable = file(
+        "OrderController.java",
+        'Order order = orderRepository.findById(Long.parseLong(request.getParameter("id")));'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: does not flag when an ownership check (getPrincipal) follows the lookup", () => {
+      const check = checkById("idor");
+      const clean = file(
+        "OrderController.java",
+        'Order order = orderRepository.findById(request.getParameter("id"));\nif (!order.getUserId().equals(auth.getPrincipal())) throw new ForbiddenException();'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

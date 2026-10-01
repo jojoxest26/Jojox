@@ -1,13 +1,14 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile, isGoFile } from "../util/scan.js";
+import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile, isGoFile, isJavaFile } from "../util/scan.js";
 
 // JS/Express (requireAuth, req.user...), Python/Flask/Django (login_required,
-// request.user.is_staff...) e Go/Gin (MustGet, AuthRequired...) insieme — un
-// controllo di autenticazione o ruolo riconoscibile in tutti e tre i mondi.
+// request.user.is_staff...), Go/Gin (MustGet, AuthRequired...) e
+// Java/Spring Security (@PreAuthorize, @Secured...) insieme — un controllo di
+// autenticazione o ruolo riconoscibile in tutti e quattro i mondi.
 // Case-insensitive: così la stessa lista copre sia lo stile camelCase di
-// JS/Python sia il PascalCase idiomatico di Go, senza doverle scrivere due volte.
+// JS/Python sia il PascalCase idiomatico di Go e Java, senza doverle scrivere due volte.
 const ADMIN_AUTH_KEYWORDS =
-  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user|MustGet|AuthRequired|Authorization/i;
+  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user|MustGet|AuthRequired|Authorization|PreAuthorize|@Secured|RolesAllowed|SecurityContextHolder/i;
 
 function findUnprotectedTables(content: string): string[] {
   const createRe = /CREATE TABLE\s+(?:IF NOT EXISTS\s+)?"?(?:\w+\.)?(\w+)"?/gi;
@@ -90,6 +91,12 @@ export const highChecks: Check[] = [
         // restrizione, o AllowOrigins impostato esplicitamente a "*".
         ...scanLines(file, /\bcors\.Default\(\s*\)/g),
         ...scanLines(file, /AllowOrigins\s*[:=]\s*\[\]string\{\s*["']\*["']/g),
+        // Java/Spring: @CrossOrigin senza argomenti (o con parentesi vuote)
+        // permette di default qualsiasi origine; origins="*" o
+        // addAllowedOrigin("*") lo fanno esplicitamente.
+        ...scanLines(file, /@CrossOrigin(?:\s*\(\s*\))?(?!\s*\()/g),
+        ...scanLines(file, /origins\s*=\s*["']\*["']/g),
+        ...scanLines(file, /addAllowedOrigin\s*\(\s*["']\*["']\s*\)/g),
       ];
     },
     // Nessun autofix: non sappiamo qual è il tuo vero dominio. Un elenco di
@@ -117,6 +124,9 @@ export const highChecks: Check[] = [
         // permesso nella view in un altro file — "righe vicine" non significa
         // nulla in quell'architettura, darebbe solo falsi allarmi.)
         /@\w+\.route\s*\(\s*["'][^"']*\/admin[^"']*["']/gi,
+        // Java/Spring: @GetMapping/@PostMapping/... ("/admin/...") o
+        // @RequestMapping con lo stesso percorso.
+        /@(?:Get|Post|Put|Patch|Delete|Request)Mapping\s*\(\s*(?:value\s*=\s*)?["'][^"']*\/admin[^"']*["']/gi,
       ];
       const matches: CheckMatch[] = [];
       const lines = file.content.split("\n");
@@ -165,6 +175,13 @@ export const highChecks: Check[] = [
           file,
           /\bhttp\.(Get|Post)\s*\(\s*(c\.(Query|PostForm)|r\.(FormValue|URL\.Query\(\)\.Get))\s*\(/g
         ),
+        // Java: RestTemplate o new URL(...) con un valore preso direttamente
+        // da request.getParameter.
+        ...scanLines(
+          file,
+          /\brestTemplate\.(getForObject|getForEntity|postForObject|exchange)\s*\(\s*request\.getParameter/gi
+        ),
+        ...scanLines(file, /\bnew\s+URL\s*\(\s*request\.getParameter/g),
       ];
     },
     // Nessun autofix: quali destinazioni siano legittime lo sai solo tu —
@@ -184,24 +201,32 @@ export const highChecks: Check[] = [
     },
     detect(file) {
       const pattern =
-        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\.Sum\s*\(|\b(md5|sha1)\s*\(\s*password/gi;
+        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\.Sum\s*\(|\b(md5|sha1)\s*\(\s*password|MessageDigest\.getInstance\s*\(\s*["'](MD5|SHA-1|SHA1)["']\s*\)/gi;
       const lines = file.content.split("\n");
       return scanLines(file, pattern).filter((m) => /password/i.test(lines[m.line - 1] ?? ""));
     },
     autofix(file) {
       const python = isPythonFile(file);
       const go = isGoFile(file);
+      const java = isJavaFile(file);
+      // Nota a blocco /* */ per Java: a differenza di Go e JS, Java non ha
+      // l'inserimento automatico di ";" — un commento // a fine riga
+      // inghiottirebbe il punto e virgola che resta dopo, rompendo la sintassi.
       const note = python
         ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
         : go
           ? " // JoJoX: serve il pacchetto golang.org/x/crypto/bcrypt"
-          : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+          : java
+            ? " /* JoJoX: serve la libreria jBCrypt — org.mindrot:jbcrypt */"
+            : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
       const hashCall = (value: string) =>
         python
           ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())`
           : go
             ? `bcrypt.GenerateFromPassword([]byte(${value}), bcrypt.DefaultCost)`
-            : `await bcrypt.hash(${value}, 12)`;
+            : java
+              ? `BCrypt.hashpw(${value}, BCrypt.gensalt())`
+              : `await bcrypt.hash(${value}, 12)`;
 
       // Il valore passato può a sua volta contenere una chiamata con le sue
       // parentesi (es. Python password.encode()) — un semplice [^)]* si
@@ -242,6 +267,21 @@ export const highChecks: Check[] = [
       if (!result.changed) {
         const barePattern = new RegExp(`\\b(?:md5|sha1)\\s*\\((${BALANCED_ARG})\\)`, "gi");
         result = replaceLines(file.content, barePattern, (line, m) => {
+          if (!/password/i.test(line)) return null;
+          return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
+        });
+      }
+      if (!result.changed) {
+        // Java: MessageDigest.getInstance("MD5").digest(password.getBytes())
+        // — stessa logica di md5.Sum in Go, sostituiamo solo la chiamata di
+        // hashing. Nota: se l'argomento catturato include già .getBytes(),
+        // jBCrypt (che vuole una String) andrà aggiustato a mano — lo stesso
+        // compromesso già accettato per il doppio .encode() in Python.
+        const javaDigestPattern = new RegExp(
+          `MessageDigest\\.getInstance\\(\\s*["'](?:MD5|SHA-1|SHA1)["']\\s*\\)\\.digest\\((${BALANCED_ARG})\\)`,
+          "gi"
+        );
+        result = replaceLines(file.content, javaDigestPattern, (line, m) => {
           if (!/password/i.test(line)) return null;
           return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
         });

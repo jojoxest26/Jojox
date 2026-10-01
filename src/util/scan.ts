@@ -10,6 +10,11 @@ export function isGoFile(file: SourceFile): boolean {
   return /\.go$/.test(file.path);
 }
 
+/** True per un file Java — usato dai controlli che riconoscono anche questo linguaggio, non solo JS/TS/Python/Go. */
+export function isJavaFile(file: SourceFile): boolean {
+  return /\.java$/.test(file.path);
+}
+
 const CONTEXT_CHARS = 12;
 const MASK_CHAR = "•";
 

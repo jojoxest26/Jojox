@@ -151,4 +151,58 @@ describe("low checks", () => {
       expect(fixed).toContain('// log.Println("login attempt", password)  // rimossa da JoJoX');
     });
   });
+
+  describe("Java", () => {
+    it("no-login-rate-limit: flags a Spring @PostMapping login route with no rate limiter in the file", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file("AuthController.java", '@PostMapping("/login")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("no-login-rate-limit: does not flag a login route guarded by a rate limiter", () => {
+      const check = checkById("no-login-rate-limit");
+      const clean = file(
+        "AuthController.java",
+        '@RateLimiter(name = "login")\n@PostMapping("/login")'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("no-login-rate-limit autofix: does not attempt a fix (needs correct synchronization across threads)", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file("AuthController.java", '@PostMapping("/login")');
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+
+    it("sensitive-data-in-logs: flags a password logged with System.out.println", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("AuthController.java", 'System.out.println("login attempt email=" + email + " password=" + password);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: flags a token logged with SLF4J's log.info", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("AuthController.java", 'log.info("issued token {}", token);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: does not flag a log without sensitive fields", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("AuthController.java", 'log.info("login attempt email={}", email);');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs: does not flag a line already commented out with //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("AuthController.java", '// log.info("login attempt password={}", password);');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs autofix: comments the line out with //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("AuthController.java", 'log.info("login attempt password={}", password);');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('// log.info("login attempt password={}", password);  // rimossa da JoJoX');
+    });
+  });
 });
