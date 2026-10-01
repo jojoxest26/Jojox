@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, redactLine, replaceLines, isPhpFile } from "../util/scan.js";
+import { scanLines, redactLine, replaceLines } from "../util/scan.js";
 
 // JS (userId, req.user...), Python/Django/Flask (request.user, user_id...),
 // Go (UserID, c.MustGet...), Java/Spring Security (getPrincipal,
