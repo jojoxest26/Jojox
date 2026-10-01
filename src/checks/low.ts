@@ -1,5 +1,5 @@
 import type { Check } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile } from "../util/scan.js";
 
 const RATE_LIMIT_HELPER = `// JoJoX: limite tentativi di accesso (5 ogni 15 minuti), senza dipendenze esterne
 const __jojoxLoginAttempts = new Map();
@@ -66,20 +66,25 @@ export const lowChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
+      const php = isPhpFile(file);
       const routePattern = python
         ? /@\w+\.route\s*\(\s*["'][^"']*\/login[^"']*["']/i
         : go
           ? /\.(POST|post)\s*\(\s*["'][^"']*\/login[^"']*["']/
           : java
             ? /@PostMapping\s*\(\s*(?:value\s*=\s*)?["'][^"']*\/login[^"']*["']/
-            : /\.post\s*\(\s*["'][^"']*\/login[^"']*["']/i;
+            : php
+              ? /Route::post\s*\(\s*["'][^"']*\/login[^"']*["']/i
+              : /\.post\s*\(\s*["'][^"']*\/login[^"']*["']/i;
       const limiterPattern = python
         ? /rateLimit|rate-limit|rate_limit|flask_limiter|Limiter\(/i
         : go
           ? /rate\.NewLimiter|tollbooth|ulule\/limiter|gin-contrib\/limiter|RateLimit|rate_limit/i
           : java
             ? /RateLimiter|Bucket4j|resilience4j|rate_limit/i
-            : /rateLimit|rate-limit|rate_limit/i;
+            : php
+              ? /throttle:|RateLimiter::|rate_limit/i
+              : /rateLimit|rate-limit|rate_limit/i;
 
       if (!fileMatch(file, routePattern)) return [];
       if (fileMatch(file, limiterPattern)) return [];
@@ -89,14 +94,19 @@ export const lowChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
+      const php = isPhpFile(file);
 
-      // Per il Go (e per lo stesso motivo per Java) non generiamo un rate
-      // limiter autonomo come per JS/Python: servirebbe uno stato condiviso
-      // tra richieste concorrenti (thread diversi in un server Java, goroutine
-      // diverse in Go) con una sincronizzazione corretta che un autofix
-      // basato su pattern non può garantire alla cieca. Per ora segnaliamo
-      // soltanto il problema senza un fix automatico.
-      if (go || java) return null;
+      // Per il Go e per Java non generiamo un rate limiter autonomo come per
+      // JS/Python: servirebbe uno stato condiviso tra richieste concorrenti
+      // (thread diversi in un server Java, goroutine diverse in Go) con una
+      // sincronizzazione corretta che un autofix basato su pattern non può
+      // garantire alla cieca. Per PHP il motivo è ancora più diretto: nel
+      // deployment classico (PHP-FPM/Apache), ogni richiesta parte da un
+      // interprete nuovo — una variabile in memoria come quella usata per
+      // JS/Python non sopravvivrebbe da una richiesta all'altra e non
+      // proteggerebbe davvero nulla. Per tutti e tre segnaliamo soltanto il
+      // problema senza un fix automatico.
+      if (go || java || php) return null;
 
       if (python) {
         if (!fileMatch(file, /@\w+\.route\s*\(\s*["'][^"']*\/login[^"']*["']/i)) return null;
@@ -147,13 +157,18 @@ export const lowChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
+      const php = isPhpFile(file);
+      // \$? nell'alternativa PHP copre il sigillo "$" davanti al nome della
+      // variabile (es. $password), diverso dalle forme bare delle altre lingue.
       const pattern = python
         ? /\b(print|logging\.(debug|info|warning|error|critical)|logger\.(debug|info|warning|error|critical))\([^)]*\b(password|token|secret|api_key|apiKey)\b/gi
         : go
           ? /\b(log\.(Println|Printf|Print|Fatal|Fatalln|Fatalf)|fmt\.(Println|Printf|Print))\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi
           : java
             ? /\b(System\.out\.(println|print|printf)|log\.(debug|info|warn|error)|logger\.(debug|info|warn|error))\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi
-            : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
+            : php
+              ? /\b(error_log|var_dump|print_r)\s*\([^)]*\$(password|token|secret|api_key|apiKey)\b/gi
+              : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
       const commentPattern = python ? /^\s*#/ : /^\s*\/\//;
       const lines = file.content.split("\n");
       return scanLines(file, pattern).filter((m) => !commentPattern.test(lines[m.line - 1] ?? ""));
@@ -162,13 +177,16 @@ export const lowChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
+      const php = isPhpFile(file);
       const pattern = python
         ? /\b(print|logging\.(debug|info|warning|error|critical)|logger\.(debug|info|warning|error|critical))\([^)]*\b(password|token|secret|api_key|apiKey)\b/gi
         : go
           ? /\b(log\.(Println|Printf|Print|Fatal|Fatalln|Fatalf)|fmt\.(Println|Printf|Print))\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi
           : java
             ? /\b(System\.out\.(println|print|printf)|log\.(debug|info|warn|error)|logger\.(debug|info|warn|error))\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi
-            : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
+            : php
+              ? /\b(error_log|var_dump|print_r)\s*\([^)]*\$(password|token|secret|api_key|apiKey)\b/gi
+              : /console\.(log|error|warn|info)\([^)]*\b(password|token|secret|apiKey|api_key)\b/gi;
       const commentPrefix = python ? "#" : "//";
       const { content, changed } = replaceLines(file.content, pattern, (line) => {
         const indent = line.match(/^(\s*)/)?.[1] ?? "";

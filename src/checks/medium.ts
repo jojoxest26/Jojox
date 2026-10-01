@@ -1,12 +1,13 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, redactLine, replaceLines } from "../util/scan.js";
+import { scanLines, redactLine, replaceLines, isPhpFile } from "../util/scan.js";
 
 // JS (userId, req.user...), Python/Django/Flask (request.user, user_id...),
-// Go (UserID, c.MustGet...) e Java/Spring Security (getPrincipal,
-// authentication.getName...) insieme — case-insensitive per coprire anche il
-// PascalCase idiomatico di Go e Java senza doverlo scrivere due volte.
+// Go (UserID, c.MustGet...), Java/Spring Security (getPrincipal,
+// authentication.getName...) e PHP/Laravel (Auth::id, auth()->id...) insieme —
+// case-insensitive per coprire anche il PascalCase idiomatico di Go e Java
+// senza doverlo scrivere due volte.
 const OWNERSHIP_KEYWORDS =
-  /userId|user_id|user\.id|owner|req\.user|request\.user|auth\.uid|current_user|MustGet|getPrincipal|AuthenticationPrincipal|authentication\.getName/i;
+  /userId|user_id|user\.id|owner|req\.user|request\.user|auth\.uid|current_user|MustGet|getPrincipal|AuthenticationPrincipal|authentication\.getName|Auth::id|auth\(\)->id/i;
 const REDIRECT_REMOVED_NOTE =
   " /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */";
 
@@ -37,6 +38,9 @@ export const mediumChecks: Check[] = [
         // Java/Thymeleaf: th:utext stampa HTML senza escape (th:text, la
         // forma sicura, non viene toccato).
         ...scanLines(file, /\bth:utext\s*=/g),
+        // PHP/Laravel Blade: {!! $var !!} stampa senza escape ({{ $var }}, la
+        // forma sicura, non viene toccato).
+        ...scanLines(file, /\{!!.*?!!\}/g),
       ];
     },
     // Nessun autofix: non sappiamo se quell'HTML deve restare tale (e va
@@ -70,6 +74,9 @@ export const mediumChecks: Check[] = [
         // .PublicRead, v2 l'enum ObjectCannedACL.PUBLIC_READ.
         ...scanLines(file, /CannedAccessControlList\.PublicRead/g),
         ...scanLines(file, /ObjectCannedACL\.PUBLIC_READ/g),
+        // PHP: SDK AWS per PHP usa la sintassi ad array con "=>", non ":"/"=",
+        // quindi il pattern generico "acl[:=]" qui sopra non la riconosce.
+        ...scanLines(file, /['"]ACL['"]\s*=>\s*['"]public-read['"]/gi),
       ];
     },
     autofix(file) {
@@ -94,7 +101,12 @@ export const mediumChecks: Check[] = [
       const r6 = replaceLines(r5.content, /ObjectCannedACL\.PUBLIC_READ/g, (line, m) => {
         return line.slice(0, m.index) + `ObjectCannedACL.PRIVATE` + line.slice(m.index + m[0].length);
       });
-      return r1.changed || r2.changed || r3.changed || r4.changed || r5.changed || r6.changed ? r6.content : null;
+      const r7 = replaceLines(r6.content, /(['"])ACL\1\s*=>\s*['"]public-read['"]/gi, (line, m) => {
+        return line.slice(0, m.index) + `${m[1]}ACL${m[1]} => 'private'` + line.slice(m.index + m[0].length);
+      });
+      return r1.changed || r2.changed || r3.changed || r4.changed || r5.changed || r6.changed || r7.changed
+        ? r7.content
+        : null;
     },
   },
 
@@ -130,6 +142,12 @@ export const mediumChecks: Check[] = [
         ...scanLines(file, /@GetMapping\s*\(\s*(?:value\s*=\s*)?["'][^"']*\/(delete|remove|update|edit)[^"']*["']/gi)
       );
 
+      // PHP/Laravel: Route::get('/posts/{id}/delete', ...) esegue
+      // un'operazione di scrittura su una rotta GET.
+      matches.push(
+        ...scanLines(file, /Route::get\s*\(\s*["'][^"']*\/(delete|remove|update|edit)[^"']*["']/gi)
+      );
+
       return matches;
     },
     // Nessun autofix: cambiare il metodo da GET a POST rompe chiunque
@@ -155,10 +173,11 @@ export const mediumChecks: Check[] = [
     // server, cioè in un file diverso da quello dove vive questa riga —
     // non possiamo farlo senza sapere dov'è quel server.
     //
-    // Non esteso a Python, Go o Java: localStorage è un'API del browser, non
-    // ha un corrispondente lato server in nessuno dei tre. Un backend che
-    // genera HTML/JS con la stessa riga (es. in un template) verrebbe comunque
-    // riconosciuto dal pattern così com'è, scansionando quel file come se fosse JS.
+    // Non esteso a Python, Go, Java o PHP: localStorage è un'API del browser,
+    // non ha un corrispondente lato server in nessuno dei quattro. Un backend
+    // che genera HTML/JS con la stessa riga (es. in un template) verrebbe
+    // comunque riconosciuto dal pattern così com'è, scansionando quel file
+    // come se fosse JS.
   },
 
   {
@@ -184,6 +203,11 @@ export const mediumChecks: Check[] = [
         ...scanLines(file, /http\.Redirect\s*\([^,]+,[^,]+,\s*r\.FormValue\s*\(/g),
         // Java/Servlet: response.sendRedirect(request.getParameter(...)).
         ...scanLines(file, /response\.sendRedirect\s*\(\s*request\.getParameter\s*\(/g),
+        // PHP: header("Location: " . $_GET[...]) con concatenazione, oppure
+        // una variabile interpolata direttamente dentro una stringa fra
+        // doppi apici (es. header("Location: $next")).
+        ...scanLines(file, /header\s*\(\s*["']Location:\s*["']?\s*\.\s*\$_(GET|POST|REQUEST)/gi),
+        ...scanLines(file, /header\s*\(\s*"Location:[^"]*\$_(GET|POST|REQUEST)/gi),
       ];
     },
     autofix(file) {
@@ -242,7 +266,32 @@ export const mediumChecks: Check[] = [
           return line.slice(0, m.index) + `response.sendRedirect("/")${REDIRECT_REMOVED_NOTE}` + line.slice(m.index + m[0].length);
         }
       );
-      return r1.changed || r2.changed || r3.changed || r4.changed || r5.changed || r6.changed ? r6.content : null;
+      // Stesso ragionamento di Java: PHP non ha l'inserimento automatico di
+      // ";", quindi teniamo la nota come commento a blocco /* */.
+      const r7 = replaceLines(
+        r6.content,
+        /header\s*\(\s*["']Location:\s*["']?\s*\.\s*\$_(?:GET|POST|REQUEST)\[[^\]]+\]\s*\)/gi,
+        (line, m) => {
+          return line.slice(0, m.index) + `header("Location: /")${REDIRECT_REMOVED_NOTE}` + line.slice(m.index + m[0].length);
+        }
+      );
+      const r8 = replaceLines(
+        r7.content,
+        /header\s*\(\s*"Location:[^"]*\$_(?:GET|POST|REQUEST)\[[^\]]+\][^"]*"\s*\)/gi,
+        (line, m) => {
+          return line.slice(0, m.index) + `header("Location: /")${REDIRECT_REMOVED_NOTE}` + line.slice(m.index + m[0].length);
+        }
+      );
+      return r1.changed ||
+        r2.changed ||
+        r3.changed ||
+        r4.changed ||
+        r5.changed ||
+        r6.changed ||
+        r7.changed ||
+        r8.changed
+        ? r8.content
+        : null;
     },
   },
 
@@ -259,7 +308,7 @@ export const mediumChecks: Check[] = [
     },
     detect(file) {
       const pattern =
-        /\.findById\(\s*req\.params\.id\s*\)|findOne\(\s*\{\s*_id:\s*req\.params\.id\s*\}\s*\)|\.objects\.get\(\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|get_object_or_404\([^,]+,\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|\.(First|Find)\(\s*&\w+\s*,\s*c\.Param\(\s*["'][^"']+["']\s*\)\s*\)|\.findById\(\s*(?:\w+\.parse\w+\(\s*)?request\.getParameter\([^)]*\)\s*\)?\s*\)/g;
+        /\.findById\(\s*req\.params\.id\s*\)|findOne\(\s*\{\s*_id:\s*req\.params\.id\s*\}\s*\)|\.objects\.get\(\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|get_object_or_404\([^,]+,\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|\.(First|Find)\(\s*&\w+\s*,\s*c\.Param\(\s*["'][^"']+["']\s*\)\s*\)|\.findById\(\s*(?:\w+\.parse\w+\(\s*)?request\.getParameter\([^)]*\)\s*\)?\s*\)|\w+::find(?:OrFail)?\(\s*\$_(GET|POST|REQUEST)\[[^\]]+\]\s*\)|\w+::find(?:OrFail)?\(\s*\$request->(?:input|get)\([^)]*\)\s*\)/g;
       const matches: CheckMatch[] = [];
       const lines = file.content.split("\n");
       lines.forEach((lineText, idx) => {

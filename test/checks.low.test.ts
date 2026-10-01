@@ -205,4 +205,58 @@ describe("low checks", () => {
       expect(fixed).toContain('// log.info("login attempt password={}", password);  // rimossa da JoJoX');
     });
   });
+
+  describe("PHP", () => {
+    it("no-login-rate-limit: flags a Laravel Route::post login route with no rate limiter in the file", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file("routes/web.php", "Route::post('/login', 'AuthController@login');");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("no-login-rate-limit: does not flag a login route guarded by Laravel's throttle middleware", () => {
+      const check = checkById("no-login-rate-limit");
+      const clean = file(
+        "routes/web.php",
+        "Route::post('/login', 'AuthController@login')->middleware('throttle:5,1');"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("no-login-rate-limit autofix: does not attempt a fix (PHP-FPM starts a fresh interpreter per request)", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file("routes/web.php", "Route::post('/login', 'AuthController@login');");
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+
+    it("sensitive-data-in-logs: flags a password logged with error_log", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("auth.php", "error_log(\"login attempt: \" . $password);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: flags a token dumped with var_dump", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("auth.php", "var_dump($token);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: does not flag a log without sensitive fields", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("auth.php", "error_log(\"login attempt: \" . $email);");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs: does not flag a line already commented out with //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("auth.php", "// error_log($password);");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs autofix: comments the line out with //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("auth.php", "error_log($password);");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("// error_log($password);  // rimossa da JoJoX");
+    });
+  });
 });

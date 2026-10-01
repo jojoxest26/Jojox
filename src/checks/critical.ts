@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile } from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
@@ -7,10 +7,10 @@ const SERVER_ONLY_PATH = /(^|\/)(api|server|edge-functions?|functions)(\/|\.)/i;
 
 // Come si legge una variabile d'ambiente nel linguaggio del file — usato per
 // non segnalare un valore già letto correttamente, e per scrivere l'autofix.
-const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv/;
+const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv|\bgetenv\s*\(/;
 
 const PLACEHOLDER_VALUE =
-  /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
+  /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv|getenv\(|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
 
 // L'operatore di assegnazione: "=" o ":" in JS/Python, ma anche ":=" in Go
 // (dichiarazione breve di variabile) — va provato per primo, altrimenti il
@@ -30,17 +30,18 @@ const HIGH_CONFIDENCE_SECRET_VALUE = /AKIA[0-9A-Z]{16}|sk_(live|test)_[0-9a-zA-Z
 
 // Librerie/funzioni di hashing riconosciute, JS e Python insieme — se il file le usa già
 // da qualche parte, diamo per buono che la password sia protetta e non segnaliamo nulla.
+// password_hash/password_verify sono le funzioni native di PHP per questo scopo.
 const ALREADY_HASHES_PASSWORD =
-  /bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2|werkzeug\.security|check_password_hash|generate_password_hash|make_password|passlib/i;
+  /bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2|werkzeug\.security|check_password_hash|generate_password_hash|make_password|passlib|password_hash|password_verify/i;
 
 // Il valore grezzo della password così come arriva dalla richiesta — Express (req.body),
 // Flask (request.form/request.json), Django (request.POST), Gin (c.PostForm), net/http
-// (r.FormValue) e Servlet/Spring (request.getParameter) hanno ognuno il suo nome. Il
-// confine di parola (\b) sta solo sulle forme che finiscono con un identificatore
-// semplice: le altre finiscono già con un carattere non alfanumerico (']', ')'), dove un
-// \b dopo non potrebbe mai combaciare.
+// (r.FormValue), Servlet/Spring (request.getParameter) e PHP ($_POST/$_REQUEST) hanno
+// ognuno il suo nome. Il confine di parola (\b) sta solo sulle forme che finiscono con un
+// identificatore semplice: le altre finiscono già con un carattere non alfanumerico
+// (']', ')'), dove un \b dopo non potrebbe mai combaciare.
 const RAW_PASSWORD_VALUE =
-  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|c\\.PostForm\\(["\']password["\']\\)|r\\.FormValue\\(["\']password["\']\\)|request\\.getParameter\\(["\']password["\']\\)|password\\b';
+  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|c\\.PostForm\\(["\']password["\']\\)|r\\.FormValue\\(["\']password["\']\\)|request\\.getParameter\\(["\']password["\']\\)|\\$_POST\\[["\']password["\']\\]|\\$_REQUEST\\[["\']password["\']\\]|password\\b';
 
 const PLAINTEXT_PASSWORD_ASSIGNMENT = new RegExp(`password\\s*[:=]\\s*(${RAW_PASSWORD_VALUE})`, "gi");
 
@@ -70,12 +71,12 @@ export const criticalChecks: Check[] = [
     // solo-server, una decisione architetturale che non possiamo prendere
     // al posto tuo senza rischiare di rompere il progetto.
     //
-    // Non esteso a Python, Go o Java: il problema che segnala è specifico dei
-    // bundler JS (Next.js, Vite...) che impacchettano variabili con prefisso
-    // pubblico dentro il codice spedito al browser. Un backend Python, un
-    // binario Go compilato o un .jar Java non hanno un passaggio di bundling
-    // equivalente — non c'è un rischio paragonabile da riconoscere con lo
-    // stesso pattern.
+    // Non esteso a Python, Go, Java o PHP: il problema che segnala è
+    // specifico dei bundler JS (Next.js, Vite...) che impacchettano variabili
+    // con prefisso pubblico dentro il codice spedito al browser. Un backend
+    // Python, un binario Go compilato, un .jar Java o uno script PHP eseguito
+    // lato server non hanno un passaggio di bundling equivalente — non c'è un
+    // rischio paragonabile da riconoscere con lo stesso pattern.
   },
 
   {
@@ -120,6 +121,7 @@ export const criticalChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
+      const php = isPhpFile(file);
       const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
         if (ENV_READ_PATTERN.test(line)) return null;
         if (HIGH_CONFIDENCE_SECRET_VALUE.test(line)) return null;
@@ -134,7 +136,11 @@ export const criticalChecks: Check[] = [
             ? `os.Getenv("${envName}")`
             : java
               ? `System.getenv("${envName}")`
-              : `process.env.${envName}`;
+              : php
+                ? `getenv("${envName}")`
+                : `process.env.${envName}`;
+        // PHP: il nome catturato non include il "$" iniziale (sta fuori dal
+        // match, prima di m.index) — resta al suo posto automaticamente.
         const replacement = `${varName}${go ? goOperator : operator}${envRead}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
@@ -238,6 +244,12 @@ export const criticalChecks: Check[] = [
         // invece di PreparedStatement con segnaposto "?" (".execute(" semplice
         // è già coperto dal pattern generico qui sopra).
         ...scanLines(file, /\.(executeQuery|executeUpdate)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
+        // PHP: mysqli/PDO — la chiamata al metodo usa "->" (non "."), e la
+        // concatenazione usa "." (non "+") invece di query parametrizzate;
+        // oppure una variabile interpolata direttamente dentro una stringa fra
+        // doppi apici (es. "SELECT ... WHERE id = $id").
+        ...scanLines(file, /->\s*(query|exec)\s*\(\s*["'][^"']*["']\s*\.\s*\$/g),
+        ...scanLines(file, /->\s*(query|exec)\s*\(\s*"[^"]*\$\w/g),
       ];
     },
     // Nessun autofix: parametrizzare correttamente la query dipende dal
@@ -265,16 +277,21 @@ export const criticalChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
-      // Nota a blocco /* */ per Java: a differenza di Go e JS, Java non ha
-      // l'inserimento automatico di ";" — un commento // a fine riga
-      // inghiottirebbe il punto e virgola che resta dopo, rompendo la sintassi.
+      const php = isPhpFile(file);
+      // Nota a blocco /* */ per Java e PHP: a differenza di Go e JS, nessuno
+      // dei due ha l'inserimento automatico di ";" — un commento // a fine
+      // riga inghiottirebbe il punto e virgola che resta dopo, rompendo la
+      // sintassi. Per PHP non serve comunque menzionare un pacchetto esterno:
+      // password_hash() è nativa del linguaggio da PHP 5.5.
       const note = python
         ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
         : go
           ? " // JoJoX: serve il pacchetto golang.org/x/crypto/bcrypt"
           : java
             ? " /* JoJoX: serve la libreria jBCrypt — org.mindrot:jbcrypt */"
-            : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+            : php
+              ? ""
+              : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
       const { content, changed } = replaceLines(file.content, PLAINTEXT_PASSWORD_ASSIGNMENT, (line, m) => {
         const value = m[1];
         const prefix = m[0].slice(0, m[0].length - value.length);
@@ -286,7 +303,9 @@ export const criticalChecks: Check[] = [
             ? `bcrypt.GenerateFromPassword([]byte(${value}), bcrypt.DefaultCost)`
             : java
               ? `BCrypt.hashpw(${value}, BCrypt.gensalt())`
-              : `await bcrypt.hash(${value}, 12)`;
+              : php
+                ? `password_hash(${value}, PASSWORD_BCRYPT)`
+                : `await bcrypt.hash(${value}, 12)`;
         const replacement = `${prefix}${hashCall}${note}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
@@ -317,6 +336,10 @@ export const criticalChecks: Check[] = [
         // o .signWith(Keys.hmacShaKeyFor("secret".getBytes())) (API 0.11+).
         ...scanLines(file, /\.signWith\s*\(\s*SignatureAlgorithm\.\w+\s*,\s*["'][^"']{6,}["']\s*\)/g),
         ...scanLines(file, /\.signWith\s*\(\s*Keys\.hmacShaKeyFor\s*\(\s*["'][^"']{6,}["']\s*\.getBytes\s*\(\s*\)\s*\)\s*\)/g),
+        // PHP (firebase/php-jwt): JWT::encode($payload, "secret", 'HS256') e
+        // new Key("secret", 'HS256') lato decode.
+        ...scanLines(file, /JWT::encode\s*\(\s*\$\w+\s*,\s*["'][^"']{6,}["']/g),
+        ...scanLines(file, /new\s+Key\s*\(\s*["'][^"']{6,}["']/g),
         ...scanLines(file, /JWT_SECRET\s*(?:=|:=)\s*["'][^"']+["']/g),
       ];
     },
@@ -324,13 +347,16 @@ export const criticalChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
+      const php = isPhpFile(file);
       const envRead = python
         ? 'os.environ["JWT_SECRET"]'
         : go
           ? 'os.Getenv("JWT_SECRET")'
           : java
             ? 'System.getenv("JWT_SECRET")'
-            : "process.env.JWT_SECRET";
+            : php
+              ? 'getenv("JWT_SECRET")'
+              : "process.env.JWT_SECRET";
       const jsMethods = replaceLines(file.content, /jwt\.(sign|verify)\s*\(([^)]*),\s*["'][^"']{6,}["']/g, (line, m) => {
         const [, method, args] = m;
         const replacement = `jwt.${method}(${args}, ${envRead}`;
@@ -362,7 +388,17 @@ export const criticalChecks: Check[] = [
           return line.slice(0, m.index) + `.signWith(Keys.hmacShaKeyFor(${envRead}.getBytes()))` + line.slice(m.index + m[0].length);
         }
       );
-      const literal = replaceLines(javaNewApi.content, /JWT_SECRET\s*(=|:=)\s*["'][^"']+["']/g, (line, m) => {
+      const phpEncode = replaceLines(
+        javaNewApi.content,
+        /JWT::encode\s*\(\s*(\$\w+)\s*,\s*["'][^"']{6,}["']/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `JWT::encode(${m[1]}, ${envRead}` + line.slice(m.index + m[0].length);
+        }
+      );
+      const phpKey = replaceLines(phpEncode.content, /new\s+Key\s*\(\s*["'][^"']{6,}["']/g, (line, m) => {
+        return line.slice(0, m.index) + `new Key(${envRead}` + line.slice(m.index + m[0].length);
+      });
+      const literal = replaceLines(phpKey.content, /JWT_SECRET\s*(=|:=)\s*["'][^"']+["']/g, (line, m) => {
         const op = go ? m[1].replace(":=", "=") : m[1];
         return line.slice(0, m.index) + `JWT_SECRET ${op} ${envRead}` + line.slice(m.index + m[0].length);
       });
@@ -371,6 +407,8 @@ export const criticalChecks: Check[] = [
         goMethods.changed ||
         javaOldApi.changed ||
         javaNewApi.changed ||
+        phpEncode.changed ||
+        phpKey.changed ||
         literal.changed
         ? literal.content
         : null;
@@ -443,6 +481,24 @@ export const criticalChecks: Check[] = [
             file,
             /new\s+ProcessBuilder\s*\(\s*["'`](?:sh|bash|cmd)["'`]\s*,\s*["'`](?:-c|\/c)["'`]\s*,\s*["'][^"']*["']\s*\+\s*\w/g
           )
+        );
+      }
+
+      // PHP: exec/shell_exec/system/passthru/popen/proc_open con una stringa
+      // costruita per concatenazione (".", non "+") o con una variabile
+      // interpolata direttamente dentro una stringa fra doppi apici. L'operatore
+      // backtick `comando` di PHP esegue comunque una shell — stesso rischio
+      // se contiene una variabile interpolata.
+      if (
+        fileMatch(
+          file,
+          /\b(exec|shell_exec|system|passthru|popen|proc_open)\s*\(|`[^`]*\$\w/
+        )
+      ) {
+        matches.push(
+          ...scanLines(file, /\b(exec|shell_exec|system|passthru|popen|proc_open)\s*\(\s*["'][^"']*["']\s*\.\s*\$/g),
+          ...scanLines(file, /\b(exec|shell_exec|system|passthru|popen|proc_open)\s*\(\s*"[^"]*\$\w/g),
+          ...scanLines(file, /`[^`]*\$\w[^`]*`/g)
         );
       }
 

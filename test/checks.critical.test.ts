@@ -474,4 +474,123 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("PHP", () => {
+    it("hardcoded-secret: flags a PHP variable assigned a literal secret", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("config.php", '$apiKey = "abcdefghijklmnop123456";');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag a value read with getenv", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("config.php", '$apiKey = getenv("STRIPE_SECRET_KEY");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret autofix: replaces a hardcoded secret with getenv, keeping the leading $", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("config.php", '$clientSecret = "abcdefghijklmnop123456";');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('$clientSecret = getenv("CLIENT_SECRET");');
+    });
+
+    it("sql-injection: flags a PDO query built with string concatenation (.)", () => {
+      const check = checkById("sql-injection");
+      const vulnerable = file("UserDao.php", '$pdo->query("SELECT * FROM users WHERE email = " . $email);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sql-injection: flags a mysqli query with a variable interpolated in a double-quoted string", () => {
+      const check = checkById("sql-injection");
+      const vulnerable = file("UserDao.php", '$mysqli->query("SELECT * FROM users WHERE email = $email");');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sql-injection: does not flag a parameterized PDO query", () => {
+      const check = checkById("sql-injection");
+      const clean = file("UserDao.php", '$pdo->query("SELECT * FROM users WHERE email = ?");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage: flags a $_POST password stored without hashing", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("UserController.php", "$password = $_POST['password'];");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("plaintext-password-storage: does not flag when the file already uses password_hash", () => {
+      const check = checkById("plaintext-password-storage");
+      const clean = file(
+        "UserController.php",
+        "$password = $_POST['password'];\n$hashed = password_hash($password, PASSWORD_BCRYPT);"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage autofix: wraps the raw value in password_hash, not bcrypt/BCrypt", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("UserController.php", "$password = $_POST['password'];");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("password_hash($_POST['password'], PASSWORD_BCRYPT)");
+      expect(fixed).not.toContain("bcrypt");
+      expect(fixed).not.toContain("BCrypt");
+    });
+
+    it("hardcoded-jwt-secret: flags a literal secret passed to firebase/php-jwt's JWT::encode", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("jwt.php", 'JWT::encode($payload, "super-secret-key-123", \'HS256\');');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-jwt-secret: flags a literal secret passed to new Key (decode side)", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("jwt.php", 'JWT::decode($jwt, new Key("super-secret-key-123", \'HS256\'));');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-jwt-secret: does not flag a secret read from getenv", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const clean = file("jwt.php", 'JWT::encode($payload, getenv("JWT_SECRET"), \'HS256\');');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-jwt-secret autofix: replaces the literal with getenv in JWT::encode", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("jwt.php", 'JWT::encode($payload, "super-secret-key-123", \'HS256\');');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('JWT::encode($payload, getenv("JWT_SECRET")');
+    });
+
+    it("hardcoded-jwt-secret autofix: replaces the literal with getenv in new Key", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("jwt.php", 'new Key("super-secret-key-123", \'HS256\')');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('new Key(getenv("JWT_SECRET")');
+    });
+
+    it("command-injection: flags shell_exec with string concatenation", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("Util.php", '$output = shell_exec("rm -rf " . $path);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: flags system with a variable interpolated in a double-quoted string", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("Util.php", 'system("rm -rf $path");');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: flags the backtick shell-exec operator with an interpolated variable", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("Util.php", "$output = `rm -rf $path`;");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: does not flag a fixed command with no interpolation", () => {
+      const check = checkById("command-injection");
+      const clean = file("Util.php", '$output = shell_exec("ls -la");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

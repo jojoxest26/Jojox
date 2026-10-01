@@ -1,14 +1,15 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile, isGoFile, isJavaFile } from "../util/scan.js";
+import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile } from "../util/scan.js";
 
 // JS/Express (requireAuth, req.user...), Python/Flask/Django (login_required,
-// request.user.is_staff...), Go/Gin (MustGet, AuthRequired...) e
-// Java/Spring Security (@PreAuthorize, @Secured...) insieme — un controllo di
-// autenticazione o ruolo riconoscibile in tutti e quattro i mondi.
+// request.user.is_staff...), Go/Gin (MustGet, AuthRequired...),
+// Java/Spring Security (@PreAuthorize, @Secured...) e PHP/Laravel
+// (middleware('auth'), Auth::check()...) insieme — un controllo di
+// autenticazione o ruolo riconoscibile in tutti e cinque i mondi.
 // Case-insensitive: così la stessa lista copre sia lo stile camelCase di
 // JS/Python sia il PascalCase idiomatico di Go e Java, senza doverle scrivere due volte.
 const ADMIN_AUTH_KEYWORDS =
-  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user|MustGet|AuthRequired|Authorization|PreAuthorize|@Secured|RolesAllowed|SecurityContextHolder/i;
+  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user|MustGet|AuthRequired|Authorization|PreAuthorize|@Secured|RolesAllowed|SecurityContextHolder|Auth::check|Auth::user|middleware\(["']auth/i;
 
 function findUnprotectedTables(content: string): string[] {
   const createRe = /CREATE TABLE\s+(?:IF NOT EXISTS\s+)?"?(?:\w+\.)?(\w+)"?/gi;
@@ -97,6 +98,10 @@ export const highChecks: Check[] = [
         ...scanLines(file, /@CrossOrigin(?:\s*\(\s*\))?(?!\s*\()/g),
         ...scanLines(file, /origins\s*=\s*["']\*["']/g),
         ...scanLines(file, /addAllowedOrigin\s*\(\s*["']\*["']\s*\)/g),
+        // PHP: l'header grezzo è scritto come stringa intera dentro header(),
+        // non come coppia chiave/valore — il pattern generico sopra non la
+        // riconosce perché richiede una virgoletta subito prima di "*".
+        ...scanLines(file, /header\s*\(\s*["']Access-Control-Allow-Origin:\s*\*["']/gi),
       ];
     },
     // Nessun autofix: non sappiamo qual è il tuo vero dominio. Un elenco di
@@ -127,6 +132,8 @@ export const highChecks: Check[] = [
         // Java/Spring: @GetMapping/@PostMapping/... ("/admin/...") o
         // @RequestMapping con lo stesso percorso.
         /@(?:Get|Post|Put|Patch|Delete|Request)Mapping\s*\(\s*(?:value\s*=\s*)?["'][^"']*\/admin[^"']*["']/gi,
+        // PHP/Laravel: Route::get/post/put/patch/delete('/admin/...', ...).
+        /Route::(?:get|post|put|patch|delete)\s*\(\s*["'][^"']*\/admin[^"']*["']/gi,
       ];
       const matches: CheckMatch[] = [];
       const lines = file.content.split("\n");
@@ -182,6 +189,10 @@ export const highChecks: Check[] = [
           /\brestTemplate\.(getForObject|getForEntity|postForObject|exchange)\s*\(\s*request\.getParameter/gi
         ),
         ...scanLines(file, /\bnew\s+URL\s*\(\s*request\.getParameter/g),
+        // PHP: file_get_contents o cURL con un valore preso direttamente da
+        // $_GET/$_POST/$_REQUEST.
+        ...scanLines(file, /\bfile_get_contents\s*\(\s*\$_(GET|POST|REQUEST)\[/g),
+        ...scanLines(file, /CURLOPT_URL\s*,\s*\$_(GET|POST|REQUEST)\[/g),
       ];
     },
     // Nessun autofix: quali destinazioni siano legittime lo sai solo tu —
@@ -200,8 +211,11 @@ export const highChecks: Check[] = [
       after: `const hashed = await bcrypt.hash(password, 12)`,
     },
     detect(file) {
+      // \$?password nell'ultima alternativa copre sia la chiamata nuda di
+      // JS/Python ("password") sia quella PHP, dove l'argomento ha il sigillo
+      // del linguaggio ("$password").
       const pattern =
-        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\.Sum\s*\(|\b(md5|sha1)\s*\(\s*password|MessageDigest\.getInstance\s*\(\s*["'](MD5|SHA-1|SHA1)["']\s*\)/gi;
+        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\.Sum\s*\(|\b(md5|sha1)\s*\(\s*\$?password|MessageDigest\.getInstance\s*\(\s*["'](MD5|SHA-1|SHA1)["']\s*\)/gi;
       const lines = file.content.split("\n");
       return scanLines(file, pattern).filter((m) => /password/i.test(lines[m.line - 1] ?? ""));
     },
@@ -209,16 +223,21 @@ export const highChecks: Check[] = [
       const python = isPythonFile(file);
       const go = isGoFile(file);
       const java = isJavaFile(file);
-      // Nota a blocco /* */ per Java: a differenza di Go e JS, Java non ha
-      // l'inserimento automatico di ";" — un commento // a fine riga
-      // inghiottirebbe il punto e virgola che resta dopo, rompendo la sintassi.
+      const php = isPhpFile(file);
+      // Nota a blocco /* */ per Java e PHP: a differenza di Go e JS, nessuno
+      // dei due ha l'inserimento automatico di ";" — un commento // a fine
+      // riga inghiottirebbe il punto e virgola che resta dopo, rompendo la
+      // sintassi. Per PHP non serve menzionare un pacchetto: password_hash()
+      // è nativa del linguaggio da PHP 5.5.
       const note = python
         ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
         : go
           ? " // JoJoX: serve il pacchetto golang.org/x/crypto/bcrypt"
           : java
             ? " /* JoJoX: serve la libreria jBCrypt — org.mindrot:jbcrypt */"
-            : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+            : php
+              ? ""
+              : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
       const hashCall = (value: string) =>
         python
           ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())`
@@ -226,7 +245,9 @@ export const highChecks: Check[] = [
             ? `bcrypt.GenerateFromPassword([]byte(${value}), bcrypt.DefaultCost)`
             : java
               ? `BCrypt.hashpw(${value}, BCrypt.gensalt())`
-              : `await bcrypt.hash(${value}, 12)`;
+              : php
+                ? `password_hash(${value}, PASSWORD_BCRYPT)`
+                : `await bcrypt.hash(${value}, 12)`;
 
       // Il valore passato può a sua volta contenere una chiamata con le sue
       // parentesi (es. Python password.encode()) — un semplice [^)]* si

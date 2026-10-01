@@ -338,4 +338,73 @@ describe("high checks", () => {
       expect(opens).toBe(closes);
     });
   });
+
+  describe("PHP", () => {
+    it("permissive-cors: flags a raw Access-Control-Allow-Origin header set to *", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("api.php", 'header("Access-Control-Allow-Origin: *");');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: does not flag a restricted origin header", () => {
+      const check = checkById("permissive-cors");
+      const clean = file("api.php", 'header("Access-Control-Allow-Origin: https://tuosito.com");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("admin-function-missing-auth: flags a Laravel Route::post admin route with no nearby auth check", () => {
+      const check = checkById("admin-function-missing-auth");
+      const vulnerable = file(
+        "routes/web.php",
+        "Route::post('/admin/delete-user', function (Request $request) {\n  User::destroy($request->input('id'));\n});"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("admin-function-missing-auth: does not flag when the auth middleware guards the route", () => {
+      const check = checkById("admin-function-missing-auth");
+      const clean = file(
+        "routes/web.php",
+        "Route::post('/admin/delete-user', function (Request $request) {\n  User::destroy($request->input('id'));\n})->middleware('auth');"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("ssrf: flags file_get_contents built from $_GET", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("proxy.php", "$data = file_get_contents($_GET['url']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: flags a cURL request with CURLOPT_URL built from $_GET", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("proxy.php", "curl_setopt($ch, CURLOPT_URL, $_GET['url']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: does not flag a request to a fixed URL", () => {
+      const check = checkById("ssrf");
+      const clean = file("proxy.php", '$data = file_get_contents("https://api.example.com");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing: flags a bare md5($password) call", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("auth.php", "$hashed = md5($password);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-password-hashing: does not flag password_hash", () => {
+      const check = checkById("weak-password-hashing");
+      const clean = file("auth.php", "$hashed = password_hash($password, PASSWORD_BCRYPT);");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing autofix: replaces md5($password) with password_hash, not bcrypt/BCrypt, with no install note", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("auth.php", "$hashed = md5($password);");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe("$hashed = password_hash($password, PASSWORD_BCRYPT);");
+    });
+  });
 });

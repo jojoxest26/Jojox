@@ -388,4 +388,103 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("PHP", () => {
+    it("xss-dangerous-html: flags Laravel Blade's unescaped {!! !!}", () => {
+      const check = checkById("xss-dangerous-html");
+      const vulnerable = file("comment.blade.php", "{!! $comment->text !!}");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("xss-dangerous-html: does not flag Blade's escaped {{ }}", () => {
+      const check = checkById("xss-dangerous-html");
+      const clean = file("comment.blade.php", "{{ $comment->text }}");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("public-storage-bucket: flags an AWS SDK for PHP object made public", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file(
+        "StorageService.php",
+        "$s3->putObject(['Bucket' => $bucket, 'Key' => $key, 'ACL' => 'public-read']);"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: does not flag a private AWS SDK for PHP object", () => {
+      const check = checkById("public-storage-bucket");
+      const clean = file(
+        "StorageService.php",
+        "$s3->putObject(['Bucket' => $bucket, 'Key' => $key, 'ACL' => 'private']);"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("public-storage-bucket autofix: replaces 'ACL' => 'public-read' with 'ACL' => 'private'", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file("StorageService.php", "'ACL' => 'public-read'");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe("'ACL' => 'private'");
+    });
+
+    it("csrf-state-changing-get: flags a Laravel Route::get route that deletes data", () => {
+      const check = checkById("csrf-state-changing-get");
+      const vulnerable = file("routes/web.php", "Route::get('/posts/{id}/delete', 'PostController@delete');");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("csrf-state-changing-get: does not flag a Route::post route", () => {
+      const check = checkById("csrf-state-changing-get");
+      const clean = file("routes/web.php", "Route::post('/posts/{id}/delete', 'PostController@delete');");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect: flags a header Location redirect built with concatenation", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("auth.php", "header('Location: ' . $_GET['next']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: flags a header Location redirect with a variable interpolated in a double-quoted string", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("auth.php", 'header("Location: $_GET[\'next\']");');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: does not flag a redirect to a fixed path", () => {
+      const check = checkById("open-redirect");
+      const clean = file("auth.php", "header('Location: /dashboard');");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect autofix: replaces the header redirect with a fixed one, using a block comment (PHP has no automatic semicolon insertion)", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("auth.php", "header('Location: ' . $_GET['next']);");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('header("Location: /")');
+      expect(fixed).toContain("/* JoJoX:");
+      expect(fixed).toContain("*/;");
+    });
+
+    it("idor: flags a Laravel Eloquent find by $_GET id with no ownership check nearby", () => {
+      const check = checkById("idor");
+      const vulnerable = file("OrderController.php", "$order = Order::find($_GET['id']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: flags findOrFail with $request->input", () => {
+      const check = checkById("idor");
+      const vulnerable = file("OrderController.php", "$order = Order::findOrFail($request->input('id'));");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: does not flag when an ownership check (Auth::id) follows the lookup", () => {
+      const check = checkById("idor");
+      const clean = file(
+        "OrderController.php",
+        "$order = Order::find($_GET['id']);\nif ($order->user_id !== Auth::id()) abort(403);"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

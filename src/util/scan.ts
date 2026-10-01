@@ -15,6 +15,11 @@ export function isJavaFile(file: SourceFile): boolean {
   return /\.java$/.test(file.path);
 }
 
+/** True per un file PHP — usato dai controlli che riconoscono anche questo linguaggio, non solo JS/TS/Python/Go/Java. */
+export function isPhpFile(file: SourceFile): boolean {
+  return /\.php$/.test(file.path);
+}
+
 const CONTEXT_CHARS = 12;
 const MASK_CHAR = "•";
 
