@@ -1,7 +1,8 @@
 import type { Check, CheckMatch } from "../types.js";
 import { scanLines, redactLine, replaceLines } from "../util/scan.js";
 
-const OWNERSHIP_KEYWORDS = /userId|user\.id|owner|req\.user|auth\.uid/;
+// JS (userId, req.user...) e Python/Django/Flask (request.user, user_id...) insieme.
+const OWNERSHIP_KEYWORDS = /userId|user_id|user\.id|owner|req\.user|request\.user|auth\.uid|current_user/;
 const REDIRECT_REMOVED_NOTE =
   " /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */";
 
@@ -22,6 +23,10 @@ export const mediumChecks: Check[] = [
         ...scanLines(file, /dangerouslySetInnerHTML/g),
         ...scanLines(file, /v-html\s*=/g),
         ...scanLines(file, /\.innerHTML\s*=\s*[^"'`\s][^;]*/g),
+        // Python/Jinja2 (Flask) e Django template: il filtro |safe o
+        // mark_safe() disattivano l'escape automatico dell'HTML.
+        ...scanLines(file, /\{\{[^}]*\|\s*safe\s*\}\}/g),
+        ...scanLines(file, /\bmark_safe\s*\(/g),
       ];
     },
     // Nessun autofix: non sappiamo se quell'HTML deve restare tale (e va
@@ -42,8 +47,13 @@ export const mediumChecks: Check[] = [
     },
     detect(file) {
       return [
+        // JS: supabase-js, dict-style con "true" minuscolo.
         ...scanLines(file, /createBucket\([^)]*public\s*:\s*true/g),
-        ...scanLines(file, /acl\s*:\s*["']public-read["']/g),
+        // Python: supabase-py, stesso dict ma "True" maiuscolo (sintassi Python).
+        ...scanLines(file, /create_bucket\([^)]*public["']?\s*:\s*True/g),
+        // JS e Python insieme: boto3 (Python) e SDK JS di S3 usano entrambi
+        // la stessa chiave "ACL" con lo stesso valore letterale.
+        ...scanLines(file, /acl\s*[:=]\s*["']public-read["']/gi),
       ];
     },
     autofix(file) {
@@ -51,10 +61,15 @@ export const mediumChecks: Check[] = [
         const replacement = m[0].replace(/public\s*:\s*true/, "public: false");
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
-      const r2 = replaceLines(r1.content, /acl\s*:\s*["']public-read["']/g, (line, m) => {
-        return line.slice(0, m.index) + `acl: "private"` + line.slice(m.index + m[0].length);
+      const r2 = replaceLines(r1.content, /create_bucket\([^)]*public["']?\s*:\s*True/g, (line, m) => {
+        const replacement = m[0].replace(/public(["']?)\s*:\s*True/, "public$1: False");
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
-      return r1.changed || r2.changed ? r2.content : null;
+      const r3 = replaceLines(r2.content, /acl\s*([:=])\s*["']public-read["']/gi, (line, m) => {
+        const replacement = m[1] === "=" ? `ACL="private"` : `acl: "private"`;
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
+      });
+      return r1.changed || r2.changed || r3.changed ? r3.content : null;
     },
   },
 
@@ -70,7 +85,21 @@ export const mediumChecks: Check[] = [
       after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
     },
     detect(file) {
-      return scanLines(file, /\.get\s*\(\s*["'][^"']*\/(delete|remove|update|edit)[^"']*["']/gi);
+      const matches: CheckMatch[] = [...scanLines(file, /\.get\s*\(\s*["'][^"']*\/(delete|remove|update|edit)[^"']*["']/gi)];
+
+      // Python/Flask: @app.route("/posts/<id>/delete") è una GET per
+      // default finché non specifichi methods= con POST/PUT/DELETE nella
+      // stessa riga — un form che chiama una rotta così è comunque un rischio.
+      const flaskRoutePattern = /@\w+\.route\s*\(\s*["'][^"']*\/(delete|remove|update|edit)[^"']*["']/gi;
+      const lines = file.content.split("\n");
+      lines.forEach((lineText, idx) => {
+        if (!flaskRoutePattern.test(lineText)) return;
+        flaskRoutePattern.lastIndex = 0;
+        if (/methods\s*=\s*\[[^\]]*(POST|PUT|DELETE)/i.test(lineText)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+
+      return matches;
     },
     // Nessun autofix: cambiare il metodo da GET a POST rompe chiunque
     // chiami questa rotta altrove (form, link, fetch) — quei punti di
@@ -94,6 +123,11 @@ export const mediumChecks: Check[] = [
     // Nessun autofix: la correzione vera sposta la scrittura del cookie sul
     // server, cioè in un file diverso da quello dove vive questa riga —
     // non possiamo farlo senza sapere dov'è quel server.
+    //
+    // Non esteso a Python: localStorage è un'API del browser, non ha un
+    // corrispondente lato server. Un backend Python che genera HTML/JS con
+    // la stessa riga (es. in un template) verrebbe comunque riconosciuto
+    // dal pattern così com'è, scansionando quel file come se fosse JS.
   },
 
   {
@@ -111,6 +145,9 @@ export const mediumChecks: Check[] = [
       return [
         ...scanLines(file, /res\.redirect\(\s*req\.(query|body|params)/g),
         ...scanLines(file, /window\.location(\.href)?\s*=\s*(req\.(query|body|params)|new URLSearchParams)/g),
+        // Python/Flask: redirect(request.args[...]). Django: redirect(request.GET[...])
+        // o HttpResponseRedirect(request.GET[...]).
+        ...scanLines(file, /\b(redirect|HttpResponseRedirect)\s*\(\s*request\.(args|form|GET|POST)/g),
       ];
     },
     autofix(file) {
@@ -133,7 +170,15 @@ export const mediumChecks: Check[] = [
           return line.slice(0, m.index) + `window.location${prop} = "/"${REDIRECT_REMOVED_NOTE}` + line.slice(m.index + m[0].length);
         }
       );
-      return r1.changed || r2.changed ? r2.content : null;
+      const pythonNote = REDIRECT_REMOVED_NOTE.replace("/*", "#").replace("*/", "");
+      const r3 = replaceLines(
+        r2.content,
+        /\b(redirect|HttpResponseRedirect)\s*\(\s*request\.(args|form|GET|POST)(?:\.\w+|\[[^\]]+\]|\.get\([^)]*\))*\s*\)/g,
+        (line, m) => {
+          return line.slice(0, m.index) + `${m[1]}("/")${pythonNote}` + line.slice(m.index + m[0].length);
+        }
+      );
+      return r1.changed || r2.changed || r3.changed ? r3.content : null;
     },
   },
 
@@ -149,7 +194,8 @@ export const mediumChecks: Check[] = [
       after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
     },
     detect(file) {
-      const pattern = /\.findById\(\s*req\.params\.id\s*\)|findOne\(\s*\{\s*_id:\s*req\.params\.id\s*\}\s*\)/g;
+      const pattern =
+        /\.findById\(\s*req\.params\.id\s*\)|findOne\(\s*\{\s*_id:\s*req\.params\.id\s*\}\s*\)|\.objects\.get\(\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)|get_object_or_404\([^,]+,\s*(pk|id)\s*=\s*request\.(GET|POST|args)\[[^\]]+\]\s*\)/g;
       const matches: CheckMatch[] = [];
       const lines = file.content.split("\n");
       lines.forEach((lineText, idx) => {

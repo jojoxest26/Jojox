@@ -1,5 +1,10 @@
 import type { CheckMatch, SourceFile } from "../types.js";
 
+/** True per un file Python — usato dai controlli che riconoscono anche questo linguaggio, non solo JS/TS. */
+export function isPythonFile(file: SourceFile): boolean {
+  return /\.py$/.test(file.path);
+}
+
 const CONTEXT_CHARS = 12;
 const MASK_CHAR = "•";
 

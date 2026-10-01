@@ -95,4 +95,105 @@ describe("medium checks", () => {
     );
     expect(detect(check, clean)).toHaveLength(0);
   });
+
+  describe("Python", () => {
+    it("xss-dangerous-html: flags Jinja2's |safe filter", () => {
+      const check = checkById("xss-dangerous-html");
+      const vulnerable = file("templates/comment.html", "{{ comment.text|safe }}");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("xss-dangerous-html: flags Django's mark_safe()", () => {
+      const check = checkById("xss-dangerous-html");
+      const vulnerable = file("app/views.py", "return mark_safe(comment.text)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("xss-dangerous-html: does not flag plain Jinja2 output (auto-escaped by default)", () => {
+      const check = checkById("xss-dangerous-html");
+      const clean = file("templates/comment.html", "{{ comment.text }}");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("public-storage-bucket: flags a supabase-py bucket created as public (capital True)", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file("app/storage.py", 'supabase.storage.create_bucket("uploads", {"public": True})');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: flags a boto3 S3 object made public", () => {
+      const check = checkById("public-storage-bucket");
+      const vulnerable = file("app/storage.py", 's3.put_object(Bucket="uploads", Key=key, ACL="public-read")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("public-storage-bucket: does not flag a private supabase-py bucket", () => {
+      const check = checkById("public-storage-bucket");
+      const clean = file("app/storage.py", 'supabase.storage.create_bucket("uploads", {"public": False})');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("csrf-state-changing-get: flags a Flask route that deletes data with no explicit POST method", () => {
+      const check = checkById("csrf-state-changing-get");
+      const vulnerable = file("app/routes.py", '@app.route("/posts/<id>/delete")\ndef delete_post(id):\n    ...');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("csrf-state-changing-get: does not flag a Flask route restricted to POST", () => {
+      const check = checkById("csrf-state-changing-get");
+      const clean = file(
+        "app/routes.py",
+        '@app.route("/posts/<id>/delete", methods=["POST"])\ndef delete_post(id):\n    ...'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect: flags a Flask redirect built from request.args", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("app/auth.py", "return redirect(request.args['next'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: flags a Django HttpResponseRedirect built from request.GET", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("app/views.py", "return HttpResponseRedirect(request.GET['next'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("open-redirect: does not flag a redirect to a fixed path", () => {
+      const check = checkById("open-redirect");
+      const clean = file("app/auth.py", 'return redirect("/dashboard")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("open-redirect autofix: replaces the Flask redirect with a fixed one, commented in Python style", () => {
+      const check = checkById("open-redirect");
+      const vulnerable = file("app/auth.py", "return redirect(request.args['next'])");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('redirect("/")');
+      expect(fixed).toContain("# JoJoX:");
+      expect(fixed).not.toContain("/*");
+    });
+
+    it("idor: flags a Django ORM lookup by request.GET id with no ownership check nearby", () => {
+      const check = checkById("idor");
+      const vulnerable = file("app/views.py", "order = Order.objects.get(pk=request.GET['id'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: flags get_object_or_404 with no ownership check nearby", () => {
+      const check = checkById("idor");
+      const vulnerable = file("app/views.py", "order = get_object_or_404(Order, pk=request.GET['id'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("idor: does not flag when an ownership check follows the lookup", () => {
+      const check = checkById("idor");
+      const clean = file(
+        "app/views.py",
+        "order = Order.objects.get(pk=request.GET['id'])\nif order.user_id != request.user.id:\n    raise PermissionDenied"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

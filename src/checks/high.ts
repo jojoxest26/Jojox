@@ -1,7 +1,11 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, lineFromIndex, redactLine, replaceLines } from "../util/scan.js";
+import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile } from "../util/scan.js";
 
-const ADMIN_AUTH_KEYWORDS = /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole/;
+// JS/Express (requireAuth, req.user...) e Python/Flask/Django (login_required,
+// request.user.is_staff...) insieme — un controllo di autenticazione o ruolo
+// riconoscibile in entrambi i mondi.
+const ADMIN_AUTH_KEYWORDS =
+  /requireAuth|isAdmin|checkRole|verifyToken|session\.user|req\.user|assertRole|login_required|permission_required|staff_member_required|is_staff|is_superuser|request\.user\.is_authenticated|current_user/;
 
 function findUnprotectedTables(content: string): string[] {
   const createRe = /CREATE TABLE\s+(?:IF NOT EXISTS\s+)?"?(?:\w+\.)?(\w+)"?/gi;
@@ -70,9 +74,16 @@ export const highChecks: Check[] = [
     },
     detect(file) {
       return [
+        // Intestazione grezza — identica in qualsiasi linguaggio.
         ...scanLines(file, /Access-Control-Allow-Origin["']?\s*[:=]\s*["']\*["']/gi),
-        ...scanLines(file, /origin\s*:\s*["']\*["']/gi),
+        ...scanLines(file, /origin\s*[:=]\s*["']\*["']/gi),
+        // JS: middleware cors() di Express usato senza restrizioni.
         ...scanLines(file, /\bcors\(\s*\)/g),
+        // Python: Flask-CORS senza restrizioni, o django-cors-headers che
+        // permette esplicitamente qualsiasi origine.
+        ...scanLines(file, /\bCORS\(\s*\w+\s*\)/g),
+        ...scanLines(file, /CORS_ORIGIN_ALLOW_ALL\s*=\s*True/g),
+        ...scanLines(file, /CORS_ALLOWED_ORIGINS\s*=\s*\[\s*["']\*["']/g),
       ];
     },
     // Nessun autofix: non sappiamo qual è il tuo vero dominio. Un elenco di
@@ -92,12 +103,24 @@ export const highChecks: Check[] = [
       after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
     },
     detect(file) {
-      const routePattern = /\.(get|post|put|patch|delete)\s*\(\s*["'][^"']*\/admin[^"']*["']/gi;
+      const routePatterns = [
+        // JS/Express: router.get("/admin/...", ...).
+        /\.(get|post|put|patch|delete)\s*\(\s*["'][^"']*\/admin[^"']*["']/gi,
+        // Python/Flask: @app.route("/admin/...") — la riga del decoratore.
+        // (Django non è incluso: lì la rotta sta in urls.py e il controllo di
+        // permesso nella view in un altro file — "righe vicine" non significa
+        // nulla in quell'architettura, darebbe solo falsi allarmi.)
+        /@\w+\.route\s*\(\s*["'][^"']*\/admin[^"']*["']/gi,
+      ];
       const matches: CheckMatch[] = [];
       const lines = file.content.split("\n");
       lines.forEach((lineText, idx) => {
-        if (!routePattern.test(lineText)) return;
-        routePattern.lastIndex = 0;
+        const hit = routePatterns.some((p) => {
+          const found = p.test(lineText);
+          p.lastIndex = 0;
+          return found;
+        });
+        if (!hit) return;
         const windowText = lines.slice(idx, Math.min(lines.length, idx + 15)).join("\n");
         if (ADMIN_AUTH_KEYWORDS.test(windowText)) return;
         matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
@@ -121,7 +144,16 @@ export const highChecks: Check[] = [
       after: `const ALLOWED = new Set(["https://api.tuoservizio.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL non consentito")\nconst data = await fetch(req.query.url)`,
     },
     detect(file) {
-      return scanLines(file, /\b(fetch|axios\.get|axios\.post|axios\.request|request)\s*\(\s*req\.(query|body|params)/g);
+      return [
+        // JS: fetch/axios con un valore preso direttamente dalla richiesta.
+        ...scanLines(file, /\b(fetch|axios\.get|axios\.post|axios\.request|request)\s*\(\s*req\.(query|body|params)/g),
+        // Python: requests/urllib con un valore preso da Flask (request.args/
+        // form/json) o Django (request.GET/POST).
+        ...scanLines(
+          file,
+          /\b(requests\.(get|post|put|request)|urllib\.request\.urlopen)\s*\(\s*request\.(args|form|json|GET|POST)/g
+        ),
+      ];
     },
     // Nessun autofix: quali destinazioni siano legittime lo sai solo tu —
     // un elenco consentito inventato non protegge davvero.
@@ -139,21 +171,50 @@ export const highChecks: Check[] = [
       after: `const hashed = await bcrypt.hash(password, 12)`,
     },
     detect(file) {
-      const pattern = /createHash\(\s*["'](md5|sha1)["']\s*\)|\b(md5|sha1)\s*\(\s*password/gi;
+      const pattern =
+        /createHash\(\s*["'](md5|sha1)["']\s*\)|hashlib\.(md5|sha1)\s*\(|\b(md5|sha1)\s*\(\s*password/gi;
       const lines = file.content.split("\n");
       return scanLines(file, pattern).filter((m) => /password/i.test(lines[m.line - 1] ?? ""));
     },
     autofix(file) {
-      const note = " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
-      const chainPattern = /crypto\.createHash\(\s*["'](?:md5|sha1)["']\s*\)\.update\(([^)]*)\)\.digest\([^)]*\)/gi;
+      const python = isPythonFile(file);
+      const note = python
+        ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
+        : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+      const hashCall = (value: string) =>
+        python ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())` : `await bcrypt.hash(${value}, 12)`;
+
+      // Il valore passato può a sua volta contenere una chiamata con le sue
+      // parentesi (es. Python password.encode()) — un semplice [^)]* si
+      // fermerebbe alla prima ")" interna, troncando l'argomento e
+      // producendo codice sintatticamente rotto. Questo pattern tollera un
+      // livello di parentesi annidate.
+      const BALANCED_ARG = "(?:[^()]|\\([^()]*\\))*";
+
+      const chainPattern = new RegExp(
+        `crypto\\.createHash\\(\\s*["'](?:md5|sha1)["']\\s*\\)\\.update\\((${BALANCED_ARG})\\)\\.digest\\([^)]*\\)`,
+        "gi"
+      );
       let result = replaceLines(file.content, chainPattern, (line, m) => {
         if (!/password/i.test(line)) return null;
-        return line.slice(0, m.index) + `await bcrypt.hash(${m[1]}, 12)${note}` + line.slice(m.index + m[0].length);
+        return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
       });
       if (!result.changed) {
-        result = replaceLines(file.content, /\b(?:md5|sha1)\s*\(\s*([^)]*)\)/gi, (line, m) => {
+        // Python: hashlib.md5(password.encode()).hexdigest() — la "chiamata
+        // intera" sostituita è solo hashlib.md5(...), il resto (.hexdigest())
+        // resta sulla riga: bcrypt non ne ha bisogno, ma toglierlo da solo
+        // rischierebbe di rompere la sintassi se il valore è usato altrove.
+        const hashlibPattern = new RegExp(`hashlib\\.(?:md5|sha1)\\((${BALANCED_ARG})\\)`, "gi");
+        result = replaceLines(file.content, hashlibPattern, (line, m) => {
           if (!/password/i.test(line)) return null;
-          return line.slice(0, m.index) + `await bcrypt.hash(${m[1]}, 12)${note}` + line.slice(m.index + m[0].length);
+          return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
+        });
+      }
+      if (!result.changed) {
+        const barePattern = new RegExp(`\\b(?:md5|sha1)\\s*\\((${BALANCED_ARG})\\)`, "gi");
+        result = replaceLines(file.content, barePattern, (line, m) => {
+          if (!/password/i.test(line)) return null;
+          return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
         });
       }
       return result.changed ? result.content : null;

@@ -35,4 +35,66 @@ describe("low checks", () => {
     const clean = file("src/routes/auth.ts", 'console.log("login attempt", { email })');
     expect(detect(check, clean)).toHaveLength(0);
   });
+
+  describe("Python", () => {
+    it("no-login-rate-limit: flags a Flask login route with no rate limiter in the file", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file(
+        "app/routes.py",
+        '@app.route("/login", methods=["POST"])\ndef login():\n    ...'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("no-login-rate-limit: does not flag a login route guarded by Flask-Limiter", () => {
+      const check = checkById("no-login-rate-limit");
+      const clean = file(
+        "app/routes.py",
+        'from flask_limiter import Limiter\nlimiter = Limiter(app)\n\n@app.route("/login", methods=["POST"])\n@limiter.limit("5/15minutes")\ndef login():\n    ...'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("no-login-rate-limit autofix: inserts a self-contained decorator right below @app.route", () => {
+      const check = checkById("no-login-rate-limit");
+      const vulnerable = file(
+        "app/routes.py",
+        '@app.route("/login", methods=["POST"])\ndef login():\n    ...'
+      );
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("def __jojox_rate_limit(view):");
+      expect(fixed).toContain('@app.route("/login", methods=["POST"])\n@__jojox_rate_limit\ndef login():');
+    });
+
+    it("sensitive-data-in-logs: flags a password logged with print()", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("app/auth.py", 'print("login attempt", email, password)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: flags a password logged with logging.info()", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("app/auth.py", 'logging.info("login attempt email=%s password=%s", email, password)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sensitive-data-in-logs: does not flag a log without sensitive fields", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("app/auth.py", 'print("login attempt", email)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs: does not flag a line already commented out with #", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const clean = file("app/auth.py", '# print("login attempt", password)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("sensitive-data-in-logs autofix: comments the line out with #, not //", () => {
+      const check = checkById("sensitive-data-in-logs");
+      const vulnerable = file("app/auth.py", 'print("login attempt", password)');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('# print("login attempt", password)  # rimossa da JoJoX');
+    });
+  });
 });

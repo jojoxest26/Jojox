@@ -92,4 +92,93 @@ describe("high checks", () => {
     const clean = file("src/auth.ts", "const hashed = await bcrypt.hash(password, 12)");
     expect(detect(check, clean)).toHaveLength(0);
   });
+
+  describe("Python", () => {
+    it("permissive-cors: flags Flask-CORS used with no restriction", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("app/server.py", "CORS(app)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: flags django-cors-headers allowing all origins", () => {
+      const check = checkById("permissive-cors");
+      const vulnerable = file("app/settings.py", "CORS_ORIGIN_ALLOW_ALL = True");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("permissive-cors: does not flag a restricted django-cors-headers list", () => {
+      const check = checkById("permissive-cors");
+      const clean = file("app/settings.py", 'CORS_ALLOWED_ORIGINS = ["https://tuosito.com"]');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("admin-function-missing-auth: flags a Flask admin route with no nearby auth decorator", () => {
+      const check = checkById("admin-function-missing-auth");
+      const vulnerable = file(
+        "app/admin.py",
+        '@app.route("/admin/delete-user", methods=["POST"])\ndef delete_user():\n    db.users.delete(request.form["id"])'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("admin-function-missing-auth: does not flag when login_required guards the route", () => {
+      const check = checkById("admin-function-missing-auth");
+      const clean = file(
+        "app/admin.py",
+        '@app.route("/admin/delete-user", methods=["POST"])\n@login_required\ndef delete_user():\n    db.users.delete(request.form["id"])'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("ssrf: flags an outgoing request built from Flask request.args", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("app/proxy.py", "data = requests.get(request.args['url'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: flags an outgoing request built from Django request.GET", () => {
+      const check = checkById("ssrf");
+      const vulnerable = file("app/views.py", "data = requests.get(request.GET['url'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ssrf: does not flag a request to a fixed URL", () => {
+      const check = checkById("ssrf");
+      const clean = file("app/proxy.py", 'data = requests.get("https://api.example.com")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing: flags hashlib.md5 used near password handling", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("app/auth.py", "hashed = hashlib.md5(password.encode()).hexdigest()");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-password-hashing: does not flag bcrypt", () => {
+      const check = checkById("weak-password-hashing");
+      const clean = file("app/auth.py", "hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-password-hashing autofix: replaces hashlib.md5 with bcrypt.hashpw, not JS bcrypt.hash", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("app/auth.py", "hashed = hashlib.md5(password).hexdigest()");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("bcrypt.hashpw(password.encode(), bcrypt.gensalt())");
+      expect(fixed).not.toContain("await bcrypt.hash");
+    });
+
+    it("weak-password-hashing autofix: handles a nested call inside the argument, e.g. password.encode(), without breaking the syntax", () => {
+      const check = checkById("weak-password-hashing");
+      const vulnerable = file("app/auth.py", "hashed = hashlib.md5(password.encode()).hexdigest()");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe(
+        "hashed = bcrypt.hashpw(password.encode().encode(), bcrypt.gensalt()) # JoJoX: serve il pacchetto bcrypt — pip install bcrypt.hexdigest()"
+      );
+      // Soprattutto: le parentesi devono restare bilanciate.
+      const opens = (fixed!.match(/\(/g) ?? []).length;
+      const closes = (fixed!.match(/\)/g) ?? []).length;
+      expect(opens).toBe(closes);
+    });
+  });
 });

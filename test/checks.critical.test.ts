@@ -150,4 +150,110 @@ describe("critical checks", () => {
     const clean = file("src/convert.ts", 'execFile("convert", [filename, "output.png"])');
     expect(detect(check, clean)).toHaveLength(0);
   });
+
+  describe("Python", () => {
+    it("hardcoded-secret: flags a snake_case secret, same as camelCase", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("app/config.py", 'api_secret = "abcdefghijklmnop123456"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag a value read with os.environ or os.getenv", () => {
+      const check = checkById("hardcoded-secret");
+      const clean1 = file("app/config.py", 'api_key = os.environ["STRIPE_SECRET_KEY"]');
+      const clean2 = file("app/config.py", 'api_key = os.getenv("STRIPE_SECRET_KEY")');
+      expect(detect(check, clean1)).toHaveLength(0);
+      expect(detect(check, clean2)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret autofix: replaces a hardcoded secret with os.environ, not process.env", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("app/config.py", 'client_secret = "abcdefghijklmnop123456"');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('client_secret = os.environ["CLIENT_SECRET"]');
+    });
+
+    it("sql-injection: flags an f-string query", () => {
+      const check = checkById("sql-injection");
+      const vulnerable = file("app/db.py", 'cursor.execute(f"SELECT * FROM users WHERE email = \'{email}\'")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sql-injection: flags string concatenation (same syntax as JS)", () => {
+      const check = checkById("sql-injection");
+      const vulnerable = file("app/db.py", 'cursor.execute("SELECT * FROM users WHERE id = " + user_id)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("sql-injection: does not flag a parameterized query", () => {
+      const check = checkById("sql-injection");
+      const clean = file("app/db.py", 'cursor.execute("SELECT * FROM users WHERE email = %s", (email,))');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage: flags a Flask request.form password stored without hashing", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("app/signup.py", "user.password = request.form['password']");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("plaintext-password-storage: flags a Django request.POST password stored without hashing", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("app/views.py", "user.password = request.POST['password']");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("plaintext-password-storage: does not flag when the file already hashes with werkzeug/passlib/bcrypt", () => {
+      const check = checkById("plaintext-password-storage");
+      const clean = file(
+        "app/signup.py",
+        "from werkzeug.security import generate_password_hash\nuser.password = generate_password_hash(request.form['password'])"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("plaintext-password-storage autofix: wraps the raw value in bcrypt.hashpw", () => {
+      const check = checkById("plaintext-password-storage");
+      const vulnerable = file("app/signup.py", "user.password = request.form['password']");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())");
+    });
+
+    it("hardcoded-jwt-secret: flags a literal secret passed to PyJWT's encode/decode", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("app/auth.py", 'jwt.encode(payload, "super-secret-key-123", algorithm="HS256")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-jwt-secret: does not flag a secret read from os.environ", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const clean = file("app/auth.py", 'jwt.encode(payload, os.environ["JWT_SECRET"], algorithm="HS256")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-jwt-secret autofix: replaces the literal with os.environ, not process.env", () => {
+      const check = checkById("hardcoded-jwt-secret");
+      const vulnerable = file("app/auth.py", 'jwt.encode(payload, "super-secret-key-123")');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toBe('jwt.encode(payload, os.environ["JWT_SECRET"])');
+    });
+
+    it("command-injection: flags os.system with an interpolated f-string", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("app/convert.py", 'os.system(f"convert {filename} output.png")');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: flags subprocess.run with shell=True and string concatenation", () => {
+      const check = checkById("command-injection");
+      const vulnerable = file("app/convert.py", 'subprocess.run("convert " + filename, shell=True)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("command-injection: does not flag subprocess.run with an argument list (shell=False, the default)", () => {
+      const check = checkById("command-injection");
+      const clean = file("app/convert.py", 'subprocess.run(["convert", filename, "output.png"])');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

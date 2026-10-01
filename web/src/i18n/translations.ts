@@ -603,7 +603,7 @@ const it: TranslationTree = {
     dropzoneHintLoggedIn: "Sei loggato: l'analisi viene salvata nel tuo storico.",
     dropzoneHintGuest: "Modalità ospite: 1 analisi gratuita, senza email. Dopo, basta la mail per continuare (5 al mese, gratis).",
     dropzoneHintAny: "Funziona su qualsiasi codice — anche scritto interamente a mano, non solo generato dall'AI.",
-    dropzoneHintLanguages: "Oggi i 21 controlli sono tarati su JavaScript/TypeScript e SQL/Supabase: su altri linguaggi (Python, Java, PHP...) alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
+    dropzoneHintLanguages: "I 21 controlli coprono JavaScript/TypeScript, SQL/Supabase e Python (Flask, Django). Su altri linguaggi (Java, Go, Rust, PHP...) alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
     sectionEyebrow: "L'analyzer",
     sectionTitle: "Carica il codice, guarda cosa trova.",
     moreFiles: "+{{count}} altri",
@@ -696,7 +696,7 @@ const it: TranslationTree = {
       {
         icon: "🧩",
         title: "Controlli per altri linguaggi",
-        text: "Oggi JoJoX è tarato su JavaScript/TypeScript e SQL/Supabase. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede settimane di lavoro dedicato. Coprire seriamente 3-4 linguaggi in più (Python, Java, PHP): realisticamente 3-6 mesi di lavoro concentrato, se diventa la priorità.",
+        text: "Oltre a JavaScript/TypeScript e SQL/Supabase, i 21 controlli ora riconoscono anche Python (Flask, Django), testati su codice reale. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede giorni di lavoro dedicato per ognuno. Restano da coprire Java, Go, Rust e PHP: uno alla volta, nello stesso modo.",
       },
       {
         icon: "📦",
@@ -1057,7 +1057,7 @@ const en: TranslationTree = {
     dropzoneHintLoggedIn: "You're signed in: the analysis is saved to your history.",
     dropzoneHintGuest: "Guest mode: 1 free analysis, no email. After that, just an email to continue (5 a month, free).",
     dropzoneHintAny: "Works on any code — even written entirely by hand, not just AI-generated.",
-    dropzoneHintLanguages: "Today the 21 checks are tuned for JavaScript/TypeScript and SQL/Supabase: on other languages (Python, Java, PHP...) some generic checks may still help, but coverage isn't complete yet.",
+    dropzoneHintLanguages: "The 21 checks cover JavaScript/TypeScript, SQL/Supabase and Python (Flask, Django). On other languages (Java, Go, Rust, PHP...) some generic checks may still help, but coverage isn't complete yet.",
     sectionEyebrow: "The analyzer",
     sectionTitle: "Upload the code, see what it finds.",
     moreFiles: "+{{count}} more",
@@ -1150,7 +1150,7 @@ const en: TranslationTree = {
       {
         icon: "🧩",
         title: "Checks for more languages",
-        text: "Today JoJoX is tuned for JavaScript/TypeScript and SQL/Supabase. A new language done properly — checks and tests to avoid false positives — takes weeks of dedicated work. Seriously covering 3-4 more languages (Python, Java, PHP): realistically 3-6 months of focused work, if it becomes the priority.",
+        text: "Besides JavaScript/TypeScript and SQL/Supabase, the 21 checks now also recognize Python (Flask, Django), tested on real code. A new language done properly — checks and tests to avoid false positives — takes days of dedicated work each. Java, Go, Rust and PHP are still to cover, one at a time, the same way.",
       },
       {
         icon: "📦",

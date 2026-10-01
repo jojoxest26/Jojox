@@ -1,21 +1,41 @@
-import type { Check } from "../types.js";
-import { scanLines, fileMatch, replaceLines } from "../util/scan.js";
+import type { Check, CheckMatch } from "../types.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile } from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
 const SERVER_ONLY_PATH = /(^|\/)(api|server|edge-functions?|functions)(\/|\.)/i;
 
-const PLACEHOLDER_VALUE = /^(process\.env|import\.meta\.env|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
+// Come si legge una variabile d'ambiente nel linguaggio del file — usato per
+// non segnalare un valore già letto correttamente, e per scrivere l'autofix.
+const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv/;
+
+const PLACEHOLDER_VALUE = /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
 
 // Nomi di variabile che, assegnati a un valore letterale, indicano quasi sempre un segreto.
-// Condiviso tra detect() e autofix() così restano sempre allineati.
+// Sia in stile camelCase (JS/TS) sia snake_case (Python, lo stile idiomatico
+// lì) — condiviso tra detect() e autofix() così restano sempre allineati.
 const SECRET_LIKE_NAMES =
-  "apiKey|api_key|secret|secretKey|apiSecret|clientSecret|accessToken|refreshToken|privateKey|dbPassword|password|token|authToken";
+  "apiKey|api_key|secret|secretKey|secret_key|apiSecret|api_secret|clientSecret|client_secret|accessToken|access_token|refreshToken|refresh_token|privateKey|private_key|dbPassword|db_password|password|token|authToken|auth_token";
 
 // Valori che, oltre a essere hardcoded, hanno un formato riconoscibile di chiave reale
 // (AKIA…, sk_live_/sk_test_…): vanno anche revocati presso il fornitore, non solo tolti
 // dal codice — l'autofix li lascia quindi segnalati soltanto, mai riscritti in automatico.
 const HIGH_CONFIDENCE_SECRET_VALUE = /AKIA[0-9A-Z]{16}|sk_(live|test)_[0-9a-zA-Z]{16,}/;
+
+// Librerie/funzioni di hashing riconosciute, JS e Python insieme — se il file le usa già
+// da qualche parte, diamo per buono che la password sia protetta e non segnaliamo nulla.
+const ALREADY_HASHES_PASSWORD =
+  /bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2|werkzeug\.security|check_password_hash|generate_password_hash|make_password|passlib/i;
+
+// Il valore grezzo della password così come arriva dalla richiesta — Express (req.body),
+// Flask (request.form/request.json) e Django (request.POST) hanno ognuno il suo nome. Il
+// confine di parola (\b) sta solo sulle due forme che finiscono con un identificatore
+// semplice: le altre finiscono già con un carattere non alfanumerico (']', ')'), dove un
+// \b dopo non potrebbe mai combaciare.
+const RAW_PASSWORD_VALUE =
+  'req\\.body\\.password\\b|req\\.body\\[["\']password["\']\\]|request\\.form\\[["\']password["\']\\]|request\\.form\\.get\\(["\']password["\']\\)|request\\.json\\[["\']password["\']\\]|request\\.POST\\[["\']password["\']\\]|password\\b';
+
+const PLAINTEXT_PASSWORD_ASSIGNMENT = new RegExp(`password\\s*[:=]\\s*(${RAW_PASSWORD_VALUE})`, "gi");
 
 export const criticalChecks: Check[] = [
   {
@@ -42,6 +62,12 @@ export const criticalChecks: Check[] = [
     // Nessun autofix: la correzione vera è spostare questo codice in un file
     // solo-server, una decisione architetturale che non possiamo prendere
     // al posto tuo senza rischiare di rompere il progetto.
+    //
+    // Non esteso a Python: il problema che segnala è specifico dei bundler
+    // JS (Next.js, Vite...) che impacchettano variabili con prefisso
+    // pubblico dentro il codice spedito al browser. Un backend Python non
+    // ha un passaggio di bundling equivalente — non c'è un rischio
+    // paragonabile da riconoscere con lo stesso pattern.
   },
 
   {
@@ -68,7 +94,7 @@ export const criticalChecks: Check[] = [
       const assignmentMatches = scanLines(file, assignmentPattern).filter((m) => {
         if (alreadyFlaggedLines.has(m.line)) return false;
         const raw = lines[m.line - 1] ?? "";
-        if (/process\.env|import\.meta\.env/.test(raw)) return false;
+        if (ENV_READ_PATTERN.test(raw)) return false;
         const valueMatch = raw.match(/["'`]([^"'`]{6,})["'`]/);
         return !(valueMatch && PLACEHOLDER_VALUE.test(valueMatch[1]));
       });
@@ -83,11 +109,14 @@ export const criticalChecks: Check[] = [
       // vanno anche revocate, non solo tolte dal codice — se sono finite in
       // un commit, potrebbero già essere compromesse.
       const pattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})(\\s*[:=]\\s*)["'\`][^"'\`]{12,}["'\`]`, "gi");
+      const python = isPythonFile(file);
       const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
-        if (/process\.env|import\.meta\.env/.test(line)) return null;
+        if (ENV_READ_PATTERN.test(line)) return null;
         if (HIGH_CONFIDENCE_SECRET_VALUE.test(line)) return null;
         const [, varName, operator] = m;
-        const replacement = `${varName}${operator}process.env.${toEnvName(varName)}`;
+        const envName = toEnvName(varName);
+        const envRead = python ? `os.environ["${envName}"]` : `process.env.${envName}`;
+        const replacement = `${varName}${operator}${envRead}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
       return changed ? content : null;
@@ -177,7 +206,12 @@ export const criticalChecks: Check[] = [
     },
     detect(file) {
       return [
+        // JS/TS: template literal con interpolazione `${...}`.
         ...scanLines(file, /\.(query|raw|execute)\s*\(\s*`[^`]*\$\{/g),
+        // Python: f-string con interpolazione f"...{...}" (gestisce anche un
+        // apice dell'altro tipo dentro la stringa, es. f"...WHERE x = '{v}'").
+        ...scanLines(file, /\.(query|raw|execute)\s*\(\s*(f"[^"]*\{|f'[^']*\{)/g),
+        // Concatenazione con "+": stessa sintassi in entrambi i linguaggi.
         ...scanLines(file, /\.(query|raw|execute)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
       ];
     },
@@ -198,20 +232,22 @@ export const criticalChecks: Check[] = [
       after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
     },
     detect(file) {
-      if (/bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2/i.test(file.content)) return [];
-      return scanLines(
-        file,
-        /password\s*[:=]\s*(req\.body\.password|req\.body\[["']password["']\]|password)\b/gi
-      );
+      if (ALREADY_HASHES_PASSWORD.test(file.content)) return [];
+      return scanLines(file, PLAINTEXT_PASSWORD_ASSIGNMENT);
     },
     autofix(file) {
-      if (/bcrypt|argon2|scrypt|hashSync|hashPassword|crypto\.hash|pbkdf2/i.test(file.content)) return null;
-      const pattern = /password\s*[:=]\s*(req\.body\.password|req\.body\[["']password["']\]|password)\b/gi;
-      const note = " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
-      const { content, changed } = replaceLines(file.content, pattern, (line, m) => {
+      if (ALREADY_HASHES_PASSWORD.test(file.content)) return null;
+      const python = isPythonFile(file);
+      const note = python
+        ? " # JoJoX: serve il pacchetto bcrypt — pip install bcrypt"
+        : " /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */";
+      const { content, changed } = replaceLines(file.content, PLAINTEXT_PASSWORD_ASSIGNMENT, (line, m) => {
         const value = m[1];
         const prefix = m[0].slice(0, m[0].length - value.length);
-        const replacement = `${prefix}await bcrypt.hash(${value}, 12)${note}`;
+        const hashCall = python
+          ? `bcrypt.hashpw(${value}.encode(), bcrypt.gensalt())`
+          : `await bcrypt.hash(${value}, 12)`;
+        const replacement = `${prefix}${hashCall}${note}`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
       return changed ? content : null;
@@ -231,24 +267,30 @@ export const criticalChecks: Check[] = [
     },
     detect(file) {
       return [
+        // JS (jsonwebtoken): jwt.sign(...)/jwt.verify(...).
         ...scanLines(file, /jwt\.(sign|verify)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
+        // Python (PyJWT): jwt.encode(...)/jwt.decode(...).
+        ...scanLines(file, /jwt\.(encode|decode)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
         ...scanLines(file, /JWT_SECRET\s*=\s*["'][^"']+["']/g),
       ];
     },
     autofix(file) {
-      const r1 = replaceLines(
-        file.content,
-        /jwt\.(sign|verify)\s*\(([^)]*),\s*["'][^"']{6,}["']/g,
-        (line, m) => {
-          const [, method, args] = m;
-          const replacement = `jwt.${method}(${args}, process.env.JWT_SECRET`;
-          return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
-        }
-      );
-      const r2 = replaceLines(r1.content, /JWT_SECRET\s*=\s*["'][^"']+["']/g, (line, m) => {
-        return line.slice(0, m.index) + "JWT_SECRET = process.env.JWT_SECRET" + line.slice(m.index + m[0].length);
+      const python = isPythonFile(file);
+      const envRead = python ? 'os.environ["JWT_SECRET"]' : "process.env.JWT_SECRET";
+      const jsMethods = replaceLines(file.content, /jwt\.(sign|verify)\s*\(([^)]*),\s*["'][^"']{6,}["']/g, (line, m) => {
+        const [, method, args] = m;
+        const replacement = `jwt.${method}(${args}, ${envRead}`;
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
-      return r1.changed || r2.changed ? r2.content : null;
+      const pyMethods = replaceLines(jsMethods.content, /jwt\.(encode|decode)\s*\(([^)]*),\s*["'][^"']{6,}["']/g, (line, m) => {
+        const [, method, args] = m;
+        const replacement = `jwt.${method}(${args}, ${envRead}`;
+        return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
+      });
+      const literal = replaceLines(pyMethods.content, /JWT_SECRET\s*=\s*["'][^"']+["']/g, (line, m) => {
+        return line.slice(0, m.index) + `JWT_SECRET = ${envRead}` + line.slice(m.index + m[0].length);
+      });
+      return jsMethods.changed || pyMethods.changed || literal.changed ? literal.content : null;
     },
   },
 
@@ -264,11 +306,33 @@ export const criticalChecks: Check[] = [
       after: `execFile("convert", [filename, "output.png"])`,
     },
     detect(file) {
-      if (!fileMatch(file, /\b(exec|execSync|spawn)\s*\(/)) return [];
-      return [
-        ...scanLines(file, /\b(exec|execSync|spawn)\s*\(\s*`[^`]*\$\{/g),
-        ...scanLines(file, /\b(exec|execSync|spawn)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
-      ];
+      const matches: CheckMatch[] = [];
+
+      if (fileMatch(file, /\b(exec|execSync|spawn)\s*\(/)) {
+        matches.push(
+          ...scanLines(file, /\b(exec|execSync|spawn)\s*\(\s*`[^`]*\$\{/g),
+          ...scanLines(file, /\b(exec|execSync|spawn)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g)
+        );
+      }
+
+      // Python: os.system/os.popen sono pericolosi non appena il comando è
+      // costruito da input (nessuna via sicura, a differenza di subprocess),
+      // mentre subprocess.call/run/Popen/check_output lo sono solo quando
+      // shell=True è esplicito — con shell=False (il default) una lista di
+      // argomenti interpolati resta sicura, non la segnaliamo.
+      if (fileMatch(file, /\bos\.(system|popen)\s*\(|\bsubprocess\.(call|run|Popen|check_output)\s*\(/)) {
+        matches.push(
+          ...scanLines(file, /\bos\.(system|popen)\s*\(\s*(f"[^"]*\{|f'[^']*\{)/g),
+          ...scanLines(file, /\bos\.(system|popen)\s*\(\s*["'][^"']*["']\s*\+\s*\w/g),
+          ...scanLines(
+            file,
+            /\bsubprocess\.(call|run|Popen|check_output)\s*\(\s*(f"[^"]*\{[^)]*|f'[^']*\{[^)]*)shell\s*=\s*True/g
+          ),
+          ...scanLines(file, /\bsubprocess\.(call|run|Popen|check_output)\s*\([^)]*\+\s*\w[^)]*shell\s*=\s*True/g)
+        );
+      }
+
+      return matches;
     },
     // Nessun autofix: separare comando e argomenti in modo sicuro richiede
     // di capire quale sia davvero il programma e quali i suoi parametri —
