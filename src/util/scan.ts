@@ -26,6 +26,20 @@ export function isDockerfile(file: SourceFile): boolean {
   return /^Dockerfile(\.[\w-]+)?$/i.test(basename) || /\.dockerfile$/i.test(basename);
 }
 
+const K8S_WORKLOAD_KIND = /^kind:\s*["']?(Pod|Deployment|StatefulSet|DaemonSet|ReplicaSet|Job|CronJob)["']?\s*$/im;
+
+/**
+ * True per un manifest Kubernetes di un workload (Pod/Deployment/StatefulSet/
+ * DaemonSet/ReplicaSet/Job/CronJob) — richiede sia "apiVersion:" sia un
+ * "kind:" riconosciuto, non solo l'estensione .yaml/.yml, per non confondere
+ * un docker-compose.yml o un workflow GitHub Actions (anche loro YAML) con
+ * un vero manifest Kubernetes. Usato dai controlli IaC (Fase 2).
+ */
+export function isKubernetesManifest(file: SourceFile): boolean {
+  if (!/\.ya?ml$/i.test(file.path)) return false;
+  return /^apiVersion:/im.test(file.content) && K8S_WORKLOAD_KIND.test(file.content);
+}
+
 const CONTEXT_CHARS = 12;
 const MASK_CHAR = "•";
 

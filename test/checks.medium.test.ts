@@ -586,4 +586,39 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Fase 2 — IaC (Kubernetes)", () => {
+    it("k8s-missing-run-as-non-root: flags a manifest with no runAsNonRoot anywhere", () => {
+      const check = checkById("k8s-missing-run-as-non-root");
+      const vulnerable = file(
+        "deployment.yaml",
+        "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\nspec:\n  template:\n    spec:\n      containers:\n        - name: app\n          image: myapp:1.0\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-missing-run-as-non-root: does not flag a manifest that sets runAsNonRoot at pod level", () => {
+      const check = checkById("k8s-missing-run-as-non-root");
+      const clean = file(
+        "deployment.yaml",
+        "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\nspec:\n  template:\n    spec:\n      securityContext:\n        runAsNonRoot: true\n      containers:\n        - name: app\n"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-missing-run-as-non-root: does not flag a manifest that sets runAsNonRoot at container level", () => {
+      const check = checkById("k8s-missing-run-as-non-root");
+      const clean = file(
+        "deployment.yaml",
+        "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\nspec:\n  template:\n    spec:\n      containers:\n        - name: app\n          securityContext:\n            runAsNonRoot: true\n"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-missing-run-as-non-root: does not flag a file that isn't a Kubernetes manifest", () => {
+      const check = checkById("k8s-missing-run-as-non-root");
+      const clean = file("docker-compose.yml", "services:\n  web:\n    image: myapp:1.0\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

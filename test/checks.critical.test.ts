@@ -986,4 +986,46 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Fase 2 — IaC (Kubernetes)", () => {
+    const k8s = (body: string) => file("deployment.yaml", `apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\nspec:\n  template:\n    spec:\n${body}`);
+
+    it("k8s-privileged-container: flags privileged: true", () => {
+      const check = checkById("k8s-privileged-container");
+      const vulnerable = k8s("      containers:\n        - name: app\n          securityContext:\n            privileged: true\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-privileged-container: does not flag privileged: false", () => {
+      const check = checkById("k8s-privileged-container");
+      const clean = k8s("      containers:\n        - name: app\n          securityContext:\n            privileged: false\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-privileged-container: does not flag a plain YAML file that isn't a Kubernetes manifest", () => {
+      const check = checkById("k8s-privileged-container");
+      const clean = file("docker-compose.yml", "services:\n  web:\n    privileged: true\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-plaintext-secret-env: flags a literal value for a secret-looking env name", () => {
+      const check = checkById("k8s-plaintext-secret-env");
+      const vulnerable = k8s("      containers:\n        - name: app\n          env:\n            - name: DB_PASSWORD\n              value: supersecret123\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-plaintext-secret-env: does not flag a secret read via valueFrom.secretKeyRef", () => {
+      const check = checkById("k8s-plaintext-secret-env");
+      const clean = k8s(
+        "      containers:\n        - name: app\n          env:\n            - name: DB_PASSWORD\n              valueFrom:\n                secretKeyRef:\n                  name: db-credentials\n                  key: password\n"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-plaintext-secret-env: does not flag a non-secret-looking env name", () => {
+      const check = checkById("k8s-plaintext-secret-env");
+      const clean = k8s("      containers:\n        - name: app\n          env:\n            - name: NODE_ENV\n              value: production\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

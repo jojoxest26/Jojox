@@ -407,4 +407,63 @@ describe("high checks", () => {
       expect(fixed).toBe("$hashed = password_hash($password, PASSWORD_BCRYPT);");
     });
   });
+
+  describe("Fase 2 — IaC (Kubernetes)", () => {
+    const k8s = (body: string) => file("deployment.yaml", `apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\nspec:\n  template:\n    spec:\n${body}`);
+
+    it("k8s-run-as-root: flags runAsUser: 0", () => {
+      const check = checkById("k8s-run-as-root");
+      const vulnerable = k8s("      containers:\n        - name: app\n          securityContext:\n            runAsUser: 0\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-run-as-root: flags runAsNonRoot: false", () => {
+      const check = checkById("k8s-run-as-root");
+      const vulnerable = k8s("      containers:\n        - name: app\n          securityContext:\n            runAsNonRoot: false\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-run-as-root: does not flag runAsUser: 1000", () => {
+      const check = checkById("k8s-run-as-root");
+      const clean = k8s("      containers:\n        - name: app\n          securityContext:\n            runAsUser: 1000\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-privilege-escalation: flags allowPrivilegeEscalation: true", () => {
+      const check = checkById("k8s-privilege-escalation");
+      const vulnerable = k8s("      containers:\n        - name: app\n          securityContext:\n            allowPrivilegeEscalation: true\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-privilege-escalation: does not flag allowPrivilegeEscalation: false", () => {
+      const check = checkById("k8s-privilege-escalation");
+      const clean = k8s("      containers:\n        - name: app\n          securityContext:\n            allowPrivilegeEscalation: false\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("k8s-privilege-escalation autofix: flips true to false", () => {
+      const check = checkById("k8s-privilege-escalation");
+      const vulnerable = k8s("      containers:\n        - name: app\n          securityContext:\n            allowPrivilegeEscalation: true\n");
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("allowPrivilegeEscalation: false");
+    });
+
+    it("k8s-host-namespace-access: flags hostNetwork: true", () => {
+      const check = checkById("k8s-host-namespace-access");
+      const vulnerable = k8s("      hostNetwork: true\n      containers:\n        - name: app\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("k8s-host-namespace-access: flags hostPID and hostIPC too", () => {
+      const check = checkById("k8s-host-namespace-access");
+      const vulnerable = k8s("      hostPID: true\n      hostIPC: true\n      containers:\n        - name: app\n");
+      expect(detect(check, vulnerable)).toHaveLength(2);
+    });
+
+    it("k8s-host-namespace-access: does not flag hostNetwork: false", () => {
+      const check = checkById("k8s-host-namespace-access");
+      const clean = k8s("      hostNetwork: false\n      containers:\n        - name: app\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

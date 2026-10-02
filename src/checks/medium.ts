@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, redactLine, replaceLines, fileMatch, isDockerfile } from "../util/scan.js";
+import { scanLines, redactLine, replaceLines, fileMatch, isDockerfile, isKubernetesManifest } from "../util/scan.js";
 
 // JS (userId, req.user...), Python/Django/Flask (request.user, user_id...),
 // Go (UserID, c.MustGet...), Java/Spring Security (getPrincipal,
@@ -395,5 +395,28 @@ export const mediumChecks: Check[] = [
     // Nessun autofix: l'utente giusto da usare dipende dall'immagine di base
     // (alcune hanno già un utente non-root pronto tipo "node", altre no) —
     // non possiamo indovinarlo senza rischiare un container che non si avvia più.
+  },
+
+  {
+    id: "k8s-missing-run-as-non-root",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "Il manifest Kubernetes non impone esplicitamente l'esecuzione come utente non-root",
+    description:
+      "Nessun \"runAsNonRoot\" nel manifest (né a livello di pod né di singolo container): senza impostarlo, un container gira come l'utente definito nella sua immagine — spesso root di default, se l'immagine stessa non l'ha cambiato. Impostarlo esplicitamente a true fa fallire l'avvio del pod se l'immagine prova comunque a girare come root, invece di scoprirlo solo dopo un incidente.",
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+    detect(file) {
+      if (!isKubernetesManifest(file)) return [];
+      if (fileMatch(file, /^\s*runAsNonRoot:/im)) return [];
+      const firstLine = file.content.split("\n").findIndex((l) => /^kind:/im.test(l));
+      const line = Math.max(1, firstLine + 1);
+      return [{ line, snippet: redactLine(file.content.split("\n")[line - 1] ?? "", 0, 40) }];
+    },
+    // Nessun autofix: aggiungere runAsNonRoot alla cieca potrebbe far
+    // fallire l'avvio del pod se l'immagine gira davvero come root e non è
+    // pensata per girare altrimenti — va verificato da chi conosce l'immagine.
   },
 ];

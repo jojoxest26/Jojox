@@ -1,5 +1,22 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, lineFromIndex, redactLine, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile } from "../util/scan.js";
+import {
+  scanLines,
+  lineFromIndex,
+  redactLine,
+  replaceLines,
+  isPythonFile,
+  isGoFile,
+  isJavaFile,
+  isPhpFile,
+  isKubernetesManifest,
+} from "../util/scan.js";
+
+// Fase 2, IaC: manifest Kubernetes — stessa scelta di non usare un parser
+// YAML già spiegata in critical.ts, qui per i campi "meno gravi del
+// privileged" ma comunque seri.
+const K8S_RUN_AS_ROOT = /^\s*runAsUser:\s*0\b|^\s*runAsNonRoot:\s*false\b/gim;
+const K8S_PRIVILEGE_ESCALATION = /^\s*allowPrivilegeEscalation:\s*true\b/gim;
+const K8S_HOST_NAMESPACE = /^\s*(hostNetwork|hostPID|hostIPC):\s*true\b/gim;
 
 // JS/Express (requireAuth, req.user...), Python/Flask/Django (login_required,
 // request.user.is_staff...), Go/Gin (MustGet, AuthRequired...),
@@ -309,5 +326,70 @@ export const highChecks: Check[] = [
       }
       return result.changed ? result.content : null;
     },
+  },
+
+  {
+    id: "k8s-run-as-root",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Un container del manifest Kubernetes è impostato per girare come root",
+    description:
+      "\"runAsUser: 0\" o \"runAsNonRoot: false\" nel securityContext impongono esplicitamente l'esecuzione come root dentro il container. Se un attaccante riesce a eseguire codice nel container (es. sfruttando una libreria vulnerabile), root dentro il container rende più facile un'eventuale fuga verso l'host o un impatto più ampio.",
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+    detect(file) {
+      if (!isKubernetesManifest(file)) return [];
+      return scanLines(file, K8S_RUN_AS_ROOT);
+    },
+    // Nessun autofix: l'UID giusto da usare dipende dall'immagine (alcune
+    // hanno già un utente non-root pronto, altre no) — non possiamo
+    // indovinarlo senza rischiare un pod che non si avvia più.
+  },
+
+  {
+    id: "k8s-privilege-escalation",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Un container del manifest Kubernetes può ottenere più privilegi di quelli iniziali",
+    description:
+      "\"allowPrivilegeEscalation: true\" nel securityContext permette a un processo dentro il container di ottenere più privilegi del processo che lo ha avviato (es. tramite un binario con lo sticky bit setuid). Combinato con una vulnerabilità nell'applicazione, è un passo in più verso l'esecuzione di codice con privilegi maggiori di quelli previsti.",
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+    detect(file) {
+      if (!isKubernetesManifest(file)) return [];
+      return scanLines(file, K8S_PRIVILEGE_ESCALATION);
+    },
+    autofix(file) {
+      if (!isKubernetesManifest(file)) return null;
+      const { content, changed } = replaceLines(file.content, K8S_PRIVILEGE_ESCALATION, (line) =>
+        line.replace(/true\b/i, "false")
+      );
+      return changed ? content : null;
+    },
+  },
+
+  {
+    id: "k8s-host-namespace-access",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Un pod del manifest Kubernetes condivide la rete, i processi o la memoria condivisa dell'host",
+    description:
+      "\"hostNetwork\", \"hostPID\" o \"hostIPC\" impostati a true fanno uscire il pod dal suo normale isolamento: hostNetwork espone il pod sulla rete dell'host (bypassando le policy di rete del cluster), hostPID gli dà visibilità su tutti i processi della macchina host, hostIPC gli dà accesso alla memoria condivisa dell'host. Quasi mai necessario per un'app normale — tipico solo di strumenti di sistema/monitoraggio a basso livello.",
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+    detect(file) {
+      if (!isKubernetesManifest(file)) return [];
+      return scanLines(file, K8S_HOST_NAMESPACE);
+    },
+    // Nessun autofix: a differenza di allowPrivilegeEscalation (dove "false"
+    // è sempre la scelta più sicura), qui alcuni workload di sistema
+    // dipendono davvero da questo accesso — disattivarlo alla cieca
+    // potrebbe romperli.
   },
 ];

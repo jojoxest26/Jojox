@@ -245,4 +245,96 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
       ),
     },
   }),
+
+  // Fase 2 — IaC (Dockerfile e Kubernetes).
+  "docker-hardcoded-secret": {
+    title: "A secret is written directly in an ENV or ARG instruction in the Dockerfile",
+    description:
+      "A variable with a name like password/secret/token/key has a literal value in an ENV or ARG instruction. Unlike a .env file (which normally doesn't end up in the image), this value gets baked into the Docker image itself — anyone who can pull it or inspect the layer history can recover it, even if the line is removed in a later version of the Dockerfile.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# passed with: docker build --build-arg DB_PASSWORD=*** (or, better yet,\n# a BuildKit secret mount, which never ends up in the layer history)`,
+    },
+  },
+  "docker-missing-user": {
+    title: "The Dockerfile doesn't set a non-root user",
+    description:
+      "No USER instruction in the Dockerfile: without one, the container runs as root. If an attacker manages to run code inside the container (e.g. by exploiting a vulnerable library), being root inside the container makes an escape to the host — or a wider impact on the surrounding system — easier.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'The Dockerfile\'s base image uses the ":latest" tag',
+    description:
+      'A FROM instruction explicitly uses the ":latest" tag instead of a precise version. "latest" changes over time: the same build, redone at a different moment, can get a different version of the base image — a non-reproducible build, and an unwanted update can arrive without anyone having decided it should.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "The Dockerfile downloads a remote file with ADD instead of COPY",
+    description:
+      "An ADD instruction with an http/https URL downloads a file from the internet during the build, with no integrity check and with the content invisible in the repository. If that URL is ever compromised, the build pulls in arbitrary content without anyone noticing just by reading the Dockerfile.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "A container in the Kubernetes manifest runs as privileged",
+    description:
+      '"privileged: true" in a container\'s securityContext disables almost all the usual isolation between container and host: the container can access the host\'s devices, change its network configuration, and in many cases effectively gain root access to the machine running it. Almost never needed for a normal app.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # only the capabilities actually needed`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "A secret is written in plain text in a Kubernetes manifest's env variable",
+    description:
+      'An environment variable with a name like password/secret/token/key has a literal value ("value:") instead of being read from a Secret ("valueFrom.secretKeyRef"). The manifest itself — often committed to a repository — therefore contains the secret in plain text, visible even to someone who can only read the configuration, not necessarily run commands in the cluster.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "A container in the Kubernetes manifest is set to run as root",
+    description:
+      '"runAsUser: 0" or "runAsNonRoot: false" in the securityContext explicitly force the container to run as root. If an attacker manages to run code inside the container (e.g. by exploiting a vulnerable library), being root inside the container makes an escape to the host — or a wider impact — easier.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "A container in the Kubernetes manifest can gain more privileges than it started with",
+    description:
+      '"allowPrivilegeEscalation: true" in the securityContext lets a process inside the container gain more privileges than the process that started it (e.g. through a setuid binary). Combined with a vulnerability in the application, it\'s one more step toward running code with more privileges than intended.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "A pod in the Kubernetes manifest shares the host's network, processes, or shared memory",
+    description:
+      '"hostNetwork", "hostPID" or "hostIPC" set to true take the pod out of its normal isolation: hostNetwork exposes the pod on the host\'s network (bypassing the cluster\'s network policies), hostPID gives it visibility into every process on the host machine, hostIPC gives it access to the host\'s shared memory. Almost never needed for a normal app — typically only for low-level system/monitoring tools.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "The Kubernetes manifest doesn't explicitly enforce running as a non-root user",
+    description:
+      'No "runAsNonRoot" anywhere in the manifest (neither at pod nor at container level): without setting it, a container runs as whatever user its image defines — often root by default, if the image itself hasn\'t changed that. Setting it explicitly to true makes the pod fail to start if the image still tries to run as root, instead of only finding out after an incident.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
 };

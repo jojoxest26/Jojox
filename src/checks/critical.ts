@@ -1,5 +1,17 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile, isDockerfile, nearbyMatches, redactLine } from "../util/scan.js";
+import {
+  scanLines,
+  fileMatch,
+  replaceLines,
+  isPythonFile,
+  isGoFile,
+  isJavaFile,
+  isPhpFile,
+  isDockerfile,
+  isKubernetesManifest,
+  nearbyMatches,
+  redactLine,
+} from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
@@ -21,6 +33,17 @@ const DOCKERFILE_SECRET_VAR_NAME = /PASSWORD|SECRET|TOKEN|API_?KEY|PRIVATE_?KEY|
 // più variabili sulla stessa riga ("ENV A=1 B=2") viene letta solo per la
 // prima — limite noto, accettato per restare un pattern semplice e leggibile.
 const DOCKERFILE_ENV_ARG_ASSIGNMENT = /^\s*(ENV|ARG)\s+([A-Za-z_][A-Za-z0-9_]*)(?:=|\s+)(\S+)/i;
+
+// Fase 2, IaC: manifest Kubernetes. Nessun parser YAML — gli stessi nomi di
+// campo (privileged, runAsUser, allowPrivilegeEscalation...) sono abbastanza
+// specifici da riconoscere con una regex per riga, coerente col resto del
+// motore, senza aggiungere una dipendenza solo per questo.
+const K8S_PRIVILEGED = /^\s*privileged:\s*true\b/gim;
+// Stesso elenco di nomi "segreto" usato per Dockerfile ENV/ARG — stile
+// UPPER_SNAKE_CASE, idiomatico anche nei manifest Kubernetes.
+const K8S_ENV_SECRET_NAME_LINE = new RegExp(`^\\s*-\\s*name:\\s*["']?(\\w*(?:${DOCKERFILE_SECRET_VAR_NAME.source})\\w*)["']?\\s*$`, "i");
+const K8S_ENV_VALUE_FROM_LINE = /^\s*valueFrom:/i;
+const K8S_ENV_VALUE_LINE = /^\s*value:\s*["']?([^"'\s][^"']*?)["']?\s*$/i;
 
 // L'operatore di assegnazione: "=" o ":" in JS/Python, ma anche ":=" in Go
 // (dichiarazione breve di variabile) — va provato per primo, altrimenti il
@@ -777,5 +800,63 @@ export const criticalChecks: Check[] = [
     // --build-arg o, meglio, come secret mount di BuildKit) richiede
     // modifiche anche al comando di build usato fuori da questo file — non
     // è una riscrittura meccanica sicura della sola riga segnalata.
+  },
+
+  {
+    id: "k8s-privileged-container",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un container del manifest Kubernetes gira come privileged",
+    description:
+      "\"privileged: true\" nel securityContext di un container disattiva quasi tutto l'isolamento normale tra container e host: il container può accedere ai device dell'host, modificarne la configurazione di rete e, in molti casi, ottenere di fatto accesso root sulla macchina che lo esegue. Quasi mai necessario per un'app normale.",
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # solo le capability davvero necessarie`,
+    },
+    detect(file) {
+      if (!isKubernetesManifest(file)) return [];
+      return scanLines(file, K8S_PRIVILEGED);
+    },
+    // Nessun autofix: rimuovere "privileged: true" alla cieca potrebbe
+    // rompere un workload che ne ha davvero bisogno (raro, ma esiste:
+    // es. strumenti di rete o storage a basso livello) — va deciso da chi
+    // conosce il motivo per cui è stato messo.
+  },
+
+  {
+    id: "k8s-plaintext-secret-env",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un segreto è scritto in chiaro in una variabile env del manifest Kubernetes",
+    description:
+      "Una variabile d'ambiente con un nome tipo password/secret/token/chiave ha un valore letterale (\"value:\") invece di essere letta da un Secret (\"valueFrom.secretKeyRef\"). Il manifest stesso — spesso committato in un repository — contiene quindi il segreto in chiaro, visibile anche a chi può solo leggere la configurazione, non necessariamente eseguire comandi nel cluster.",
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+    detect(file) {
+      if (!isKubernetesManifest(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        if (!K8S_ENV_SECRET_NAME_LINE.test(lineText)) return;
+
+        for (let j = idx + 1; j < Math.min(idx + 3, lines.length); j++) {
+          if (K8S_ENV_VALUE_FROM_LINE.test(lines[j])) return; // già letto da un Secret — a posto
+          const valueMatch = lines[j].match(K8S_ENV_VALUE_LINE);
+          if (!valueMatch) continue;
+          const value = valueMatch[1];
+          if (value.startsWith("$") || PLACEHOLDER_VALUE.test(value)) return;
+          matches.push({ line: j + 1, snippet: redactLine(lines[j], 0, lines[j].length) });
+          return;
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: creare il Secret corrispondente (e scegliere come
+    // gestirlo — kubectl create secret, un tool esterno, SOPS...) richiede
+    // una decisione che non possiamo prendere al posto tuo.
   },
 ];
