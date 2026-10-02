@@ -869,4 +869,77 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Punto 13 — SSTI (Server-Side Template Injection)", () => {
+    it("Python/Flask: flags render_template_string with the template taken directly from request.args", () => {
+      const check = checkById("ssti");
+      const vulnerable = file("app/views.py", 'return render_template_string(request.args.get("name"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Python/Flask: does not flag render_template with a fixed template name (the safe form)", () => {
+      const check = checkById("ssti");
+      const clean = file("app/views.py", 'return render_template("profile.html", name=request.args.get("name"))');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("Node/EJS: flags ejs.render with the template taken directly from req.body", () => {
+      const check = checkById("ssti");
+      const vulnerable = file("src/routes.ts", "ejs.render(req.body.template, data)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Node/EJS: does not flag ejs.render with a fixed template file", () => {
+      const check = checkById("ssti");
+      const clean = file("src/routes.ts", 'ejs.render(fs.readFileSync("views/profile.ejs", "utf8"), data)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("Node/Handlebars: flags Handlebars.compile with the template taken directly from req.query", () => {
+      const check = checkById("ssti");
+      const vulnerable = file("src/routes.ts", "const tpl = Handlebars.compile(req.query.tpl)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP/Twig: flags createTemplate with the template taken directly from $_GET", () => {
+      const check = checkById("ssti");
+      const vulnerable = file("page.php", "$twig->createTemplate($_GET['template'])->render();");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP/Twig: does not flag render() with a fixed template name (the safe form)", () => {
+      const check = checkById("ssti");
+      const clean = file("page.php", "$twig->render('profile.html.twig', ['name' => $_GET['name']]);");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Punto 13 — XXE (XML External Entity, Java)", () => {
+    it("flags DocumentBuilderFactory with no safe feature set nearby", () => {
+      const check = checkById("xxe");
+      const vulnerable = file(
+        "XmlParser.java",
+        "DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("does not flag DocumentBuilderFactory when disallow-doctype-decl is set nearby", () => {
+      const check = checkById("xxe");
+      const clean = file(
+        "XmlParser.java",
+        'DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("does not flag DocumentBuilderFactory when external-general-entities is disabled nearby", () => {
+      const check = checkById("xxe");
+      const clean = file(
+        "XmlParser.java",
+        'DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://xml.org/sax/features/external-general-entities", false);\nDocumentBuilder builder = factory.newDocumentBuilder();'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

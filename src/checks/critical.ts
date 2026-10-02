@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile, nearbyMatches, redactLine } from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
@@ -658,5 +658,81 @@ export const criticalChecks: Check[] = [
     // Nessun autofix: $where va quasi sempre eliminato e sostituito con un
     // filtro sui campi veri, una riscrittura che dipende troppo dalla logica
     // originale per essere generata alla cieca.
+  },
+
+  // Punto 13, fase 1 — ultimo giro di injection, quello che richiedeva più
+  // attenzione: SSTI e XXE. LDAP injection è stata lasciata fuori di
+  // proposito: il pattern più sicuro da riconoscere (una chiamata .search(...)
+  // con un filtro costruito per concatenazione) userebbe un nome di metodo
+  // troppo generico — "search" compare ovunque, da Elasticsearch a una
+  // qualunque funzione di ricerca interna — con un rischio di falsi positivi
+  // che gli altri controlli di injection non hanno mai avuto. In più, le app
+  // tipiche del pubblico di JoJoX (Flask/Django/Gin/Spring/Laravel, API
+  // JSON) raramente interrogano una directory LDAP: il valore atteso non
+  // giustificava il rischio.
+  {
+    id: "ssti",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un valore inserito dall'utente viene interpretato come un template, non come dato",
+    description:
+      "Una funzione che compila/esegue un template riceve l'INTERO template da un valore della richiesta, invece di usare un template fisso e passare solo i dati. Un attaccante può scrivere direttamente nella sintassi del motore di template (es. {{7*7}} per Jinja2) ed eseguire codice sul server — Server-Side Template Injection, spesso porta a esecuzione di comandi arbitrari, non solo a un problema di visualizzazione come l'XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+    detect(file) {
+      return [
+        // Python/Flask/Jinja2: render_template_string(...) — il payload classico
+        // di test (PortSwigger Web Security Academy) è {{7*7}}.
+        ...scanLines(file, /render_template_string\s*\(\s*request\.(args|form|GET|POST)/g),
+        // Node/EJS: ejs.render/ejs.compile con il template preso dalla richiesta.
+        ...scanLines(file, /\bejs\.(render|compile)\s*\(\s*req\.(query|body|params)/g),
+        // Node/Handlebars: Handlebars.compile con il template preso dalla richiesta.
+        ...scanLines(file, /Handlebars\.compile\s*\(\s*req\.(query|body|params)/g),
+        // PHP/Twig: createTemplate(...) compila una stringa come template —
+        // diverso da render(), che passa solo dati a un template già fisso.
+        ...scanLines(file, /createTemplate\s*\(\s*\$_(GET|POST|REQUEST)\[/g),
+      ];
+    },
+    // Nessun autofix: il modo corretto è quasi sempre passare a un template
+    // fisso esistente e usare il valore come dato, non come struttura — una
+    // riscrittura che dipende troppo dalla pagina reale per essere generata
+    // alla cieca.
+  },
+
+  {
+    id: "xxe",
+    severity: "critical",
+    confidence: "heuristic",
+    title: "Il parser XML può essere costretto a leggere file o fare richieste esterne",
+    description:
+      "Un parser XML (DocumentBuilderFactory) viene creato senza disattivare esplicitamente le entità esterne (DOCTYPE), nelle righe vicine. Se il parser riceve XML da una fonte non fidata, un attaccante può definire un'entità esterna per leggere file sul server o fargli contattare un indirizzo a sua scelta — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+    detect(file) {
+      // Non estesa oltre Java per ora: è di gran lunga il contesto più comune
+      // in cui si incontra davvero (servizi SOAP/enterprise) — le app tipiche
+      // del pubblico di JoJoX (API JSON su Flask/Django/Gin/Express/Laravel)
+      // raramente fanno parsing di XML non fidato, e gli altri linguaggi
+      // qui coperti hanno comunque default più sicuri dalla fabbrica.
+      const matches: CheckMatch[] = [];
+      const factoryPattern = /DocumentBuilderFactory\.newInstance\s*\(\s*\)/g;
+      const safeFeaturePattern = /setFeature\s*\(\s*["']http:\/\/apache\.org\/xml\/features\/disallow-doctype-decl["']\s*,\s*true\s*\)|setFeature\s*\(\s*["']http:\/\/xml\.org\/sax\/features\/external-general-entities["']\s*,\s*false\s*\)/;
+      const lines = file.content.split("\n");
+      lines.forEach((lineText, idx) => {
+        const re = new RegExp(factoryPattern.source, "g");
+        if (!re.test(lineText)) return;
+        if (nearbyMatches(file, idx + 1, 5, safeFeaturePattern)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+      return matches;
+    },
+    // Nessun autofix: disattivare le entità esterne può richiedere una delle
+    // diverse feature a seconda di cosa serve davvero al progetto (DOCTYPE
+    // completamente vietato vs solo entità esterne) — una scelta che
+    // dipende dall'uso reale dell'XML in quel progetto.
   },
 ];
