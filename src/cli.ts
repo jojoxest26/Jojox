@@ -123,7 +123,7 @@ async function main() {
   }
 
   if (result.findings.length === 0) {
-    console.log("Nessun problema trovato nei 21 controlli. 🎉\n");
+    console.log("Nessun problema trovato nei 26 controlli. 🎉\n");
   } else if (result.findings.some((f) => AUTOFIXABLE_CHECK_IDS.has(f.checkId))) {
     console.log("Suggerimento: rilancia con --fix per correggere in automatico quello che si può.\n");
   }

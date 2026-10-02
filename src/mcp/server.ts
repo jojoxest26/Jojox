@@ -47,7 +47,7 @@ export const TOOLS = [
   {
     name: "analyze_code",
     description:
-      "Analizza dei file sorgente con i 21 controlli di sicurezza di JoJoX (pattern matching, nessun LLM) e restituisce punteggio da 0 a 100 e problemi trovati.",
+      "Analizza dei file sorgente con i 26 controlli di sicurezza di JoJoX (pattern matching, nessun LLM) e restituisce punteggio da 0 a 100 e problemi trovati.",
     inputSchema: FILES_SCHEMA,
   },
   {
@@ -58,7 +58,7 @@ export const TOOLS = [
   },
   {
     name: "list_checks",
-    description: "Elenca i 21 controlli di sicurezza di JoJoX, con gravità e se hanno una correzione automatica.",
+    description: "Elenca i 26 controlli di sicurezza di JoJoX, con gravità e se hanno una correzione automatica.",
     inputSchema: { type: "object", properties: {} },
   },
 ] as const;
