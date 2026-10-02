@@ -75,9 +75,9 @@ describe("MCP server: handleRequest", () => {
 });
 
 describe("MCP server: callTool", () => {
-  it("list_checks elenca tutti i 23 controlli (punto 13: 21 + path-traversal + nosql-injection)", () => {
+  it("list_checks elenca tutti i 24 controlli (punto 13: 21 + path-traversal + nosql-injection + header-injection)", () => {
     const result = callTool("list_checks", {}) as unknown[];
-    expect(result).toHaveLength(23);
+    expect(result).toHaveLength(24);
   });
 
   it("analyze_code richiede il parametro 'files'", () => {

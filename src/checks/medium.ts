@@ -326,4 +326,41 @@ export const mediumChecks: Check[] = [
     // all'utente proprietario nel tuo schema dati — aggiungerne uno a
     // caso creerebbe una query che sembra corretta ma non lo è.
   },
+
+  // Punto 13, fase 1 — ultimo pattern di injection prima del giro dedicato a
+  // LDAP/XXE/SSTI: header injection (CRLF/response splitting). Il pattern
+  // PHP esclude di proposito "Location" perché quel caso specifico è già
+  // coperto da open-redirect qui sopra — altrimenti la stessa riga verrebbe
+  // segnalata due volte per lo stesso motivo di fondo.
+  {
+    id: "header-injection",
+    severity: "medium",
+    confidence: "confirmed",
+    title: "Un valore della richiesta finisce direttamente in un'intestazione HTTP di risposta",
+    description:
+      "Un'intestazione HTTP di risposta viene impostata con un valore preso direttamente dalla richiesta (query, body, params), senza controllare che non contenga ritorno a capo (CRLF). Un attaccante può inserire intestazioni aggiuntive o persino un'intera risposta diversa — response splitting — potendo manipolare cache, cookie o il contenuto mostrato ad altri utenti.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+    detect(file) {
+      return [
+        // JS/Express: res.setHeader/res.set con un valore preso direttamente dalla richiesta.
+        ...scanLines(file, /res\.(setHeader|set)\s*\(\s*[^,]+,\s*req\.(query|body|params)/g),
+        // Python/Flask e Django: response.headers[...] assegnato da request.args/form/GET/POST.
+        ...scanLines(file, /response\.headers\[[^\]]+\]\s*=\s*request\.(args|form|GET|POST)/g),
+        // Go/Gin: c.Header(...). net/http: w.Header().Set(...).
+        ...scanLines(file, /c\.Header\s*\(\s*[^,]+,\s*c\.(Query|PostForm)\s*\(/g),
+        ...scanLines(file, /\.Header\(\)\.Set\s*\(\s*[^,]+,\s*(c\.(Query|PostForm)|r\.(FormValue|URL\.Query\(\)\.Get))\s*\(/g),
+        // Java/Servlet: response.setHeader(...) con request.getParameter.
+        ...scanLines(file, /response\.setHeader\s*\(\s*[^,]+,\s*request\.getParameter/g),
+        // PHP: header("Nome: " . $_GET[...]) — esclude "Location" (già coperto da open-redirect).
+        ...scanLines(file, /header\s*\(\s*["'](?!Location)[^"']*:\s*["']?\s*\.\s*\$_(GET|POST|REQUEST)/gi),
+        ...scanLines(file, /header\s*\(\s*"(?!Location)[^"]*:[^"]*\$_(GET|POST|REQUEST)/gi),
+      ];
+    },
+    // Nessun autofix: non conosciamo l'elenco di valori legittimi per
+    // quell'intestazione — inventarlo rischierebbe di bloccare un uso
+    // legittimo o, peggio, lasciare comunque un modo per iniettare CRLF.
+  },
 ];

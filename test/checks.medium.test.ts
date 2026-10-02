@@ -487,4 +487,68 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Punto 13 — header injection (CRLF / response splitting)", () => {
+    it("flags res.setHeader built from req.query", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("src/routes.ts", 'res.setHeader("X-Reason", req.query.reason)');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("does not flag res.setHeader with a fixed value", () => {
+      const check = checkById("header-injection");
+      const clean = file("src/routes.ts", 'res.setHeader("X-Reason", "ok")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("Python: flags response.headers[...] assigned from Flask request.args", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("app/views.py", "response.headers['X-Reason'] = request.args['reason']");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Go: flags Gin's c.Header built from c.Query", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("main.go", 'c.Header("X-Reason", c.Query("reason"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Go: flags net/http's w.Header().Set built from r.FormValue", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("main.go", 'w.Header().Set("X-Reason", r.FormValue("reason"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Java: flags response.setHeader built from request.getParameter", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("Controller.java", 'response.setHeader("X-Reason", request.getParameter("reason"));');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP: flags a custom header built with string concatenation", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("page.php", "header('X-Reason: ' . $_GET['reason']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP: flags a custom header with a variable interpolated in a double-quoted string", () => {
+      const check = checkById("header-injection");
+      const vulnerable = file("page.php", 'header("X-Reason: $_GET[\'reason\']");');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP: does not flag a fixed header value", () => {
+      const check = checkById("header-injection");
+      const clean = file("page.php", "header('X-Reason: ok');");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("PHP: does not double-flag a Location header built from $_GET — that's open-redirect's job, not header-injection's", () => {
+      const headerInjection = checkById("header-injection");
+      const openRedirect = mediumChecks.find((c) => c.id === "open-redirect")!;
+      const vulnerable = file("auth.php", "header('Location: ' . $_GET['next']);");
+      expect(detect(headerInjection, vulnerable)).toHaveLength(0);
+      expect(detect(openRedirect, vulnerable)).toHaveLength(1);
+    });
+  });
 });
