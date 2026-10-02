@@ -285,6 +285,12 @@ export interface TranslationTree {
     body1: string;
     body2: string;
   };
+  awsIam: {
+    title: string;
+    badge: string;
+    body1: string;
+    body2: string;
+  };
   report: {
     brandSub: string;
     reportLabel: string;
@@ -739,6 +745,12 @@ const it: TranslationTree = {
     badge: "OPZIONALE",
     body1: "Per Java le versioni delle dipendenze spesso non sono scritte nel progetto: nello stack Spring Boot sono quasi sempre ereditate da un parent POM. Per questo serve un passo in più rispetto agli altri linguaggi: un comando di sola lettura, che non modifica nulla, da lanciare tu nella cartella del tuo progetto.",
     body2: "Lancia questo comando nella cartella del tuo progetto Maven, poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 26 controlli.",
+  },
+  awsIam: {
+    title: "Controllo AWS IAM",
+    badge: "OPZIONALE",
+    body1: "Questo controllo legge lo stato vero del tuo account AWS, non il codice: trova policy IAM con accesso completo (Action \"*\" e Resource \"*\") e utenti con la policy AdministratorAccess collegata direttamente invece che tramite un ruolo — due errori di configurazione comuni e ben noti (CIS AWS Foundations Benchmark).",
+    body2: "Lancia questo comando, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 26 controlli.",
   },
   report: {
     brandSub: "Report di sicurezza del codice",
@@ -1199,6 +1211,12 @@ const en: TranslationTree = {
     badge: "OPTIONAL",
     body1: "For Java, dependency versions are often not written in the project itself: in the Spring Boot stack they're almost always inherited from a parent POM. That's why it takes one extra step compared to other languages: a read-only command, that changes nothing, which you run yourself in your project's folder.",
     body2: "Run this command in your Maven project's folder, then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 26 checks.",
+  },
+  awsIam: {
+    title: "AWS IAM check",
+    badge: "OPTIONAL",
+    body1: "This check reads your AWS account's real state, not the code: it finds IAM policies with full access (Action \"*\" and Resource \"*\") and users with the AdministratorAccess policy attached directly instead of through a role — two common, well-known misconfigurations (CIS AWS Foundations Benchmark).",
+    body2: "Run this read-only command with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 26 checks.",
   },
   report: {
     brandSub: "Code security report",

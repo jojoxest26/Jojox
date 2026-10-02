@@ -1,5 +1,6 @@
 import type { AnalysisResult, Finding, SourceFile } from "./types.js";
 import { ALL_CHECKS } from "./checks/index.js";
+import { AWS_IAM_SNAPSHOT_FILENAME, awsIamConfigFindings, parseAwsIamSnapshot } from "./cloudConfigChecks.js";
 import { MAVEN_DEPENDENCY_LIST_FILENAME } from "./depscan.js";
 import { computeScore, summarizeBySeverity } from "./scoring.js";
 import { SUPABASE_SNAPSHOT_FILENAME, parseSupabaseSnapshot, supabaseConfigFindings } from "./supabaseConfigChecks.js";
@@ -9,7 +10,7 @@ export { SKIP_PATH };
 const BINARY_EXT = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|pdf|zip|lock)$/i;
 
 /** File "snapshot" che non sono codice sorgente da scansionare riga per riga con i controlli a pattern — ognuno ha la sua analisi dedicata. */
-const NON_SOURCE_SNAPSHOTS = [SUPABASE_SNAPSHOT_FILENAME, MAVEN_DEPENDENCY_LIST_FILENAME];
+const NON_SOURCE_SNAPSHOTS = [SUPABASE_SNAPSHOT_FILENAME, MAVEN_DEPENDENCY_LIST_FILENAME, AWS_IAM_SNAPSHOT_FILENAME];
 
 export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {
   const relevantFiles = files.filter((f) => !SKIP_PATH.test(f.path) && !BINARY_EXT.test(f.path));
@@ -36,10 +37,16 @@ export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {
     }
   }
 
-  const snapshotFile = relevantFiles.find((f) => f.path.endsWith(SUPABASE_SNAPSHOT_FILENAME));
-  if (snapshotFile) {
-    const snapshot = parseSupabaseSnapshot(snapshotFile.content);
+  const supabaseSnapshotFile = relevantFiles.find((f) => f.path.endsWith(SUPABASE_SNAPSHOT_FILENAME));
+  if (supabaseSnapshotFile) {
+    const snapshot = parseSupabaseSnapshot(supabaseSnapshotFile.content);
     if (snapshot) findings.push(...supabaseConfigFindings(snapshot));
+  }
+
+  const awsIamSnapshotFile = relevantFiles.find((f) => f.path.endsWith(AWS_IAM_SNAPSHOT_FILENAME));
+  if (awsIamSnapshotFile) {
+    const snapshot = parseAwsIamSnapshot(awsIamSnapshotFile.content);
+    if (snapshot) findings.push(...awsIamConfigFindings(snapshot));
   }
 
   return {
@@ -60,3 +67,10 @@ export {
   supabaseConfigFindings,
 } from "./supabaseConfigChecks.js";
 export type { SupabaseSchemaSnapshot } from "./supabaseConfigChecks.js";
+export {
+  AWS_IAM_SNAPSHOT_FILENAME,
+  AWS_IAM_SNAPSHOT_COMMAND,
+  parseAwsIamSnapshot,
+  awsIamConfigFindings,
+} from "./cloudConfigChecks.js";
+export type { AwsIamSnapshot } from "./cloudConfigChecks.js";
