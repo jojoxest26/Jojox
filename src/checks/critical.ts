@@ -24,9 +24,52 @@ const SECRET_LIKE_NAMES =
   "apiKey|api_key|secret|secretKey|secret_key|apiSecret|api_secret|clientSecret|client_secret|accessToken|access_token|refreshToken|refresh_token|privateKey|private_key|dbPassword|db_password|password|token|authToken|auth_token";
 
 // Valori che, oltre a essere hardcoded, hanno un formato riconoscibile di chiave reale
-// (AKIA…, sk_live_/sk_test_…): vanno anche revocati presso il fornitore, non solo tolti
-// dal codice — l'autofix li lascia quindi segnalati soltanto, mai riscritti in automatico.
-const HIGH_CONFIDENCE_SECRET_VALUE = /AKIA[0-9A-Z]{16}|sk_(live|test)_[0-9a-zA-Z]{16,}/;
+// (AKIA…, sk_live_/sk_test_…, chiavi AI, token OAuth con prefisso di provider): vanno
+// anche revocati presso il fornitore, non solo tolti dal codice — l'autofix li lascia
+// quindi segnalati soltanto, mai riscritti in automatico.
+//
+// Punto 13, fase 1: secret detection più ampia. Prima chiavi AI (OpenAI, Anthropic) e
+// token OAuth con prefisso riconoscibile (GitHub, Slack, Google, Discord) — pubblico di
+// JoJoX fa "vibe coding" con questi strumenti ogni giorno, è il pattern più probabile.
+// Niente "token OAuth generico": senza un prefisso fisso di provider non è distinguibile
+// da un qualunque ID/hash lungo, darebbe troppi falsi positivi — stesso principio già
+// seguito per Stripe/AWS, solo formati con un'impronta riconoscibile.
+const OPENAI_KEY = /sk-proj-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}/;
+const ANTHROPIC_KEY = /sk-ant-[A-Za-z0-9_-]{20,}/;
+const GITHUB_TOKEN = /gh[pousr]_[A-Za-z0-9]{20,}/;
+const SLACK_TOKEN = /xox[baprs]-[A-Za-z0-9-]{10,}/;
+const GOOGLE_OAUTH_TOKEN = /ya29\.[A-Za-z0-9_-]{20,}/;
+const DISCORD_BOT_TOKEN = /[MN][A-Za-z\d]{23,25}\.[A-Za-z\d_-]{6}\.[A-Za-z\d_-]{27,}/;
+// Seguito del punto 13, fase 1: Twilio e SendGrid hanno anche loro un
+// prefisso fisso riconoscibile, stesso principio delle chiavi sopra.
+const TWILIO_SID = /AC[a-fA-F0-9]{32}/;
+const SENDGRID_KEY = /SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/;
+// Certificati privati: oltre a RSA/EC/OPENSSH già coperti, anche DSA,
+// PKCS8 cifrato, e il formato a blocco separato di PGP.
+const PRIVATE_KEY_BLOCK = /-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----|-----BEGIN PGP PRIVATE KEY BLOCK-----/;
+
+const HIGH_CONFIDENCE_SECRET_VALUE = new RegExp(
+  [
+    "AKIA[0-9A-Z]{16}",
+    "sk_(live|test)_[0-9a-zA-Z]{16,}",
+    ANTHROPIC_KEY.source,
+    OPENAI_KEY.source,
+    GITHUB_TOKEN.source,
+    SLACK_TOKEN.source,
+    GOOGLE_OAUTH_TOKEN.source,
+    DISCORD_BOT_TOKEN.source,
+    TWILIO_SID.source,
+    SENDGRID_KEY.source,
+  ].join("|")
+);
+
+// Stringa di connessione a un database con la password incrustata
+// (postgres://utente:password@host/db e simili) — il segreto è il segmento
+// tra ":" e "@". Un valore segnaposto ovvio (es. "password", "changeme") non
+// va segnalato: è lo stesso principio di PLACEHOLDER_VALUE, applicato qui al
+// segmento password invece che al valore di un'assegnazione intera.
+const DB_CONNECTION_STRING = /(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp):\/\/[^:\/\s"'@]+:([^@\/\s"']+)@/gi;
+const DB_CONNECTION_PLACEHOLDER_PASSWORD = /^(password|pass|changeme|xxx+|example|your[-_]?\w*|<.*>|\$\{)/i;
 
 // Librerie/funzioni di hashing riconosciute, JS e Python insieme — se il file le usa già
 // da qualche parte, diamo per buono che la password sia protetta e non segnaliamo nulla.
@@ -94,12 +137,40 @@ export const criticalChecks: Check[] = [
       const highConfidenceMatches = [
         ...scanLines(file, /AKIA[0-9A-Z]{16}/g),
         ...scanLines(file, /sk_(live|test)_[0-9a-zA-Z]{16,}/g),
-        ...scanLines(file, /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/g),
+        ...scanLines(file, new RegExp(PRIVATE_KEY_BLOCK.source, "g")),
+        // Punto 13, fase 1: chiavi AI e token OAuth con prefisso riconoscibile.
+        // ANTHROPIC_KEY prima di OPENAI_KEY: non per evitare ambiguità nel
+        // match (sono scanLines separate, non in competizione tra loro), ma
+        // perché "sk-ant-..." non ha comunque una corsa di 32+ caratteri
+        // alfanumerici subito dopo "sk-" (si interrompe su "ant-"), quindi
+        // OPENAI_KEY (versione legacy) non potrebbe comunque confonderla.
+        ...scanLines(file, new RegExp(ANTHROPIC_KEY.source, "g")),
+        ...scanLines(file, new RegExp(OPENAI_KEY.source, "g")),
+        ...scanLines(file, new RegExp(GITHUB_TOKEN.source, "g")),
+        ...scanLines(file, new RegExp(SLACK_TOKEN.source, "g")),
+        ...scanLines(file, new RegExp(GOOGLE_OAUTH_TOKEN.source, "g")),
+        ...scanLines(file, new RegExp(DISCORD_BOT_TOKEN.source, "g")),
+        ...scanLines(file, new RegExp(TWILIO_SID.source, "g")),
+        ...scanLines(file, new RegExp(SENDGRID_KEY.source, "g")),
       ];
 
       const alreadyFlaggedLines = new Set(highConfidenceMatches.map((m) => m.line));
-      const assignmentPattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})\\s*(?:${ASSIGN_OP})\\s*["'\`]([^"'\`]{12,})["'\`]`, "gi");
       const lines = file.content.split("\n");
+
+      // Stringa di connessione DB con password incrustata: il segreto è nel
+      // segmento catturato tra ":" e "@", non nell'intera stringa di
+      // connessione — va escluso solo quando quel segmento è un segnaposto
+      // ovvio, non l'intera riga.
+      const dbConnectionMatches = scanLines(file, new RegExp(DB_CONNECTION_STRING.source, "gi")).filter((m) => {
+        if (alreadyFlaggedLines.has(m.line)) return false;
+        const raw = lines[m.line - 1] ?? "";
+        const passwordMatch = raw.match(new RegExp(DB_CONNECTION_STRING.source, "i"));
+        const password = passwordMatch?.[1];
+        return !(password && DB_CONNECTION_PLACEHOLDER_PASSWORD.test(password));
+      });
+      for (const m of dbConnectionMatches) alreadyFlaggedLines.add(m.line);
+
+      const assignmentPattern = new RegExp(`\\b(${SECRET_LIKE_NAMES})\\s*(?:${ASSIGN_OP})\\s*["'\`]([^"'\`]{12,})["'\`]`, "gi");
       const assignmentMatches = scanLines(file, assignmentPattern).filter((m) => {
         if (alreadyFlaggedLines.has(m.line)) return false;
         const raw = lines[m.line - 1] ?? "";
@@ -108,7 +179,7 @@ export const criticalChecks: Check[] = [
         return !(valueMatch && PLACEHOLDER_VALUE.test(valueMatch[1]));
       });
 
-      return [...highConfidenceMatches, ...assignmentMatches];
+      return [...highConfidenceMatches, ...dbConnectionMatches, ...assignmentMatches];
     },
     autofix(file) {
       // Correggiamo solo la forma "nomeVariabile = 'valore letterale'": è

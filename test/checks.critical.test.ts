@@ -73,6 +73,167 @@ describe("critical checks", () => {
     expect(check.autofix?.(vulnerable)).toBeNull();
   });
 
+  describe("Punto 13 — secret detection più ampia: chiavi AI e token OAuth", () => {
+    it("hardcoded-secret: flags a literal OpenAI legacy key (sk-...)", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/ai.ts", 'const key = "sk-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789AbCdEfGh"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal OpenAI project key (sk-proj-...)", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/ai.ts", 'const key = "sk-proj-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCd"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal Anthropic key (sk-ant-...), not confused with OpenAI's sk-", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/ai.ts", 'const key = "sk-ant-api03-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal GitHub personal access token (ghp_...)", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/deploy.ts", 'const token = "ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal Slack bot token (xoxb-...)", () => {
+      const check = checkById("hardcoded-secret");
+      // Spezzata in due letterali: una token Slack realistica scritta per
+      // intero farebbe scattare la push protection di GitHub (ci è successo
+      // davvero). Il valore a runtime resta identico, solo il sorgente non
+      // contiene più la stringa intera in un unico letterale.
+      const fakeSlackToken = "xoxb-1234567890-1234567890123-" + "AbCdEfGhIjKlMnOpQrStUvWx";
+      const vulnerable = file("src/slack.ts", `const token = "${fakeSlackToken}"`);
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal Google OAuth access token (ya29....)", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/google.ts", 'const token = "ya29.AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_AbCdEf"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal Discord bot token", () => {
+      const check = checkById("hardcoded-secret");
+      // Spezzata in due letterali per lo stesso motivo del token Slack sopra.
+      const fakeDiscordToken = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA.XYZABC." + "AbCdEfGhIjKlMnOpQrStUvWxYz0123456";
+      const vulnerable = file("src/bot.ts", `const token = "${fakeDiscordToken}"`);
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag an OpenAI key read from an environment variable", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/ai.ts", "const key = process.env.OPENAI_API_KEY");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret: does not flag an Anthropic key read from an environment variable", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/ai.ts", "const key = process.env.ANTHROPIC_API_KEY");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret: does not flag a GitHub token read from an environment variable", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/deploy.ts", "const token = process.env.GITHUB_TOKEN");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret: a run of letters/digits shorter than the real key formats is not flagged (avoids false positives on ordinary IDs)", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/ids.ts", 'const requestId = "sk-short123"');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret autofix: leaves AI/OAuth format-detected keys alone — those must be revoked, not just removed", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/ai.ts", 'const key = "sk-proj-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCd"');
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+  });
+
+  describe("Punto 13 — secret detection più ampia: Twilio, SendGrid, stringhe di connessione DB, certificati", () => {
+    it("hardcoded-secret: flags a literal Twilio Account SID", () => {
+      const check = checkById("hardcoded-secret");
+      // Spezzata in due letterali per lo stesso motivo del token Slack sopra.
+      const fakeTwilioSid = "AC1234567890abcdef12345678" + "90abcdef";
+      const vulnerable = file("src/sms.ts", `const sid = "${fakeTwilioSid}"`);
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a literal SendGrid API key", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file(
+        "src/email.ts",
+        'const key = "SG.AbCdEfGhIjKlMnOpQrStUv.AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag a Twilio SID read from an environment variable", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/sms.ts", "const sid = process.env.TWILIO_ACCOUNT_SID");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret: flags a Postgres connection string with a real embedded password", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/db.ts", 'const url = "postgres://admin:Sup3rReal!Pass@db.host.com/prod"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a MongoDB connection string with a real embedded password", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("src/db.ts", 'const url = "mongodb+srv://admin:Sup3rReal!Pass@cluster.mongodb.net/prod"');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: does not flag a connection string with an obvious placeholder password", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/db.ts", 'const url = "postgres://user:password@localhost/dev"');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret: does not flag a connection string with no password at all", () => {
+      const check = checkById("hardcoded-secret");
+      const clean = file("src/db.ts", 'const url = "postgres://localhost/dev"');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("hardcoded-secret: flags a DSA private key block", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file("id_dsa", "-----BEGIN DSA PRIVATE KEY-----\nMIIBuwIBAA==\n-----END DSA PRIVATE KEY-----");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags an encrypted PKCS8 private key block", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file(
+        "id_rsa",
+        "-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIBuwIBAA==\n-----END ENCRYPTED PRIVATE KEY-----"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret: flags a PGP private key block", () => {
+      const check = checkById("hardcoded-secret");
+      const vulnerable = file(
+        "key.asc",
+        "-----BEGIN PGP PRIVATE KEY BLOCK-----\nlQOYBF...\n-----END PGP PRIVATE KEY BLOCK-----"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("hardcoded-secret autofix: leaves Twilio/SendGrid/connection-string secrets alone — those must be revoked, not just removed", () => {
+      const check = checkById("hardcoded-secret");
+      const fakeTwilioSid = "AC1234567890abcdef12345678" + "90abcdef";
+      const vulnerable = file("src/sms.ts", `const sid = "${fakeTwilioSid}"`);
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+  });
+
   it("env-file-with-real-values: flags a committed .env with real values", () => {
     const check = checkById("env-file-with-real-values");
     const vulnerable = file(".env", "DATABASE_URL=postgres://user:realpassword@db.host/prod\nJWT_SECRET=abcdef123456");
@@ -590,6 +751,121 @@ describe("critical checks", () => {
     it("command-injection: does not flag a fixed command with no interpolation", () => {
       const check = checkById("command-injection");
       const clean = file("Util.php", '$output = shell_exec("ls -la");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Punto 13 — path traversal", () => {
+    it("flags fs.readFile built from req.query", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("src/routes/files.ts", "fs.readFile(req.query.file, callback)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("flags res.sendFile built from req.body", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("src/routes/files.ts", "res.sendFile(req.body.path)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("does not flag fs.readFile with a fixed path", () => {
+      const check = checkById("path-traversal");
+      const clean = file("src/routes/files.ts", 'fs.readFile("./uploads/report.pdf", callback)');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("Python: flags open() built from Flask request.args", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("app/routes.py", "with open(request.args['file']) as f:\n    data = f.read()");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Python: flags Flask's send_file built from request.GET (Django-style key, same function name)", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("app/views.py", "return send_file(request.GET['file'])");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Go: flags os.Open built from Gin's c.Query", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("main.go", 'f, _ := os.Open(c.Query("file"))');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Go: does not flag os.Open with a fixed path", () => {
+      const check = checkById("path-traversal");
+      const clean = file("main.go", 'f, _ := os.Open("./uploads/report.pdf")');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("Java: flags new File() built from request.getParameter", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("FileController.java", 'File f = new File(request.getParameter("file"));');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP: flags file_get_contents built from $_GET", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("download.php", "$data = file_get_contents($_GET['file']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP: flags include() built from $_GET (local file inclusion, even more severe)", () => {
+      const check = checkById("path-traversal");
+      const vulnerable = file("page.php", "include($_GET['page']);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("PHP: does not flag file_get_contents with a fixed path", () => {
+      const check = checkById("path-traversal");
+      const clean = file("download.php", '$data = file_get_contents("./uploads/report.pdf");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Punto 13 — NoSQL injection ($where di MongoDB)", () => {
+    it("flags $where built with string concatenation (JS object key style)", () => {
+      const check = checkById("nosql-injection");
+      const vulnerable = file(
+        "src/users.ts",
+        "db.collection.find({ $where: \"this.username == '\" + username + \"'\" })"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("flags $where built with a template literal", () => {
+      const check = checkById("nosql-injection");
+      const vulnerable = file("src/users.ts", "db.collection.find({ $where: `this.username == '${username}'` })");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Python: flags $where built with an f-string (pymongo's quoted dict key style)", () => {
+      const check = checkById("nosql-injection");
+      const vulnerable = file(
+        "app/db.py",
+        'collection.find({"$where": f"this.username == \'{username}\'"})'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("Python: flags $where built with string concatenation (quoted dict key)", () => {
+      const check = checkById("nosql-injection");
+      const vulnerable = file(
+        "app/db.py",
+        "collection.find({\"$where\": \"this.username == '\" + username + \"'\"})"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("does not flag a normal field-based filter with no $where", () => {
+      const check = checkById("nosql-injection");
+      const clean = file("src/users.ts", "db.collection.find({ username: username })");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("does not flag a fixed, hardcoded $where clause with no interpolation", () => {
+      const check = checkById("nosql-injection");
+      const clean = file("src/users.ts", 'db.collection.find({ $where: "this.active == true" })');
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
