@@ -13,6 +13,7 @@ import { TeamSection } from "./components/TeamSection.js";
 import { SupabaseCheckSection } from "./components/SupabaseCheckSection.js";
 import { MavenCheckSection } from "./components/MavenCheckSection.js";
 import { AwsIamCheckSection } from "./components/AwsIamCheckSection.js";
+import { AwsS3CheckSection } from "./components/AwsS3CheckSection.js";
 import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
@@ -130,6 +131,7 @@ function App() {
       <SupabaseCheckSection />
       <MavenCheckSection />
       <AwsIamCheckSection />
+      <AwsS3CheckSection />
       <WaitlistForm />
       <ChecksList />
       <Footer />

@@ -291,6 +291,12 @@ export interface TranslationTree {
     body1: string;
     body2: string;
   };
+  awsS3: {
+    title: string;
+    badge: string;
+    body1: string;
+    body2: string;
+  };
   report: {
     brandSub: string;
     reportLabel: string;
@@ -751,6 +757,12 @@ const it: TranslationTree = {
     badge: "OPZIONALE",
     body1: "Questo controllo legge lo stato vero del tuo account AWS, non il codice: trova policy IAM con accesso completo (Action \"*\" e Resource \"*\") e utenti con la policy AdministratorAccess collegata direttamente invece che tramite un ruolo — due errori di configurazione comuni e ben noti (CIS AWS Foundations Benchmark).",
     body2: "Lancia questo comando, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 30 controlli.",
+  },
+  awsS3: {
+    title: "Controllo AWS S3",
+    badge: "OPZIONALE",
+    body1: "Questo controllo legge lo stato vero dei tuoi bucket S3, non il codice: trova bucket resi pubblici da una bucket policy o da un'ACL, e punti dove il Block Public Access non è attivo — errori di configurazione tra i più comuni e più costosi su AWS (basta un bucket configurato male per esporre tutto il suo contenuto). A differenza di IAM, qui serve un piccolo script invece di un comando singolo: S3 non ha un'unica chiamata che restituisca già tutto, va controllato bucket per bucket.",
+    body2: "Lancia questo script, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 30 controlli.",
   },
   report: {
     brandSub: "Report di sicurezza del codice",
@@ -1217,6 +1229,12 @@ const en: TranslationTree = {
     badge: "OPTIONAL",
     body1: "This check reads your AWS account's real state, not the code: it finds IAM policies with full access (Action \"*\" and Resource \"*\") and users with the AdministratorAccess policy attached directly instead of through a role — two common, well-known misconfigurations (CIS AWS Foundations Benchmark).",
     body2: "Run this read-only command with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 30 checks.",
+  },
+  awsS3: {
+    title: "AWS S3 check",
+    badge: "OPTIONAL",
+    body1: "This check reads your S3 buckets' real state, not the code: it finds buckets made public through a bucket policy or an ACL, and spots where Block Public Access isn't on — among the most common and most costly misconfigurations on AWS (one badly configured bucket is enough to expose everything in it). Unlike IAM, this one needs a small script instead of a single command: S3 has no single call that returns everything — it has to be checked bucket by bucket.",
+    body2: "Run this read-only script with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 30 checks.",
   },
   report: {
     brandSub: "Code security report",
