@@ -461,7 +461,7 @@ const it: TranslationTree = {
     integrations: "Integrazioni",
     team: "Il tuo team",
     roadmap: "In arrivo",
-    checks: "I 26 controlli",
+    checks: "Trasparenza totale",
   },
   audience: {
     eyebrow: "Per chi è",
@@ -915,7 +915,7 @@ const en: TranslationTree = {
     integrations: "Integrations",
     team: "Your team",
     roadmap: "Coming soon",
-    checks: "The 26 checks",
+    checks: "Full transparency",
   },
   audience: {
     eyebrow: "Who it's for",
