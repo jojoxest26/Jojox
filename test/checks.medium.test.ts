@@ -551,4 +551,39 @@ describe("medium checks", () => {
       expect(detect(openRedirect, vulnerable)).toHaveLength(1);
     });
   });
+
+  describe("Fase 2 — IaC (Dockerfile)", () => {
+    it("docker-missing-user: flags a Dockerfile with no USER instruction", () => {
+      const check = checkById("docker-missing-user");
+      const vulnerable = file("Dockerfile", 'FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("docker-missing-user: does not flag a Dockerfile that sets USER", () => {
+      const check = checkById("docker-missing-user");
+      const clean = file("Dockerfile", 'FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-missing-user: does not flag a multi-stage build that sets USER only in the final stage", () => {
+      const check = checkById("docker-missing-user");
+      const clean = file(
+        "Dockerfile",
+        'FROM node:20-slim AS builder\nWORKDIR /app\nCOPY . .\nRUN npm run build\n\nFROM node:20-slim\nWORKDIR /app\nCOPY --from=builder /app/dist ./dist\nUSER node\nCMD ["node", "dist/server.js"]\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-missing-user: does not flag a file with no FROM instruction (not a real Dockerfile build stage)", () => {
+      const check = checkById("docker-missing-user");
+      const clean = file("Dockerfile", "# just a comment\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-missing-user: does not flag anything in a file that isn't a Dockerfile", () => {
+      const check = checkById("docker-missing-user");
+      const clean = file("notes.txt", "FROM node:20-slim\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

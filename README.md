@@ -1,6 +1,6 @@
 # JoJoX — motore, backend e sito
 
-Sicurezza per codice scritto (anche) da AI: 26 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — gira sia lato server sia nel browser, non solo in teoria: il sito lo importa direttamente per l'analisi in modalità ospite.
+Sicurezza per codice scritto (anche) da AI: 30 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — gira sia lato server sia nel browser, non solo in teoria: il sito lo importa direttamente per l'analisi in modalità ospite.
 
 ## Struttura
 
@@ -70,8 +70,8 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 - Bottone "Collega GitHub" verso l'installazione reale della GitHub App, con indicazione chiara di quando è già collegato
 - Notifiche Slack: chi ha collegato GitHub può impostare un Incoming Webhook per ricevere un avviso quando una pull request viene bloccata o corretta in automatico
 - Scheda "Controllo Supabase": verifica la configurazione reale di un progetto (RLS, policy, bucket), non solo quella dedotta dal codice
-- Elenco dei 26 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
-- Sito disponibile in italiano e inglese, incluso il testo dei 26 controlli e il report PDF (`web/src/i18n/`)
+- Elenco dei 30 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
+- Sito disponibile in italiano e inglese, incluso il testo dei 30 controlli e il report PDF (`web/src/i18n/`)
 
 ## Uso
 

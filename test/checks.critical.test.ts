@@ -942,4 +942,48 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Fase 2 — IaC (Dockerfile)", () => {
+    it("docker-hardcoded-secret: flags ENV with a literal secret value", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const vulnerable = file("Dockerfile", "FROM node:20-slim\nENV DB_PASSWORD=supersecret123\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("docker-hardcoded-secret: flags ARG with a literal secret value", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const vulnerable = file("Dockerfile", "FROM node:20-slim\nARG API_KEY=abcdef1234567890\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("docker-hardcoded-secret: does not flag an ARG with no default value (supplied via --build-arg)", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const clean = file("Dockerfile", "FROM node:20-slim\nARG DB_PASSWORD\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-hardcoded-secret: does not flag ENV referencing another variable (from ARG)", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const clean = file("Dockerfile", "FROM node:20-slim\nARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-hardcoded-secret: does not flag an obvious placeholder value", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const clean = file("Dockerfile", "FROM node:20-slim\nENV DB_PASSWORD=changeme\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-hardcoded-secret: does not flag a non-secret-looking variable name", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const clean = file("Dockerfile", "FROM node:20-slim\nENV NODE_ENV=production\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-hardcoded-secret: does not flag anything in a file that isn't a Dockerfile", () => {
+      const check = checkById("docker-hardcoded-secret");
+      const clean = file("notes.txt", "ENV DB_PASSWORD=supersecret123\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

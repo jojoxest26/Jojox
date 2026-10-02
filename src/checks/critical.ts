@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile, nearbyMatches, redactLine } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile, isDockerfile, nearbyMatches, redactLine } from "../util/scan.js";
 import { toEnvName } from "../util/envName.js";
 
 const PUBLIC_ENV_PREFIX = /(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|GATSBY_|PUBLIC_)/;
@@ -11,6 +11,16 @@ const ENV_READ_PATTERN = /process\.env|import\.meta\.env|os\.environ|os\.getenv|
 
 const PLACEHOLDER_VALUE =
   /^(process\.env|import\.meta\.env|os\.environ|os\.getenv|os\.Getenv|System\.getenv|getenv\(|xxx+|your[-_]?\w*|changeme|example|placeholder|<.*>|\$\{)/i;
+
+// Fase 2, IaC: nomi di variabile ENV/ARG di Dockerfile che, con un valore
+// letterale, indicano quasi sempre un segreto — stile UPPER_SNAKE_CASE,
+// idiomatico in Docker (a differenza di SECRET_LIKE_NAMES sopra, pensato per
+// codice applicativo camelCase/snake_case).
+const DOCKERFILE_SECRET_VAR_NAME = /PASSWORD|SECRET|TOKEN|API_?KEY|PRIVATE_?KEY|ACCESS_?KEY|CREDENTIALS/i;
+// Cattura solo la prima coppia nome=valore di una riga ENV/ARG: una riga con
+// più variabili sulla stessa riga ("ENV A=1 B=2") viene letta solo per la
+// prima — limite noto, accettato per restare un pattern semplice e leggibile.
+const DOCKERFILE_ENV_ARG_ASSIGNMENT = /^\s*(ENV|ARG)\s+([A-Za-z_][A-Za-z0-9_]*)(?:=|\s+)(\S+)/i;
 
 // L'operatore di assegnazione: "=" o ":" in JS/Python, ma anche ":=" in Go
 // (dichiarazione breve di variabile) — va provato per primo, altrimenti il
@@ -734,5 +744,38 @@ export const criticalChecks: Check[] = [
     // diverse feature a seconda di cosa serve davvero al progetto (DOCTYPE
     // completamente vietato vs solo entità esterne) — una scelta che
     // dipende dall'uso reale dell'XML in quel progetto.
+  },
+
+  {
+    id: "docker-hardcoded-secret",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un segreto è scritto direttamente in un'istruzione ENV o ARG del Dockerfile",
+    description:
+      "Una variabile con un nome tipo password/secret/token/chiave ha un valore letterale in un'istruzione ENV o ARG. A differenza di un .env (che normalmente non finisce nell'immagine), questo valore viene incorporato nell'immagine Docker stessa — chiunque possa fare il pull o ispezionare la cronologia dei layer lo recupera, anche se la riga viene rimossa in una versione successiva del Dockerfile.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# passato con: docker build --build-arg DB_PASSWORD=*** (o, meglio ancora,\n# con un secret mount di BuildKit, che non finisce nella cronologia dei layer)`,
+    },
+    detect(file) {
+      if (!isDockerfile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+      lines.forEach((lineText, idx) => {
+        const m = DOCKERFILE_ENV_ARG_ASSIGNMENT.exec(lineText);
+        if (!m) return;
+        const [, , varName, rawValue] = m;
+        if (!DOCKERFILE_SECRET_VAR_NAME.test(varName)) return;
+        const value = rawValue.replace(/^["']|["']$/g, "");
+        if (value.startsWith("$")) return; // riferimento a un'altra variabile (es. da ARG), non un valore letterale
+        if (PLACEHOLDER_VALUE.test(value)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+      return matches;
+    },
+    // Nessun autofix: la correzione corretta (passare il segreto come
+    // --build-arg o, meglio, come secret mount di BuildKit) richiede
+    // modifiche anche al comando di build usato fuori da questo file — non
+    // è una riscrittura meccanica sicura della sola riga segnalata.
   },
 ];

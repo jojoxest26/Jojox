@@ -75,9 +75,9 @@ describe("MCP server: handleRequest", () => {
 });
 
 describe("MCP server: callTool", () => {
-  it("list_checks elenca tutti i 26 controlli (punto 13, fase 1 completa)", () => {
+  it("list_checks elenca tutti i 30 controlli (punto 13, fase 2 — IaC Dockerfile)", () => {
     const result = callTool("list_checks", {}) as unknown[];
-    expect(result).toHaveLength(26);
+    expect(result).toHaveLength(30);
   });
 
   it("analyze_code richiede il parametro 'files'", () => {

@@ -20,6 +20,12 @@ export function isPhpFile(file: SourceFile): boolean {
   return /\.php$/.test(file.path);
 }
 
+/** True per un Dockerfile — nome esatto "Dockerfile", con un suffisso tipo "Dockerfile.dev", o estensione ".dockerfile". Usato dai controlli IaC (Fase 2). */
+export function isDockerfile(file: SourceFile): boolean {
+  const basename = file.path.split("/").pop() ?? "";
+  return /^Dockerfile(\.[\w-]+)?$/i.test(basename) || /\.dockerfile$/i.test(basename);
+}
+
 const CONTEXT_CHARS = 12;
 const MASK_CHAR = "•";
 

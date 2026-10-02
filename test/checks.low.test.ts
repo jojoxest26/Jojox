@@ -259,4 +259,54 @@ describe("low checks", () => {
       expect(fixed).toContain("// error_log($password);  // rimossa da JoJoX");
     });
   });
+
+  describe("Fase 2 — IaC (Dockerfile)", () => {
+    it("docker-unpinned-base-image: flags FROM with an explicit :latest tag", () => {
+      const check = checkById("docker-unpinned-base-image");
+      const vulnerable = file("Dockerfile", "FROM node:latest\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("docker-unpinned-base-image: does not flag a pinned version tag", () => {
+      const check = checkById("docker-unpinned-base-image");
+      const clean = file("Dockerfile", "FROM node:20.11-slim\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-unpinned-base-image: does not flag a tag that merely starts with 'latest' (e.g. 'latest-slim')", () => {
+      const check = checkById("docker-unpinned-base-image");
+      const clean = file("Dockerfile", "FROM node:latest-slim\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-unpinned-base-image: does not flag anything in a file that isn't a Dockerfile", () => {
+      const check = checkById("docker-unpinned-base-image");
+      const clean = file("notes.txt", "FROM node:latest\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-add-remote-url: flags ADD with an http(s) URL", () => {
+      const check = checkById("docker-add-remote-url");
+      const vulnerable = file("Dockerfile", "ADD https://example.com/install.sh /tmp/install.sh\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("docker-add-remote-url: does not flag ADD with a local path", () => {
+      const check = checkById("docker-add-remote-url");
+      const clean = file("Dockerfile", "ADD app.tar.gz /app/\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-add-remote-url: does not flag COPY with a local path", () => {
+      const check = checkById("docker-add-remote-url");
+      const clean = file("Dockerfile", "COPY . .\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("docker-add-remote-url: does not flag anything in a file that isn't a Dockerfile", () => {
+      const check = checkById("docker-add-remote-url");
+      const clean = file("notes.txt", "ADD https://example.com/install.sh /tmp/install.sh\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import type { Check } from "../types.js";
-import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile } from "../util/scan.js";
+import { scanLines, fileMatch, replaceLines, isPythonFile, isGoFile, isJavaFile, isPhpFile, isDockerfile } from "../util/scan.js";
 
 const RATE_LIMIT_HELPER = `// JoJoX: limite tentativi di accesso (5 ogni 15 minuti), senza dipendenze esterne
 const __jojoxLoginAttempts = new Map();
@@ -194,5 +194,43 @@ export const lowChecks: Check[] = [
       });
       return changed ? content : null;
     },
+  },
+
+  {
+    id: "docker-unpinned-base-image",
+    severity: "low",
+    confidence: "heuristic",
+    title: "L'immagine di base del Dockerfile usa il tag \":latest\"",
+    description:
+      "Un'istruzione FROM usa esplicitamente il tag \":latest\" invece di una versione precisa. \"latest\" cambia nel tempo: la stessa build, rifatta in un altro momento, può ottenere una versione diversa dell'immagine di base — build non riproducibile, e un aggiornamento indesiderato può arrivare senza che nessuno l'abbia deciso.",
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+    detect(file) {
+      if (!isDockerfile(file)) return [];
+      return scanLines(file, /^\s*FROM\s+\S+:latest(?=\s|$)/gim);
+    },
+    // Nessun autofix: non possiamo indovinare quale versione precisa
+    // dell'immagine il progetto si aspetta — richiede una scelta umana.
+  },
+
+  {
+    id: "docker-add-remote-url",
+    severity: "low",
+    confidence: "heuristic",
+    title: "Il Dockerfile scarica un file remoto con ADD invece di COPY",
+    description:
+      "L'istruzione ADD con un URL http/https scarica un file da internet durante la build, senza verifica dell'integrità e senza che il contenuto sia visibile nel repository. Se quell'URL viene compromesso in futuro, la build incorpora contenuto arbitrario senza che nessuno se ne accorga leggendo il Dockerfile.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<hash atteso>  /tmp/install.sh" | sha256sum -c -`,
+    },
+    detect(file) {
+      if (!isDockerfile(file)) return [];
+      return scanLines(file, /^\s*ADD\s+https?:\/\//gim);
+    },
+    // Nessun autofix: servirebbe conoscere l'hash atteso del file scaricato,
+    // che non possiamo calcolare senza scaricarlo noi stessi.
   },
 ];

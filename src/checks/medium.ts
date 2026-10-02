@@ -1,5 +1,5 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, redactLine, replaceLines } from "../util/scan.js";
+import { scanLines, redactLine, replaceLines, fileMatch, isDockerfile } from "../util/scan.js";
 
 // JS (userId, req.user...), Python/Django/Flask (request.user, user_id...),
 // Go (UserID, c.MustGet...), Java/Spring Security (getPrincipal,
@@ -362,5 +362,38 @@ export const mediumChecks: Check[] = [
     // Nessun autofix: non conosciamo l'elenco di valori legittimi per
     // quell'intestazione — inventarlo rischierebbe di bloccare un uso
     // legittimo o, peggio, lasciare comunque un modo per iniettare CRLF.
+  },
+
+  {
+    id: "docker-missing-user",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "Il Dockerfile non imposta un utente non-root",
+    description:
+      "Nessuna istruzione USER nel Dockerfile: senza specificarlo, il container gira come root. Se un attaccante riesce a eseguire codice dentro il container (es. sfruttando una libreria vulnerabile), root dentro il container rende più facile un'eventuale fuga verso l'host o un impatto più ampio sul sistema circostante.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+    detect(file) {
+      if (!isDockerfile(file)) return [];
+      if (!fileMatch(file, /^\s*FROM\s+\S+/im)) return [];
+      // Un USER impostato da qualche parte nel file — anche se solo in uno
+      // stage intermedio di una build multi-stage, non necessariamente
+      // quello finale — è trattato come sufficiente: meglio un falso
+      // negativo occasionale che segnalare un Dockerfile multi-stage scritto bene.
+      if (fileMatch(file, /^\s*USER\s+\S+/im)) return [];
+
+      const lines = file.content.split("\n");
+      let lastFromLine = 1;
+      lines.forEach((lineText, idx) => {
+        if (/^\s*FROM\s+\S+/i.test(lineText)) lastFromLine = idx + 1;
+      });
+      const lineText = lines[lastFromLine - 1] ?? "";
+      return [{ line: lastFromLine, snippet: redactLine(lineText, 0, lineText.length) }];
+    },
+    // Nessun autofix: l'utente giusto da usare dipende dall'immagine di base
+    // (alcune hanno già un utente non-root pronto tipo "node", altre no) —
+    // non possiamo indovinarlo senza rischiare un container che non si avvia più.
   },
 ];

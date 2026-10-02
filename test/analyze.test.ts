@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { analyzeFiles, ALL_CHECKS } from "../src/analyze.js";
 
 describe("analyzeFiles", () => {
-  it("registers exactly 26 checks across the 4 severities (punto 13, fase 1 completa)", () => {
-    expect(ALL_CHECKS).toHaveLength(26);
+  it("registers exactly 30 checks across the 4 severities (punto 13, fase 2 — IaC Dockerfile)", () => {
+    expect(ALL_CHECKS).toHaveLength(30);
     const bySeverity = ALL_CHECKS.reduce<Record<string, number>>((acc, c) => {
       acc[c.severity] = (acc[c.severity] ?? 0) + 1;
       return acc;
     }, {});
-    expect(bySeverity).toEqual({ critical: 12, high: 5, medium: 7, low: 2 });
+    expect(bySeverity).toEqual({ critical: 13, high: 5, medium: 8, low: 4 });
   });
 
   it("returns a perfect score for a clean project", () => {
