@@ -134,6 +134,161 @@ export function parseRequirementsTxt(content: string): DependencyRef[] {
 }
 
 /**
+ * Nomi di pacchetto in un requirements.txt che NON sono stati controllati
+ * perché non pinnati con "==" (un intervallo come ">=2.0", o nessuna
+ * versione affatto) — usata per avvisare l'utente di quali dipendenze sono
+ * state saltate, invece di farlo in silenzio come faceva parseRequirementsTxt
+ * da sola. Esclude le stesse righe già escluse lì (commenti, righe vuote,
+ * direttive -r/-e/--hash) più le righe VCS/URL (es. "git+https://...") che
+ * non hanno comunque un nome di pacchetto PyPI riconoscibile.
+ */
+export function findUnanalyzedRequirements(content: string): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  const namePattern = /^([A-Za-z0-9][A-Za-z0-9._-]*)/;
+
+  for (const rawLine of content.split("\n")) {
+    const withoutComment = rawLine.split("#")[0];
+    const withoutMarkers = withoutComment.split(";")[0].trim();
+    if (!withoutMarkers || withoutMarkers.startsWith("-")) continue;
+    if (withoutMarkers.includes("==")) continue; // già pinnata, analizzata regolarmente
+    if (/^\w+\+|:\/\//.test(withoutMarkers)) continue; // riferimento VCS/URL, non un nome di pacchetto
+
+    const match = namePattern.exec(withoutMarkers);
+    if (!match) continue;
+    const name = match[1];
+    if (seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+  }
+
+  return names;
+}
+
+/**
+ * Estrae nome + versione da un yarn.lock, sia nel formato classico (Yarn 1,
+ * "version \"x.y.z\"") sia in quello di Yarn Berry (2+, "version: x.y.z").
+ * Una riga di intestazione blocco (non indentata, finisce con ":") può
+ * elencare più spec separate da virgola per lo stesso pacchetto installato
+ * (es. due range diversi risolti alla stessa versione) — tutte vengono
+ * associate alla "version" che segue, nella prima riga indentata che la
+ * dichiara. Il nome del pacchetto si ricava togliendo l'ultimo "@" e tutto
+ * quello che segue (il range) — per i pacchetti scoped (es. "@babel/core")
+ * il primo "@" fa parte del nome, quindi si cerca l'ULTIMO "@" nella stringa.
+ */
+export function parseYarnLock(content: string): DependencyRef[] {
+  const deps = new DependencyCollector();
+  let pendingNames: string[] = [];
+
+  const nameFromSpec = (spec: string): string => {
+    const trimmed = spec.trim().replace(/^["']|["']$/g, "");
+    const at = trimmed.lastIndexOf("@");
+    return at > 0 ? trimmed.slice(0, at) : trimmed;
+  };
+
+  for (const rawLine of content.split("\n")) {
+    if (!rawLine.trim() || rawLine.trim().startsWith("#")) continue;
+
+    if (/^\S/.test(rawLine) && rawLine.trim().endsWith(":")) {
+      const header = rawLine.trim().slice(0, -1);
+      pendingNames = header.split(",").map(nameFromSpec);
+      continue;
+    }
+
+    if (pendingNames.length === 0) continue;
+    const classic = rawLine.match(/^\s+version\s+"([^"]+)"/);
+    const berry = rawLine.match(/^\s+version:\s*"?([^"\s]+)"?/);
+    const version = classic?.[1] ?? berry?.[1];
+    if (!version) continue;
+
+    for (const name of pendingNames) deps.add(name, version);
+    pendingNames = [];
+  }
+
+  return deps.values();
+}
+
+/**
+ * Estrae nome + versione da un pnpm-lock.yaml — la chiave di ogni voce nella
+ * sezione "packages" combina nome e versione con "@" (es. "/lodash@4.17.21:"
+ * nelle versioni più vecchie di pnpm, "lodash@4.17.21:" nelle più recenti,
+ * che non usano più lo slash iniziale). Eventuali suffissi tra parentesi
+ * (dipendenze peer risolte, es. "(react@18.0.0)") vengono ignorati. Stessa
+ * scelta delle altre funzioni qui: nessun parser YAML, la chiave è abbastanza
+ * specifica da riconoscere con una regex per riga.
+ */
+export function parsePnpmLock(content: string): DependencyRef[] {
+  const deps = new DependencyCollector();
+  const pattern = /^\s*["']?\/?(@[^/\s'"]+\/[^@\s'"]+|[^@\s'"/]+)@([^\s'":()]+)/;
+
+  for (const rawLine of content.split("\n")) {
+    const match = pattern.exec(rawLine);
+    if (!match) continue;
+    deps.add(match[1], match[2]);
+  }
+
+  return deps.values();
+}
+
+/**
+ * Estrae nome + versione da un poetry.lock (Poetry) o un uv.lock (uv) — lo
+ * stesso formato TOML "array di tabelle" ([[package]] seguito da "name" e
+ * "version"), usato identico da entrambi gli strumenti.
+ */
+export function parsePythonTomlLock(content: string): DependencyRef[] {
+  const deps = new DependencyCollector();
+  let currentName: string | null = null;
+
+  for (const rawLine of content.split("\n")) {
+    const line = rawLine.trim();
+    if (line === "[[package]]") {
+      currentName = null;
+      continue;
+    }
+    const nameMatch = line.match(/^name\s*=\s*"([^"]+)"/);
+    if (nameMatch) {
+      currentName = nameMatch[1];
+      continue;
+    }
+    const versionMatch = line.match(/^version\s*=\s*"([^"]+)"/);
+    if (versionMatch && currentName) {
+      deps.add(currentName, versionMatch[1]);
+      currentName = null;
+    }
+  }
+
+  return deps.values();
+}
+
+/**
+ * Estrae nome + versione da un Pipfile.lock — JSON con due sezioni separate,
+ * "default" (dipendenze dirette) e "develop" (dipendenze di sviluppo). La
+ * versione include il prefisso "==" tipico degli specificatori pip, tolto
+ * prima di restituirla.
+ */
+export function parsePipfileLock(content: string): DependencyRef[] {
+  let data: unknown;
+  try {
+    data = JSON.parse(content);
+  } catch {
+    return [];
+  }
+  if (!data || typeof data !== "object") return [];
+
+  const deps = new DependencyCollector();
+  for (const section of ["default", "develop"]) {
+    const group = (data as Record<string, unknown>)[section];
+    if (!group || typeof group !== "object") continue;
+    for (const [name, info] of Object.entries(group as Record<string, unknown>)) {
+      const version = (info as Record<string, unknown> | undefined)?.version;
+      if (typeof version === "string") deps.add(name, version.replace(/^==/, ""));
+    }
+  }
+
+  return deps.values();
+}
+
+/**
  * Estrae nome + versione da un go.mod. A differenza di npm/Python, Go
  * risolve già tutte le dipendenze (dirette e indirette) a una versione
  * esatta dentro lo stesso go.mod grazie al suo sistema di moduli (minimal
@@ -372,6 +527,66 @@ function locateInComposerLock(content: string, name: string, version: string): {
   return { line: 1, snippet: `"${name}": "${version}"` };
 }
 
+/** Trova la riga dello yarn.lock dove compare la versione (sia formato classico sia Berry). */
+function locateInYarnLock(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const headerPattern = new RegExp(`(^|,\\s*)["']?${escapeRegExp(name)}@`);
+  const versionPattern = new RegExp(`^\\s+version:?\\s+?"?${escapeRegExp(version)}"?\\s*$`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!headerPattern.test(lines[i]) || !lines[i].trim().endsWith(":")) continue;
+    for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+      if (versionPattern.test(lines[j])) return { line: j + 1, snippet: lines[j].trim() };
+    }
+  }
+
+  return { line: 1, snippet: `${name}@${version}` };
+}
+
+/** Trova la riga del pnpm-lock.yaml dove compare questa dipendenza (chiave "nome@versione" nella sezione packages). */
+function locateInPnpmLock(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const pattern = new RegExp(`^\\s*["']?\\/?${escapeRegExp(name)}@${escapeRegExp(version)}\\b`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (pattern.test(lines[i])) return { line: i + 1, snippet: lines[i].trim() };
+  }
+
+  return { line: 1, snippet: `${name}@${version}` };
+}
+
+/** Trova la riga del poetry.lock/uv.lock dove compare la versione, dentro il blocco [[package]] di questo nome. */
+function locateInPythonTomlLock(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const namePattern = new RegExp(`^name\\s*=\\s*"${escapeRegExp(name)}"`);
+  const versionPattern = new RegExp(`^version\\s*=\\s*"${escapeRegExp(version)}"`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!namePattern.test(lines[i].trim())) continue;
+    for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+      if (versionPattern.test(lines[j].trim())) return { line: j + 1, snippet: lines[j].trim() };
+    }
+  }
+
+  return { line: 1, snippet: `name = "${name}"\nversion = "${version}"` };
+}
+
+/** Trova la riga del Pipfile.lock dove compare la versione di questo pacchetto (con il prefisso "==" tipico di pip). */
+function locateInPipfileLock(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const namePattern = new RegExp(`"${escapeRegExp(name)}"\\s*:\\s*\\{`);
+  const versionPattern = new RegExp(`"version"\\s*:\\s*"==${escapeRegExp(version)}"`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!namePattern.test(lines[i])) continue;
+    for (let j = i; j < Math.min(i + 5, lines.length); j++) {
+      if (versionPattern.test(lines[j])) return { line: j + 1, snippet: lines[j].trim() };
+    }
+  }
+
+  return { line: 1, snippet: `"${name}": { "version": "==${version}" }` };
+}
+
 /** Trova la riga del go.mod dove compare questa dipendenza. */
 function locateInGoMod(content: string, name: string, version: string): { line: number; snippet: string } {
   const lines = content.split("\n");
@@ -409,6 +624,8 @@ interface ManifestSource {
   formatPin: (name: string, version: string) => string;
   /** Nome usato per interrogare OSV.dev, se diverso da quello mostrato nel finding (es. PyPI vuole la forma canonica). */
   queryName: (name: string) => string;
+  /** Solo per requirements.txt: nomi dei pacchetti non pinnati, quindi non controllati — usata per avvisare invece di saltarli in silenzio. */
+  findUnanalyzed?: (content: string) => string[];
 }
 
 /**
@@ -430,10 +647,51 @@ const MANIFEST_SOURCES: ManifestSource[] = [
     queryName: (name) => name,
   },
   {
+    ecosystem: "npm",
+    filename: "yarn.lock",
+    parse: parseYarnLock,
+    locate: locateInYarnLock,
+    formatPin: (name, version) => `${name}@${version}`,
+    queryName: (name) => name,
+  },
+  {
+    ecosystem: "npm",
+    filename: "pnpm-lock.yaml",
+    parse: parsePnpmLock,
+    locate: locateInPnpmLock,
+    formatPin: (name, version) => `${name}@${version}`,
+    queryName: (name) => name,
+  },
+  {
     ecosystem: "PyPI",
     filename: "requirements.txt",
     parse: parseRequirementsTxt,
     locate: locateInRequirementsTxt,
+    formatPin: (name, version) => `${name}==${version}`,
+    queryName: normalizePypiName,
+    findUnanalyzed: findUnanalyzedRequirements,
+  },
+  {
+    ecosystem: "PyPI",
+    filename: "poetry.lock",
+    parse: parsePythonTomlLock,
+    locate: locateInPythonTomlLock,
+    formatPin: (name, version) => `${name}==${version}`,
+    queryName: normalizePypiName,
+  },
+  {
+    ecosystem: "PyPI",
+    filename: "uv.lock",
+    parse: parsePythonTomlLock,
+    locate: locateInPythonTomlLock,
+    formatPin: (name, version) => `${name}==${version}`,
+    queryName: normalizePypiName,
+  },
+  {
+    ecosystem: "PyPI",
+    filename: "Pipfile.lock",
+    parse: parsePipfileLock,
+    locate: locateInPipfileLock,
     formatPin: (name, version) => `${name}==${version}`,
     queryName: normalizePypiName,
   },
@@ -471,15 +729,45 @@ const NO_FIXED_VERSION_MESSAGE =
   "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.";
 
 /**
+ * Un avviso, non una vulnerabilità: elenca le dipendenze di un
+ * requirements.txt che non sono state controllate perché non pinnate con
+ * "==" — invece di saltarle in silenzio come prima. Un solo finding
+ * aggregato per file, non uno per dipendenza, per non riempire l'elenco dei
+ * risultati quando un progetto ha molte versioni non pinnate.
+ */
+function unanalyzedDependenciesFinding(filePath: string, names: string[]): Finding {
+  const shown = names.slice(0, 15);
+  const list = shown.join(", ") + (names.length > shown.length ? `, +${names.length - shown.length} altre` : "");
+
+  return {
+    checkId: "dependency-scan-unpinned-skipped",
+    severity: "low",
+    confidence: "heuristic",
+    title:
+      names.length === 1
+        ? `1 dipendenza in requirements.txt non è stata controllata perché non è pinnata con "=="`
+        : `${names.length} dipendenze in requirements.txt non sono state controllate perché non sono pinnate con "=="`,
+    description: `La scansione delle dipendenze vulnerabili legge solo le versioni "pinnate" con "==" (es. "flask==2.0.1"), perché solo lì si conosce con certezza quale versione è davvero installata. Queste dipendenze usano un intervallo di versioni (es. ">=2.0") o non specificano nessuna versione, quindi non sono state controllate: ${list}. Per includerle nella scansione, pinna una versione esatta nel file.`,
+    file: filePath,
+    line: 1,
+    snippet: list,
+    fix: { before: "requests>=2.0", after: "requests==2.31.0" },
+  };
+}
+
+/**
  * Fase 2: cerca dipendenze con vulnerabilità note nel database pubblico
- * OSV.dev, per ogni manifest supportato trovato tra i file caricati — npm,
- * Python, Go e PHP/Composer letti direttamente dal progetto; Java/Maven
- * invece solo se il cliente carica anche il file generato da
- * MAVEN_DEPENDENCY_LIST_COMMAND (vedi il commento su MANIFEST_SOURCES più
- * sotto per il perché). A differenza dei controlli a pattern (sincroni,
- * zero rete), questo fa vere chiamate di rete — per questo è una funzione
- * async separata, da richiamare esplicitamente insieme a analyzeFiles() e
- * non dentro di essa.
+ * OSV.dev, per ogni manifest supportato trovato tra i file caricati — npm
+ * (package-lock.json, yarn.lock, pnpm-lock.yaml), Python (requirements.txt
+ * pinnato, poetry.lock, uv.lock, Pipfile.lock), Go e PHP/Composer letti
+ * direttamente dal progetto; Java/Maven invece solo se il cliente carica
+ * anche il file generato da MAVEN_DEPENDENCY_LIST_COMMAND (vedi il commento
+ * su MANIFEST_SOURCES più sotto per il perché). Un requirements.txt con
+ * dipendenze non pinnate produce in più un avviso (non una vulnerabilità)
+ * che le elenca, invece di saltarle in silenzio. A differenza dei controlli
+ * a pattern (sincroni, zero rete), questo fa vere chiamate di rete — per
+ * questo è una funzione async separata, da richiamare esplicitamente
+ * insieme a analyzeFiles() e non dentro di essa.
  */
 export async function scanDependencies(files: readonly SourceFile[]): Promise<Finding[]> {
   const findings: Finding[] = [];
@@ -487,6 +775,11 @@ export async function scanDependencies(files: readonly SourceFile[]): Promise<Fi
   for (const source of MANIFEST_SOURCES) {
     const manifestFile = findManifest(files, source.filename);
     if (!manifestFile) continue;
+
+    if (source.findUnanalyzed) {
+      const unanalyzed = source.findUnanalyzed(manifestFile.content);
+      if (unanalyzed.length > 0) findings.push(unanalyzedDependenciesFinding(manifestFile.path, unanalyzed));
+    }
 
     const deps = source.parse(manifestFile.content);
     if (deps.length === 0) continue;

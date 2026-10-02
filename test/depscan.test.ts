@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   MAVEN_DEPENDENCY_LIST_FILENAME,
+  findUnanalyzedRequirements,
   parseComposerLock,
   parseGoMod,
   parseMavenDependencyList,
   parseNpmLockfile,
+  parsePipfileLock,
+  parsePnpmLock,
+  parsePythonTomlLock,
   parseRequirementsTxt,
+  parseYarnLock,
   scanDependencies,
 } from "../src/depscan.js";
 
@@ -676,5 +681,227 @@ describe("scanDependencies — Java (jojox-maven-dependencies.txt)", () => {
 
     expect(result).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("parseYarnLock", () => {
+  it("reads the classic Yarn 1 format", () => {
+    const content = ['lodash@^4.17.21:', '  version "4.17.21"', '  resolved "https://registry.yarnpkg.com/lodash"'].join("\n");
+    expect(parseYarnLock(content)).toEqual([{ name: "lodash", version: "4.17.21" }]);
+  });
+
+  it("associates every spec in a comma-separated header with the same version", () => {
+    const content = ["lodash@^4.17.0, lodash@^4.17.21:", '  version "4.17.21"'].join("\n");
+    expect(parseYarnLock(content)).toEqual([{ name: "lodash", version: "4.17.21" }]);
+  });
+
+  it("handles a scoped package (name contains its own '@')", () => {
+    const content = ['"@babel/core@^7.1.0":', '  version "7.20.0"'].join("\n");
+    expect(parseYarnLock(content)).toEqual([{ name: "@babel/core", version: "7.20.0" }]);
+  });
+
+  it("reads the Yarn Berry (2+) format", () => {
+    const content = ['"lodash@npm:^4.17.21":', "  version: 4.17.21", '  resolution: "lodash@npm:4.17.21"'].join("\n");
+    expect(parseYarnLock(content)).toEqual([{ name: "lodash", version: "4.17.21" }]);
+  });
+
+  it("ignores comments and blank lines", () => {
+    const content = ["# yarn lockfile v1", "", 'lodash@^4.17.21:', '  version "4.17.21"'].join("\n");
+    expect(parseYarnLock(content)).toEqual([{ name: "lodash", version: "4.17.21" }]);
+  });
+});
+
+describe("parsePnpmLock", () => {
+  it("reads the older pnpm format with a leading slash", () => {
+    const content = ["packages:", "  /lodash@4.17.21:", "    resolution: {integrity: sha512-abc}"].join("\n");
+    expect(parsePnpmLock(content)).toContainEqual({ name: "lodash", version: "4.17.21" });
+  });
+
+  it("reads the newer pnpm format without a leading slash", () => {
+    const content = ["packages:", "  lodash@4.17.21: {}"].join("\n");
+    expect(parsePnpmLock(content)).toContainEqual({ name: "lodash", version: "4.17.21" });
+  });
+
+  it("handles a scoped package", () => {
+    const content = ["packages:", "  /@babel/core@7.20.0:"].join("\n");
+    expect(parsePnpmLock(content)).toContainEqual({ name: "@babel/core", version: "7.20.0" });
+  });
+
+  it("strips a resolved-peer-dependency suffix in parentheses", () => {
+    const content = ["packages:", '  "@babel/core@7.20.0(supports-color@5.5.0)": {}'].join("\n");
+    expect(parsePnpmLock(content)).toContainEqual({ name: "@babel/core", version: "7.20.0" });
+  });
+
+  it("does not match the unrelated 'dependencies' section (no name@version on one line)", () => {
+    const content = ["dependencies:", "  lodash:", "    specifier: ^4.17.21", "    version: 4.17.21"].join("\n");
+    expect(parsePnpmLock(content)).toEqual([]);
+  });
+});
+
+describe("parsePythonTomlLock (poetry.lock / uv.lock)", () => {
+  it("reads name and version from each [[package]] block", () => {
+    const content = ['[[package]]', 'name = "flask"', 'version = "2.0.1"', 'description = "x"', "", "[[package]]", 'name = "requests"', 'version = "2.25.1"'].join(
+      "\n"
+    );
+    expect(parsePythonTomlLock(content)).toEqual([
+      { name: "flask", version: "2.0.1" },
+      { name: "requests", version: "2.25.1" },
+    ]);
+  });
+
+  it("returns [] for content with no [[package]] blocks", () => {
+    expect(parsePythonTomlLock('version = 1\nrequires-python = ">=3.8"\n')).toEqual([]);
+  });
+});
+
+describe("parsePipfileLock", () => {
+  it("reads both default and develop sections, stripping the '==' prefix", () => {
+    const content = JSON.stringify({
+      default: { flask: { version: "==2.0.1" } },
+      develop: { pytest: { version: "==7.0.0" } },
+    });
+    expect(parsePipfileLock(content)).toEqual([
+      { name: "flask", version: "2.0.1" },
+      { name: "pytest", version: "7.0.0" },
+    ]);
+  });
+
+  it("returns [] on invalid JSON", () => {
+    expect(parsePipfileLock("{ not json")).toEqual([]);
+  });
+});
+
+describe("findUnanalyzedRequirements", () => {
+  it("lists packages with a range specifier or no version at all", () => {
+    expect(findUnanalyzedRequirements("requests>=2.0\ndjango\n")).toEqual(["requests", "django"]);
+  });
+
+  it("does not list a pinned dependency", () => {
+    expect(findUnanalyzedRequirements("flask==2.0.1\n")).toEqual([]);
+  });
+
+  it("ignores comments, blank lines and directive lines", () => {
+    expect(findUnanalyzedRequirements("# comment\n\n-r other.txt\n-e .\n")).toEqual([]);
+  });
+
+  it("ignores VCS/URL references", () => {
+    expect(findUnanalyzedRequirements("git+https://github.com/x/y#egg=z\nhttps://example.com/pkg.whl\n")).toEqual([]);
+  });
+
+  it("deduplicates repeated package names", () => {
+    expect(findUnanalyzedRequirements("requests>=2.0\nrequests>=2.5\n")).toEqual(["requests"]);
+  });
+});
+
+describe("scanDependencies — unpinned requirements.txt notice", () => {
+  it("adds one aggregate low-severity finding listing the unanalyzed packages", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const content = "flask==0.12\nrequests>=2.0\ndjango\n";
+
+    const result = await scanDependencies([{ path: "requirements.txt", content }]);
+
+    const notice = result.find((f) => f.checkId === "dependency-scan-unpinned-skipped");
+    expect(notice).toMatchObject({ severity: "low", confidence: "heuristic", file: "requirements.txt" });
+    expect(notice!.description).toContain("requests");
+    expect(notice!.description).toContain("django");
+    expect(notice!.snippet).not.toContain("flask"); // la dipendenza già pinnata non va nell'elenco di quelle saltate
+  });
+
+  it("does not add the notice when every dependency is pinned", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results: [{}] }) }));
+    const result = await scanDependencies([{ path: "requirements.txt", content: "flask==2.0.1\n" }]);
+    expect(result.find((f) => f.checkId === "dependency-scan-unpinned-skipped")).toBeUndefined();
+  });
+
+  it("still adds the notice even when the file has zero pinned dependencies to query", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await scanDependencies([{ path: "requirements.txt", content: "requests>=2.0\n" }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].checkId).toBe("dependency-scan-unpinned-skipped");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("scanDependencies — additional npm lockfiles (yarn.lock, pnpm-lock.yaml)", () => {
+  it("scans yarn.lock when no package-lock.json is present", async () => {
+    const content = ["flask-like-pkg@^1.0.0:", '  version "1.0.0"'].join("\n");
+    const batchCalls: unknown[] = [];
+
+    const fetchMock = vi.fn(async (url: string, init?: { body?: string }) => {
+      if (url.toString().includes("querybatch")) {
+        batchCalls.push(JSON.parse(init?.body ?? "{}"));
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "GHSA-yarn" }] }] }) };
+      }
+      return { ok: true, json: async () => ({ id: "GHSA-yarn", database_specific: { severity: "HIGH" } }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "yarn.lock", content }]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ checkId: "vulnerable-dependency", file: "yarn.lock" });
+    expect((batchCalls[0] as { queries: { package: { ecosystem: string } }[] }).queries[0].package.ecosystem).toBe("npm");
+  });
+
+  it("scans pnpm-lock.yaml when present", async () => {
+    const content = ["packages:", "  /flask-like-pkg@1.0.0:"].join("\n");
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.toString().includes("querybatch")) {
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "GHSA-pnpm" }] }] }) };
+      }
+      return { ok: true, json: async () => ({ id: "GHSA-pnpm", database_specific: { severity: "LOW" } }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "pnpm-lock.yaml", content }]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ checkId: "vulnerable-dependency", file: "pnpm-lock.yaml", severity: "low" });
+  });
+});
+
+describe("scanDependencies — additional Python lockfiles (poetry.lock, uv.lock, Pipfile.lock)", () => {
+  it("scans poetry.lock", async () => {
+    const content = ['[[package]]', 'name = "flask"', 'version = "0.12"'].join("\n");
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.toString().includes("querybatch")) {
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "PYSEC-poetry" }] }] }) };
+      }
+      return { ok: true, json: async () => ({ id: "PYSEC-poetry", database_specific: { severity: "MODERATE" } }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "poetry.lock", content }]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ checkId: "vulnerable-dependency", file: "poetry.lock", severity: "medium" });
+  });
+
+  it("scans uv.lock using the same TOML format as poetry.lock", async () => {
+    const content = ['[[package]]', 'name = "flask"', 'version = "0.12"'].join("\n");
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.toString().includes("querybatch")) {
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "PYSEC-uv" }] }] }) };
+      }
+      return { ok: true, json: async () => ({ id: "PYSEC-uv" }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "uv.lock", content }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].file).toBe("uv.lock");
+  });
+
+  it("scans Pipfile.lock", async () => {
+    const content = JSON.stringify({ default: { flask: { version: "==0.12" } } });
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.toString().includes("querybatch")) {
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "PYSEC-pipfile" }] }] }) };
+      }
+      return { ok: true, json: async () => ({ id: "PYSEC-pipfile" }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "Pipfile.lock", content }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].file).toBe("Pipfile.lock");
   });
 });
