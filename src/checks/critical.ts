@@ -579,4 +579,84 @@ export const criticalChecks: Check[] = [
     // di capire quale sia davvero il programma e quali i suoi parametri —
     // provarci alla cieca rischia di generare codice che non funziona più.
   },
+
+  // Punto 13, fase 1 — injection oltre SQL/command: iniziamo da path
+  // traversal e NoSQL injection, i due pattern a rischio di falso positivo
+  // più basso (stessa logica "input utente dentro un sink pericoloso" già
+  // usata per SSRF/SQL injection). LDAP injection, XXE e SSTI restano per un
+  // giro dedicato: richiedono una validazione più attenta coi payload OWASP,
+  // come deciso insieme prima di partire con questo punto.
+  {
+    id: "path-traversal",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un file sul server può essere letto o scritto scegliendo il percorso dall'esterno",
+    description:
+      "Una funzione che legge, scrive o invia un file riceve il percorso direttamente da un valore della richiesta (query, body, params) senza controllare che resti dentro una cartella consentita. Un attaccante può inserire \"../\" per uscire dalla cartella prevista e leggere o sovrascrivere file arbitrari sul server (es. file di configurazione con credenziali).",
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Percorso non consentito")\n  res.sendFile(target)\n})`,
+    },
+    detect(file) {
+      return [
+        // JS/Node: fs.*/res.sendFile con un valore preso direttamente dalla richiesta.
+        ...scanLines(
+          file,
+          /\b(fs\.(readFile|readFileSync|createReadStream|writeFile|writeFileSync)|res\.(sendFile|download))\s*\(\s*req\.(query|body|params)/g
+        ),
+        // Python: open()/Flask send_file con un valore da Flask (request.args/form) o Django (request.GET/POST).
+        ...scanLines(
+          file,
+          /\b(open|send_file)\s*\(\s*request\.(args|form|GET|POST)/g
+        ),
+        // Go: os.Open/http.ServeFile con un valore da Gin (c.Query/c.PostForm) o net/http puro (r.FormValue/r.URL.Query).
+        ...scanLines(
+          file,
+          /\b(os\.Open|os\.ReadFile|http\.ServeFile)\s*\([^)]*\b(c\.(Query|PostForm)|r\.(FormValue|URL\.Query\(\)\.Get))\s*\(/g
+        ),
+        // Java: new File(...)/FileInputStream/FileReader con request.getParameter.
+        ...scanLines(file, /new\s+(File|FileInputStream|FileReader)\s*\(\s*request\.getParameter/g),
+        // PHP: file_get_contents/fopen/readfile/include/require con $_GET/$_POST/$_REQUEST —
+        // include/require con input utente è anche Local File Inclusion, ancora più grave (può portare a RCE).
+        ...scanLines(
+          file,
+          /\b(file_get_contents|fopen|readfile|include|include_once|require|require_once)\s*\(\s*\$_(GET|POST|REQUEST)\[/g
+        ),
+      ];
+    },
+    // Nessun autofix: la cartella consentita e il modo corretto di validare il
+    // percorso dipendono dal progetto — inventarli rischierebbe di bloccare
+    // casi d'uso legittimi o, peggio, lasciare comunque un modo per uscirne.
+  },
+
+  {
+    id: "nosql-injection",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un valore inserito dall'utente viene eseguito come codice dentro una query MongoDB",
+    description:
+      "L'operatore $where di MongoDB esegue del JavaScript lato server per ogni documento — se quella stringa è costruita concatenando un valore che arriva dall'utente, chi lo controlla può far eseguire codice arbitrario nel contesto del database, non solo alterare il filtro come con una normale SQL injection.",
+    fix: {
+      before: "db.collection.find({ $where: \"this.username == '\" + username + \"'\" })",
+      after: `db.collection.find({ username: username })`,
+    },
+    detect(file) {
+      // Python (pymongo) scrive la chiave come stringa tra apici ("$where":
+      // ...), non come proprietà nuda (JS: $where: ...) — l'apice di
+      // chiusura opzionale copre entrambe le forme con lo stesso pattern.
+      //
+      // Per la concatenazione: due alternative con lo STESSO tipo di apice
+      // (non un generico ["'`]) — una stringa come "...== '" contiene un
+      // apice singolo prima di chiudere con uno doppio, e un carattere
+      // escluso genericamente da entrambi i tipi la spezzerebbe troppo presto.
+      return [
+        ...scanLines(file, /\$where["']?\s*[:=]\s*("[^"]*"|'[^']*')\s*\+\s*\w/g),
+        ...scanLines(file, /\$where["']?\s*[:=]\s*`[^`]*\$\{/g),
+        ...scanLines(file, /\$where["']?\s*[:=]\s*(f"[^"]*\{|f'[^']*\{)/g),
+      ];
+    },
+    // Nessun autofix: $where va quasi sempre eliminato e sostituito con un
+    // filtro sui campi veri, una riscrittura che dipende troppo dalla logica
+    // originale per essere generata alla cieca.
+  },
 ];
