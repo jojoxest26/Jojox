@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { analyzeFiles } from "../../analyze.js";
+import { scanDependencies } from "../../depscan.js";
+import { computeScore, summarizeBySeverity } from "../../scoring.js";
 import { supabaseAdmin } from "../db/supabase.js";
 
 const MAX_FILES = 300;
@@ -51,7 +53,9 @@ guestAnalyzeRouter.post("/api/guest-analyze", async (req, res) => {
     return;
   }
 
-  const result = analyzeFiles(parsed.data.files);
+  const depFindings = await scanDependencies(parsed.data.files);
+  const findings = [...analyzeFiles(parsed.data.files).findings, ...depFindings];
+  const result = { score: computeScore(findings), findings, summary: summarizeBySeverity(findings) };
 
   // Registriamo l'uso solo dopo aver calcolato il risultato: se l'analisi
   // fallisce sopra, la visita non perde il suo unico tentativo gratuito.

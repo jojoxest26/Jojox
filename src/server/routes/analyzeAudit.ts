@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { analyzeFiles, applyAutofixes } from "../../analyze.js";
+import { scanDependencies } from "../../depscan.js";
+import { computeScore, summarizeBySeverity } from "../../scoring.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
@@ -106,7 +108,9 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     return;
   }
 
-  const result = analyzeFiles(parsed.data.files);
+  const depFindings = await scanDependencies(parsed.data.files);
+  const findings = [...analyzeFiles(parsed.data.files).findings, ...depFindings];
+  const result = { score: computeScore(findings), findings, summary: summarizeBySeverity(findings) };
 
   await supabaseAdmin.from("analyses").insert({
     user_id: req.userId,

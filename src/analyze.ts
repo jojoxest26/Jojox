@@ -4,7 +4,7 @@ import { computeScore, summarizeBySeverity } from "./scoring.js";
 import { SUPABASE_SNAPSHOT_FILENAME, parseSupabaseSnapshot, supabaseConfigFindings } from "./supabaseConfigChecks.js";
 
 /** Files this engine never needs to look inside — keeps noise and runtime down. */
-const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
+export const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
 const BINARY_EXT = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|pdf|zip|lock)$/i;
 
 export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {

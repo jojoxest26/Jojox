@@ -9,6 +9,16 @@ export interface CheckTranslation {
 }
 
 /**
+ * I controlli a pattern (src/checks/) hanno un titolo e una descrizione
+ * fissi per ogni checkId, qui traducibili con una semplice voce statica. I
+ * controlli di Fase 2 (dipendenze, e in arrivo IaC/cloud config) generano
+ * invece testo diverso ad ogni finding (nome pacchetto, versione, ID della
+ * vulnerabilità...) — per questi la voce è una funzione che riceve il testo
+ * italiano originale e ne deriva la versione inglese, invece di un oggetto fisso.
+ */
+type CheckTranslationEntry = CheckTranslation | ((original: CheckTranslation) => CheckTranslation);
+
+/**
  * L'italiano è la lingua "nativa" del motore (src/checks/), quindi in
  * italiano restituiamo sempre il testo originale del Check/Finding così
  * com'è. In inglese, applichiamo la traduzione se esiste per quel checkId
@@ -22,10 +32,11 @@ export function translateCheckText<T extends { title: string; description: strin
 ): { title: string; description: string; fix: { before: string; after: string } } {
   if (lang === "it") return original;
   const translated = checkTranslationsEn[checkId];
-  return translated ?? original;
+  if (!translated) return original;
+  return typeof translated === "function" ? translated(original) : translated;
 }
 
-export const checkTranslationsEn: Record<string, CheckTranslation> = {
+export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
   "supabase-service-role-in-client": {
     title: "Supabase's secret key ends up in a browser-facing file",
     description:
@@ -215,4 +226,23 @@ export const checkTranslationsEn: Record<string, CheckTranslation> = {
       after: `console.log("login attempt", { email })`,
     },
   },
+
+  // Fase 2 — dependency scanning. Nome pacchetto, versione e ID della
+  // vulnerabilità (es. GHSA-...) sono lasciati invariati: sono identificatori
+  // tecnici, non testo da tradurre. Lo stesso vale per il riassunto preso da
+  // OSV.dev nella description: i database di vulnerabilità pubblici (CVE,
+  // GHSA) sono nativamente in inglese anche quando il sito è in italiano —
+  // tradurlo rischierebbe di perdere precisione tecnica, per questo resta
+  // identico in entrambe le lingue.
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Vulnerable dependency:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "No fixed version known yet — consider an alternative package or follow the project's updates."
+      ),
+    },
+  }),
 };

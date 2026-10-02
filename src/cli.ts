@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import fg from "fast-glob";
 import { analyzeFiles, applyAutofixes } from "./analyze.js";
 import { ALL_CHECKS } from "./checks/index.js";
+import { scanDependencies } from "./depscan.js";
+import { computeScore, summarizeBySeverity } from "./scoring.js";
 import type { Severity } from "./types.js";
 
 const AUTOFIXABLE_CHECK_IDS = new Set(ALL_CHECKS.filter((c) => c.autofix).map((c) => c.id));
@@ -102,7 +104,9 @@ async function main() {
     return;
   }
 
-  const result = analyzeFiles(files);
+  const depFindings = await scanDependencies(files);
+  const allFindings = [...analyzeFiles(files).findings, ...depFindings];
+  const result = { score: computeScore(allFindings), findings: allFindings, summary: summarizeBySeverity(allFindings) };
 
   if (asJson) {
     console.log(JSON.stringify(result, null, 2));
@@ -123,7 +127,7 @@ async function main() {
   }
 
   if (result.findings.length === 0) {
-    console.log("Nessun problema trovato nei 26 controlli. 🎉\n");
+    console.log("Nessun problema trovato nei 26 controlli né nelle dipendenze. 🎉\n");
   } else if (result.findings.some((f) => AUTOFIXABLE_CHECK_IDS.has(f.checkId))) {
     console.log("Suggerimento: rilancia con --fix per correggere in automatico quello che si può.\n");
   }

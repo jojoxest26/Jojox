@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { analyzeFiles } from "../../analyze.js";
+import { scanDependencies } from "../../depscan.js";
+import { computeScore, summarizeBySeverity } from "../../scoring.js";
 import { optionalAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, MONTHLY_ANALYSIS_LIMIT, startOfCurrentMonthUtc } from "../plan.js";
@@ -47,7 +49,9 @@ analyzeRouter.post("/api/analyze", optionalAuth, async (req: AuthedRequest, res)
     }
   }
 
-  const result = analyzeFiles(parsed.data.files);
+  const depFindings = await scanDependencies(parsed.data.files);
+  const findings = [...analyzeFiles(parsed.data.files).findings, ...depFindings];
+  const result = { score: computeScore(findings), findings, summary: summarizeBySeverity(findings) };
 
   if (req.userId) {
     await supabaseAdmin.from("analyses").insert({
