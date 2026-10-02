@@ -1,5 +1,5 @@
 import type { Finding, Severity, SourceFile } from "./types.js";
-import { SKIP_PATH } from "./analyze.js";
+import { SKIP_PATH } from "./util/skipPath.js";
 
 const OSV_BATCH_URL = "https://api.osv.dev/v1/querybatch";
 const OSV_VULN_URL = "https://api.osv.dev/v1/vulns/";
@@ -78,6 +78,34 @@ export function parseNpmLockfile(content: string): DependencyRef[] {
 }
 
 /**
+ * Estrae nome + versione da un composer.lock — stesso principio di
+ * package-lock.json: contiene già le versioni esatte risolte di ogni
+ * dipendenza, dirette ("packages") e di sviluppo ("packages-dev").
+ */
+export function parseComposerLock(content: string): DependencyRef[] {
+  let data: unknown;
+  try {
+    data = JSON.parse(content);
+  } catch {
+    return [];
+  }
+  if (!data || typeof data !== "object") return [];
+
+  const deps = new DependencyCollector();
+  for (const key of ["packages", "packages-dev"]) {
+    const list = (data as Record<string, unknown>)[key];
+    if (!Array.isArray(list)) continue;
+    for (const entry of list) {
+      const name = (entry as Record<string, unknown> | undefined)?.name;
+      const version = (entry as Record<string, unknown> | undefined)?.version;
+      if (typeof name === "string" && typeof version === "string") deps.add(name, version);
+    }
+  }
+
+  return deps.values();
+}
+
+/**
  * Estrae nome + versione da un requirements.txt — solo le righe "pinnate"
  * con "==" (es. "flask==2.0.1"): sono le uniche per cui conosciamo la
  * versione davvero installata. Una riga con un intervallo (">=2.0", "~=2.0")
@@ -100,6 +128,74 @@ export function parseRequirementsTxt(content: string): DependencyRef[] {
     const match = pinPattern.exec(withoutMarkers);
     if (!match) continue;
     deps.add(match[1], match[2]);
+  }
+
+  return deps.values();
+}
+
+/**
+ * Estrae nome + versione da un go.mod. A differenza di npm/Python, Go
+ * risolve già tutte le dipendenze (dirette e indirette) a una versione
+ * esatta dentro lo stesso go.mod grazie al suo sistema di moduli (minimal
+ * version selection) — non serve un file di lock separato come go.sum, che
+ * contiene solo gli hash di verifica, non informazioni aggiuntive sulla
+ * versione scelta. Riconosce sia il blocco "require (...)" sia le righe
+ * "require module version" singole, e ignora "module", "go", "toolchain",
+ * "replace" ed "exclude" (non sono dipendenze da controllare).
+ */
+export function parseGoMod(content: string): DependencyRef[] {
+  const deps = new DependencyCollector();
+  const versionPattern = /^(\S+)\s+(v\d[^\s/]*)/;
+
+  for (const rawLine of content.split("\n")) {
+    let line = rawLine.split("//")[0].trim();
+    if (!line) continue;
+
+    if (/^(module|go|toolchain|replace|exclude)\b/.test(line)) continue;
+    if (line === "require" || line === "require (" || line === ")") continue;
+    line = line.replace(/^require\s+/, "");
+
+    const match = versionPattern.exec(line);
+    if (!match) continue;
+    deps.add(match[1], match[2]);
+  }
+
+  return deps.values();
+}
+
+/**
+ * Java/Maven non ha un file di lock standard committato nel progetto come
+ * gli altri ecosistemi (pom.xml da solo spesso non basta: eredita versioni
+ * da un parent POM o da un import di BOM — vedi il commento su
+ * MANIFEST_SOURCES più sotto). Stesso schema già usato per Supabase: il
+ * cliente lancia lui, in locale, un comando di sola lettura che non
+ * modifica nulla, e carica il risultato insieme al resto del codice. Il
+ * comando scrive già il file con questo nome esatto, zero passi in più.
+ */
+export const MAVEN_DEPENDENCY_LIST_FILENAME = "jojox-maven-dependencies.txt";
+export const MAVEN_DEPENDENCY_LIST_COMMAND = `mvn dependency:list -DoutputFile=${MAVEN_DEPENDENCY_LIST_FILENAME}`;
+
+/**
+ * Estrae nome ("groupId:artifactId") + versione dall'output di
+ * `mvn dependency:list`, un elenco piatto tipo
+ * "com.google.guava:guava:jar:31.1-jre:compile" (5 campi) o, per i pacchetti
+ * con classifier, "io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.86.Final:compile"
+ * (6 campi). Ignora l'intestazione del comando e ogni riga che non
+ * corrisponde esattamente a questo schema.
+ */
+export function parseMavenDependencyList(content: string): DependencyRef[] {
+  const deps = new DependencyCollector();
+  const fieldPattern = /^[\w.-]+$/;
+
+  for (const rawLine of content.split("\n")) {
+    const parts = rawLine.trim().split(":");
+    if (parts.length !== 5 && parts.length !== 6) continue;
+
+    const [groupId, artifactId] = parts;
+    const version = parts.length === 6 ? parts[4] : parts[3];
+    if (![groupId, artifactId, version].every((field) => fieldPattern.test(field))) continue;
+
+    deps.add(`${groupId}:${artifactId}`, version);
   }
 
   return deps.values();
@@ -260,6 +356,46 @@ function locateInRequirementsTxt(content: string, name: string, version: string)
   return { line: 1, snippet: `${name}==${version}` };
 }
 
+/** Trova la riga del composer.lock dove compare la versione di questo pacchetto. */
+function locateInComposerLock(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const namePattern = new RegExp(`"name"\\s*:\\s*"${escapeRegExp(name)}"`);
+  const versionPattern = new RegExp(`"version"\\s*:\\s*"${escapeRegExp(version)}"`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!namePattern.test(lines[i])) continue;
+    for (let j = i; j < Math.min(i + 5, lines.length); j++) {
+      if (versionPattern.test(lines[j])) return { line: j + 1, snippet: lines[j].trim() };
+    }
+  }
+
+  return { line: 1, snippet: `"${name}": "${version}"` };
+}
+
+/** Trova la riga del go.mod dove compare questa dipendenza. */
+function locateInGoMod(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const pattern = new RegExp(`^\\s*(?:require\\s+)?${escapeRegExp(name)}\\s+${escapeRegExp(version)}\\b`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (pattern.test(lines[i])) return { line: i + 1, snippet: lines[i].trim() };
+  }
+
+  return { line: 1, snippet: `${name} ${version}` };
+}
+
+/** Trova la riga dell'output di `mvn dependency:list` dove compare questa dipendenza ("groupId:artifactId"). */
+function locateInMavenDependencyList(content: string, name: string, version: string): { line: number; snippet: string } {
+  const lines = content.split("\n");
+  const pattern = new RegExp(`^\\s*${escapeRegExp(name)}:[\\w.-]+(?::[\\w.-]+)?:${escapeRegExp(version)}:`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (pattern.test(lines[i])) return { line: i + 1, snippet: lines[i].trim() };
+  }
+
+  return { line: 1, snippet: `${name}:${version}` };
+}
+
 /** PEP 503: normalizzazione canonica di un nome pacchetto PyPI (minuscolo, separatori unificati a "-"). */
 function normalizePypiName(name: string): string {
   return name.toLowerCase().replace(/[._-]+/g, "-");
@@ -275,6 +411,15 @@ interface ManifestSource {
   queryName: (name: string) => string;
 }
 
+/**
+ * Java (Maven) non ha un pom.xml leggibile con precisione da solo: nello
+ * stack Spring Boot pubblicizzato da JoJoX, le versioni sono quasi sempre
+ * ereditate da un parent POM o da un import di BOM, non scritte nel
+ * progetto. Per questo non c'è un parser di pom.xml qui sotto — l'unica
+ * fonte affidabile è l'output di `mvn dependency:list` (vedi
+ * MAVEN_DEPENDENCY_LIST_FILENAME sopra), che il cliente genera lui in
+ * locale e carica insieme al resto, stesso schema già usato per Supabase.
+ */
 const MANIFEST_SOURCES: ManifestSource[] = [
   {
     ecosystem: "npm",
@@ -292,6 +437,30 @@ const MANIFEST_SOURCES: ManifestSource[] = [
     formatPin: (name, version) => `${name}==${version}`,
     queryName: normalizePypiName,
   },
+  {
+    ecosystem: "Go",
+    filename: "go.mod",
+    parse: parseGoMod,
+    locate: locateInGoMod,
+    formatPin: (name, version) => `${name} ${version}`,
+    queryName: (name) => name,
+  },
+  {
+    ecosystem: "Packagist",
+    filename: "composer.lock",
+    parse: parseComposerLock,
+    locate: locateInComposerLock,
+    formatPin: (name, version) => `"${name}": "${version}"`,
+    queryName: (name) => name,
+  },
+  {
+    ecosystem: "Maven",
+    filename: MAVEN_DEPENDENCY_LIST_FILENAME,
+    parse: parseMavenDependencyList,
+    locate: locateInMavenDependencyList,
+    formatPin: (name, version) => `${name}:${version}`,
+    queryName: (name) => name,
+  },
 ];
 
 function findManifest(files: readonly SourceFile[], filename: string): SourceFile | undefined {
@@ -303,12 +472,14 @@ const NO_FIXED_VERSION_MESSAGE =
 
 /**
  * Fase 2: cerca dipendenze con vulnerabilità note nel database pubblico
- * OSV.dev, per ogni manifest supportato trovato tra i file caricati (npm e
- * Python per ora — Go/PHP/Java valutati in seguito, i loro file di lock sono
- * più complessi da leggere con la stessa precisione). A differenza dei
- * controlli a pattern (sincroni, zero rete), questo fa vere chiamate di
- * rete — per questo è una funzione async separata, da richiamare
- * esplicitamente insieme a analyzeFiles() e non dentro di essa.
+ * OSV.dev, per ogni manifest supportato trovato tra i file caricati — npm,
+ * Python, Go e PHP/Composer letti direttamente dal progetto; Java/Maven
+ * invece solo se il cliente carica anche il file generato da
+ * MAVEN_DEPENDENCY_LIST_COMMAND (vedi il commento su MANIFEST_SOURCES più
+ * sotto per il perché). A differenza dei controlli a pattern (sincroni,
+ * zero rete), questo fa vere chiamate di rete — per questo è una funzione
+ * async separata, da richiamare esplicitamente insieme a analyzeFiles() e
+ * non dentro di essa.
  */
 export async function scanDependencies(files: readonly SourceFile[]): Promise<Finding[]> {
   const findings: Finding[] = [];

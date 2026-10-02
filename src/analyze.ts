@@ -1,20 +1,22 @@
 import type { AnalysisResult, Finding, SourceFile } from "./types.js";
 import { ALL_CHECKS } from "./checks/index.js";
+import { MAVEN_DEPENDENCY_LIST_FILENAME } from "./depscan.js";
 import { computeScore, summarizeBySeverity } from "./scoring.js";
 import { SUPABASE_SNAPSHOT_FILENAME, parseSupabaseSnapshot, supabaseConfigFindings } from "./supabaseConfigChecks.js";
+import { SKIP_PATH } from "./util/skipPath.js";
 
-/** Files this engine never needs to look inside — keeps noise and runtime down. */
-export const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
+export { SKIP_PATH };
 const BINARY_EXT = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|pdf|zip|lock)$/i;
+
+/** File "snapshot" che non sono codice sorgente da scansionare riga per riga con i controlli a pattern — ognuno ha la sua analisi dedicata. */
+const NON_SOURCE_SNAPSHOTS = [SUPABASE_SNAPSHOT_FILENAME, MAVEN_DEPENDENCY_LIST_FILENAME];
 
 export function analyzeFiles(files: readonly SourceFile[]): AnalysisResult {
   const relevantFiles = files.filter((f) => !SKIP_PATH.test(f.path) && !BINARY_EXT.test(f.path));
 
   const findings: Finding[] = [];
   for (const file of relevantFiles) {
-    // Non è codice sorgente da scansionare riga per riga: è lo snapshot
-    // della configurazione reale di Supabase, con la sua analisi dedicata.
-    if (file.path.endsWith(SUPABASE_SNAPSHOT_FILENAME)) continue;
+    if (NON_SOURCE_SNAPSHOTS.some((name) => file.path.endsWith(name))) continue;
 
     for (const check of ALL_CHECKS) {
       const matches = check.detect(file, relevantFiles);

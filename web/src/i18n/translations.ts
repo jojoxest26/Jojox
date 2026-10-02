@@ -279,6 +279,12 @@ export interface TranslationTree {
     toggleShow: string;
     toggleHide: string;
   };
+  maven: {
+    title: string;
+    badge: string;
+    body1: string;
+    body2: string;
+  };
   report: {
     brandSub: string;
     reportLabel: string;
@@ -727,6 +733,12 @@ const it: TranslationTree = {
     sqlEditor: "SQL Editor",
     toggleShow: "▼ Mostra la query",
     toggleHide: "▲ Nascondi la query",
+  },
+  maven: {
+    title: "Controllo Java/Maven",
+    badge: "OPZIONALE",
+    body1: "Per Java le versioni delle dipendenze spesso non sono scritte nel progetto: nello stack Spring Boot sono quasi sempre ereditate da un parent POM. Per questo serve un passo in più rispetto agli altri linguaggi: un comando di sola lettura, che non modifica nulla, da lanciare tu nella cartella del tuo progetto.",
+    body2: "Lancia questo comando nella cartella del tuo progetto Maven, poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 26 controlli.",
   },
   report: {
     brandSub: "Report di sicurezza del codice",
@@ -1181,6 +1193,12 @@ const en: TranslationTree = {
     sqlEditor: "SQL Editor",
     toggleShow: "▼ Show the query",
     toggleHide: "▲ Hide the query",
+  },
+  maven: {
+    title: "Java/Maven check",
+    badge: "OPTIONAL",
+    body1: "For Java, dependency versions are often not written in the project itself: in the Spring Boot stack they're almost always inherited from a parent POM. That's why it takes one extra step compared to other languages: a read-only command, that changes nothing, which you run yourself in your project's folder.",
+    body2: "Run this command in your Maven project's folder, then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 26 checks.",
   },
   report: {
     brandSub: "Code security report",

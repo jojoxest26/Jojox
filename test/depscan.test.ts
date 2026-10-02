@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parseNpmLockfile, parseRequirementsTxt, scanDependencies } from "../src/depscan.js";
+import {
+  MAVEN_DEPENDENCY_LIST_FILENAME,
+  parseComposerLock,
+  parseGoMod,
+  parseMavenDependencyList,
+  parseNpmLockfile,
+  parseRequirementsTxt,
+  scanDependencies,
+} from "../src/depscan.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -397,5 +405,276 @@ describe("scanDependencies — Python (requirements.txt)", () => {
     ]);
 
     expect(result.map((f) => f.file).sort()).toEqual(["package-lock.json", "requirements.txt"]);
+  });
+});
+
+const GO_MOD = [
+  "module github.com/example/app",
+  "",
+  "go 1.21",
+  "",
+  "toolchain go1.21.5",
+  "",
+  "require (",
+  "\tgithub.com/gin-gonic/gin v1.7.4",
+  "\tgolang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect",
+  ")",
+  "",
+  "require github.com/sirupsen/logrus v1.9.0",
+  "",
+  "replace github.com/old/pkg => github.com/new/pkg v1.0.0",
+  "",
+  "exclude github.com/bad/pkg v1.0.0",
+  "",
+].join("\n");
+
+describe("parseGoMod", () => {
+  it("legge le dipendenze dentro un blocco require(...), incluse quelle indirect", () => {
+    const deps = parseGoMod(GO_MOD);
+    expect(deps).toContainEqual({ name: "github.com/gin-gonic/gin", version: "v1.7.4" });
+    expect(deps).toContainEqual({ name: "golang.org/x/net", version: "v0.0.0-20210405180319-a5a99cb37ef4" });
+  });
+
+  it("legge anche una riga 'require modulo versione' singola, fuori dal blocco", () => {
+    const deps = parseGoMod(GO_MOD);
+    expect(deps).toContainEqual({ name: "github.com/sirupsen/logrus", version: "v1.9.0" });
+  });
+
+  it("ignora module, go, toolchain, replace ed exclude", () => {
+    const deps = parseGoMod(GO_MOD);
+    expect(deps.find((d) => d.name === "go")).toBeUndefined();
+    expect(deps.find((d) => d.name === "github.com/old/pkg")).toBeUndefined();
+    expect(deps.find((d) => d.name === "github.com/bad/pkg")).toBeUndefined();
+    expect(deps).toHaveLength(3);
+  });
+
+  it("deduplica la stessa coppia modulo+versione", () => {
+    const content = ["require (", "\tgithub.com/foo/bar v1.0.0", "\tgithub.com/foo/bar v1.0.0", ")"].join("\n");
+    expect(parseGoMod(content)).toHaveLength(1);
+  });
+
+  it("torna [] su un go.mod senza nessuna dipendenza", () => {
+    expect(parseGoMod("module github.com/example/app\n\ngo 1.21\n")).toEqual([]);
+  });
+});
+
+describe("scanDependencies — Go (go.mod)", () => {
+  it("segnala un modulo Go vulnerabile, interrogando OSV.dev con l'ecosistema Go", async () => {
+    const content = "module demo\n\ngo 1.21\n\nrequire github.com/gin-gonic/gin v1.6.0\n";
+    const batchCalls: unknown[] = [];
+
+    const fetchMock = vi.fn(async (url: string, init?: { body?: string }) => {
+      if (url.toString().includes("querybatch")) {
+        batchCalls.push(JSON.parse(init?.body ?? "{}"));
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "GHSA-go-1" }] }] }) };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          id: "GHSA-go-1",
+          summary: "HTTP request smuggling in gin",
+          database_specific: { severity: "HIGH" },
+          affected: [
+            { package: { name: "github.com/gin-gonic/gin", ecosystem: "Go" }, ranges: [{ events: [{ fixed: "v1.7.0" }] }] },
+          ],
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "go.mod", content }]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ checkId: "vulnerable-dependency", severity: "high", file: "go.mod", line: 5 });
+    expect(result[0].title).toContain("github.com/gin-gonic/gin@v1.6.0");
+    expect(result[0].fix.before).toBe("github.com/gin-gonic/gin v1.6.0");
+    expect(result[0].fix.after).toBe("github.com/gin-gonic/gin v1.7.0");
+    expect((batchCalls[0] as { queries: { package: { ecosystem: string } }[] }).queries[0].package.ecosystem).toBe("Go");
+  });
+
+  it("torna [] senza chiamare la rete quando non c'è un go.mod", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "main.go", content: "package main" }]);
+
+    expect(result).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+const COMPOSER_LOCK = JSON.stringify({
+  packages: [
+    { name: "monolog/monolog", version: "2.3.5" },
+    { name: "laravel/framework", version: "v9.52.0" },
+  ],
+  "packages-dev": [{ name: "phpunit/phpunit", version: "9.5.10" }],
+});
+
+describe("parseComposerLock", () => {
+  it("legge le dipendenze dirette e di sviluppo", () => {
+    const deps = parseComposerLock(COMPOSER_LOCK);
+    expect(deps).toContainEqual({ name: "monolog/monolog", version: "2.3.5" });
+    expect(deps).toContainEqual({ name: "laravel/framework", version: "v9.52.0" });
+    expect(deps).toContainEqual({ name: "phpunit/phpunit", version: "9.5.10" });
+  });
+
+  it("torna [] su JSON non valido invece di lanciare un'eccezione", () => {
+    expect(parseComposerLock("{ non è json")).toEqual([]);
+  });
+
+  it("torna [] quando non ci sono né 'packages' né 'packages-dev'", () => {
+    expect(parseComposerLock(JSON.stringify({ name: "demo" }))).toEqual([]);
+  });
+
+  it("deduplica la stessa coppia nome+versione", () => {
+    const content = JSON.stringify({
+      packages: [
+        { name: "monolog/monolog", version: "2.3.5" },
+        { name: "monolog/monolog", version: "2.3.5" },
+      ],
+    });
+    expect(parseComposerLock(content)).toHaveLength(1);
+  });
+});
+
+describe("scanDependencies — PHP (composer.lock)", () => {
+  it("segnala un pacchetto Composer vulnerabile, interrogando OSV.dev con l'ecosistema Packagist", async () => {
+    const content = JSON.stringify({ packages: [{ name: "monolog/monolog", version: "1.25.0" }] });
+    const batchCalls: unknown[] = [];
+
+    const fetchMock = vi.fn(async (url: string, init?: { body?: string }) => {
+      if (url.toString().includes("querybatch")) {
+        batchCalls.push(JSON.parse(init?.body ?? "{}"));
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "GHSA-php-1" }] }] }) };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          id: "GHSA-php-1",
+          summary: "RCE in Monolog",
+          database_specific: { severity: "CRITICAL" },
+          affected: [
+            { package: { name: "monolog/monolog", ecosystem: "Packagist" }, ranges: [{ events: [{ fixed: "1.25.1" }] }] },
+          ],
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "composer.lock", content }]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ checkId: "vulnerable-dependency", severity: "critical", file: "composer.lock" });
+    expect(result[0].title).toContain("monolog/monolog@1.25.0");
+    expect(result[0].fix.before).toBe('"monolog/monolog": "1.25.0"');
+    expect(result[0].fix.after).toBe('"monolog/monolog": "1.25.1"');
+    expect((batchCalls[0] as { queries: { package: { ecosystem: string } }[] }).queries[0].package.ecosystem).toBe("Packagist");
+  });
+
+  it("torna [] senza chiamare la rete quando non c'è un composer.lock", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "src/index.php", content: "<?php echo 'ciao'; " }]);
+
+    expect(result).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+const MAVEN_DEPENDENCY_LIST = [
+  "The following files have been resolved:",
+  "   com.google.guava:guava:jar:31.1-jre:compile",
+  "   org.springframework:spring-core:jar:5.3.21:compile",
+  "   io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.86.Final:compile",
+  "   com.example:mymodule:jar:1.0.0:test (optional)",
+].join("\n");
+
+describe("parseMavenDependencyList", () => {
+  it("legge le dipendenze nel formato groupId:artifactId:packaging:version:scope", () => {
+    const deps = parseMavenDependencyList(MAVEN_DEPENDENCY_LIST);
+    expect(deps).toContainEqual({ name: "com.google.guava:guava", version: "31.1-jre" });
+    expect(deps).toContainEqual({ name: "org.springframework:spring-core", version: "5.3.21" });
+  });
+
+  it("legge anche le dipendenze con classifier (6 campi)", () => {
+    const deps = parseMavenDependencyList(MAVEN_DEPENDENCY_LIST);
+    expect(deps).toContainEqual({ name: "io.netty:netty-transport-native-epoll", version: "4.1.86.Final" });
+  });
+
+  it("gestisce lo scope con suffisso '(optional)'", () => {
+    const deps = parseMavenDependencyList(MAVEN_DEPENDENCY_LIST);
+    expect(deps).toContainEqual({ name: "com.example:mymodule", version: "1.0.0" });
+  });
+
+  it("ignora l'intestazione e le righe che non combaciano con lo schema", () => {
+    const deps = parseMavenDependencyList(MAVEN_DEPENDENCY_LIST);
+    expect(deps).toHaveLength(4);
+  });
+
+  it("torna [] su un output senza nessuna dipendenza riconoscibile", () => {
+    expect(parseMavenDependencyList("The following files have been resolved:\n")).toEqual([]);
+  });
+
+  it("deduplica la stessa coppia nome+versione", () => {
+    const content = [
+      "com.example:lib:jar:1.0.0:compile",
+      "com.example:lib:jar:1.0.0:compile",
+    ].join("\n");
+    expect(parseMavenDependencyList(content)).toHaveLength(1);
+  });
+});
+
+describe("scanDependencies — Java (jojox-maven-dependencies.txt)", () => {
+  it("segnala una dipendenza Maven vulnerabile, interrogando OSV.dev con l'ecosistema Maven", async () => {
+    const content = "com.fasterxml.jackson.core:jackson-databind:jar:2.9.8:compile\n";
+    const batchCalls: unknown[] = [];
+
+    const fetchMock = vi.fn(async (url: string, init?: { body?: string }) => {
+      if (url.toString().includes("querybatch")) {
+        batchCalls.push(JSON.parse(init?.body ?? "{}"));
+        return { ok: true, json: async () => ({ results: [{ vulns: [{ id: "GHSA-java-1" }] }] }) };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          id: "GHSA-java-1",
+          summary: "Deserialization of untrusted data in jackson-databind",
+          database_specific: { severity: "CRITICAL" },
+          affected: [
+            {
+              package: { name: "com.fasterxml.jackson.core:jackson-databind", ecosystem: "Maven" },
+              ranges: [{ events: [{ fixed: "2.9.9" }] }],
+            },
+          ],
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: MAVEN_DEPENDENCY_LIST_FILENAME, content }]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      checkId: "vulnerable-dependency",
+      severity: "critical",
+      file: MAVEN_DEPENDENCY_LIST_FILENAME,
+      line: 1,
+    });
+    expect(result[0].title).toContain("com.fasterxml.jackson.core:jackson-databind@2.9.8");
+    expect(result[0].fix.before).toBe("com.fasterxml.jackson.core:jackson-databind:2.9.8");
+    expect(result[0].fix.after).toBe("com.fasterxml.jackson.core:jackson-databind:2.9.9");
+    expect((batchCalls[0] as { queries: { package: { ecosystem: string } }[] }).queries[0].package.ecosystem).toBe("Maven");
+  });
+
+  it("torna [] senza chiamare la rete quando il file non si chiama esattamente jojox-maven-dependencies.txt", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await scanDependencies([{ path: "dependency-list.txt", content: MAVEN_DEPENDENCY_LIST }]);
+
+    expect(result).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
