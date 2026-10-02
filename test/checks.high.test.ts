@@ -466,4 +466,55 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Fase 2 — IaC (Terraform)", () => {
+    it("terraform-s3-block-public-access-disabled: flags block_public_acls = false", () => {
+      const check = checkById("terraform-s3-block-public-access-disabled");
+      const vulnerable = file("main.tf", 'resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("terraform-s3-block-public-access-disabled: does not flag when all four flags are true", () => {
+      const check = checkById("terraform-s3-block-public-access-disabled");
+      const clean = file(
+        "main.tf",
+        'resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-s3-block-public-access-disabled autofix: flips false to true", () => {
+      const check = checkById("terraform-s3-block-public-access-disabled");
+      const vulnerable = file("main.tf", 'resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}\n');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("block_public_acls = true");
+    });
+
+    it("terraform-iam-wildcard-policy: flags a statement with actions and resources both wildcard", () => {
+      const check = checkById("terraform-iam-wildcard-policy");
+      const vulnerable = file(
+        "main.tf",
+        'data "aws_iam_policy_document" "admin" {\n  statement {\n    effect    = "Allow"\n    actions   = ["*"]\n    resources = ["*"]\n  }\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("terraform-iam-wildcard-policy: does not flag a statement scoped to specific actions/resources", () => {
+      const check = checkById("terraform-iam-wildcard-policy");
+      const clean = file(
+        "main.tf",
+        'data "aws_iam_policy_document" "readonly" {\n  statement {\n    effect    = "Allow"\n    actions   = ["s3:GetObject"]\n    resources = ["arn:aws:s3:::my-bucket/*"]\n  }\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-iam-wildcard-policy: does not flag a wildcard action alone without a wildcard resource nearby", () => {
+      const check = checkById("terraform-iam-wildcard-policy");
+      const clean = file(
+        "main.tf",
+        'data "aws_iam_policy_document" "x" {\n  statement {\n    actions   = ["*"]\n    resources = ["arn:aws:s3:::my-bucket/*"]\n  }\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

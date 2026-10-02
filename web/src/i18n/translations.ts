@@ -411,7 +411,7 @@ const it: TranslationTree = {
   hero: {
     titleLine1: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu?",
     titleLine2Suffix: "lo sorveglia.",
-    body: "Non un controllo una tantum. {{monitoring}}. 30 controlli pubblici sugli errori più comuni nel codice, un {{score}} chiaro, e correzioni pronte da copiare.",
+    body: "Non un controllo una tantum. {{monitoring}}. 40 controlli pubblici sugli errori più comuni nel codice, un {{score}} chiaro, e correzioni pronte da copiare.",
     bodyMonitoring: "Monitoraggio continuo",
     bodyScore: "punteggio di sicurezza",
     sub: "Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.",
@@ -432,7 +432,7 @@ const it: TranslationTree = {
     step1Title: "Analizza",
     step1Text: "Carica il codice, o collega il tuo repository GitHub.",
     step2Title: "Rileva",
-    step2Text: "JoJoX esegue i 30 controlli e trova i problemi di sicurezza.",
+    step2Text: "JoJoX esegue i 40 controlli e trova i problemi di sicurezza.",
     step3Title: "Correggi",
     step3Text: "Ricevi spiegazione, gravità e una correzione pronta da copiare.",
   },
@@ -466,7 +466,7 @@ const it: TranslationTree = {
     question: "Il mio agente AI già scrive il codice. Non può controllarlo anche lui?",
     readMore: "Leggi la risposta completa",
     point1: "Puoi chiederlo. Ma nella pratica quasi nessuno lo fa ogni volta, su ogni file, dopo ogni modifica — e basta dimenticarsene una volta per lasciare un buco aperto. JoJoX non aspetta che te ne ricordi: controlla da solo, a ogni push.",
-    point2: "Chiedere \"è sicuro?\" a un modello è come chiedere un parere: cambia ogni volta e non lascia una prova. JoJoX esegue sempre gli stessi 30 controlli pubblici, identici per tutti, verificabili riga per riga nel codice — un responso, non un'opinione.",
+    point2: "Chiedere \"è sicuro?\" a un modello è come chiedere un parere: cambia ogni volta e non lascia una prova. JoJoX esegue sempre gli stessi 40 controlli pubblici, identici per tutti, verificabili riga per riga nel codice — un responso, non un'opinione.",
     point3: "Nessun LLM, nessuna allucinazione, nessun costo che cresce con l'uso: pattern matching puro, istantaneo, pensato per girare su ogni pull request quante volte serve.",
     closingLead: "JoJoX non scrive il tuo codice.",
     closingPunch: "Lo sorveglia.",
@@ -515,7 +515,7 @@ const it: TranslationTree = {
     guestTitle: "Modalità ospite",
     guestList: [
       "1 analisi gratuita, senza email",
-      "Tutti i 30 controlli con esempi di correzione",
+      "Tutti i 40 controlli con esempi di correzione",
       "Punteggio di sicurezza",
       "Un solo tentativo per visitatore, imposto dal nostro server",
     ],
@@ -526,7 +526,7 @@ const it: TranslationTree = {
     freeTitle: "Gratis",
     freeList: [
       "5 analisi al mese",
-      "Tutti i 30 controlli, con esempi di correzione",
+      "Tutti i 40 controlli, con esempi di correzione",
       "Punteggio di sicurezza + badge da scaricare (.svg)",
       "Cronologia delle ultime 20 analisi",
     ],
@@ -587,7 +587,7 @@ const it: TranslationTree = {
   },
   checksList: {
     title: "Tutti i controlli, senza segreti",
-    body: "JoJoX non nasconde come funziona: qui sotto trovi tutti i 30 controlli, quanto sono gravi, e quanto siamo sicuri di ognuno — «confermato» quando il problema è certo, «da verificare» quando manca un segnale nel codice ma potrebbe essere gestito altrove (il controllo viene comunque sempre eseguito).",
+    body: "JoJoX non nasconde come funziona: qui sotto trovi tutti i 40 controlli, quanto sono gravi, e quanto siamo sicuri di ognuno — «confermato» quando il problema è certo, «da verificare» quando manca un segnale nel codice ma potrebbe essere gestito altrove (il controllo viene comunque sempre eseguito).",
     subLabel: "{{count}} controlli, in 4 livelli di gravità",
   },
   team: {
@@ -621,7 +621,7 @@ const it: TranslationTree = {
     dropzoneHintLoggedIn: "Sei loggato: l'analisi viene salvata nel tuo storico.",
     dropzoneHintGuest: "Modalità ospite: 1 analisi gratuita, senza email. Dopo, basta la mail per continuare (5 al mese, gratis).",
     dropzoneHintAny: "Funziona su qualsiasi codice — anche scritto interamente a mano, non solo generato dall'AI.",
-    dropzoneHintLanguages: "I 30 controlli coprono JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel). Su altri linguaggi alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
+    dropzoneHintLanguages: "I 40 controlli coprono JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel). Su altri linguaggi alcuni controlli generici possono comunque essere utili, ma la copertura non è ancora completa.",
     sectionEyebrow: "L'analyzer",
     sectionTitle: "Carica il codice, guarda cosa trova.",
     moreFiles: "+{{count}} altri",
@@ -652,7 +652,7 @@ const it: TranslationTree = {
   },
   findingsList: {
     scoreLabel: "Punteggio di sicurezza",
-    emptyState: "Nessun problema trovato nei 30 controlli. 🎉",
+    emptyState: "Nessun problema trovato nei 40 controlli. 🎉",
     autoFixed: "🔧 già corretto nel file scaricabile",
   },
   github: {
@@ -704,7 +704,7 @@ const it: TranslationTree = {
       {
         icon: "🌍",
         title: "Sito in più lingue",
-        text: "Già disponibile in italiano e inglese, sito e i 30 controlli inclusi. Altre lingue in arrivo più avanti.",
+        text: "Già disponibile in italiano e inglese, sito e i 40 controlli inclusi. Altre lingue in arrivo più avanti.",
       },
       {
         icon: "➕",
@@ -714,7 +714,7 @@ const it: TranslationTree = {
       {
         icon: "🧩",
         title: "Controlli per altri linguaggi",
-        text: "Oltre a JavaScript/TypeScript e SQL/Supabase, i 30 controlli ora riconoscono anche Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel), testati su codice reale. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede giorni di lavoro dedicato per ognuno.",
+        text: "Oltre a JavaScript/TypeScript e SQL/Supabase, i 40 controlli ora riconoscono anche Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel), testati su codice reale. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede giorni di lavoro dedicato per ognuno.",
       },
       {
         icon: "📦",
@@ -729,7 +729,7 @@ const it: TranslationTree = {
       {
         icon: "🧠",
         title: "Livello AI per i bug difficilissimi",
-        text: "I 30 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare — ma sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da solo.",
+        text: "I 40 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare — ma sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da solo.",
       },
     ],
     emailPlaceholder: "tua@email.com",
@@ -741,7 +741,7 @@ const it: TranslationTree = {
     title: "Controllo Supabase",
     badge: "DISPONIBILE",
     body1: "Gli altri controlli leggono il codice e deducono cosa dovrebbe succedere a runtime. Questo invece si collega al tuo vero progetto Supabase e verifica cosa succede davvero: Row Level Security attiva o no, almeno una policy presente, bucket di storage pubblici o privati.",
-    body2: "Non ti chiediamo mai le tue credenziali Supabase. Esegui tu stesso questa query di sola lettura (nessuna scrittura possibile) nell'{{sqlEditor}} del tuo progetto, copia il risultato in un file chiamato esattamente {{filename}}, e caricalo insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 30 controlli.",
+    body2: "Non ti chiediamo mai le tue credenziali Supabase. Esegui tu stesso questa query di sola lettura (nessuna scrittura possibile) nell'{{sqlEditor}} del tuo progetto, copia il risultato in un file chiamato esattamente {{filename}}, e caricalo insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 40 controlli.",
     sqlEditor: "SQL Editor",
     toggleShow: "▼ Mostra la query",
     toggleHide: "▲ Nascondi la query",
@@ -750,25 +750,25 @@ const it: TranslationTree = {
     title: "Controllo Java/Maven",
     badge: "OPZIONALE",
     body1: "Per Java le versioni delle dipendenze spesso non sono scritte nel progetto: nello stack Spring Boot sono quasi sempre ereditate da un parent POM. Per questo serve un passo in più rispetto agli altri linguaggi: un comando di sola lettura, che non modifica nulla, da lanciare tu nella cartella del tuo progetto.",
-    body2: "Lancia questo comando nella cartella del tuo progetto Maven, poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 30 controlli.",
+    body2: "Lancia questo comando nella cartella del tuo progetto Maven, poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 40 controlli.",
   },
   awsIam: {
     title: "Controllo AWS IAM",
     badge: "OPZIONALE",
     body1: "Questo controllo legge lo stato vero del tuo account AWS, non il codice: trova policy IAM con accesso completo (Action \"*\" e Resource \"*\") e utenti con la policy AdministratorAccess collegata direttamente invece che tramite un ruolo — due errori di configurazione comuni e ben noti (CIS AWS Foundations Benchmark).",
-    body2: "Lancia questo comando, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 30 controlli.",
+    body2: "Lancia questo comando, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 40 controlli.",
   },
   awsS3: {
     title: "Controllo AWS S3",
     badge: "OPZIONALE",
     body1: "Questo controllo legge lo stato vero dei tuoi bucket S3, non il codice: trova bucket resi pubblici da una bucket policy o da un'ACL, e punti dove il Block Public Access non è attivo — errori di configurazione tra i più comuni e più costosi su AWS (basta un bucket configurato male per esporre tutto il suo contenuto). A differenza di IAM, qui serve un piccolo script invece di un comando singolo: S3 non ha un'unica chiamata che restituisca già tutto, va controllato bucket per bucket.",
-    body2: "Lancia questo script, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 30 controlli.",
+    body2: "Lancia questo script, di sola lettura, con le tue credenziali AWS — non modifica nulla sull'account. Poi carica il file generato ({{filename}}) insieme al resto del codice nell'analyzer qui sopra — i risultati si aggiungono automaticamente a quelli degli altri 40 controlli.",
   },
   report: {
     brandSub: "Report di sicurezza del codice",
     reportLabel: "Report",
     generatedOn: "Generato il {{date}}",
-    controlsNoLLM: "30 controlli · nessun LLM",
+    controlsNoLLM: "40 controlli · nessun LLM",
     filesScannedOne: "1 file analizzato",
     filesScannedMany: "{{count}} file analizzati",
     projectFallback: "Analisi codice",
@@ -779,7 +779,7 @@ const it: TranslationTree = {
     autofixNoteMany: "{{count}} problemi su {{total}} possono essere corretti in automatico da JoJoX.",
     autofixNoteSuffix: " Il file corretto è scaricabile dal sito come archivio .zip, separatamente da questo report.",
     resultsLabel: "Risultati",
-    emptyState: "Nessun problema trovato nei 30 controlli.",
+    emptyState: "Nessun problema trovato nei 40 controlli.",
     printBtn: "Stampa / Salva come PDF",
     printHint: "Se la finestra di stampa non si apre da sola, usa Ctrl+P (Cmd+P su Mac).",
     popupBlocked: "Il browser ha bloccato l'apertura della finestra. Consenti i popup per questo sito e riprova.",
@@ -795,7 +795,7 @@ const it: TranslationTree = {
     ctaText: "Analizza il tuo codice — gratis",
     copyLink: "Copia link",
     linkCopied: "✓ Link copiato",
-    poweredBy: "Generato da JoJoX — 30 controlli pubblici, nessun LLM",
+    poweredBy: "Generato da JoJoX — 40 controlli pubblici, nessun LLM",
   },
   fullSiteAudit: {
     eyebrow: "Novità",
@@ -805,7 +805,7 @@ const it: TranslationTree = {
     priceNote: "pagamento singolo, non un abbonamento",
     features: [
       "Analizza l'intero progetto — frontend e backend insieme, non solo poche modifiche",
-      "Gli stessi 30 controlli pubblici, sullo stesso motore usato per il monitoraggio continuo",
+      "Gli stessi 40 controlli pubblici, sullo stesso motore usato per il monitoraggio continuo",
       "Correzioni automatiche dove possibile, istruzioni chiare per il resto",
       "Report scaricabile in PDF, valido subito dopo il pagamento",
     ],
@@ -883,7 +883,7 @@ const en: TranslationTree = {
   hero: {
     titleLine1: "Your AI agent writes code every day, or do you write it yourself?",
     titleLine2Suffix: "keeps watch.",
-    body: "Not a one-off check. {{monitoring}}. 30 public checks for the most common mistakes in your code, a clear {{score}}, and fixes ready to copy.",
+    body: "Not a one-off check. {{monitoring}}. 40 public checks for the most common mistakes in your code, a clear {{score}}, and fixes ready to copy.",
     bodyMonitoring: "Continuous monitoring",
     bodyScore: "security score",
     sub: "The checks that normally take hours, automated and always on.",
@@ -904,7 +904,7 @@ const en: TranslationTree = {
     step1Title: "Analyze",
     step1Text: "Upload the code, or connect your GitHub repository.",
     step2Title: "Detect",
-    step2Text: "JoJoX runs the 30 checks and finds the security issues.",
+    step2Text: "JoJoX runs the 40 checks and finds the security issues.",
     step3Title: "Fix",
     step3Text: "Get an explanation, severity, and a fix ready to copy.",
   },
@@ -938,7 +938,7 @@ const en: TranslationTree = {
     question: "My AI agent already writes the code. Can't it check it too?",
     readMore: "Read the full answer",
     point1: "You can. But almost no one does it every time, on every file, after every change — and it only takes one missed check to leave a hole open. JoJoX doesn't wait for you to remember: it checks on its own, on every push.",
-    point2: "Asking a model \"is this secure?\" is like asking for an opinion: it changes every time and leaves no proof. JoJoX runs the same 30 public checks every time, identical for everyone, verifiable line by line in the code — a verdict, not an opinion.",
+    point2: "Asking a model \"is this secure?\" is like asking for an opinion: it changes every time and leaves no proof. JoJoX runs the same 40 public checks every time, identical for everyone, verifiable line by line in the code — a verdict, not an opinion.",
     point3: "No LLM, no hallucinations, no cost that grows with usage: pure pattern matching, instant, built to run on every pull request as often as you need.",
     closingLead: "JoJoX doesn't write your code.",
     closingPunch: "It keeps watch.",
@@ -987,7 +987,7 @@ const en: TranslationTree = {
     guestTitle: "Guest mode",
     guestList: [
       "1 free analysis, no email",
-      "All 30 checks with fix examples",
+      "All 40 checks with fix examples",
       "Security score",
       "One attempt per visitor, enforced by our server",
     ],
@@ -998,7 +998,7 @@ const en: TranslationTree = {
     freeTitle: "Free",
     freeList: [
       "5 analyses a month",
-      "All 30 checks, with fix examples",
+      "All 40 checks, with fix examples",
       "Security score + downloadable badge (.svg)",
       "History of the last 20 analyses",
     ],
@@ -1059,7 +1059,7 @@ const en: TranslationTree = {
   },
   checksList: {
     title: "Every check, no secrets",
-    body: "JoJoX doesn't hide how it works: below is the full list of all 30 checks, how severe each is, and how confident we are in each — \"confirmed\" when the problem is certain, \"to verify\" when a signal is missing from the code but it might be handled elsewhere (the check still always runs).",
+    body: "JoJoX doesn't hide how it works: below is the full list of all 40 checks, how severe each is, and how confident we are in each — \"confirmed\" when the problem is certain, \"to verify\" when a signal is missing from the code but it might be handled elsewhere (the check still always runs).",
     subLabel: "{{count}} checks, across 4 severity levels",
   },
   team: {
@@ -1093,7 +1093,7 @@ const en: TranslationTree = {
     dropzoneHintLoggedIn: "You're signed in: the analysis is saved to your history.",
     dropzoneHintGuest: "Guest mode: 1 free analysis, no email. After that, just an email to continue (5 a month, free).",
     dropzoneHintAny: "Works on any code — even written entirely by hand, not just AI-generated.",
-    dropzoneHintLanguages: "The 30 checks cover JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel). On other languages some generic checks may still help, but coverage isn't complete yet.",
+    dropzoneHintLanguages: "The 40 checks cover JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel). On other languages some generic checks may still help, but coverage isn't complete yet.",
     sectionEyebrow: "The analyzer",
     sectionTitle: "Upload the code, see what it finds.",
     moreFiles: "+{{count}} more",
@@ -1124,7 +1124,7 @@ const en: TranslationTree = {
   },
   findingsList: {
     scoreLabel: "Security score",
-    emptyState: "No problems found across the 30 checks. 🎉",
+    emptyState: "No problems found across the 40 checks. 🎉",
     autoFixed: "🔧 already fixed in the downloadable file",
   },
   github: {
@@ -1176,7 +1176,7 @@ const en: TranslationTree = {
       {
         icon: "🌍",
         title: "Site in more languages",
-        text: "Already available in Italian and English, site and all 30 checks included. More languages coming later.",
+        text: "Already available in Italian and English, site and all 40 checks included. More languages coming later.",
       },
       {
         icon: "➕",
@@ -1186,7 +1186,7 @@ const en: TranslationTree = {
       {
         icon: "🧩",
         title: "Checks for more languages",
-        text: "Besides JavaScript/TypeScript and SQL/Supabase, the 30 checks now also recognize Python (Flask, Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel), tested on real code. A new language done properly — checks and tests to avoid false positives — takes days of dedicated work each.",
+        text: "Besides JavaScript/TypeScript and SQL/Supabase, the 40 checks now also recognize Python (Flask, Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel), tested on real code. A new language done properly — checks and tests to avoid false positives — takes days of dedicated work each.",
       },
       {
         icon: "📦",
@@ -1201,7 +1201,7 @@ const en: TranslationTree = {
       {
         icon: "🧠",
         title: "AI layer for the hardest bugs",
-        text: "The 30 checks stay the heart of JoJoX: always the same, always verifiable — the score you can count on. Coming soon: an extra AI layer, built to catch the logic bugs that are hardest to find, the ones no pattern can catch — but always with a person reviewing before code is actually changed, never on its own.",
+        text: "The 40 checks stay the heart of JoJoX: always the same, always verifiable — the score you can count on. Coming soon: an extra AI layer, built to catch the logic bugs that are hardest to find, the ones no pattern can catch — but always with a person reviewing before code is actually changed, never on its own.",
       },
     ],
     emailPlaceholder: "you@email.com",
@@ -1213,7 +1213,7 @@ const en: TranslationTree = {
     title: "Supabase check",
     badge: "AVAILABLE",
     body1: "The other checks read the code and infer what should happen at runtime. This one instead connects to your real Supabase project and verifies what actually happens: Row Level Security on or off, at least one policy present, storage buckets public or private.",
-    body2: "We never ask for your Supabase credentials. Run this read-only query yourself (no writes possible) in your project's {{sqlEditor}}, copy the result into a file named exactly {{filename}}, and upload it together with the rest of the code in the analyzer above — the results are automatically added to the other 30 checks.",
+    body2: "We never ask for your Supabase credentials. Run this read-only query yourself (no writes possible) in your project's {{sqlEditor}}, copy the result into a file named exactly {{filename}}, and upload it together with the rest of the code in the analyzer above — the results are automatically added to the other 40 checks.",
     sqlEditor: "SQL Editor",
     toggleShow: "▼ Show the query",
     toggleHide: "▲ Hide the query",
@@ -1222,25 +1222,25 @@ const en: TranslationTree = {
     title: "Java/Maven check",
     badge: "OPTIONAL",
     body1: "For Java, dependency versions are often not written in the project itself: in the Spring Boot stack they're almost always inherited from a parent POM. That's why it takes one extra step compared to other languages: a read-only command, that changes nothing, which you run yourself in your project's folder.",
-    body2: "Run this command in your Maven project's folder, then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 30 checks.",
+    body2: "Run this command in your Maven project's folder, then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 40 checks.",
   },
   awsIam: {
     title: "AWS IAM check",
     badge: "OPTIONAL",
     body1: "This check reads your AWS account's real state, not the code: it finds IAM policies with full access (Action \"*\" and Resource \"*\") and users with the AdministratorAccess policy attached directly instead of through a role — two common, well-known misconfigurations (CIS AWS Foundations Benchmark).",
-    body2: "Run this read-only command with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 30 checks.",
+    body2: "Run this read-only command with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 40 checks.",
   },
   awsS3: {
     title: "AWS S3 check",
     badge: "OPTIONAL",
     body1: "This check reads your S3 buckets' real state, not the code: it finds buckets made public through a bucket policy or an ACL, and spots where Block Public Access isn't on — among the most common and most costly misconfigurations on AWS (one badly configured bucket is enough to expose everything in it). Unlike IAM, this one needs a small script instead of a single command: S3 has no single call that returns everything — it has to be checked bucket by bucket.",
-    body2: "Run this read-only script with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 30 checks.",
+    body2: "Run this read-only script with your AWS credentials — it changes nothing on the account. Then upload the generated file ({{filename}}) together with the rest of the code in the analyzer above — the results are automatically added to the other 40 checks.",
   },
   report: {
     brandSub: "Code security report",
     reportLabel: "Report",
     generatedOn: "Generated on {{date}}",
-    controlsNoLLM: "30 checks · no LLM",
+    controlsNoLLM: "40 checks · no LLM",
     filesScannedOne: "1 file scanned",
     filesScannedMany: "{{count}} files scanned",
     projectFallback: "Code analysis",
@@ -1251,7 +1251,7 @@ const en: TranslationTree = {
     autofixNoteMany: "{{count}} problems out of {{total}} can be fixed automatically by JoJoX.",
     autofixNoteSuffix: " The fixed file can be downloaded from the site as a .zip archive, separately from this report.",
     resultsLabel: "Results",
-    emptyState: "No problems found across the 30 checks.",
+    emptyState: "No problems found across the 40 checks.",
     printBtn: "Print / Save as PDF",
     printHint: "If the print window doesn't open by itself, use Ctrl+P (Cmd+P on Mac).",
     popupBlocked: "Your browser blocked the popup window. Allow popups for this site and try again.",
@@ -1267,7 +1267,7 @@ const en: TranslationTree = {
     ctaText: "Analyze your code — free",
     copyLink: "Copy link",
     linkCopied: "✓ Link copied",
-    poweredBy: "Generated by JoJoX — 30 public checks, no LLM",
+    poweredBy: "Generated by JoJoX — 40 public checks, no LLM",
   },
   fullSiteAudit: {
     eyebrow: "New",
@@ -1277,7 +1277,7 @@ const en: TranslationTree = {
     priceNote: "one-time payment, not a subscription",
     features: [
       "Scans the whole project — frontend and backend together, not just a few changes",
-      "The same 30 public checks, on the same engine used for continuous monitoring",
+      "The same 40 public checks, on the same engine used for continuous monitoring",
       "Automatic fixes where possible, clear instructions for the rest",
       "Downloadable PDF report, ready right after payment",
     ],

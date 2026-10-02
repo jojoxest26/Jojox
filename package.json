@@ -2,7 +2,7 @@
   "name": "@jojox/backend",
   "version": "0.1.0",
   "private": true,
-  "description": "JoJoX security analysis engine + backend — 30 checks for AI-generated code, GitHub App, API",
+  "description": "JoJoX security analysis engine + backend — 40 checks for AI-generated code, GitHub App, API",
   "type": "module",
   "main": "src/analyze.ts",
   "engines": {

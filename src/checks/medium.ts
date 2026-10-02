@@ -66,8 +66,10 @@ export const mediumChecks: Check[] = [
         // Python: supabase-py, stesso dict ma "True" maiuscolo (sintassi Python).
         ...scanLines(file, /create_bucket\([^)]*public["']?\s*:\s*True/g),
         // JS e Python insieme: boto3 (Python) e SDK JS di S3 usano entrambi
-        // la stessa chiave "ACL" con lo stesso valore letterale.
-        ...scanLines(file, /acl\s*[:=]\s*["']public-read["']/gi),
+        // la stessa chiave "ACL" con lo stesso valore letterale — lo stesso
+        // "acl = ..." è anche la sintassi di Terraform (aws_s3_bucket_acl),
+        // "public-read-write" (anche scrittura, non solo lettura) incluso.
+        ...scanLines(file, /acl\s*[:=]\s*["']public-read(-write)?["']/gi),
         // Go: SDK AWS per Go, il valore è avvolto in aws.String(...).
         ...scanLines(file, /ACL:\s*aws\.String\(\s*["']public-read["']\s*\)/g),
         // Java: SDK AWS per Java — v1 usa la costante CannedAccessControlList
@@ -88,7 +90,7 @@ export const mediumChecks: Check[] = [
         const replacement = m[0].replace(/public(["']?)\s*:\s*True/, "public$1: False");
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });
-      const r3 = replaceLines(r2.content, /acl\s*([:=])\s*["']public-read["']/gi, (line, m) => {
+      const r3 = replaceLines(r2.content, /acl\s*([:=])\s*["']public-read(-write)?["']/gi, (line, m) => {
         const replacement = m[1] === "=" ? `ACL="private"` : `acl: "private"`;
         return line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       });

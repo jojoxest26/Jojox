@@ -9,6 +9,7 @@ import {
   isPhpFile,
   isDockerfile,
   isKubernetesManifest,
+  isTerraformFile,
   nearbyMatches,
   redactLine,
 } from "../util/scan.js";
@@ -858,5 +859,75 @@ export const criticalChecks: Check[] = [
     // Nessun autofix: creare il Secret corrispondente (e scegliere come
     // gestirlo — kubectl create secret, un tool esterno, SOPS...) richiede
     // una decisione che non possiamo prendere al posto tuo.
+  },
+
+  {
+    id: "terraform-open-security-group",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un security group Terraform apre una porta sensibile a tutto internet",
+    description:
+      "Una regola con \"cidr_blocks\" che include 0.0.0.0/0 (qualunque indirizzo IP) è vicina a una porta sensibile — SSH (22), RDP (3389), o una porta tipica di database (MySQL, Postgres, MongoDB, Redis, SQL Server). Chiunque su internet può provare a connettersi a quel servizio, non solo chi dovrebbe.",
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # solo la tua rete privata, o un bastion host\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+      const openCidrPattern = /cidr_blocks\s*=\s*\[[^\]]*0\.0\.0\.0\/0[^\]]*\]/i;
+      const sensitivePortPattern = /\b(from_port|to_port)\s*=\s*(22|3389|3306|5432|27017|6379|1433)\b/;
+
+      lines.forEach((lineText, idx) => {
+        if (!openCidrPattern.test(lineText)) return;
+        if (!nearbyMatches(file, idx + 1, 10, sensitivePortPattern)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+
+      return matches;
+    },
+    // Nessun autofix: il CIDR giusto da usare al posto di 0.0.0.0/0 dipende
+    // dalla rete del progetto (VPC privata, IP del bastion host, ufficio...)
+    // — non possiamo indovinarlo senza rischiare di bloccare un accesso legittimo.
+  },
+
+  {
+    id: "terraform-hardcoded-secret",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un segreto è scritto come valore di default di una variabile Terraform",
+    description:
+      "Una variabile con un nome tipo password/secret/token/chiave ha un valore letterale nel suo \"default\". A differenza di un valore passato a runtime (tfvars, variabili d'ambiente TF_VAR_*), un default finisce nel codice sorgente — e se il repository è condiviso o pubblico, chiunque lo vede, anche senza accesso allo stato Terraform.",
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # nessun default: va passato con un file .tfvars (fuori da git) o una variabile d'ambiente TF_VAR_db_password\n  sensitive = true\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+      const varDeclPattern = new RegExp(`^\\s*variable\\s+["'](\\w*(?:${DOCKERFILE_SECRET_VAR_NAME.source})\\w*)["']\\s*\\{`, "i");
+      const defaultValuePattern = /^\s*default\s*=\s*["']([^"']+)["']/i;
+
+      lines.forEach((lineText, idx) => {
+        if (!varDeclPattern.test(lineText)) return;
+        for (let j = idx + 1; j < Math.min(idx + 10, lines.length); j++) {
+          if (/^\s*\}/.test(lines[j])) break; // fine del blocco variable
+          const m = lines[j].match(defaultValuePattern);
+          if (!m) continue;
+          const value = m[1];
+          if (value.startsWith("$") || PLACEHOLDER_VALUE.test(value)) return;
+          matches.push({ line: j + 1, snippet: redactLine(lines[j], 0, lines[j].length) });
+          return;
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: rimuovere il default senza sapere come il progetto
+    // intende passare il valore vero (tfvars? variabile d'ambiente?
+    // un secret manager?) rischia di rompere ogni "terraform plan/apply"
+    // finché qualcuno non decide come sostituirlo.
   },
 ];

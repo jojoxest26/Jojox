@@ -9,6 +9,8 @@ import {
   isJavaFile,
   isPhpFile,
   isKubernetesManifest,
+  isTerraformFile,
+  nearbyMatches,
 } from "../util/scan.js";
 
 // Fase 2, IaC: manifest Kubernetes — stessa scelta di non usare un parser
@@ -17,6 +19,15 @@ import {
 const K8S_RUN_AS_ROOT = /^\s*runAsUser:\s*0\b|^\s*runAsNonRoot:\s*false\b/gim;
 const K8S_PRIVILEGE_ESCALATION = /^\s*allowPrivilegeEscalation:\s*true\b/gim;
 const K8S_HOST_NAMESPACE = /^\s*(hostNetwork|hostPID|hostIPC):\s*true\b/gim;
+
+// Fase 2, IaC: Terraform. "actions"/"resources" (array, stile HCL nativo
+// aws_iam_policy_document) e "Action"/"Resource" (stile JSON/jsonencode) —
+// coperti entrambi perché sono i due modi più comuni di scrivere una policy
+// IAM dentro un file .tf.
+const TF_ACTION_WILDCARD = /\bactions?\s*[:=]\s*(\["\*"\]|"\*")/i;
+const TF_RESOURCE_WILDCARD = /\bresources?\s*[:=]\s*(\["\*"\]|"\*")/i;
+const TF_PUBLIC_ACCESS_BLOCK_DISABLED =
+  /\b(block_public_acls|ignore_public_acls|block_public_policy|restrict_public_buckets)\s*=\s*false\b/gi;
 
 // JS/Express (requireAuth, req.user...), Python/Flask/Django (login_required,
 // request.user.is_staff...), Go/Gin (MustGet, AuthRequired...),
@@ -391,5 +402,56 @@ export const highChecks: Check[] = [
     // è sempre la scelta più sicura), qui alcuni workload di sistema
     // dipendono davvero da questo accesso — disattivarlo alla cieca
     // potrebbe romperli.
+  },
+
+  {
+    id: "terraform-s3-block-public-access-disabled",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Block Public Access è disattivato su un bucket S3 definito in Terraform",
+    description:
+      "Una o più delle quattro protezioni di \"aws_s3_bucket_public_access_block\" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) sono impostate su false. Non significa che il bucket sia già pubblico, ma toglie una rete di sicurezza che impedirebbe di renderlo pubblico per errore in futuro.",
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      return scanLines(file, TF_PUBLIC_ACCESS_BLOCK_DISABLED);
+    },
+    autofix(file) {
+      if (!isTerraformFile(file)) return null;
+      const { content, changed } = replaceLines(file.content, TF_PUBLIC_ACCESS_BLOCK_DISABLED, (line) => line.replace(/false\b/i, "true"));
+      return changed ? content : null;
+    },
+  },
+
+  {
+    id: "terraform-iam-wildcard-policy",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Una policy IAM definita in Terraform concede accesso completo",
+    description:
+      "Uno statement con azione \"*\" e risorsa \"*\" concede accesso completo a ogni servizio e risorsa AWS — stesso controllo già fatto sullo stato IAM live, qui letto direttamente dal codice prima ancora di essere applicato. Può essere voluto per un ruolo di emergenza, ma va confermato: per l'uso quotidiano concedi solo i permessi davvero necessari.",
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::il-tuo-bucket/*"]\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        if (!TF_ACTION_WILDCARD.test(lineText)) return;
+        if (!nearbyMatches(file, idx + 1, 5, TF_RESOURCE_WILDCARD)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+
+      return matches;
+    },
+    // Nessun autofix: non conosciamo quali permessi servano davvero al
+    // progetto — restringerli alla cieca romperebbe quasi certamente
+    // qualcosa che dipende da quell'accesso.
   },
 ];

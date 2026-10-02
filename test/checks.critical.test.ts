@@ -1028,4 +1028,72 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Fase 2 — IaC (Terraform)", () => {
+    it("terraform-open-security-group: flags a security group open to 0.0.0.0/0 on SSH", () => {
+      const check = checkById("terraform-open-security-group");
+      const vulnerable = file(
+        "main.tf",
+        'resource "aws_security_group" "web" {\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = "tcp"\n    cidr_blocks = ["0.0.0.0/0"]\n  }\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("terraform-open-security-group: flags a database port open to 0.0.0.0/0", () => {
+      const check = checkById("terraform-open-security-group");
+      const vulnerable = file(
+        "main.tf",
+        'resource "aws_security_group" "db" {\n  ingress {\n    from_port   = 5432\n    to_port     = 5432\n    cidr_blocks = ["0.0.0.0/0"]\n  }\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("terraform-open-security-group: does not flag HTTPS (443) open to 0.0.0.0/0", () => {
+      const check = checkById("terraform-open-security-group");
+      const clean = file(
+        "main.tf",
+        'resource "aws_security_group" "web" {\n  ingress {\n    from_port   = 443\n    to_port     = 443\n    cidr_blocks = ["0.0.0.0/0"]\n  }\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-open-security-group: does not flag SSH restricted to a private CIDR", () => {
+      const check = checkById("terraform-open-security-group");
+      const clean = file(
+        "main.tf",
+        'resource "aws_security_group" "web" {\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    cidr_blocks = ["10.0.0.0/16"]\n  }\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-hardcoded-secret: flags a secret-looking variable default", () => {
+      const check = checkById("terraform-hardcoded-secret");
+      const vulnerable = file("variables.tf", 'variable "db_password" {\n  default = "supersecret123"\n}\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("terraform-hardcoded-secret: does not flag a variable default with no secret-looking name", () => {
+      const check = checkById("terraform-hardcoded-secret");
+      const clean = file("variables.tf", 'variable "region" {\n  default = "eu-west-1"\n}\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-hardcoded-secret: does not flag a secret-looking variable with no default at all", () => {
+      const check = checkById("terraform-hardcoded-secret");
+      const clean = file("variables.tf", 'variable "db_password" {\n  description = "passed via TF_VAR_db_password"\n}\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-hardcoded-secret: does not flag an obvious placeholder default", () => {
+      const check = checkById("terraform-hardcoded-secret");
+      const clean = file("variables.tf", 'variable "db_password" {\n  default = "changeme"\n}\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("terraform-hardcoded-secret: does not flag anything in a file that isn't Terraform", () => {
+      const check = checkById("terraform-hardcoded-secret");
+      const clean = file("notes.txt", 'variable "db_password" {\n  default = "supersecret123"\n}\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

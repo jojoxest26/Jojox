@@ -22,7 +22,7 @@ export function formatPrComment(result: AnalysisResult, fixPrUrl?: string | null
     return [
       `## JoJoX — Punteggio di sicurezza: ${result.score}/100`,
       "",
-      "Nessun problema trovato nei 30 controlli. ✅",
+      "Nessun problema trovato nei 40 controlli. ✅",
     ].join("\n");
   }
 

@@ -26,6 +26,11 @@ export function isDockerfile(file: SourceFile): boolean {
   return /^Dockerfile(\.[\w-]+)?$/i.test(basename) || /\.dockerfile$/i.test(basename);
 }
 
+/** True per un file Terraform. Usato dai controlli IaC (Fase 2). */
+export function isTerraformFile(file: SourceFile): boolean {
+  return /\.tf$/i.test(file.path);
+}
+
 const K8S_WORKLOAD_KIND = /^kind:\s*["']?(Pod|Deployment|StatefulSet|DaemonSet|ReplicaSet|Job|CronJob)["']?\s*$/im;
 
 /**

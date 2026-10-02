@@ -36,6 +36,24 @@ describe("medium checks", () => {
     expect(detect(check, clean)).toHaveLength(0);
   });
 
+  it("public-storage-bucket: flags a Terraform aws_s3_bucket_acl set to public-read", () => {
+    const check = checkById("public-storage-bucket");
+    const vulnerable = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  acl = "public-read"\n}\n');
+    expect(detect(check, vulnerable)).toHaveLength(1);
+  });
+
+  it("public-storage-bucket: flags a Terraform aws_s3_bucket_acl set to public-read-write too", () => {
+    const check = checkById("public-storage-bucket");
+    const vulnerable = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  acl = "public-read-write"\n}\n');
+    expect(detect(check, vulnerable)).toHaveLength(1);
+  });
+
+  it("public-storage-bucket: does not flag a Terraform aws_s3_bucket_acl set to private", () => {
+    const check = checkById("public-storage-bucket");
+    const clean = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  acl = "private"\n}\n');
+    expect(detect(check, clean)).toHaveLength(0);
+  });
+
   it("csrf-state-changing-get: flags a GET route that deletes data", () => {
     const check = checkById("csrf-state-changing-get");
     const vulnerable = file("src/routes/posts.ts", 'router.get("/posts/:id/delete", deletePost)');
