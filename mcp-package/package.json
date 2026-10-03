@@ -1,0 +1,42 @@
+{
+  "name": "jojox-mcp",
+  "version": "0.1.0",
+  "description": "Server MCP di JoJoX: 40 controlli di sicurezza per codice generato da AI (pattern matching deterministico, nessun LLM, nessun dato inviato fuori dal tuo editor). Si collega a Claude Code, Claude Desktop, Cursor e altri agenti compatibili con il Model Context Protocol.",
+  "type": "module",
+  "bin": {
+    "jojox-mcp": "./dist/mcp/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jojoxest26/Jojox.git",
+    "directory": "mcp-package"
+  },
+  "homepage": "https://jojox.it",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "security",
+    "sicurezza",
+    "ai",
+    "claude",
+    "cursor",
+    "code-review"
+  ],
+  "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p . && chmod +x dist/mcp/server.js",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  }
+}

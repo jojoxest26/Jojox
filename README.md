@@ -18,20 +18,33 @@ Sicurezza per codice scritto (anche) da AI: 40 controlli statici, punteggio 0-10
 
 ### Server MCP
 
-Claude Code e altri agenti AI possono collegarsi a JoJoX come strumento MCP, senza passare dal sito:
+Claude Code e altri agenti AI possono collegarsi a JoJoX come strumento MCP, senza passare dal sito. Espone `analyze_code`, `fix_code` e `list_checks` — un agente può controllarsi da solo mentre scrive codice, prima ancora di proporre una modifica.
 
-```bash
-npm run mcp   # avvia il server MCP su stdio
-```
-
-Espone `analyze_code`, `fix_code` e `list_checks` — un agente può controllarsi da solo mentre scrive codice, prima ancora di proporre una modifica.
-
-Per collegarlo a **Claude Code** in un altro progetto, aggiungi al suo `.mcp.json` (sostituendo il percorso con quello reale di questa cartella sul tuo computer):
+**Per chi usa JoJoX da fuori questo repository** (utenti esterni di Claude Code, Claude Desktop, Cursor, ecc.): esiste un package pubblicabile, `mcp-package/` (nome npm `jojox-mcp`), che distribuisce solo la build compilata del motore — niente clone del repository, niente percorsi locali da configurare. Una volta pubblicato su npm, basta:
 
 ```json
 {
   "mcpServers": {
     "jojox": {
+      "command": "npx",
+      "args": ["-y", "jojox-mcp"]
+    }
+  }
+}
+```
+
+*(Il package è pronto e testato end-to-end — vedi `mcp-package/README.md` — ma la pubblicazione su npm è un passo manuale non ancora fatto: va eseguito `npm publish` da un account con accesso al nome `jojox-mcp`.)*
+
+**Per lo sviluppo del motore stesso** (dentro a questo repository), si può usare direttamente la sorgente TypeScript senza compilare:
+
+```bash
+npm run mcp   # avvia il server MCP su stdio, letto direttamente da src/mcp/server.ts
+```
+
+```json
+{
+  "mcpServers": {
+    "jojox-dev": {
       "command": "npx",
       "args": ["tsx", "/percorso/assoluto/a/Jojox/src/mcp/server.ts"]
     }
@@ -60,6 +73,11 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 **Estensione VS Code** (`vscode-extension/`, pacchetto a parte con il proprio `package.json`):
 - Sottolinea i problemi direttamente nell'editor mentre scrivi (o al salvataggio), riusando lo stesso motore di `src/` — nessuna dipendenza a runtime, nessun LLM
 - Non ancora pubblicata sul Marketplace: si compila e si avvia in locale, istruzioni in `vscode-extension/README.md`
+
+**Package MCP distribuibile** (`mcp-package/`, pacchetto a parte con il proprio `package.json`, nome npm `jojox-mcp`):
+- Stesso server di `src/mcp/server.ts`, ma compilato e autosufficiente — nessun clone di questo repository, nessun percorso locale da configurare
+- Pensato per chi usa JoJoX da fuori (Claude Code, Claude Desktop, Cursor di terzi): una volta pubblicato, si collega con `npx -y jojox-mcp`
+- Pronto e testato end-to-end, non ancora pubblicato su npm — istruzioni in `mcp-package/README.md`
 
 **Sito** (`web/`, Vite + React + TypeScript):
 - Landing page, analisi client-side (drag&drop → `analyzeFiles` importato direttamente dal motore)
@@ -91,6 +109,11 @@ npm run dev                       # sito in locale (richiede un .env, vedi web/.
 cd vscode-extension
 npm install
 npm run compile                   # poi apri questa cartella in VS Code e premi F5 per provarla
+
+cd mcp-package
+npm install
+npm run build                     # compila dist/, poi node dist/mcp/server.js per provarlo in locale
+npm publish                       # pubblica jojox-mcp su npm (richiede un account con accesso al nome)
 ```
 
 ## Punteggio
