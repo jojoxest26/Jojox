@@ -1,10 +1,12 @@
 # jojox-mcp
 
-Server MCP di [JoJoX](https://jojox.it): gli stessi 40 controlli di sicurezza del sito, via pattern matching deterministico — nessun LLM nel motore, nessun codice inviato fuori dal tuo editor.
+Server MCP di [JoJoX](https://jojox.it): 40 controlli di sicurezza per codice generato (anche) da AI — pattern matching deterministico, **nessun LLM nel motore**.
 
-## Uso
+**L'analisi avviene interamente in locale.** `jojox-mcp` gira come processo sul tuo computer, parla con il tuo agente via stdio: il codice che analizzi non viene mai inviato a JoJoX né a terzi, nessuna chiamata di rete nei tool `analyze_code` e `fix_code`. Per uno strumento di sicurezza, è una garanzia, non solo una comodità.
 
-Aggiungi al `.mcp.json` del tuo progetto (Claude Code) o alla configurazione MCP di Claude Desktop/Cursor:
+## Uso con Claude Code
+
+Aggiungi al `.mcp.json` del progetto (o a quello globale):
 
 ```json
 {
@@ -17,7 +19,30 @@ Aggiungi al `.mcp.json` del tuo progetto (Claude Code) o alla configurazione MCP
 }
 ```
 
-Nessuna installazione manuale, nessun percorso locale da configurare.
+## Uso con Cursor
+
+Stessa configurazione, nel file `.cursor/mcp.json` del progetto (o in quello globale, `~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "jojox": {
+      "command": "npx",
+      "args": ["-y", "jojox-mcp"]
+    }
+  }
+}
+```
+
+## Uso con Claude Desktop
+
+Stessa voce nel file di configurazione dell'app (Impostazioni → Sviluppatore → Modifica configurazione).
+
+In tutti i casi: nessuna installazione manuale, nessun percorso locale da configurare, nessuna registrazione. Il tuo agente avvia `jojox-mcp` da solo al bisogno.
+
+## Cosa controlla
+
+40 controlli deterministici su JavaScript/TypeScript, Python, Go, Java, PHP e SQL/Supabase — chiavi e credenziali scritte nel codice, SQL/NoSQL/command/header injection, path traversal, SSRF, XSS, CSRF, IDOR, CORS permissivo, hashing debole, redirect aperti, controlli IaC su Dockerfile/Kubernetes/Terraform, e altro. Elenco completo e aggiornato, con gravità e confidenza di ognuno: [jojox.it](https://jojox.it).
 
 ## Strumenti esposti
 
@@ -35,3 +60,9 @@ npm run build
 ```
 
 Il codice sorgente del motore resta nel repository principale (`jojoxest26/jojox`); questo package ne distribuisce solo la build compilata.
+
+## Link
+
+- Sito: [jojox.it](https://jojox.it)
+- Codice sorgente del motore: [github.com/jojoxest26/Jojox](https://github.com/jojoxest26/Jojox)
+- Segnalazione vulnerabilità: [jojox.it/sicurezza](https://jojox.it/sicurezza)

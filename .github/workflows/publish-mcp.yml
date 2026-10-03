@@ -1,0 +1,72 @@
+name: Pubblica jojox-mcp su npm
+
+# Ricompila ed eventualmente pubblica il package mcp-package/ (jojox-mcp) su npm,
+# cosi' non resta mai indietro rispetto al motore di analisi in src/.
+#
+# Si attiva in due casi:
+# - manualmente, dal tab "Actions" di GitHub ("Run workflow") - utile per la prima
+#   pubblicazione o per ripubblicare senza dover toccare nulla nel codice;
+# - automaticamente, a ogni push che cambia mcp-package/package.json (tipicamente
+#   quando si alza il numero di versione dopo aver aggiunto nuovi controlli).
+#
+# Pubblica solo se la versione in mcp-package/package.json e' piu' recente di
+# quella gia' su npm - se e' la stessa, non fa nulla (evita errori "versione gia'
+# pubblicata" su run ripetuti che non cambiano la versione).
+#
+# Richiede un secret del repository chiamato NPM_TOKEN: un Automation Token creato
+# su npmjs.com (Account -> Access Tokens -> Generate New Token -> Automation),
+# aggiunto in Settings -> Secrets and variables -> Actions. Il token non viene mai
+# letto o visto al di fuori di questa Action.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - claude/banca-italia-manager-meeting-kaaxrt
+    paths:
+      - "mcp-package/package.json"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Confronta la versione locale con quella pubblicata su npm
+        id: version-check
+        working-directory: mcp-package
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view jojox-mcp version 2>/dev/null || echo "none")
+          echo "Versione locale: $LOCAL_VERSION — versione su npm: $PUBLISHED_VERSION"
+          if [ "$LOCAL_VERSION" = "$PUBLISHED_VERSION" ]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Installa le dipendenze
+        if: steps.version-check.outputs.should_publish == 'true'
+        working-directory: mcp-package
+        run: npm ci
+
+      - name: Compila (ricompila sempre dal motore aggiornato in src/)
+        if: steps.version-check.outputs.should_publish == 'true'
+        working-directory: mcp-package
+        run: npm run build
+
+      - name: Pubblica su npm
+        if: steps.version-check.outputs.should_publish == 'true'
+        working-directory: mcp-package
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Nessuna azione
+        if: steps.version-check.outputs.should_publish == 'false'
+        run: echo "La versione in mcp-package/package.json è già quella pubblicata su npm — nessuna pubblicazione necessaria."

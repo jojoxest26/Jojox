@@ -33,7 +33,7 @@ Claude Code e altri agenti AI possono collegarsi a JoJoX come strumento MCP, sen
 }
 ```
 
-*(Il package è pronto e testato end-to-end — vedi `mcp-package/README.md` — ma la pubblicazione su npm è un passo manuale non ancora fatto: va eseguito `npm publish` da un account con accesso al nome `jojox-mcp`.)*
+*(Il package è pronto e testato end-to-end — vedi `mcp-package/README.md`. La compilazione e la pubblicazione su npm sono automatizzate in `.github/workflows/publish-mcp.yml`: basta aggiungere il secret `NPM_TOKEN` del repository — un Automation Token creato su npmjs.com — e lanciare la Action dal tab "Actions" di GitHub. Resta un passo manuale, puramente perché serve un account npm con 2FA attiva e il permesso di creare quel token: nessuna azione automatica può farlo al posto tuo.)*
 
 **Per lo sviluppo del motore stesso** (dentro a questo repository), si può usare direttamente la sorgente TypeScript senza compilare:
 
@@ -113,8 +113,10 @@ npm run compile                   # poi apri questa cartella in VS Code e premi 
 cd mcp-package
 npm install
 npm run build                     # compila dist/, poi node dist/mcp/server.js per provarlo in locale
-npm publish                       # pubblica jojox-mcp su npm (richiede un account con accesso al nome)
+npm publish                       # pubblica jojox-mcp su npm a mano (di solito non serve, vedi sotto)
 ```
+
+La pubblicazione su npm di `jojox-mcp` è automatizzata: vedi `.github/workflows/publish-mcp.yml`, che ricompila e pubblica da solo ogni volta che la versione in `mcp-package/package.json` cambia (o quando lanciata a mano dal tab "Actions"), così il package su npm non resta mai indietro rispetto ai controlli in `src/`.
 
 ## Punteggio
 
