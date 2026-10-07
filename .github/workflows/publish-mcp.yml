@@ -13,10 +13,13 @@ name: Pubblica jojox-mcp su npm
 # quella gia' su npm - se e' la stessa, non fa nulla (evita errori "versione gia'
 # pubblicata" su run ripetuti che non cambiano la versione).
 #
-# Richiede un secret del repository chiamato NPM_TOKEN: un Automation Token creato
-# su npmjs.com (Account -> Access Tokens -> Generate New Token -> Automation),
-# aggiunto in Settings -> Secrets and variables -> Actions. Il token non viene mai
-# letto o visto al di fuori di questa Action.
+# Autenticazione: Trusted Publishing (OIDC), non un token salvato come secret.
+# npm si fida direttamente di questo workflow specifico in questo repository,
+# verificato da GitHub a ogni esecuzione - nessun segreto da generare, salvare
+# o far scadere. Va configurato una volta sola sulla pagina del pacchetto su
+# npmjs.com (Settings del pacchetto jojox-mcp -> Trusted Publisher -> GitHub
+# Actions -> repository "jojoxest26/Jojox", file ".github/workflows/publish-mcp.yml").
+# Richiede npm CLI aggiornato (il job lo aggiorna da solo prima di pubblicare).
 
 on:
   workflow_dispatch: {}
@@ -25,6 +28,10 @@ on:
       - claude/banca-italia-manager-meeting-kaaxrt
     paths:
       - "mcp-package/package.json"
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   publish:
@@ -36,6 +43,9 @@ jobs:
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Aggiorna npm (serve una versione recente per il Trusted Publishing)
+        run: npm install -g npm@latest
 
       - name: Confronta la versione locale con quella pubblicata su npm
         id: version-check
@@ -64,8 +74,6 @@ jobs:
         if: steps.version-check.outputs.should_publish == 'true'
         working-directory: mcp-package
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Nessuna azione
         if: steps.version-check.outputs.should_publish == 'false'
