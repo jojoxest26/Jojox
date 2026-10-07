@@ -1,6 +1,6 @@
 # JoJoX — motore, backend e sito
 
-Sicurezza per codice scritto (anche) da AI: 40 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — gira sia lato server sia nel browser, non solo in teoria: il sito lo importa direttamente per l'analisi in modalità ospite.
+Sicurezza per codice scritto (anche) da AI: 40 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — stesso codice riusato sul server (l'analisi sul sito, sia ospite sia loggato, passa dal backend), nel browser (le correzioni automatiche restano sempre e solo lì, mai inviate al server) e in locale per chi usa la CLI o il server MCP, che non fa mai una chiamata di rete.
 
 ## Struttura
 
@@ -33,7 +33,7 @@ Claude Code e altri agenti AI possono collegarsi a JoJoX come strumento MCP, sen
 }
 ```
 
-*(Il package è pronto e testato end-to-end — vedi `mcp-package/README.md`. La compilazione e la pubblicazione su npm sono automatizzate in `.github/workflows/publish-mcp.yml`: basta aggiungere il secret `NPM_TOKEN` del repository — un Automation Token creato su npmjs.com — e lanciare la Action dal tab "Actions" di GitHub. Resta un passo manuale, puramente perché serve un account npm con 2FA attiva e il permesso di creare quel token: nessuna azione automatica può farlo al posto tuo.)*
+*(Pubblicato su npm come `jojox-mcp`, testato end-to-end con un'installazione reale via `npx` — vedi `mcp-package/README.md`. Le pubblicazioni future sono automatizzate in `.github/workflows/publish-mcp.yml` via Trusted Publishing di npm (OIDC, nessun token salvato come secret): basta alzare il numero di versione in `mcp-package/package.json` e fare push, la Action ricompila e pubblica da sola.)*
 
 **Per lo sviluppo del motore stesso** (dentro a questo repository), si può usare direttamente la sorgente TypeScript senza compilare:
 
@@ -76,11 +76,11 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 
 **Package MCP distribuibile** (`mcp-package/`, pacchetto a parte con il proprio `package.json`, nome npm `jojox-mcp`):
 - Stesso server di `src/mcp/server.ts`, ma compilato e autosufficiente — nessun clone di questo repository, nessun percorso locale da configurare
-- Pensato per chi usa JoJoX da fuori (Claude Code, Claude Desktop, Cursor di terzi): una volta pubblicato, si collega con `npx -y jojox-mcp`
-- Pronto e testato end-to-end, non ancora pubblicato su npm — istruzioni in `mcp-package/README.md`
+- Pubblicato su npm: chi usa JoJoX da fuori (Claude Code, Claude Desktop, Cursor di terzi) si collega con `npx -y jojox-mcp`, senza installazione né registrazione — gira interamente in locale, nessuna chiamata di rete nei tool `analyze_code`/`fix_code`
+- Testato end-to-end con un'installazione reale — istruzioni in `mcp-package/README.md`
 
 **Sito** (`web/`, Vite + React + TypeScript):
-- Landing page, analisi client-side (drag&drop → `analyzeFiles` importato direttamente dal motore)
+- Landing page, drag&drop dei file; l'analisi (sia ospite sia loggato) passa dal backend per applicare i limiti e salvare lo storico — il testo dei file non viene conservato, solo i risultati; le correzioni automatiche restano invece sempre e solo nel browser
 - Login via Supabase (magic link email), storico delle analisi per utenti loggati, con grafico dell'andamento del punteggio nel tempo
 - 1 analisi gratuita senza email (limite imposto dal server per IP), poi serve l'email per 5 analisi/mese gratis
 - Report PDF esportabile: genera una pagina stampabile con punteggio, riepilogo e problemi trovati, tramite la stampa del browser (nessuna libreria PDF)
@@ -133,8 +133,7 @@ Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md
 
 ## Prossimi passi
 
-- **Controlli per altri linguaggi** — oggi JoJoX è tarato su JavaScript/TypeScript e SQL/Supabase; coprire seriamente Python, Java o PHP richiede settimane di lavoro dedicato per linguaggio (test, niente falsi positivi) — realisticamente 3-6 mesi per 3-4 linguaggi in più, se diventa priorità
-- **Sempre più correzioni automatiche** — estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
-- **Gestione team con più seat** — nessuna data ancora
+- **Controlli per altri linguaggi** — oggi JoJoX copre JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel) su tutti i controlli applicabili al codice applicativo (fatto, un linguaggio alla volta, testato su codice reale per ognuno); più Dockerfile, Kubernetes e Terraform per l'infrastruttura, indipendenti dal linguaggio del progetto. Altri linguaggi (es. Rust, Ruby, C#) restano da aggiungere se diventa priorità, stessa logica: giorni di lavoro dedicato per linguaggio, non ore
+- **Sempre più correzioni automatiche** — oggi 12 controlli su 40 sanno correggersi da soli; estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
 - **Un livello aggiuntivo con l'intelligenza artificiale** per i problemi più difficili da individuare — sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da sola
 - **Sito in più lingue** — già disponibile in italiano e inglese, altre lingue in arrivo più avanti
