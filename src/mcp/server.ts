@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { analyzeFiles, applyAutofixes } from "../analyze.js";
@@ -181,7 +182,19 @@ function startStdioServer(): void {
   });
 }
 
-// Avvia il server solo quando questo file viene eseguito direttamente (`npm run mcp`),
-// non quando viene importato — ad esempio dai test, che vogliono solo le funzioni pure.
-const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+// Avvia il server solo quando questo file viene eseguito direttamente (`npm run mcp`,
+// o tramite il collegamento simbolico `bin` che npm/npx creano quando il pacchetto è
+// installato - per questo si confrontano i percorsi reali, non quelli letterali: un
+// collegamento simbolico in argv[1] altrimenti non combacerebbe mai con questo file),
+// non quando viene importato - ad esempio dai test, che vogliono solo le funzioni pure.
+function resolveRealpath(path: string): string | undefined {
+  try {
+    return realpathSync(path);
+  } catch {
+    return undefined;
+  }
+}
+
+const invokedPath = process.argv[1] ? resolveRealpath(process.argv[1]) : undefined;
+const isMainModule = invokedPath !== undefined && invokedPath === fileURLToPath(import.meta.url);
 if (isMainModule) startStdioServer();
