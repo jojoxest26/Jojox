@@ -184,7 +184,7 @@ export function GithubSection({
                 {renderWithTokens(t.github.terminalBody, {
                   fix: <code>--fix</code>,
                   link: (
-                    <a href="https://github.com/jojoxest26/Jojox#uso" target="_blank" rel="noreferrer">
+                    <a href="https://github.com/jojoxest26/Jojox#server-mcp" target="_blank" rel="noreferrer">
                       {t.github.terminalLink}
                     </a>
                   ),
