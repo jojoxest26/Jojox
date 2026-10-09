@@ -14,7 +14,7 @@ import { SUPABASE_SNAPSHOT_FILENAME, parseSupabaseSnapshot, supabaseConfigFindin
 import { SKIP_PATH } from "./util/skipPath.js";
 
 export { SKIP_PATH };
-const BINARY_EXT = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|pdf|zip|lock)$/i;
+export const BINARY_EXT = /\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|pdf|zip|lock)$/i;
 
 /** File "snapshot" che non sono codice sorgente da scansionare riga per riga con i controlli a pattern — ognuno ha la sua analisi dedicata. */
 const NON_SOURCE_SNAPSHOTS = [

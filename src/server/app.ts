@@ -16,6 +16,7 @@ import { auditCreditsRouter } from "./routes/auditCredits.js";
 import { analyzeAuditRouter } from "./routes/analyzeAudit.js";
 import { planTrialRouter } from "./routes/planTrial.js";
 import { teamRouter } from "./routes/team.js";
+import { sentinelRouter } from "./routes/sentinel.js";
 
 export function createApp(): Express {
   const app = express();
@@ -61,6 +62,7 @@ export function createApp(): Express {
   app.use(analyzeAuditRouter);
   app.use(planTrialRouter);
   app.use(teamRouter);
+  app.use(sentinelRouter);
 
   return app;
 }

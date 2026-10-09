@@ -16,7 +16,7 @@ function buildAuditFixPrBody(fixedCheckIds: Set<string>, filesChanged: number): 
 }
 
 /** Branch predefinito di un repository e lo sha del suo ultimo commit. */
-async function getDefaultBranchHead(
+export async function getDefaultBranchHead(
   octokit: InstallationOctokit,
   params: { owner: string; repo: string }
 ): Promise<{ branch: string; sha: string }> {

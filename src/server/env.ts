@@ -41,4 +41,11 @@ export const env = {
   stripePriceIdTeamAnnual: process.env.STRIPE_PRICE_ID_TEAM_ANNUAL ?? null,
   /** Prezzo one-time per il Full Site Audit — pagamento singolo, non abbonamento. */
   stripePriceIdAudit: process.env.STRIPE_PRICE_ID_AUDIT ?? null,
+  /**
+   * Segreto opzionale per avviare a mano uno scan della Sentinella 24/7
+   * (POST /api/internal/sentinel/run), senza aspettare il cron notturno —
+   * utile per verificare che funzioni davvero prima di fidarsi dello
+   * schedule. Se non impostata, la rotta risponde sempre 404.
+   */
+  sentinelTriggerSecret: process.env.SENTINEL_TRIGGER_SECRET ?? null,
 };

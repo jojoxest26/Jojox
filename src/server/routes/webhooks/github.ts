@@ -8,7 +8,10 @@ import { checkRunConclusion, formatPrComment } from "../../github/report.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import { notifySlack } from "../../slack/notify.js";
 import { getPlanForUser } from "../../plan.js";
+import { mapWithConcurrency } from "../../util/concurrency.js";
 import type { SourceFile } from "../../../types.js";
+
+export { mapWithConcurrency };
 
 interface InstallationPayload {
   action: string;
@@ -39,20 +42,6 @@ const MAX_FILES_PER_PR = 3000;
 // essere veloci, abbastanza poco per non rischiare i rate limit "secondari" di
 // GitHub su PR con centinaia di file.
 const FILE_FETCH_CONCURRENCY = 8;
-
-/** Esegue `fn` su ogni elemento con al massimo `limit` chiamate in parallelo. */
-export async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  async function worker(): Promise<void> {
-    while (next < items.length) {
-      const i = next++;
-      results[i] = await fn(items[i]);
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
 
 export interface ChangedFile {
   filename: string;
