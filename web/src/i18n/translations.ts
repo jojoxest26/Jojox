@@ -31,6 +31,8 @@ export interface TranslationTree {
     before: string;
     after: string;
     correctionsManifest: {
+      fileName: string;
+      zipFileName: string;
       title: string;
       filesIntro: string;
       filesHeader: string;
@@ -391,6 +393,8 @@ const it: TranslationTree = {
     before: "Prima",
     after: "Dopo",
     correctionsManifest: {
+      fileName: "CORREZIONI.txt",
+      zipFileName: "jojox-correzioni.zip",
       title: "Correzioni automatiche di JoJoX",
       filesIntro:
         "Questo zip contiene SOLO i file che sono stati modificati, non l'intero progetto. Copia questi file dentro il tuo progetto reale, sovrascrivendo quelli con lo stesso percorso — non sostituire l'intera cartella.",
@@ -863,6 +867,8 @@ const en: TranslationTree = {
     before: "Before",
     after: "After",
     correctionsManifest: {
+      fileName: "CORRECTIONS.txt",
+      zipFileName: "jojox-fixes.zip",
       title: "JoJoX automatic corrections",
       filesIntro:
         "This zip contains ONLY the files that were changed, not the whole project. Copy these files into your real project, overwriting the ones with the same path — don't replace the whole folder.",
@@ -1300,8 +1306,8 @@ const en: TranslationTree = {
     scoreAfter: "After the automatic fixes",
     scoreAfterNote: "Only the automatically fixed issues are already resolved in the downloadable files — anything without an automatic fix still needs a manual fix.",
     scoreStuckNote: "The score hasn't moved yet, but we still fixed {{fixed}} of {{total}} issues: there are critical issues left that the automatic fixer can't resolve on its own (e.g. SQL injection) and need manual changes. The issues already fixed stay fixed in the downloadable files below.",
-    zipHelp: "The zip only contains the fixed files (not the whole project), plus a CORREZIONI.txt file listing what to copy into your project and what's still left to fix by hand. For a real GitHub project, connecting the repository above before starting the audit is still the smoother path: the Pull Request shows the same changes as a diff, ready to merge with one click.",
-    zipHelpWithPr: "The zip only contains the fixed files (not the whole project), plus a CORREZIONI.txt file with the details. The same changes are already there as a diff in the Pull Request above.",
+    zipHelp: "The zip only contains the fixed files (not the whole project), plus a CORRECTIONS.txt file listing what to copy into your project and what's still left to fix by hand. For a real GitHub project, connecting the repository above before starting the audit is still the smoother path: the Pull Request shows the same changes as a diff, ready to merge with one click.",
+    zipHelpWithPr: "The zip only contains the fixed files (not the whole project), plus a CORRECTIONS.txt file with the details. The same changes are already there as a diff in the Pull Request above.",
     connectGithubSuggestion: "Have a GitHub repository? Connect it before you start to get the fixes as a Pull Request ready to merge, instead of a zip to copy by hand into your project.",
     githubTargetLabel: "Also want a GitHub Pull Request with the fixes? (optional)",
     githubTargetChooseAccount: "Choose a connected account",

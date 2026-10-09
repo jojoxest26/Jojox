@@ -182,7 +182,7 @@ export function Analyzer({
                 className="btn btn-primary hard-border hard-shadow-sm"
                 onClick={() => {
                   const afterFindings = analyzeFiles(autofix.files).findings;
-                  downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t), "jojox-correzioni.zip");
+                  downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t), t.common.correctionsManifest.zipFileName);
                 }}
               >
                 {t.analyzer.downloadZip}

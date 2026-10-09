@@ -38,7 +38,10 @@ export function buildCorrectionsManifest(afterFindings: readonly Finding[], auto
   return lines.join("\n");
 }
 
-/** I file da mettere nello zip scaricabile: solo quelli corretti, più il manifesto CORREZIONI.txt. */
+/** I file da mettere nello zip scaricabile: solo quelli corretti, più il manifesto (CORREZIONI.txt o CORRECTIONS.txt a seconda della lingua). */
 export function buildCorrectionsZipEntries(afterFindings: readonly Finding[], autofix: AutofixResult, t: TranslationTree): SourceFile[] {
-  return [...autofix.changedFiles, { path: "CORREZIONI.txt", content: buildCorrectionsManifest(afterFindings, autofix, t) }];
+  return [
+    ...autofix.changedFiles,
+    { path: t.common.correctionsManifest.fileName, content: buildCorrectionsManifest(afterFindings, autofix, t) },
+  ];
 }
