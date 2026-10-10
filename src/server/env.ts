@@ -42,6 +42,11 @@ export const env = {
   /** Prezzo one-time per il Full Site Audit — pagamento singolo, non abbonamento. */
   stripePriceIdAudit: process.env.STRIPE_PRICE_ID_AUDIT ?? null,
   /**
+   * DSN opzionale di Sentry per il tracciamento degli errori del server —
+   * se non impostata, Sentry resta semplicemente spento, nessun crash.
+   */
+  sentryDsn: process.env.SENTRY_DSN ?? null,
+  /**
    * Segreto opzionale per avviare a mano uno scan della Sentinella 24/7
    * (POST /api/internal/sentinel/run), senza aspettare il cron notturno —
    * utile per verificare che funzioni davvero prima di fidarsi dello

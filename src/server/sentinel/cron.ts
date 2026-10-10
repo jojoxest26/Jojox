@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { runSentinelScan } from "./scan.js";
+import { reportError } from "../sentry.js";
 
 // Un rescan completo di molti repository può durare più a lungo di quanto
 // ci si aspetti con molte installazioni attive: questo flag evita di farne
@@ -18,6 +19,7 @@ export function startSentinelCron(): void {
       await runSentinelScan();
     } catch (err) {
       console.error("Sentinella 24/7: errore durante lo scan notturno", err);
+      reportError(err);
     } finally {
       running = false;
     }

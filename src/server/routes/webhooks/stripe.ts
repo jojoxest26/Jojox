@@ -4,6 +4,7 @@ import { verifyStripeSignature } from "../../stripe/verifySignature.js";
 import { planForPriceId } from "../../stripe/plans.js";
 import { stripeRequest, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../../stripe/client.js";
 import { supabaseAdmin } from "../../db/supabase.js";
+import { reportError } from "../../sentry.js";
 import type { Plan } from "../../plan.js";
 
 interface SubscriptionEventObject {
@@ -56,6 +57,7 @@ stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), 
     res.json({ received: true });
   } catch (err) {
     console.error(`errore nell'elaborazione del webhook Stripe (${event.type})`, err);
+    reportError(err);
     // 500 così Stripe ritenta: se è un problema temporaneo (es. Supabase giù), non vogliamo perdere l'evento.
     res.status(500).json({ error: "Errore nell'elaborazione dell'evento" });
   }

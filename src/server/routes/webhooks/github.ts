@@ -9,6 +9,7 @@ import { supabaseAdmin } from "../../db/supabase.js";
 import { notifySlack } from "../../slack/notify.js";
 import { getPlanForUser } from "../../plan.js";
 import { mapWithConcurrency } from "../../util/concurrency.js";
+import { reportError } from "../../sentry.js";
 import type { SourceFile } from "../../../types.js";
 
 export { mapWithConcurrency };
@@ -96,6 +97,7 @@ githubWebhookRouter.post("/webhooks/github", raw({ type: "application/json" }), 
     }
   } catch (err) {
     console.error(`errore nell'elaborazione del webhook GitHub (${event})`, err);
+    reportError(err);
   }
 });
 

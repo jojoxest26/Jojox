@@ -1,6 +1,12 @@
+// Va importato prima di ogni rotta: intercetta le promise non gestite
+// nei gestori async (Express 4 non lo fa da solo), così un errore inatteso
+// risponde con un 500 invece di lasciare la richiesta in sospeso o far
+// crashare il processo — e arriva comunque a Sentry più sotto.
+import "express-async-errors";
 import cors from "cors";
 import express, { type Express } from "express";
 import { env } from "./env.js";
+import { Sentry } from "./sentry.js";
 import { analyzeRouter } from "./routes/analyze.js";
 import { analysesRouter } from "./routes/analyses.js";
 import { waitlistRouter } from "./routes/waitlist.js";
@@ -63,6 +69,22 @@ export function createApp(): Express {
   app.use(planTrialRouter);
   app.use(teamRouter);
   app.use(sentinelRouter);
+
+  // Va montato dopo tutte le rotte (è lì che intercetta i loro errori) e
+  // prima del nostro gestore finale, che chiude sempre la risposta — se
+  // Sentry non è configurata, setupExpressErrorHandler non fa nulla di male,
+  // ma lo chiamiamo solo quando c'è una DSN per restare coerenti con
+  // initSentry().
+  if (env.sentryDsn) Sentry.setupExpressErrorHandler(app);
+
+  // Ultima rete di sicurezza: qualunque errore non gestito da una rotta
+  // (anche senza Sentry configurata) riceve comunque una risposta pulita,
+  // invece di lasciare la richiesta in sospeso.
+  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("Errore non gestito in una rotta", err);
+    if (res.headersSent) return;
+    res.status(500).json({ error: "Errore interno del server" });
+  });
 
   return app;
 }
