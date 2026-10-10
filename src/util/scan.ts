@@ -31,6 +31,11 @@ export function isTerraformFile(file: SourceFile): boolean {
   return /\.tf$/i.test(file.path);
 }
 
+/** True per un workflow GitHub Actions — file YAML dentro .github/workflows/. Usato dai controlli sulla sicurezza della CI. */
+export function isGithubActionsWorkflow(file: SourceFile): boolean {
+  return /(^|\/)\.github\/workflows\/[^/]+\.ya?ml$/i.test(file.path);
+}
+
 const K8S_WORKLOAD_KIND = /^kind:\s*["']?(Pod|Deployment|StatefulSet|DaemonSet|ReplicaSet|Job|CronJob)["']?\s*$/im;
 
 /**

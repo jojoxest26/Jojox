@@ -24,6 +24,21 @@ const K8S_HOST_NAMESPACE = /^\s*(hostNetwork|hostPID|hostIPC):\s*true\b/gim;
 // aws_iam_policy_document) e "Action"/"Resource" (stile JSON/jsonencode) —
 // coperti entrambi perché sono i due modi più comuni di scrivere una policy
 // IAM dentro un file .tf.
+// Math.random()/random.random()/rand() non sono generatori crittograficamente
+// sicuri: le sequenze che producono sono prevedibili, abbastanza da poter
+// essere indovinate o ricostruite — inaccettabile per qualunque valore che
+// deve essere impossibile da indovinare (token, id di sessione, codice di
+// reset password).
+const WEAK_RANDOM_CALL = /\b(Math\.random\(\)|random\.random\(\)|random\.randint\(|rand\(\)|mt_rand\()/;
+const SECURITY_TOKEN_NAME = /\b(\w*(token|session|reset|otp|csrf|nonce|verification)\w*)\s*[:=]/i;
+
+// Un filtro LDAP è una stringa con una sintassi propria ("(campo=valore)");
+// se un valore della richiesta ci finisce dentro senza un escape dei
+// caratteri speciali LDAP (*, (, ), \, NUL), chi lo controlla può alterare
+// la logica del filtro — stesso principio della SQL injection, applicato a LDAP.
+const LDAP_FILTER_HINT = /\((?:uid|cn|mail|sAMAccountName|objectClass|userPrincipalName)\s*=/i;
+const LDAP_REQUEST_INPUT_INLINE = /\$\{\s*req\.(query|body|params)\.|request\.(args|form|GET|POST)\[|f["'][^"']*\{\s*request\./;
+
 const TF_ACTION_WILDCARD = /\bactions?\s*[:=]\s*(\["\*"\]|"\*")/i;
 const TF_RESOURCE_WILDCARD = /\bresources?\s*[:=]\s*(\["\*"\]|"\*")/i;
 const TF_PUBLIC_ACCESS_BLOCK_DISABLED =
@@ -453,5 +468,64 @@ export const highChecks: Check[] = [
     // Nessun autofix: non conosciamo quali permessi servano davvero al
     // progetto — restringerli alla cieca romperebbe quasi certamente
     // qualcosa che dipende da quell'accesso.
+  },
+
+  {
+    id: "weak-random-token",
+    severity: "high",
+    confidence: "heuristic",
+    title: "Un token di sicurezza è generato con un generatore di numeri casuali non sicuro",
+    description:
+      "Un valore con un nome tipo token/session/reset/otp/csrf è generato con Math.random() (JS), random.random() (Python) o rand() (PHP) — generatori non pensati per la sicurezza, le cui sequenze sono prevedibili. Un token così generato può essere indovinato o ricostruito, vanificando lo scopo per cui esiste (es. un link di reset password che chiunque può prevedere).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, non Math.random — imprevedibile`,
+    },
+    detect(file) {
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const nameMatch = lineText.match(SECURITY_TOKEN_NAME);
+        if (!nameMatch || nameMatch.index === undefined) return;
+        const rhs = lineText.slice(nameMatch.index + nameMatch[0].length);
+        if (WEAK_RANDOM_CALL.test(rhs)) {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: il sostituto sicuro giusto dipende dal linguaggio e da
+    // come il valore viene poi usato (lunghezza, formato) — non una
+    // riscrittura meccanica sicura della sola riga segnalata.
+  },
+
+  {
+    id: "ldap-injection",
+    severity: "high",
+    confidence: "heuristic",
+    title: "Un filtro LDAP è costruito concatenando direttamente un valore della richiesta",
+    description:
+      "Una riga che costruisce un filtro LDAP (es. \"(uid=...)\") include direttamente un valore preso dalla richiesta, senza nessun escape dei caratteri speciali LDAP. Chi controlla quel valore può alterare la logica del filtro — ad esempio bypassare un controllo di autenticazione o leggere dati della directory che non dovrebbe vedere.",
+    fix: {
+      before: `const filter = \`(uid=${"${req.body.username}"})\`;\nclient.search(base, { filter });`,
+      after: `const filter = \`(uid=${"${ldapEscape(req.body.username)}"})\`; // va sempre fatto l'escape dei caratteri speciali LDAP prima di usarli in un filtro\nclient.search(base, { filter });`,
+    },
+    detect(file) {
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        if (LDAP_FILTER_HINT.test(lineText) && LDAP_REQUEST_INPUT_INLINE.test(lineText)) {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: la funzione di escape giusta dipende dalla libreria
+    // LDAP in uso — non ne aggiungiamo una generica senza sapere se il
+    // progetto ne ha già una propria.
   },
 ];

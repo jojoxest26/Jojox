@@ -1096,4 +1096,122 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — GitHub Actions", () => {
+    const workflow = (body: string) => file(".github/workflows/ci.yml", `name: CI\non:\n  pull_request:\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n${body}`);
+
+    it("gha-script-injection: flags an inline run: step interpolating the PR title", () => {
+      const check = checkById("gha-script-injection");
+      const vulnerable = workflow('      - run: echo "${{ github.event.pull_request.title }}"\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gha-script-injection: flags a multiline run: block interpolating the head branch", () => {
+      const check = checkById("gha-script-injection");
+      const vulnerable = workflow('      - run: |\n          echo "building"\n          echo "${{ github.head_ref }}"\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gha-script-injection: does not flag a run: step that only uses trusted context values", () => {
+      const check = checkById("gha-script-injection");
+      const clean = workflow('      - run: echo "${{ github.repository }}"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gha-script-injection: does not flag anything in a file outside .github/workflows", () => {
+      const check = checkById("gha-script-injection");
+      const clean = file("ci.yml", '- run: echo "${{ github.event.pull_request.title }}"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gha-pull-request-target-checkout: flags checking out the PR head under pull_request_target", () => {
+      const check = checkById("gha-pull-request-target-checkout");
+      const vulnerable = file(
+        ".github/workflows/ci.yml",
+        'on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha }}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gha-pull-request-target-checkout: does not flag pull_request_target without checking out the PR head", () => {
+      const check = checkById("gha-pull-request-target-checkout");
+      const clean = file(".github/workflows/ci.yml", "on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gha-pull-request-target-checkout: does not flag checking out the PR head under a plain pull_request trigger", () => {
+      const check = checkById("gha-pull-request-target-checkout");
+      const clean = file(
+        ".github/workflows/ci.yml",
+        "on:\n  pull_request:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.sha }}\n"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Nuovo blocco — deserializzazione insicura", () => {
+    it("insecure-deserialization: flags Python pickle.loads on request data", () => {
+      const check = checkById("insecure-deserialization");
+      const vulnerable = file("app.py", "data = pickle.loads(request.data)");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("insecure-deserialization: flags PHP unserialize() on $_POST", () => {
+      const check = checkById("insecure-deserialization");
+      const vulnerable = file("app.php", '$data = unserialize($_POST["payload"]);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("insecure-deserialization: flags Java ObjectInputStream reading the request body", () => {
+      const check = checkById("insecure-deserialization");
+      const vulnerable = file("App.java", "ObjectInputStream ois = new ObjectInputStream(request.getInputStream());");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("insecure-deserialization: does not flag json.loads on request data", () => {
+      const check = checkById("insecure-deserialization");
+      const clean = file("app.py", "data = json.loads(request.data)");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Nuovo blocco — JWT algoritmo none", () => {
+    it("jwt-none-algorithm: flags an algorithms array that includes \"none\"", () => {
+      const check = checkById("jwt-none-algorithm");
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256", "none"] })');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jwt-none-algorithm: flags a single algorithm set to \"none\"", () => {
+      const check = checkById("jwt-none-algorithm");
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithm: "none" })');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jwt-none-algorithm: does not flag an algorithms array without \"none\"", () => {
+      const check = checkById("jwt-none-algorithm");
+      const clean = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256"] })');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("jwt-none-algorithm autofix: removes \"none\" from an algorithms array, keeping the others", () => {
+      const check = checkById("jwt-none-algorithm");
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256", "none"] })');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain('algorithms: ["HS256"]');
+      expect(fixed).not.toContain("none");
+    });
+
+    it("jwt-none-algorithm autofix: does nothing when \"none\" is the only algorithm (nothing safe left to propose)", () => {
+      const check = checkById("jwt-none-algorithm");
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["none"] })');
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+
+    it("jwt-none-algorithm autofix: does nothing for the single-algorithm form (no array to clean)", () => {
+      const check = checkById("jwt-none-algorithm");
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithm: "none" })');
+      expect(check.autofix?.(vulnerable)).toBeNull();
+    });
+  });
 });

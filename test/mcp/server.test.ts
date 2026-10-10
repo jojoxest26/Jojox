@@ -75,9 +75,9 @@ describe("MCP server: handleRequest", () => {
 });
 
 describe("MCP server: callTool", () => {
-  it("list_checks elenca tutti i 40 controlli (punto 13, fase 2 — IaC Terraform)", () => {
+  it("list_checks elenca tutti i 49 controlli (punto 13, nuovo blocco — GitHub Actions + injection/auth)", () => {
     const result = callTool("list_checks", {}) as unknown[];
-    expect(result).toHaveLength(40);
+    expect(result).toHaveLength(49);
   });
 
   it("analyze_code richiede il parametro 'files'", () => {

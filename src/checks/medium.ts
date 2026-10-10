@@ -1,5 +1,32 @@
 import type { Check, CheckMatch } from "../types.js";
-import { scanLines, redactLine, replaceLines, fileMatch, isDockerfile, isKubernetesManifest } from "../util/scan.js";
+import {
+  scanLines,
+  redactLine,
+  replaceLines,
+  fileMatch,
+  isDockerfile,
+  isKubernetesManifest,
+  isGithubActionsWorkflow,
+} from "../util/scan.js";
+
+// Azioni di terze parti referenziate per tag/branch invece che per commit
+// SHA: chi le mantiene (o chi ne compromette l'account) può spostare quel
+// riferimento su un commit diverso in qualsiasi momento, cambiando
+// silenziosamente cosa gira nella CI con accesso ai suoi segreti. Le azioni
+// ufficiali GitHub (actions/*, github/*) sono escluse: referenziarle per
+// versione è prassi comune e accettata.
+const GHA_ACTION_REFERENCE = /uses:\s*([A-Za-z0-9][\w.-]*)\/([\w.-]+)@([^\s#]+)/g;
+const GHA_FIRST_PARTY_ACTION_OWNER = /^(actions|github)$/i;
+const GHA_PINNED_ACTION_SHA = /^[0-9a-f]{40}$/i;
+
+const GHA_WRITE_ALL_PERMISSIONS = /^\s*permissions:\s*write-all\s*$/im;
+
+// Un cookie di sessione/autenticazione senza httpOnly può essere letto da
+// JavaScript nella pagina (compreso codice iniettato con un XSS); senza
+// secure può essere inviato anche su HTTP in chiaro, esposto a
+// un'intercettazione di rete. Limitato per ora a Express (res.cookie) — lo
+// stesso principio vale per altri framework, da estendere in futuro.
+const EXPRESS_COOKIE_CALL = /res\.cookie\s*\(\s*["'][^"']*(?:session|auth|token|jwt)[^"']*["']\s*,/i;
 
 // JS (userId, req.user...), Python/Django/Flask (request.user, user_id...),
 // Go (UserID, c.MustGet...), Java/Spring Security (getPrincipal,
@@ -420,5 +447,94 @@ export const mediumChecks: Check[] = [
     // Nessun autofix: aggiungere runAsNonRoot alla cieca potrebbe far
     // fallire l'avvio del pod se l'immagine gira davvero come root e non è
     // pensata per girare altrimenti — va verificato da chi conosce l'immagine.
+  },
+
+  {
+    id: "gha-unpinned-action",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "Un'azione di terze parti nella CI non è bloccata su una versione precisa (commit SHA)",
+    description:
+      "Il workflow usa un'azione di terze parti referenziata per tag o branch (es. \"@v1\", \"@main\") invece che per commit SHA. Chi la mantiene — o chi ne compromette l'account — può spostare quel riferimento su un commit diverso in qualsiasi momento, cambiando silenziosamente cosa gira nella CI, con accesso ai suoi segreti. Un commit SHA punta sempre allo stesso identico codice.",
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, bloccata sul commit SHA — aggiorna lo SHA quando aggiorni la versione`,
+    },
+    detect(file) {
+      if (!isGithubActionsWorkflow(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const re = new RegExp(GHA_ACTION_REFERENCE.source, "g");
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(lineText)) !== null) {
+          const [whole, owner, , ref] = m;
+          if (GHA_FIRST_PARTY_ACTION_OWNER.test(owner)) continue;
+          if (GHA_PINNED_ACTION_SHA.test(ref)) continue;
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, m.index, whole.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: non conosciamo il commit SHA corrispondente alla
+    // versione referenziata — andrebbe cercato sul repository dell'azione,
+    // non indovinato.
+  },
+
+  {
+    id: "gha-excessive-permissions",
+    severity: "medium",
+    confidence: "confirmed",
+    title: "Il workflow si concede tutti i permessi del token invece di solo quelli che usa",
+    description:
+      "\"permissions: write-all\" concede al GITHUB_TOKEN del workflow accesso in scrittura a tutto — issue, pull request, pacchetti, deployment — anche se il workflow ne usa solo una parte. Se un passaggio del workflow viene compromesso (una dipendenza malevola, uno script iniettato), quei permessi più ampi aumentano cosa può fare chi lo sfrutta.",
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # solo i permessi che il workflow usa davvero`,
+    },
+    detect(file) {
+      if (!isGithubActionsWorkflow(file)) return [];
+      return scanLines(file, GHA_WRITE_ALL_PERMISSIONS);
+    },
+    // Nessun autofix: non sappiamo quali permessi il workflow usi davvero —
+    // restringerli alla cieca romperebbe quasi certamente qualcosa.
+  },
+
+  {
+    id: "insecure-cookie-flags",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "Un cookie di sessione o autenticazione è impostato senza i flag Secure e HttpOnly",
+    description:
+      "Un cookie con un nome che somiglia a sessione/autenticazione/token è impostato senza \"httpOnly\" e \"secure\" tra le sue opzioni. Senza httpOnly, JavaScript nella pagina — compreso codice iniettato con un XSS — può leggere quel cookie. Senza secure, può essere inviato anche su una connessione HTTP non cifrata.",
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+    detect(file) {
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        if (!EXPRESS_COOKIE_CALL.test(lineText)) return;
+        let span = lineText;
+        for (let j = idx + 1; j < Math.min(idx + 6, lines.length); j++) {
+          span += "\n" + lines[j];
+          if (/\)\s*;?\s*$/.test(lines[j])) break;
+        }
+        const hasHttpOnly = /httpOnly\s*:\s*true/i.test(span);
+        const hasSecure = /secure\s*:\s*true/i.test(span);
+        if (!hasHttpOnly || !hasSecure) {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: potrebbe già esserci un oggetto di opzioni su più
+    // righe con altre impostazioni (maxAge, domain...) — riscriverlo alla
+    // cieca rischia di perderle, meglio segnalarlo soltanto.
   },
 ];

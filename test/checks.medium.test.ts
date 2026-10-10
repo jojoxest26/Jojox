@@ -639,4 +639,71 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — GitHub Actions", () => {
+    it("gha-unpinned-action: flags a third-party action referenced by tag", () => {
+      const check = checkById("gha-unpinned-action");
+      const vulnerable = file(".github/workflows/ci.yml", "steps:\n  - uses: some-org/some-action@v1\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gha-unpinned-action: does not flag a third-party action pinned to a commit SHA", () => {
+      const check = checkById("gha-unpinned-action");
+      const clean = file(
+        ".github/workflows/ci.yml",
+        "steps:\n  - uses: some-org/some-action@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gha-unpinned-action: does not flag an official actions/* action referenced by tag", () => {
+      const check = checkById("gha-unpinned-action");
+      const clean = file(".github/workflows/ci.yml", "steps:\n  - uses: actions/checkout@v4\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gha-unpinned-action: does not flag anything outside .github/workflows", () => {
+      const check = checkById("gha-unpinned-action");
+      const clean = file("ci.yml", "steps:\n  - uses: some-org/some-action@v1\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gha-excessive-permissions: flags permissions: write-all", () => {
+      const check = checkById("gha-excessive-permissions");
+      const vulnerable = file(".github/workflows/ci.yml", "permissions: write-all\njobs:\n  build:\n    runs-on: ubuntu-latest\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gha-excessive-permissions: does not flag scoped permissions", () => {
+      const check = checkById("gha-excessive-permissions");
+      const clean = file(".github/workflows/ci.yml", "permissions:\n  contents: read\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Nuovo blocco — cookie di sessione senza Secure/HttpOnly", () => {
+    it("insecure-cookie-flags: flags a session cookie with no options at all", () => {
+      const check = checkById("insecure-cookie-flags");
+      const vulnerable = file("auth.ts", 'res.cookie("session", sessionId);');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("insecure-cookie-flags: flags a session cookie missing secure", () => {
+      const check = checkById("insecure-cookie-flags");
+      const vulnerable = file("auth.ts", 'res.cookie("session", sessionId, { httpOnly: true });');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("insecure-cookie-flags: does not flag a session cookie with both httpOnly and secure set", () => {
+      const check = checkById("insecure-cookie-flags");
+      const clean = file("auth.ts", 'res.cookie("session", sessionId, { httpOnly: true, secure: true });');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("insecure-cookie-flags: does not flag a cookie with a non-sensitive name", () => {
+      const check = checkById("insecure-cookie-flags");
+      const clean = file("prefs.ts", 'res.cookie("theme", "dark");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

@@ -1,13 +1,13 @@
 # JoJoX — motore, backend e sito
 
-Sicurezza per codice scritto (anche) da AI: 40 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — stesso codice riusato sul server (l'analisi sul sito, sia ospite sia loggato, passa dal backend), nel browser (le correzioni automatiche restano sempre e solo lì, mai inviate al server) e in locale per chi usa la CLI o il server MCP, che non fa mai una chiamata di rete.
+Sicurezza per codice scritto (anche) da AI: 49 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — stesso codice riusato sul server (l'analisi sul sito, sia ospite sia loggato, passa dal backend), nel browser (le correzioni automatiche restano sempre e solo lì, mai inviate al server) e in locale per chi usa la CLI o il server MCP, che non fa mai una chiamata di rete.
 
 ## Struttura
 
 **Motore** (`src/`, riusabile server-side e client-side, senza I/O):
 - `src/types.ts` — tipi condivisi (`Check`, `Finding`, `AnalysisResult`, ...)
 - `src/util/scan.ts` — scansione riga per riga e redazione degli snippet (mai la riga intera)
-- `src/checks/{critical,high,medium,low}.ts` — gli 8+5+6+2 controlli, uno per gravità
+- `src/checks/{critical,high,medium,low}.ts` — i 21+12+12+4 controlli, uno per gravità
 - `src/scoring.ts` — formula del punteggio, a rendimento decrescente per occorrenze ripetute dello stesso controllo
 - `src/analyze.ts` — `analyzeFiles(files)`, il punto d'ingresso
 - `src/autofix.ts` — `applyAutofixes(files)`, corregge in automatico quello che i singoli controlli sanno correggere
@@ -88,8 +88,8 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 - Bottone "Collega GitHub" verso l'installazione reale della GitHub App, con indicazione chiara di quando è già collegato
 - Notifiche Slack: chi ha collegato GitHub può impostare un Incoming Webhook per ricevere un avviso quando una pull request viene bloccata o corretta in automatico
 - Scheda "Controllo Supabase": verifica la configurazione reale di un progetto (RLS, policy, bucket), non solo quella dedotta dal codice
-- Elenco dei 40 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
-- Sito disponibile in italiano e inglese, incluso il testo dei 40 controlli e il report PDF (`web/src/i18n/`)
+- Elenco dei 49 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
+- Sito disponibile in italiano e inglese, incluso il testo dei 49 controlli e il report PDF (`web/src/i18n/`)
 
 ## Uso
 
@@ -134,6 +134,6 @@ Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md
 ## Prossimi passi
 
 - **Controlli per altri linguaggi** — oggi JoJoX copre JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel) su tutti i controlli applicabili al codice applicativo (fatto, un linguaggio alla volta, testato su codice reale per ognuno); più Dockerfile, Kubernetes e Terraform per l'infrastruttura, indipendenti dal linguaggio del progetto. Altri linguaggi (es. Rust, Ruby, C#) restano da aggiungere se diventa priorità, stessa logica: giorni di lavoro dedicato per linguaggio, non ore
-- **Sempre più correzioni automatiche** — oggi 12 controlli su 40 sanno correggersi da soli; estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
+- **Sempre più correzioni automatiche** — oggi 13 controlli su 49 sanno correggersi da soli; estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
 - **Un livello aggiuntivo con l'intelligenza artificiale** per i problemi più difficili da individuare — sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da sola
 - **Sito in più lingue** — già disponibile in italiano e inglese, altre lingue in arrivo più avanti

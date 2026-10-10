@@ -517,4 +517,56 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — token generati con RNG debole", () => {
+    it("weak-random-token: flags a reset token built with Math.random()", () => {
+      const check = checkById("weak-random-token");
+      const vulnerable = file("auth.ts", "const resetToken = Math.random().toString(36).slice(2);");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-random-token: flags a Python session id built with random.random()", () => {
+      const check = checkById("weak-random-token");
+      const vulnerable = file("auth.py", "session_id = str(random.random())");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-random-token: flags a PHP csrf token built with rand()", () => {
+      const check = checkById("weak-random-token");
+      const vulnerable = file("auth.php", "$csrfToken = rand();");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("weak-random-token: does not flag a token built with crypto.randomBytes", () => {
+      const check = checkById("weak-random-token");
+      const clean = file("auth.ts", 'const resetToken = crypto.randomBytes(32).toString("hex");');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("weak-random-token: does not flag Math.random() used for something that isn't security-sensitive", () => {
+      const check = checkById("weak-random-token");
+      const clean = file("ui.ts", "const shuffleSeed = Math.random();");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
+
+  describe("Nuovo blocco — LDAP injection", () => {
+    it("ldap-injection: flags a filter built with a template literal including req.body", () => {
+      const check = checkById("ldap-injection");
+      const vulnerable = file("auth.ts", "const filter = `(uid=${req.body.username})`;");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("ldap-injection: does not flag a filter built from a fixed, non-request value", () => {
+      const check = checkById("ldap-injection");
+      const clean = file("auth.ts", 'const filter = `(uid=${username})`;');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("ldap-injection: does not flag req.body used outside an LDAP filter", () => {
+      const check = checkById("ldap-injection");
+      const clean = file("auth.ts", "const name = `${req.body.username}`;");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

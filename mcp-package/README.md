@@ -1,6 +1,6 @@
 # jojox-mcp
 
-Server MCP di [JoJoX](https://jojox.it): 40 controlli di sicurezza per codice generato (anche) da AI — pattern matching deterministico, **nessun LLM nel motore**.
+Server MCP di [JoJoX](https://jojox.it): 49 controlli di sicurezza per codice generato (anche) da AI — pattern matching deterministico, **nessun LLM nel motore**.
 
 **L'analisi avviene interamente in locale.** `jojox-mcp` gira come processo sul tuo computer, parla con il tuo agente via stdio: il codice che analizzi non viene mai inviato a JoJoX né a terzi, nessuna chiamata di rete nei tool `analyze_code` e `fix_code`. Per uno strumento di sicurezza, è una garanzia, non solo una comodità.
 
@@ -42,7 +42,7 @@ In tutti i casi: nessuna installazione manuale, nessun percorso locale da config
 
 ## Cosa controlla
 
-40 controlli deterministici su JavaScript/TypeScript, Python, Go, Java, PHP e SQL/Supabase — chiavi e credenziali scritte nel codice, SQL/NoSQL/command/header injection, path traversal, SSRF, XSS, CSRF, IDOR, CORS permissivo, hashing debole, redirect aperti, controlli IaC su Dockerfile/Kubernetes/Terraform, e altro. Elenco completo e aggiornato, con gravità e confidenza di ognuno: [jojox.it](https://jojox.it).
+49 controlli deterministici su JavaScript/TypeScript, Python, Go, Java, PHP e SQL/Supabase — chiavi e credenziali scritte nel codice, SQL/NoSQL/command/header injection, path traversal, SSRF, XSS, CSRF, IDOR, CORS permissivo, hashing debole, redirect aperti, controlli IaC su Dockerfile/Kubernetes/Terraform, e altro. Elenco completo e aggiornato, con gravità e confidenza di ognuno: [jojox.it](https://jojox.it).
 
 ## Strumenti esposti
 
