@@ -224,7 +224,7 @@ export const mediumChecks: Check[] = [
       return [
         ...scanLines(file, /res\.redirect\(\s*req\.(query|body|params)/g),
         ...scanLines(file, /window\.location(\.href)?\s*=\s*(req\.(query|body|params)|new URLSearchParams)/g),
-        // Python/Flask: redirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo . Django: redirect(request.GET[...])
+        // Python/Flask: redirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo . Django: redirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo 
         // o HttpResponseRedirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo .
         ...scanLines(file, /\b(redirect|HttpResponseRedirect)\s*\(\s*request\.(args|form|GET|POST)/g),
         // Go/Gin: c.Redirect(status, "/") // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo . net/http: http.Redirect(w, r, "/", status) // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo .

@@ -308,7 +308,7 @@ export const highChecks: Check[] = [
         return line.slice(0, m.index) + `${hashCall(m[1]!)}${note}` + line.slice(m.index + m[0].length);
       });
       if (!result.changed) {
-        // Python: hashlib.md5(password.encode()).hexdigest() — la "chiamata
+        // Python: await bcrypt.hash(password.encode(), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */.hexdigest() — la "chiamata
         // intera" sostituita è solo hashlib.md5(...), il resto (.hexdigest())
         // resta sulla riga: bcrypt non ne ha bisogno, ma toglierlo da solo
         // rischierebbe di rompere la sintassi se il valore è usato altrove.

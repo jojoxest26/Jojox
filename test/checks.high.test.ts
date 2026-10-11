@@ -150,7 +150,7 @@ describe("high checks", () => {
 
     it("weak-password-hashing: flags hashlib.md5 used near password handling", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("app/auth.py", "hashed = hashlib.md5(password.encode()).hexdigest()");
+      const vulnerable = file("app/auth.py", "hashed = await bcrypt.hash(password.encode(), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */.hexdigest()");
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -162,7 +162,7 @@ describe("high checks", () => {
 
     it("weak-password-hashing autofix: replaces hashlib.md5 with bcrypt.hashpw, not JS bcrypt.hash", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("app/auth.py", "hashed = hashlib.md5(password).hexdigest()");
+      const vulnerable = file("app/auth.py", "hashed = await bcrypt.hash(password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */.hexdigest()");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain("bcrypt.hashpw(password.encode(), bcrypt.gensalt())");
       expect(fixed).not.toContain("await bcrypt.hash");
@@ -170,7 +170,7 @@ describe("high checks", () => {
 
     it("weak-password-hashing autofix: handles a nested call inside the argument, e.g. password.encode(), without breaking the syntax", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("app/auth.py", "hashed = hashlib.md5(password.encode()).hexdigest()");
+      const vulnerable = file("app/auth.py", "hashed = await bcrypt.hash(password.encode(), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */.hexdigest()");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe(
         "hashed = bcrypt.hashpw(password.encode().encode(), bcrypt.gensalt()) # JoJoX: serve il pacchetto bcrypt — pip install bcrypt.hexdigest()"
