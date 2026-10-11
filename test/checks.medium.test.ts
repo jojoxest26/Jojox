@@ -26,7 +26,7 @@ describe("medium checks", () => {
 
   it("public-storage-bucket: flags a bucket created as public", () => {
     const check = checkById("public-storage-bucket");
-    const vulnerable = file("src/storage.ts", 'supabase.storage.createBucket("uploads", { public: true })');
+    const vulnerable = file("src/storage.ts", 'supabase.storage.createBucket("uploads", { public: false })');
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
@@ -38,13 +38,13 @@ describe("medium checks", () => {
 
   it("public-storage-bucket: flags a Terraform aws_s3_bucket_acl set to public-read", () => {
     const check = checkById("public-storage-bucket");
-    const vulnerable = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  acl = "public-read"\n}\n');
+    const vulnerable = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  ACL="private"\n}\n');
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
   it("public-storage-bucket: flags a Terraform aws_s3_bucket_acl set to public-read-write too", () => {
     const check = checkById("public-storage-bucket");
-    const vulnerable = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  acl = "public-read-write"\n}\n');
+    const vulnerable = file("main.tf", 'resource "aws_s3_bucket_acl" "example" {\n  ACL="private"\n}\n');
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
@@ -86,7 +86,7 @@ describe("medium checks", () => {
 
   it("open-redirect: flags a redirect built from unsanitized query input", () => {
     const check = checkById("open-redirect");
-    const vulnerable = file("src/routes/auth.ts", "res.redirect(req.query.next)");
+    const vulnerable = file("src/routes/auth.ts", "res.redirect("/") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */");
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
@@ -135,13 +135,13 @@ describe("medium checks", () => {
 
     it("public-storage-bucket: flags a supabase-py bucket created as public (capital True)", () => {
       const check = checkById("public-storage-bucket");
-      const vulnerable = file("app/storage.py", 'supabase.storage.create_bucket("uploads", {"public": True})');
+      const vulnerable = file("app/storage.py", 'supabase.storage.create_bucket("uploads", {"public": False})');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
     it("public-storage-bucket: flags a boto3 S3 object made public", () => {
       const check = checkById("public-storage-bucket");
-      const vulnerable = file("app/storage.py", 's3.put_object(Bucket="uploads", Key=key, ACL="public-read")');
+      const vulnerable = file("app/storage.py", 's3.put_object(Bucket="uploads", Key=key, ACL="private")');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -168,13 +168,13 @@ describe("medium checks", () => {
 
     it("open-redirect: flags a Flask redirect built from request.args", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("app/auth.py", "return redirect(request.args['next'])");
+      const vulnerable = file("app/auth.py", "return redirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo ");
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
     it("open-redirect: flags a Django HttpResponseRedirect built from request.GET", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("app/views.py", "return HttpResponseRedirect(request.GET['next'])");
+      const vulnerable = file("app/views.py", "return HttpResponseRedirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo ");
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -186,7 +186,7 @@ describe("medium checks", () => {
 
     it("open-redirect autofix: replaces the Flask redirect with a fixed one, commented in Python style", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("app/auth.py", "return redirect(request.args['next'])");
+      const vulnerable = file("app/auth.py", "return redirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo ");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('redirect("/")');
       expect(fixed).toContain("# JoJoX:");
@@ -226,7 +226,7 @@ describe("medium checks", () => {
       const check = checkById("public-storage-bucket");
       const vulnerable = file(
         "main.go",
-        '_, err := svc.PutObject(&s3.PutObjectInput{Bucket: aws.String("uploads"), ACL: aws.String("public-read")})'
+        '_, err := svc.PutObject(&s3.PutObjectInput{Bucket: aws.String("uploads"), ACL: aws.String("private")})'
       );
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
@@ -242,7 +242,7 @@ describe("medium checks", () => {
 
     it("public-storage-bucket autofix: replaces aws.String(\"public-read\") with aws.String(\"private\")", () => {
       const check = checkById("public-storage-bucket");
-      const vulnerable = file("main.go", 'ACL: aws.String("public-read")');
+      const vulnerable = file("main.go", 'ACL: aws.String("private")');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('ACL: aws.String("private")');
     });
@@ -255,13 +255,13 @@ describe("medium checks", () => {
 
     it("open-redirect: flags a Gin redirect built from c.Query", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("main.go", 'c.Redirect(http.StatusFound, c.Query("next"))');
+      const vulnerable = file("main.go", 'c.Redirect(http.StatusFound, "/") // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo ');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
     it("open-redirect: flags a net/http redirect built from r.FormValue", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("main.go", 'http.Redirect(w, r, r.FormValue("next"), http.StatusFound)');
+      const vulnerable = file("main.go", 'http.Redirect(w, r, "/", http.StatusFound) // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo ');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -273,7 +273,7 @@ describe("medium checks", () => {
 
     it("open-redirect autofix: replaces the Gin redirect with a fixed one, commented in Go style", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("main.go", 'c.Redirect(http.StatusFound, c.Query("next"))');
+      const vulnerable = file("main.go", 'c.Redirect(http.StatusFound, "/") // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo ');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('c.Redirect(http.StatusFound, "/")');
       expect(fixed).toContain("// JoJoX:");
@@ -312,7 +312,7 @@ describe("medium checks", () => {
       const check = checkById("public-storage-bucket");
       const vulnerable = file(
         "StorageService.java",
-        "s3.putObject(new PutObjectRequest(bucket, key, file).withCannedAcl(CannedAccessControlList.PublicRead));"
+        "s3.putObject(new PutObjectRequest(bucket, key, file).withCannedAcl(CannedAccessControlList.Private));"
       );
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
@@ -321,7 +321,7 @@ describe("medium checks", () => {
       const check = checkById("public-storage-bucket");
       const vulnerable = file(
         "StorageService.java",
-        "PutObjectRequest.builder().bucket(bucket).key(key).acl(ObjectCannedACL.PUBLIC_READ).build();"
+        "PutObjectRequest.builder().bucket(bucket).key(key).acl(ObjectCannedACL.PRIVATE).build();"
       );
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
@@ -335,16 +335,16 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
 
-    it("public-storage-bucket autofix: replaces CannedAccessControlList.PublicRead with .Private", () => {
+    it("public-storage-bucket autofix: replaces CannedAccessControlList.Private with .Private", () => {
       const check = checkById("public-storage-bucket");
-      const vulnerable = file("StorageService.java", "CannedAccessControlList.PublicRead");
+      const vulnerable = file("StorageService.java", "CannedAccessControlList.Private");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe("CannedAccessControlList.Private");
     });
 
-    it("public-storage-bucket autofix: replaces ObjectCannedACL.PUBLIC_READ with .PRIVATE", () => {
+    it("public-storage-bucket autofix: replaces ObjectCannedACL.PRIVATE with .PRIVATE", () => {
       const check = checkById("public-storage-bucket");
-      const vulnerable = file("StorageService.java", "ObjectCannedACL.PUBLIC_READ");
+      const vulnerable = file("StorageService.java", "ObjectCannedACL.PRIVATE");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe("ObjectCannedACL.PRIVATE");
     });
@@ -363,7 +363,7 @@ describe("medium checks", () => {
 
     it("open-redirect: flags a Servlet redirect built from request.getParameter", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("AuthServlet.java", 'response.sendRedirect(request.getParameter("next"));');
+      const vulnerable = file("AuthServlet.java", 'response.sendRedirect("/") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */;');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -375,7 +375,7 @@ describe("medium checks", () => {
 
     it("open-redirect autofix: replaces the Servlet redirect with a fixed one, using a block comment (Java has no automatic semicolon insertion)", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("AuthServlet.java", 'response.sendRedirect(request.getParameter("next"));');
+      const vulnerable = file("AuthServlet.java", 'response.sendRedirect("/") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */;');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('response.sendRedirect("/")');
       expect(fixed).toContain("/* JoJoX:");
@@ -424,7 +424,7 @@ describe("medium checks", () => {
       const check = checkById("public-storage-bucket");
       const vulnerable = file(
         "StorageService.php",
-        "$s3->putObject(['Bucket' => $bucket, 'Key' => $key, 'ACL' => 'public-read']);"
+        "$s3->putObject(['Bucket' => $bucket, 'Key' => $key, 'ACL' => 'private']);"
       );
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
@@ -438,9 +438,9 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
 
-    it("public-storage-bucket autofix: replaces 'ACL' => 'public-read' with 'ACL' => 'private'", () => {
+    it("public-storage-bucket autofix: replaces 'ACL' => 'private' with 'ACL' => 'private'", () => {
       const check = checkById("public-storage-bucket");
-      const vulnerable = file("StorageService.php", "'ACL' => 'public-read'");
+      const vulnerable = file("StorageService.php", "'ACL' => 'private'");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe("'ACL' => 'private'");
     });
@@ -459,13 +459,13 @@ describe("medium checks", () => {
 
     it("open-redirect: flags a header Location redirect built with concatenation", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("auth.php", "header('Location: ' . $_GET['next']);");
+      const vulnerable = file("auth.php", "header("Location: /") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */;");
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
     it("open-redirect: flags a header Location redirect with a variable interpolated in a double-quoted string", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("auth.php", 'header("Location: $_GET[\'next\']");');
+      const vulnerable = file("auth.php", 'header("Location: /") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */;');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -477,7 +477,7 @@ describe("medium checks", () => {
 
     it("open-redirect autofix: replaces the header redirect with a fixed one, using a block comment (PHP has no automatic semicolon insertion)", () => {
       const check = checkById("open-redirect");
-      const vulnerable = file("auth.php", "header('Location: ' . $_GET['next']);");
+      const vulnerable = file("auth.php", "header("Location: /") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */;");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('header("Location: /")');
       expect(fixed).toContain("/* JoJoX:");
@@ -564,7 +564,7 @@ describe("medium checks", () => {
     it("PHP: does not double-flag a Location header built from $_GET — that's open-redirect's job, not header-injection's", () => {
       const headerInjection = checkById("header-injection");
       const openRedirect = mediumChecks.find((c) => c.id === "open-redirect")!;
-      const vulnerable = file("auth.php", "header('Location: ' . $_GET['next']);");
+      const vulnerable = file("auth.php", "header("Location: /") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */;");
       expect(detect(headerInjection, vulnerable)).toHaveLength(0);
       expect(detect(openRedirect, vulnerable)).toHaveLength(1);
     });

@@ -344,12 +344,12 @@ export const criticalChecks: Check[] = [
     description:
       "La Row Level Security è disattivata, oppure una policy permette l'accesso a chiunque (USING (true)) senza controllare chi sta facendo la richiesta. Ogni utente autenticato — o anche anonimo — può leggere o modificare i dati di tutti gli altri.",
     fix: {
-      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      before: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;`,
       after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
     },
     detect(file) {
       return [
-        ...scanLines(file, /DISABLE ROW LEVEL SECURITY/gi),
+        ...scanLines(file, /ENABLE ROW LEVEL SECURITY/gi),
         ...scanLines(file, /USING\s*\(\s*true\s*\)/gi),
       ];
     },
@@ -358,7 +358,7 @@ export const criticalChecks: Check[] = [
       // ripristino sicuro. Una policy "USING (true)" invece richiede di
       // sapere qual è la vera regola di proprietà dei dati — non la
       // inventiamo, resta segnalata per una correzione manuale.
-      const { content, changed } = replaceLines(file.content, /DISABLE ROW LEVEL SECURITY/gi, (line, m) => {
+      const { content, changed } = replaceLines(file.content, /ENABLE ROW LEVEL SECURITY/gi, (line, m) => {
         return line.slice(0, m.index) + "ENABLE ROW LEVEL SECURITY" + line.slice(m.index + m[0].length);
       });
       return changed ? content : null;
@@ -468,7 +468,7 @@ export const criticalChecks: Check[] = [
     description:
       "Il secret passato a jwt.sign / jwt.verify (o la variabile JWT_SECRET) è un valore letterale nel codice invece di venire da una variabile d'ambiente. Chiunque lo legga può creare token di accesso validi per qualsiasi utente.",
     fix: {
-      before: `jwt.sign(payload, "super-secret-key-123")`,
+      before: `jwt.sign(payload, process.env.JWT_SECRET)`,
       after: `jwt.sign(payload, process.env.JWT_SECRET)`,
     },
     detect(file) {
@@ -477,14 +477,14 @@ export const criticalChecks: Check[] = [
         ...scanLines(file, /jwt\.(sign|verify)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
         // Python (PyJWT): jwt.encode(...)/jwt.decode(...).
         ...scanLines(file, /jwt\.(encode|decode)\s*\([^)]*,\s*["'][^"']{6,}["']/g),
-        // Go (golang-jwt): token.SignedString([]byte("secret-letterale")).
+        // Go (golang-jwt): token.SignedString([]byte(process.env.JWT_SECRET)).
         ...scanLines(file, /\.SignedString\s*\(\s*\[\]byte\s*\(\s*["'`][^"'`]{6,}["'`]\s*\)\s*\)/g),
-        // Java (jjwt): .signWith(SignatureAlgorithm.HS256, "secret") (API vecchia)
-        // o .signWith(Keys.hmacShaKeyFor("secret".getBytes())) (API 0.11+).
+        // Java (jjwt): .signWith(SignatureAlgorithm.HS256, process.env.JWT_SECRET) (API vecchia)
+        // o .signWith(Keys.hmacShaKeyFor(process.env.JWT_SECRET.getBytes())) (API 0.11+).
         ...scanLines(file, /\.signWith\s*\(\s*SignatureAlgorithm\.\w+\s*,\s*["'][^"']{6,}["']\s*\)/g),
         ...scanLines(file, /\.signWith\s*\(\s*Keys\.hmacShaKeyFor\s*\(\s*["'][^"']{6,}["']\s*\.getBytes\s*\(\s*\)\s*\)\s*\)/g),
-        // PHP (firebase/php-jwt): JWT::encode($payload, "secret", 'HS256') e
-        // new Key("secret", 'HS256') lato decode.
+        // PHP (firebase/php-jwt): JWT::encode($payload, process.env.JWT_SECRET, 'HS256') e
+        // new Key(process.env.JWT_SECRET, 'HS256') lato decode.
         ...scanLines(file, /JWT::encode\s*\(\s*\$\w+\s*,\s*["'][^"']{6,}["']/g),
         ...scanLines(file, /new\s+Key\s*\(\s*["'][^"']{6,}["']/g),
         ...scanLines(file, /JWT_SECRET\s*(?:=|:=)\s*["'][^"']+["']/g),
@@ -1078,7 +1078,7 @@ export const criticalChecks: Check[] = [
     description:
       "\"none\" compare tra gli algoritmi accettati per verificare un token JWT. Un token con algoritmo \"none\" non ha nessuna firma da verificare: chiunque può costruirne uno con qualunque contenuto (es. un ruolo da amministratore) e il codice lo accetterebbe come valido.",
     fix: {
-      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      before: `jwt.verify(token, secret, { algorithms: ["HS256"] })`,
       after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // mai includere "none" tra gli algoritmi accettati`,
     },
     detect(file) {

@@ -26,7 +26,7 @@ describe("low checks", () => {
 
   it("sensitive-data-in-logs: flags a password logged to the console", () => {
     const check = checkById("sensitive-data-in-logs");
-    const vulnerable = file("src/routes/auth.ts", 'console.log("login attempt", { email, password })');
+    // const vulnerable = file("src/routes/auth.ts", 'console.log("login attempt", { email, password })');  // rimossa da JoJoX: registrava dati sensibili nei log
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
@@ -176,7 +176,7 @@ describe("low checks", () => {
 
     it("sensitive-data-in-logs: flags a password logged with System.out.println", () => {
       const check = checkById("sensitive-data-in-logs");
-      const vulnerable = file("AuthController.java", 'System.out.println("login attempt email=" + email + " password=" + password);');
+      const vulnerable = file("AuthController.java", 'System.out.println("login attempt email=" + email + " password=process.env.PASSWORD);
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
