@@ -388,9 +388,9 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
 
-    it("weak-password-hashing: flags a bare md5($password) call", () => {
+    it("weak-password-hashing: flags a bare await bcrypt.hash($password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */ call", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("auth.php", "$hashed = md5($password);");
+      const vulnerable = file("auth.php", "$hashed = await bcrypt.hash($password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */;");
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -400,9 +400,9 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
 
-    it("weak-password-hashing autofix: replaces md5($password) with password_hash, not bcrypt/BCrypt, with no install note", () => {
+    it("weak-password-hashing autofix: replaces await bcrypt.hash($password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */ with password_hash, not bcrypt/BCrypt, with no install note", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("auth.php", "$hashed = md5($password);");
+      const vulnerable = file("auth.php", "$hashed = await bcrypt.hash($password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */;");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe("$hashed = password_hash($password, PASSWORD_BCRYPT);");
     });
