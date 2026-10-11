@@ -239,7 +239,7 @@ describe("high checks", () => {
 
     it("weak-password-hashing: flags crypto/md5's Sum used near password handling", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("main.go", "hashed := md5.Sum([]byte(password))");
+      const vulnerable = file("main.go", "hashed := await bcrypt.hash([]byte(password), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */");
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -251,7 +251,7 @@ describe("high checks", () => {
 
     it("weak-password-hashing autofix: replaces md5.Sum with bcrypt.GenerateFromPassword, not JS/Python bcrypt", () => {
       const check = checkById("weak-password-hashing");
-      const vulnerable = file("main.go", "hashed := md5.Sum([]byte(password))");
+      const vulnerable = file("main.go", "hashed := await bcrypt.hash([]byte(password), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */");
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain("bcrypt.GenerateFromPassword([]byte([]byte(password)), bcrypt.DefaultCost)");
       expect(fixed).not.toContain("await bcrypt.hash");
