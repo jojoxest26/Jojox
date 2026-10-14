@@ -169,13 +169,15 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
 
   // In modalità generale (nessuna analisi aperta) la chat scrive anche
   // codice vero: serve un modello più capace e risposte che possono essere
-  // molto più lunghe di una spiegazione di un singolo finding.
+  // molto più lunghe di una spiegazione di un singolo finding. 16000 è il
+  // tetto consigliato per una chiamata senza streaming (come questa) —
+  // andare oltre rischierebbe un timeout prima che la risposta finisca.
   const isGeneralMode = findings.length === 0;
 
   try {
     const response = await anthropic.messages.create({
       model: isGeneralMode ? CODE_MODEL : CHAT_MODEL,
-      max_tokens: isGeneralMode ? 3000 : 700,
+      max_tokens: isGeneralMode ? 16000 : 700,
       system: buildSystemPrompt(findings, score, lang),
       messages: [...history.map((h) => ({ role: h.role, content: h.content })), { role: "user" as const, content: message }],
     });
