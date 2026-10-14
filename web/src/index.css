@@ -410,23 +410,27 @@ body {
 }
 
 /* ---------- Sentinella (mascotte) ---------- */
-.hero-sentinel {
-  width: clamp(96px, 11vw, 136px);
-  flex-shrink: 0;
-  animation: sentinelBob 4.2s ease-in-out infinite;
+.panel-sentinel {
+  position: absolute;
+  bottom: 100%;
+  right: clamp(26px, 5vw, 64px);
+  width: clamp(78px, 8vw, 104px);
+  margin-bottom: -16px;
+  z-index: 3;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
+  animation: sentinelBob 4.6s ease-in-out infinite;
 }
 @keyframes sentinelBob {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-5px) rotate(-1.2deg);
   }
 }
 .sentinel-eye {
   animation: sentinelEyePulse 2.6s ease-in-out infinite;
-  transform-origin: 110px 66px;
 }
 @keyframes sentinelEyePulse {
   0%,
@@ -456,37 +460,22 @@ body {
 @keyframes sentinelSweep {
   0%,
   100% {
-    transform: rotate(-34deg);
+    transform: rotate(-22deg);
   }
   50% {
-    transform: rotate(34deg);
+    transform: rotate(22deg);
   }
 }
-.sentinel-arm-left,
-.sentinel-arm-right {
-  transform-origin: 54px 130px;
-  animation: sentinelArmSway 4.2s ease-in-out infinite;
-}
-.sentinel-arm-right {
-  transform-origin: 166px 130px;
-  animation-delay: -2.1s;
-}
-@keyframes sentinelArmSway {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  50% {
-    transform: rotate(-3deg);
+@media (max-width: 720px) {
+  .panel-sentinel {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-sentinel,
+  .panel-sentinel,
   .sentinel-eye,
   .sentinel-antenna-blink,
-  .sentinel-scan-sweep,
-  .sentinel-arm-left,
-  .sentinel-arm-right {
+  .sentinel-scan-sweep {
     animation: none;
   }
 }
@@ -530,14 +519,15 @@ body {
   .trace {
     display: none;
   }
-  .hero-sentinel {
-    display: none;
-  }
 }
 
-.scanpanel {
+.scanpanel-wrap {
   position: relative;
   flex: 0 1 640px;
+}
+.scanpanel {
+  position: relative;
+  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -546,7 +536,7 @@ body {
   box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
 }
 @media (max-width: 720px) {
-  .scanpanel {
+  .scanpanel-wrap {
     flex: 1 1 auto;
     max-width: 480px;
     margin: 0 auto;
@@ -776,9 +766,20 @@ body {
   background: var(--surface);
 }
 .audience-card .audience-icon {
-  font-size: 1.5rem;
-  display: block;
-  margin-bottom: 0.6rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+.audience-card .audience-icon svg {
+  width: 20px;
+  height: 20px;
 }
 .audience-card h3 {
   margin: 0;
@@ -819,20 +820,26 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
   margin-bottom: 0;
+}
+.feature-card .feature-icon svg {
+  width: 21px;
+  height: 21px;
 }
 .feature-card-blue .feature-icon {
   background: rgba(127, 176, 224, 0.16);
   border: 1px solid rgba(127, 176, 224, 0.4);
+  color: #7fb0e0;
 }
 .feature-card-amber .feature-icon {
   background: rgba(245, 166, 35, 0.16);
   border: 1px solid rgba(245, 166, 35, 0.4);
+  color: var(--accent);
 }
 .feature-card-mint .feature-icon {
   background: rgba(107, 207, 158, 0.16);
   border: 1px solid rgba(107, 207, 158, 0.4);
+  color: #6bcf9e;
 }
 .feature-card h3 {
   margin: 0;

@@ -15,9 +15,10 @@ export function Hero() {
       <h1 className="poster-line top">JoJoX</h1>
 
       <div className="panel-wrap">
-        <SentinelMascot className="hero-sentinel" />
         <div className="trace"></div>
-        <div className="scanpanel">
+        <div className="scanpanel-wrap">
+          <SentinelMascot className="panel-sentinel" />
+          <div className="scanpanel">
           <div className="scanpanel-winctl">
             <span></span>
             <span></span>
@@ -57,6 +58,7 @@ export function Hero() {
                 <span className="kw">module</span>.exports = router
               </span>
             </div>
+          </div>
           </div>
         </div>
         <div className="trace right"></div>

@@ -1,4 +1,5 @@
 import { useTranslation } from "../i18n/LanguageContext.js";
+import { Icon } from "./Icon.js";
 
 export function AudienceSection() {
   const { t } = useTranslation();
@@ -16,7 +17,9 @@ export function AudienceSection() {
         <div className="audience-grid">
           {t.audience.items.map((item) => (
             <div key={item.title} className="audience-card">
-              <span className="audience-icon">{item.icon}</span>
+              <span className="audience-icon">
+                <Icon name={item.icon} />
+              </span>
               <h3>{item.title}</h3>
               <p>{item.text}</p>
             </div>

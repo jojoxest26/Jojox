@@ -1,4 +1,5 @@
 import { useTranslation } from "../i18n/LanguageContext.js";
+import { Icon } from "./Icon.js";
 
 export function Features() {
   const { t } = useTranslation();
@@ -17,7 +18,9 @@ export function Features() {
         <div className="features-grid">
           {t.features.items.map((f) => (
             <div key={f.title} className={`card feature-card feature-card-${f.accent} lift`}>
-              <div className="feature-icon">{f.icon}</div>
+              <div className="feature-icon">
+                <Icon name={f.icon} />
+              </div>
               <h3>{f.title}</h3>
               <p>{f.text}</p>
             </div>

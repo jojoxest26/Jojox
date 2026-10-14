@@ -446,19 +446,19 @@ const it: TranslationTree = {
     subtitle: "Tre cose vere, non promesse generiche: dove resta il codice, come vedi le correzioni, come si calcola il punteggio.",
     items: [
       {
-        icon: "🛡️",
+        icon: "shield",
         accent: "blue",
         title: "Il tuo codice resta tuo",
         text: "L'analisi che carichi a mano passa dai nostri server (per salvare punteggio e storico), ma il testo dei file non viene mai conservato — solo i risultati. Le correzioni automatiche, invece, restano sempre e solo nel tuo browser.",
       },
       {
-        icon: "🔧",
+        icon: "wrench",
         accent: "amber",
         title: "Non solo l'errore, anche come risolverlo",
         text: "Ogni problema è accompagnato da un esempio di correzione, mostrato come un prima/dopo: capisci subito cosa cambiare.",
       },
       {
-        icon: "📊",
+        icon: "chart",
         accent: "mint",
         title: "Punteggio di sicurezza + badge",
         text: "Un punteggio da 0 a 100, calcolato con una formula che vedi per intero, più un badge da mettere nel README del progetto.",
@@ -490,22 +490,22 @@ const it: TranslationTree = {
     title: "Che tu scriva codice da solo o in team.",
     items: [
       {
-        icon: "👨‍💻",
+        icon: "developer",
         title: "Developer",
         text: "Controlla il codice prima che diventi un problema — da terminale, VS Code, o dal sito.",
       },
       {
-        icon: "🚀",
+        icon: "rocket",
         title: "Startup",
         text: "Proteggi il prodotto mentre il team sviluppa veloce, senza fermarsi per una revisione manuale.",
       },
       {
-        icon: "👥",
+        icon: "team",
         title: "Team",
         text: "Monitora ogni push e pull request su più repository, con blocco automatico dei problemi critici.",
       },
       {
-        icon: "🤖",
+        icon: "bot",
         title: "Sviluppo con AI",
         text: "Controlla il codice scritto o modificato da agenti AI come Claude Code, prima che finisca in produzione.",
       },
@@ -920,19 +920,19 @@ const en: TranslationTree = {
     subtitle: "Three true things, not generic promises: where the code stays, how you see the fixes, how the score is calculated.",
     items: [
       {
-        icon: "🛡️",
+        icon: "shield",
         accent: "blue",
         title: "Your code stays yours",
         text: "The analysis you upload passes through our servers (to save the score and history), but the file contents are never kept — only the results. Automatic fixes, on the other hand, always stay in your browser.",
       },
       {
-        icon: "🔧",
+        icon: "wrench",
         accent: "amber",
         title: "Not just the problem, also how to fix it",
         text: "Every issue comes with a fix example, shown as a before/after: you immediately see what to change.",
       },
       {
-        icon: "📊",
+        icon: "chart",
         accent: "mint",
         title: "Security score + badge",
         text: "A score from 0 to 100, calculated with a formula you can see in full, plus a badge to put in your project's README.",
@@ -964,22 +964,22 @@ const en: TranslationTree = {
     title: "Whether you code solo or with a team.",
     items: [
       {
-        icon: "👨‍💻",
+        icon: "developer",
         title: "Developers",
         text: "Check your code before it becomes a problem — from the terminal, VS Code, or the site.",
       },
       {
-        icon: "🚀",
+        icon: "rocket",
         title: "Startups",
         text: "Protect the product while the team ships fast, without stopping for a manual review.",
       },
       {
-        icon: "👥",
+        icon: "team",
         title: "Teams",
         text: "Monitor every push and pull request across multiple repositories, with automatic blocking of critical issues.",
       },
       {
-        icon: "🤖",
+        icon: "bot",
         title: "AI-powered development",
         text: "Check code written or modified by AI agents like Claude Code, before it reaches production.",
       },

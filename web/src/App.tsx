@@ -20,6 +20,7 @@ import { Footer } from "./components/Footer.js";
 import { PrivacyPolicyPage, TermsOfServicePage, SecurityPolicyPage } from "./components/LegalPage.js";
 import { PublicScorePage } from "./components/PublicScorePage.js";
 import { FullSiteAudit } from "./components/FullSiteAudit.js";
+import { Reveal } from "./components/Reveal.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 
@@ -114,26 +115,48 @@ function App() {
     <>
       <Header session={session} installations={installations} />
       <Hero />
-      <HowItWorks />
-      <Features />
-      <WhyNotAiSection />
-      <AudienceSection />
-      <Pricing session={session} />
-      <FullSiteAudit session={session} />
+      <Reveal>
+        <HowItWorks />
+      </Reveal>
+      <Reveal>
+        <Features />
+      </Reveal>
+      <Reveal>
+        <WhyNotAiSection />
+      </Reveal>
+      <Reveal>
+        <AudienceSection />
+      </Reveal>
+      <Reveal>
+        <Pricing session={session} />
+      </Reveal>
+      <Reveal>
+        <FullSiteAudit session={session} />
+      </Reveal>
       {analyzerOpen && (
         <>
           <Analyzer session={session} onAnalysisSaved={() => setHistoryVersion((v) => v + 1)} />
           {session && <HistoryPanel session={session} refreshKey={historyVersion} />}
         </>
       )}
-      <GithubSection session={session} installations={installations} claimError={githubClaimError} />
-      <TeamSection session={session} />
-      <SupabaseCheckSection />
+      <Reveal>
+        <GithubSection session={session} installations={installations} claimError={githubClaimError} />
+      </Reveal>
+      <Reveal>
+        <TeamSection session={session} />
+      </Reveal>
+      <Reveal>
+        <SupabaseCheckSection />
+      </Reveal>
       <MavenCheckSection />
       <AwsIamCheckSection />
       <AwsS3CheckSection />
-      <WaitlistForm />
-      <ChecksList />
+      <Reveal>
+        <WaitlistForm />
+      </Reveal>
+      <Reveal>
+        <ChecksList />
+      </Reveal>
       <Footer />
     </>
   );
