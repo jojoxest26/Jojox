@@ -1,6 +1,5 @@
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
-import { SentinelMascot } from "./SentinelMascot.js";
 
 export function Hero() {
   const { t } = useTranslation();
@@ -15,8 +14,7 @@ export function Hero() {
       <h1 className="poster-line top">JoJoX</h1>
 
       <div className="panel-wrap">
-        <SentinelMascot className="hero-sentinel" />
-        <div className="trace trace-beam"></div>
+        <div className="trace"></div>
         <div className="scanpanel-wrap">
           <div className="scanpanel">
           <div className="scanpanel-winctl">
