@@ -255,6 +255,9 @@ export interface TranslationTree {
     planGateTitle: string;
     planGateBody: string;
     planGateCta: string;
+    planErrorTitle: string;
+    planErrorBody: string;
+    planErrorRetry: string;
   };
   github: {
     title: string;
@@ -722,6 +725,9 @@ const it: TranslationTree = {
     planGateTitle: "Chiedi a JoJoX è un vantaggio dei piani Pro e Team",
     planGateBody: "Scrive codice vero e risponde a domande difficili — per tenerne il costo sotto controllo è inclusa solo nei piani a pagamento, non nel piano gratis.",
     planGateCta: "Vedi i piani",
+    planErrorTitle: "Qualcosa non ha risposto in tempo",
+    planErrorBody: "Non siamo riusciti a verificare il tuo piano. Spesso è un'estensione del browser (es. Google Translate) che interferisce con la pagina — prova a disattivarla per questo sito, poi riprova.",
+    planErrorRetry: "Riprova",
   },
   github: {
     title: "GitHub App + CI",
@@ -1230,6 +1236,9 @@ const en: TranslationTree = {
     planGateTitle: "Ask JoJoX is a Pro and Team perk",
     planGateBody: "It writes real code and answers hard questions — to keep the cost in check it's included only in the paid plans, not the free one.",
     planGateCta: "See the plans",
+    planErrorTitle: "Something didn't respond in time",
+    planErrorBody: "We couldn't check your plan. This is often a browser extension (e.g. Google Translate) interfering with the page — try turning it off for this site, then retry.",
+    planErrorRetry: "Retry",
   },
   github: {
     title: "GitHub App + CI",

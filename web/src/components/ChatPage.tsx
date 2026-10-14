@@ -104,6 +104,8 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   const [loadingHistory, setLoadingHistory] = useState(!!session);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loadingPlan, setLoadingPlan] = useState(!!session);
+  const [planError, setPlanError] = useState(false);
+  const [planRetryCount, setPlanRetryCount] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,12 +115,36 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
 
   useEffect(() => {
     if (!session) return;
+    let cancelled = false;
     setLoadingPlan(true);
-    fetchProfile(session.access_token)
-      .then(setPlan)
-      .catch(() => setPlan("free"))
-      .finally(() => setLoadingPlan(false));
-  }, [session?.access_token]);
+    setPlanError(false);
+
+    // Non deve mai restare bloccata in attesa per sempre: se la richiesta
+    // non risponde entro un tempo ragionevole (rete lenta, un intoppo del
+    // server, un'estensione del browser che interferisce...) mostriamo un
+    // errore con un bottone per riprovare, invece di un "..." eterno.
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("timeout")), 10000);
+    });
+
+    Promise.race([fetchProfile(session.access_token), timeout])
+      .then((p) => {
+        if (cancelled) return;
+        setPlan(p);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPlanError(true);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingPlan(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token, planRetryCount]);
 
   useEffect(() => {
     if (!session || !canUseChat) return;
@@ -208,6 +234,18 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
             <p className="chat-gate-body">{t.chat.gateBody}</p>
             <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={openLogin}>
               {t.chat.gateCta}
+            </button>
+          </div>
+        ) : planError ? (
+          <div className="card chat-gate">
+            <strong>{t.chat.planErrorTitle}</strong>
+            <p className="chat-gate-body">{t.chat.planErrorBody}</p>
+            <button
+              type="button"
+              className="btn btn-primary hard-border hard-shadow-sm"
+              onClick={() => setPlanRetryCount((c) => c + 1)}
+            >
+              {t.chat.planErrorRetry}
             </button>
           </div>
         ) : loadingPlan ? (

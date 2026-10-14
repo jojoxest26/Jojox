@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Il sito ha già una traduzione vera (IT/EN) — Google Translate che riscrive
+         il DOM da fuori va in conflitto con React e può bloccare la pagina a metà
+         caricamento, quindi chiediamo al browser di non proporla. -->
+    <meta name="google" content="notranslate" />
     <meta
       name="description"
       content="JoJoX controlla il tuo codice — scritto a mano o generato dall'AI — con 49 controlli di sicurezza pubblici, un punteggio 0-100 e correzioni pronte da copiare."
