@@ -34,6 +34,9 @@ export function SentinelMascot({ className }: { className?: string }) {
           <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.85" />
           <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
+        <filter id="sv-soft-glow" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="14" />
+        </filter>
       </defs>
 
       {/* ombra a terra */}
@@ -68,6 +71,7 @@ export function SentinelMascot({ className }: { className?: string }) {
       {/* dispositivo scanner impugnato */}
       <g transform="translate(214 150)">
         <rect x="-14" y="-16" width="56" height="34" rx="9" fill="url(#sv-limb)" stroke="#4a5262" strokeWidth="3" />
+        <circle cx="30" cy="1" r="18" fill="var(--accent)" opacity="0.55" filter="url(#sv-soft-glow)" className="sentinel-eye" />
         <circle cx="30" cy="1" r="13" fill="url(#sv-emitter)" className="sentinel-eye" />
         <circle cx="30" cy="1" r="13" fill="none" stroke="var(--accent-ink)" strokeOpacity="0.25" strokeWidth="1.5" />
       </g>
@@ -87,6 +91,9 @@ export function SentinelMascot({ className }: { className?: string }) {
       <g className="sentinel-scan-sweep" style={{ transformOrigin: "130px 82px" }}>
         <path d="M130 82 L30 82 L130 82 Z" fill="var(--accent)" opacity="0.1" />
       </g>
+
+      {/* bagliore volumetrico dietro l'occhio, come una sorgente di luce vera */}
+      <circle cx="130" cy="82" r="46" fill="var(--accent)" opacity="0.5" filter="url(#sv-soft-glow)" className="sentinel-eye" />
 
       {/* occhio */}
       <circle cx="130" cy="82" r="52" fill="var(--bg)" stroke="#4a5262" strokeWidth="4" />

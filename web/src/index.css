@@ -100,6 +100,19 @@ body {
     0 0,
     0 0;
   background-attachment: fixed, fixed;
+  position: relative;
+}
+/* grana leggera su tutta la pagina — toglie la sensazione di "piatto digitale",
+   stesso trucco (rumore SVG) usato da molte interfacce curate */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .container {
@@ -201,13 +214,28 @@ body {
 }
 
 .btn-primary {
+  position: relative;
   background: var(--accent);
   color: var(--accent-ink);
   border-color: transparent;
-  box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.35), 0 10px 26px -10px rgba(245, 166, 35, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(245, 166, 35, 0.35), 0 10px 26px -10px rgba(245, 166, 35, 0.55);
+}
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--accent);
+  filter: blur(16px);
+  opacity: 0.4;
 }
 .btn-primary:hover {
   background: var(--accent-hover);
+}
+.btn-primary:hover::before {
+  opacity: 0.65;
 }
 .btn-primary:disabled {
   opacity: 0.5;
