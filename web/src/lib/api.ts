@@ -1,4 +1,4 @@
-import type { AnalysisResult, SourceFile, Severity } from "../../../src/types.js";
+import type { AnalysisResult, Finding, SourceFile, Severity } from "../../../src/types.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -63,6 +63,31 @@ export async function guestAnalyzeViaApi(files: SourceFile[]): Promise<GuestAnal
   }
 
   return { ok: true, result: (await response.json()) as AnalysisResult };
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
+ * Chiede alla chat di spiegare i risultati di un'analisi già fatta — manda
+ * i findings presenti nel browser dell'utente, non un id salvato: funziona
+ * anche per analisi non ancora persistite (es. ospite appena loggato).
+ */
+export function sendChatMessage(
+  findings: Finding[],
+  score: number,
+  message: string,
+  history: ChatMessage[],
+  lang: "it" | "en",
+  accessToken: string
+): Promise<{ reply: string }> {
+  return apiFetch<{ reply: string }>("/api/chat", {
+    method: "POST",
+    body: JSON.stringify({ findings, score, message, history, lang }),
+    accessToken,
+  });
 }
 
 export async function fetchHistory(accessToken: string): Promise<AnalysisHistoryEntry[]> {

@@ -5,6 +5,17 @@ export type Plan = "free" | "pro" | "team";
 export const MONTHLY_ANALYSIS_LIMIT = 5;
 
 /**
+ * Messaggi di chat al giorno per piano — ogni messaggio è una chiamata a
+ * pagamento all'API Anthropic, quindi il limite serve a tenere i costi
+ * sotto controllo fin dal primo utente, non solo a scoraggiare l'abuso.
+ */
+export const DAILY_CHAT_MESSAGE_LIMIT: Record<Plan, number> = {
+  free: 15,
+  pro: 100,
+  team: 200,
+};
+
+/**
  * Il piano che conta davvero: il piano pagato, salvo una prova gratuita del
  * Pro ancora attiva per chi è sul piano free — non declassa mai un piano
  * già pagato (pro/team restano tali indipendentemente dalla prova).
@@ -46,4 +57,9 @@ export async function getPlanForUser(userId: string): Promise<Plan> {
 export function startOfCurrentMonthUtc(): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
+export function startOfTodayUtc(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }

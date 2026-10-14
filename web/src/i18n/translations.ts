@@ -234,6 +234,17 @@ export interface TranslationTree {
     emptyState: string;
     autoFixed: string;
   };
+  chat: {
+    title: string;
+    subtitle: string;
+    placeholder: string;
+    send: string;
+    sending: string;
+    emptyState: string;
+    errorGeneric: string;
+    toggleOpen: string;
+    toggleClose: string;
+  };
   github: {
     title: string;
     badge: string;
@@ -676,6 +687,17 @@ const it: TranslationTree = {
     scoreLabel: "Punteggio di sicurezza",
     emptyState: "Nessun problema trovato nei 49 controlli.",
     autoFixed: "già corretto nel file scaricabile",
+  },
+  chat: {
+    title: "Chiedi a JoJoX",
+    subtitle: "Fai domande su questi risultati — risponde solo su quello che ha trovato qui.",
+    placeholder: "Es: perché questo è critico?",
+    send: "Invia",
+    sending: "Un attimo…",
+    emptyState: "Chiedimi cosa significa un problema, quanto è grave, o come sistemarlo.",
+    errorGeneric: "Errore nella chat, riprova.",
+    toggleOpen: "Chiedi a JoJoX",
+    toggleClose: "Chiudi la chat",
   },
   github: {
     title: "GitHub App + CI",
@@ -1160,6 +1182,17 @@ const en: TranslationTree = {
     scoreLabel: "Security score",
     emptyState: "No problems found across the 49 checks.",
     autoFixed: "already fixed in the downloadable file",
+  },
+  chat: {
+    title: "Ask JoJoX",
+    subtitle: "Ask about these results — it only answers about what it found here.",
+    placeholder: "E.g: why is this critical?",
+    send: "Send",
+    sending: "One moment…",
+    emptyState: "Ask what a finding means, how serious it is, or how to fix it.",
+    errorGeneric: "Chat error, try again.",
+    toggleOpen: "Ask JoJoX",
+    toggleClose: "Close chat",
   },
   github: {
     title: "GitHub App + CI",

@@ -53,4 +53,10 @@ export const env = {
    * schedule. Se non impostata, la rotta risponde sempre 404.
    */
   sentinelTriggerSecret: process.env.SENTINEL_TRIGGER_SECRET ?? null,
+  /**
+   * Chiave API Anthropic per la chat che spiega i risultati di un'analisi —
+   * opzionale come Stripe/Sentry: finché non è impostata su Railway, la
+   * rotta chat risponde 503 invece di far crashare l'intero server.
+   */
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? null,
 };
