@@ -1383,11 +1383,28 @@ body {
 
 /* ---------- pricing ---------- */
 .pricing-section {
+  position: relative;
   padding: 2.5rem 0;
   border-top: 1px solid var(--border);
   /* L'header resta fisso in alto: senza margine lo scroll-into-view
      nasconderebbe il titolo della sezione sotto di esso. */
   scroll-margin-top: 5rem;
+}
+.pricing-section::before {
+  content: "";
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  width: min(900px, 140%);
+  height: 420px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(245, 166, 35, 0.1), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.pricing-section > * {
+  position: relative;
+  z-index: 1;
 }
 .pricing-section > h2 {
   text-align: center;
@@ -1551,6 +1568,13 @@ body {
 }
 .price-card.featured {
   box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.35), 0 22px 48px -20px rgba(245, 166, 35, 0.4);
+  transform: translateY(-10px);
+  z-index: 2;
+}
+@media (max-width: 640px) {
+  .price-card.featured {
+    transform: none;
+  }
 }
 .price-card-badge {
   position: absolute;
