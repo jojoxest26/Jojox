@@ -1,11 +1,16 @@
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
+import { Icon } from "./Icon.js";
 
 export function Hero() {
   const { t } = useTranslation();
 
   function scrollToPricing() {
     document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function openChat() {
+    window.dispatchEvent(new Event("jojox-open-chat"));
   }
 
   return (
@@ -100,6 +105,10 @@ export function Hero() {
           <div className="hero-actions">
             <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToPricing}>
               {t.hero.cta}
+            </button>
+            <button type="button" className="btn btn-secondary hard-border hard-shadow-sm hero-ask-btn" onClick={openChat}>
+              <Icon name="bot" className="hero-ask-btn-icon" />
+              {t.chat.toggleOpen}
             </button>
           </div>
           <p className="hero-guest-note">{t.hero.guestNote}</p>

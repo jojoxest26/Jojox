@@ -71,17 +71,21 @@ export interface ChatMessage {
 }
 
 /**
- * Chiede alla chat di spiegare i risultati di un'analisi già fatta — manda
- * i findings presenti nel browser dell'utente, non un id salvato: funziona
- * anche per analisi non ancora persistite (es. ospite appena loggato).
+ * Chiede alla chat "Chiedi a JoJoX": in modalità generale (findings vuoti)
+ * risponde su cosa fa JoJoX, prezzi, sicurezza in generale; se c'è
+ * un'analisi in corso, le passiamo i suoi findings e risponde su quelli —
+ * mandati dal browser dell'utente, non un id salvato, così funziona anche
+ * per analisi non ancora persistite (es. ospite appena loggato).
+ * Funziona anche senza login (accessToken omesso): il server traccia per
+ * IP il limite giornaliero di chi scrive da ospite.
  */
 export function sendChatMessage(
-  findings: Finding[],
-  score: number,
   message: string,
   history: ChatMessage[],
   lang: "it" | "en",
-  accessToken: string
+  findings: Finding[] = [],
+  score: number | null = null,
+  accessToken?: string
 ): Promise<{ reply: string }> {
   return apiFetch<{ reply: string }>("/api/chat", {
     method: "POST",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
 import { sendChatMessage, type ChatMessage } from "../lib/api.js";
@@ -9,7 +9,7 @@ import { Icon } from "./Icon.js";
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
 // Stesso tetto del backend (chatRequestSchema in src/server/routes/chat.ts):
 // mandarne di più verrebbe comunque rifiutato, meglio tagliare qui e
-// avvisare che non tutto è stato visto.
+// rispondere comunque in fretta.
 const MAX_FINDINGS_SENT = 60;
 // Quante battute di conversazione precedenti mandare col prossimo messaggio
 // (storico, non persistito sul server oltre al log usato per il limite
@@ -26,13 +26,26 @@ function findingsForChat(findings: Finding[], lang: "it" | "en"): Finding[] {
   });
 }
 
-export function ChatPanel({ result, session }: { result: AnalysisResult; session: Session }) {
+/**
+ * Widget globale "Chiedi a JoJoX" — un bottone fisso in basso a destra,
+ * sempre raggiungibile, più un'apertura diretta dal bottone nell'hero
+ * (evento "jojox-open-chat"). Se c'è un'analisi appena fatta (result),
+ * risponde su quei findings; altrimenti risponde in modalità generale su
+ * JoJoX stesso. Funziona anche da ospite, senza login.
+ */
+export function ChatPanel({ result, session }: { result: AnalysisResult | null; session: Session | null }) {
   const { t, lang } = useTranslation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("jojox-open-chat", handler);
+    return () => window.removeEventListener("jojox-open-chat", handler);
+  }, []);
 
   async function handleSend() {
     const text = input.trim();
@@ -45,9 +58,10 @@ export function ChatPanel({ result, session }: { result: AnalysisResult; session
     setError(null);
 
     try {
-      const findings = findingsForChat(result.findings, lang);
+      const findings = result ? findingsForChat(result.findings, lang) : [];
+      const score = result ? result.score : null;
       const history = messages.slice(-MAX_HISTORY_SENT);
-      const { reply } = await sendChatMessage(findings, result.score, text, history, lang, session.access_token);
+      const { reply } = await sendChatMessage(text, history, lang, findings, score, session?.access_token);
       setMessages([...nextMessages, { role: "assistant", content: reply }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.chat.errorGeneric);
@@ -57,26 +71,35 @@ export function ChatPanel({ result, session }: { result: AnalysisResult; session
   }
 
   return (
-    <div className="chat-panel-wrap">
-      <button type="button" className="btn btn-secondary hard-border hard-shadow-sm chat-toggle" onClick={() => setOpen((v) => !v)}>
-        <Icon name="bot" className="chat-toggle-icon" />
-        {open ? t.chat.toggleClose : t.chat.toggleOpen}
+    <>
+      <button
+        type="button"
+        className="chat-fab"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? t.chat.toggleClose : t.chat.toggleOpen}
+      >
+        <Icon name="bot" />
       </button>
 
       {open && (
-        <div className="card chat-panel">
+        <div className="card chat-panel-floating">
           <div className="chat-panel-head">
             <span className="chat-panel-icon">
               <Icon name="bot" />
             </span>
-            <div>
+            <div className="chat-panel-head-text">
               <p className="chat-panel-title">{t.chat.title}</p>
-              <p className="chat-panel-subtitle">{t.chat.subtitle}</p>
+              <p className="chat-panel-subtitle">{result ? t.chat.subtitle : t.chat.subtitleGeneral}</p>
             </div>
+            <button type="button" className="chat-close" onClick={() => setOpen(false)} aria-label={t.chat.toggleClose}>
+              <Icon name="plus" />
+            </button>
           </div>
 
           <div className="chat-messages">
-            {messages.length === 0 && <p className="chat-empty-state">{t.chat.emptyState}</p>}
+            {messages.length === 0 && (
+              <p className="chat-empty-state">{result ? t.chat.emptyState : t.chat.emptyStateGeneral}</p>
+            )}
             {messages.map((m, i) => (
               <div key={i} className={`chat-bubble chat-bubble-${m.role}`}>
                 {m.content}
@@ -91,7 +114,7 @@ export function ChatPanel({ result, session }: { result: AnalysisResult; session
             <input
               type="text"
               value={input}
-              placeholder={t.chat.placeholder}
+              placeholder={result ? t.chat.placeholder : t.chat.placeholderGeneral}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSend();
@@ -104,6 +127,6 @@ export function ChatPanel({ result, session }: { result: AnalysisResult; session
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -7,7 +7,6 @@ import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTEN
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
-import { ChatPanel } from "./ChatPanel.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";
 
@@ -24,9 +23,12 @@ function openLogin() {
 export function Analyzer({
   session,
   onAnalysisSaved,
+  onResult,
 }: {
   session: Session | null;
   onAnalysisSaved?: () => void;
+  /** Tiene aggiornato il widget globale "Chiedi a JoJoX" con i findings dell'ultima analisi. */
+  onResult?: (result: AnalysisResult | null) => void;
 }) {
   const { t, lang } = useTranslation();
   const [files, setFiles] = useState<SourceFile[]>([]);
@@ -45,9 +47,10 @@ export function Analyzer({
     const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);
     setResult(null);
+    onResult?.(null);
     setAutofix(null);
     setError(null);
-  }, []);
+  }, [onResult]);
 
   const loadFromDrop = useCallback(async (dataTransfer: DataTransfer) => {
     const collected = await collectFilesFromDataTransfer(dataTransfer);
@@ -55,9 +58,10 @@ export function Analyzer({
     const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);
     setResult(null);
+    onResult?.(null);
     setAutofix(null);
     setError(null);
-  }, []);
+  }, [onResult]);
 
   async function runAnalysis() {
     if (files.length === 0) return;
@@ -67,6 +71,7 @@ export function Analyzer({
       if (session) {
         const analysisResult = await analyzeViaApi(files, session.access_token);
         setResult(analysisResult);
+        onResult?.(analysisResult);
         // La correzione gira sempre nel browser, sui file originali: mai
         // inviata al server, anche se l'analisi lo è.
         setAutofix(applyAutofixes(files));
@@ -84,6 +89,7 @@ export function Analyzer({
         return;
       }
       setResult(guestResult.result);
+      onResult?.(guestResult.result);
       setAutofix(applyAutofixes(files));
     } catch (err) {
       setError(err instanceof Error ? err.message : t.analyzer.errorGeneric);
@@ -210,6 +216,7 @@ export function Analyzer({
             onClick={() => {
               setFiles([]);
               setResult(null);
+              onResult?.(null);
               setAutofix(null);
               setError(null);
               document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
@@ -221,7 +228,6 @@ export function Analyzer({
       )}
 
       {result && <FindingsList result={result} autofix={autofix} />}
-      {result && session && <ChatPanel result={result} session={session} />}
     </section>
   );
 }

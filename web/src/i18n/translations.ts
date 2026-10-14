@@ -237,10 +237,13 @@ export interface TranslationTree {
   chat: {
     title: string;
     subtitle: string;
+    subtitleGeneral: string;
     placeholder: string;
+    placeholderGeneral: string;
     send: string;
     sending: string;
     emptyState: string;
+    emptyStateGeneral: string;
     errorGeneric: string;
     toggleOpen: string;
     toggleClose: string;
@@ -691,10 +694,13 @@ const it: TranslationTree = {
   chat: {
     title: "Chiedi a JoJoX",
     subtitle: "Fai domande su questi risultati — risponde solo su quello che ha trovato qui.",
+    subtitleGeneral: "Chiedimi come funziona JoJoX, i prezzi, o consigli di sicurezza.",
     placeholder: "Es: perché questo è critico?",
+    placeholderGeneral: "Es: quanto costa il piano Pro?",
     send: "Invia",
     sending: "Un attimo…",
     emptyState: "Chiedimi cosa significa un problema, quanto è grave, o come sistemarlo.",
+    emptyStateGeneral: "Es: \"qual è la differenza tra Free e Pro?\", \"come funziona l'integrazione con GitHub?\"",
     errorGeneric: "Errore nella chat, riprova.",
     toggleOpen: "Chiedi a JoJoX",
     toggleClose: "Chiudi la chat",
@@ -1186,10 +1192,13 @@ const en: TranslationTree = {
   chat: {
     title: "Ask JoJoX",
     subtitle: "Ask about these results — it only answers about what it found here.",
+    subtitleGeneral: "Ask how JoJoX works, pricing, or general security advice.",
     placeholder: "E.g: why is this critical?",
+    placeholderGeneral: "E.g: how much is the Pro plan?",
     send: "Send",
     sending: "One moment…",
     emptyState: "Ask what a finding means, how serious it is, or how to fix it.",
+    emptyStateGeneral: "E.g. \"what's the difference between Free and Pro?\", \"how does the GitHub integration work?\"",
     errorGeneric: "Chat error, try again.",
     toggleOpen: "Ask JoJoX",
     toggleClose: "Close chat",

@@ -18,8 +18,10 @@ import { PrivacyPolicyPage, TermsOfServicePage, SecurityPolicyPage } from "./com
 import { PublicScorePage } from "./components/PublicScorePage.js";
 import { FullSiteAudit } from "./components/FullSiteAudit.js";
 import { Reveal } from "./components/Reveal.js";
+import { ChatPanel } from "./components/ChatPanel.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
+import type { AnalysisResult } from "../../src/types.js";
 
 function App() {
   const { session, loading } = useSession();
@@ -33,6 +35,9 @@ function App() {
   // Caricate qui (non nei singoli componenti) così Header e GithubSection
   // mostrano sempre lo stesso stato "collegato o no", senza disallinearsi.
   const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
+  // Ultima analisi fatta, per dare contesto al widget globale "Chiedi a
+  // JoJoX" — se è null, la chat resta in modalità generale su JoJoX stesso.
+  const [chatResult, setChatResult] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
     if (!session) {
@@ -132,7 +137,7 @@ function App() {
       </Reveal>
       {analyzerOpen && (
         <>
-          <Analyzer session={session} onAnalysisSaved={() => setHistoryVersion((v) => v + 1)} />
+          <Analyzer session={session} onAnalysisSaved={() => setHistoryVersion((v) => v + 1)} onResult={setChatResult} />
           {session && <HistoryPanel session={session} refreshKey={historyVersion} />}
         </>
       )}
@@ -152,6 +157,7 @@ function App() {
         <ChecksList />
       </Reveal>
       <Footer />
+      <ChatPanel result={chatResult} session={session} />
     </>
   );
 }
