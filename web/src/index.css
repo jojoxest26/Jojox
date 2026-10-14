@@ -1767,6 +1767,22 @@ body::after {
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+.github-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(245, 166, 35, 0.14);
+  border: 1px solid rgba(245, 166, 35, 0.38);
+  color: var(--accent);
+}
+.github-card-icon svg {
+  width: 18px;
+  height: 18px;
+}
 .github-card h2 {
   margin: 0;
   font-family: "Anton", "Inter", sans-serif;

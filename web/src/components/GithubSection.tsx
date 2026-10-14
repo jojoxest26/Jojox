@@ -130,6 +130,9 @@ export function GithubSection({
       </div>
       <div className="card github-card">
         <div className="github-title">
+          <span className="github-card-icon">
+            <Icon name="gitBranch" />
+          </span>
           <h2>{t.github.title}</h2>
           <span className="pill pill-amber">{t.github.badge}</span>
         </div>
