@@ -13,29 +13,39 @@ function extractBearerToken(req: Request): string | null {
 
 const AUTH_TIMEOUT_MS = 8000;
 
+interface VerifiedClaims {
+  userId: string;
+  userEmail?: string;
+}
+
 /**
- * supabaseAdmin.auth.getUser(token) è una vera chiamata di rete verso
- * Supabase (non una verifica locale del JWT) — se Supabase risponde lenta,
- * questa chiamata può restare appesa e bloccare la richiesta con lei senza
- * che nulla dica perché. Qui la limitiamo a un tempo massimo e logghiamo
- * sempre quanto ci ha messo: così, se càpita ancora, nei log di Railway si
- * vede subito se la colpa è di Supabase invece di doverlo supporre.
+ * auth.getUser(token) è sempre una vera chiamata di rete verso Supabase,
+ * per ogni singola richiesta autenticata del sito. auth.getClaims(token) fa
+ * la stessa verifica ma, quando il progetto usa le chiavi di firma JWT
+ * moderne (asimmetriche), la fa in locale contro una chiave pubblica tenuta
+ * in cache — senza toccare la rete. Se invece il progetto usa ancora il
+ * vecchio segreto condiviso, la libreria stessa ripiega da sola su una
+ * chiamata di rete identica a getUser(): questo cambio quindi non può mai
+ * essere più lento di prima, solo uguale o più veloce. Il timeout resta
+ * comunque come rete di sicurezza, e il log aiuta a capire nei log di
+ * Railway se la lentezza residua viene ancora da qui.
  */
-async function getUserWithTimeout(token: string): ReturnType<typeof supabaseAdmin.auth.getUser> {
+async function getClaimsWithTimeout(token: string): Promise<VerifiedClaims | null> {
   const start = Date.now();
   try {
-    const result = await Promise.race([
-      supabaseAdmin.auth.getUser(token),
+    const { data } = await Promise.race([
+      supabaseAdmin.auth.getClaims(token),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`auth.getUser oltre ${AUTH_TIMEOUT_MS}ms`)), AUTH_TIMEOUT_MS)
+        setTimeout(() => reject(new Error(`auth.getClaims oltre ${AUTH_TIMEOUT_MS}ms`)), AUTH_TIMEOUT_MS)
       ),
     ]);
     const ms = Date.now() - start;
-    if (ms > 1500) console.warn(`auth.getUser lenta: ${ms}ms`);
-    return result;
+    if (ms > 1500) console.warn(`auth.getClaims lenta: ${ms}ms`);
+    if (!data) return null;
+    return { userId: data.claims.sub, userEmail: data.claims.email };
   } catch (err) {
-    console.error(`auth.getUser fallita dopo ${Date.now() - start}ms`, err);
-    return { data: { user: null }, error: err as Error } as Awaited<ReturnType<typeof supabaseAdmin.auth.getUser>>;
+    console.error(`auth.getClaims fallita dopo ${Date.now() - start}ms`, err);
+    return null;
   }
 }
 
@@ -47,14 +57,14 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
     return;
   }
 
-  const { data, error } = await getUserWithTimeout(token);
-  if (error || !data.user) {
+  const claims = await getClaimsWithTimeout(token);
+  if (!claims) {
     res.status(401).json({ error: "Token non valido o scaduto" });
     return;
   }
 
-  req.userId = data.user.id;
-  req.userEmail = data.user.email;
+  req.userId = claims.userId;
+  req.userEmail = claims.userEmail;
   next();
 }
 
@@ -66,7 +76,7 @@ export async function optionalAuth(req: AuthedRequest, _res: Response, next: Nex
     return;
   }
 
-  const { data } = await getUserWithTimeout(token);
-  if (data.user) req.userId = data.user.id;
+  const claims = await getClaimsWithTimeout(token);
+  if (claims) req.userId = claims.userId;
   next();
 }

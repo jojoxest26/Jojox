@@ -172,7 +172,12 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
       historyLoadedForUserRef.current = null;
       return;
     }
-    if (!canUseChat) return;
+    // Parte insieme alla richiesta del piano, non dopo: aspettare che il
+    // piano risponda prima di iniziare a caricare la cronologia mette in
+    // fila due richieste autenticate invece di farle in parallelo, e
+    // raddoppia l'attesa percepita. Per un account free questa richiesta
+    // viene comunque rifiutata dal server (403, già gestito in silenzio
+    // qui sotto) senza alcun costo reale: niente chiamate al modello.
     if (historyLoadedForUserRef.current === sessionUserId) return;
     setLoadingHistory(true);
     fetchChatHistory(session.access_token)
