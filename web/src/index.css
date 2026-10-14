@@ -2343,15 +2343,25 @@ body::after {
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
 }
+.chat-page-nav {
+  max-width: 1080px;
+  margin: 0 auto;
+}
 .chat-page-body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 760px;
+  max-width: 1080px;
   width: 100%;
   margin: 0 auto;
   padding-bottom: 2rem;
   min-height: 0;
+}
+/* Il testo normale resta leggibile, i blocchi di codice usano tutta la
+   larghezza disponibile — sono due esigenze diverse nella stessa colonna. */
+.chat-bubble-assistant > span {
+  display: block;
+  max-width: 68ch;
 }
 .chat-page-head {
   display: flex;
