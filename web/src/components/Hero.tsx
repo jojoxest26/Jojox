@@ -15,9 +15,9 @@ export function Hero() {
       <h1 className="poster-line top">JoJoX</h1>
 
       <div className="panel-wrap">
-        <div className="trace"></div>
+        <SentinelMascot className="hero-sentinel" />
+        <div className="trace trace-beam"></div>
         <div className="scanpanel-wrap">
-          <SentinelMascot className="panel-sentinel" />
           <div className="scanpanel">
           <div className="scanpanel-winctl">
             <span></span>
