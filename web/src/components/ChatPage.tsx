@@ -137,6 +137,7 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   }
 
   function handleReset() {
+    if (!window.confirm(t.chat.resetConfirm)) return;
     setMessages([]);
     setError(null);
   }
@@ -172,8 +173,9 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
             <p className="chat-panel-subtitle">{result ? t.chat.subtitle : t.chat.subtitleGeneral}</p>
           </div>
           {session && messages.length > 0 && (
-            <button type="button" className="chat-reset" onClick={handleReset} aria-label={t.chat.newConversation} title={t.chat.newConversation}>
+            <button type="button" className="chat-reset" onClick={handleReset}>
               <Icon name="refresh" />
+              {t.chat.newConversation}
             </button>
           )}
         </div>

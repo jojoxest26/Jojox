@@ -248,6 +248,7 @@ export interface TranslationTree {
     toggleOpen: string;
     toggleClose: string;
     newConversation: string;
+    resetConfirm: string;
     gateTitle: string;
     gateBody: string;
     gateCta: string;
@@ -709,6 +710,7 @@ const it: TranslationTree = {
     toggleOpen: "Chiedi a JoJoX",
     toggleClose: "Chiudi la chat",
     newConversation: "Nuova conversazione",
+    resetConfirm: "Vuoi iniziare una nuova conversazione? Quella attuale non viene cancellata dal tuo account, solo nascosta dalla vista finché non ricarichi la pagina.",
     gateTitle: "Accedi per usare la chat",
     gateBody: "Basta l'email, è gratis — serve solo per tenere traccia della tua cronologia e dei messaggi usati.",
     gateCta: "Accedi o registrati",
@@ -1211,6 +1213,7 @@ const en: TranslationTree = {
     toggleOpen: "Ask JoJoX",
     toggleClose: "Close chat",
     newConversation: "New conversation",
+    resetConfirm: "Start a new conversation? The current one isn't deleted from your account, just hidden from view until you reload the page.",
     gateTitle: "Log in to use the chat",
     gateBody: "Just an email, it's free — only needed to keep track of your history and messages used.",
     gateCta: "Log in or sign up",

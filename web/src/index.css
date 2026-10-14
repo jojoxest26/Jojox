@@ -2399,34 +2399,25 @@ body::after {
   flex: 1;
   min-width: 0;
 }
-.chat-head-actions {
-  display: flex;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
-.chat-close,
 .chat-reset {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 999px;
   color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
 }
-.chat-close svg,
 .chat-reset svg {
   width: 14px;
   height: 14px;
 }
-.chat-close svg {
-  transform: rotate(45deg);
-}
-.chat-close:hover,
 .chat-reset:hover {
   color: var(--text);
   border-color: var(--text-muted);
