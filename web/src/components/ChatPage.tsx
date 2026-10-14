@@ -106,6 +106,8 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   const [loadingPlan, setLoadingPlan] = useState(!!session);
   const [planError, setPlanError] = useState(false);
   const [planRetryCount, setPlanRetryCount] = useState(0);
+  const [historyError, setHistoryError] = useState(false);
+  const [historyRetryCount, setHistoryRetryCount] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -179,16 +181,37 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     // viene comunque rifiutata dal server (403, già gestito in silenzio
     // qui sotto) senza alcun costo reale: niente chiamate al modello.
     if (historyLoadedForUserRef.current === sessionUserId) return;
+    let cancelled = false;
     setLoadingHistory(true);
-    fetchChatHistory(session.access_token)
+    setHistoryError(false);
+
+    // Stesso principio del caricamento del piano: senza un limite massimo,
+    // un intoppo lascia "…" bloccato in eterno, senza errore e senza un
+    // modo per riprovare — esattamente il tipo di blocco di stanotte.
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("timeout")), 15000);
+    });
+
+    Promise.race([fetchChatHistory(session.access_token), timeout])
       .then((h) => {
+        if (cancelled) return;
         historyLoadedForUserRef.current = sessionUserId;
         setMessages(h);
       })
-      .catch(() => {})
-      .finally(() => setLoadingHistory(false));
+      .catch(() => {
+        if (cancelled) return;
+        setHistoryError(true);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingHistory(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.access_token, canUseChat, sessionUserId]);
+  }, [session?.access_token, canUseChat, sessionUserId, historyRetryCount]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -205,11 +228,25 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     setSending(true);
     setError(null);
 
+    // In modalità generale una risposta può legittimamente arrivare a 16000
+    // token e richiedere diverse decine di secondi — ma senza un limite
+    // massimo, un intoppo di rete lascia "sending" bloccato per sempre:
+    // niente errore, niente modo di scrivere un altro messaggio, la chat
+    // sembra morta (esattamente quello che è successo stasera). 90 secondi
+    // bastano a non tagliare mai una risposta vera, ma garantiscono comunque
+    // una via d'uscita se qualcosa si è davvero inceppato.
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(t.chat.errorGeneric)), 90000);
+    });
+
     try {
       const findings = result ? findingsForChat(result.findings, lang) : [];
       const score = result ? result.score : null;
       const history = messages.slice(-MAX_HISTORY_SENT);
-      const { reply } = await sendChatMessage(text, history, lang, findings, score, session!.access_token);
+      const { reply } = await Promise.race([
+        sendChatMessage(text, history, lang, findings, score, session!.access_token),
+        timeout,
+      ]);
       setMessages([...nextMessages, { role: "assistant" as const, content: reply }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.chat.errorGeneric);
@@ -297,6 +334,17 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
             <div className="chat-page-messages">
               {loadingHistory ? (
                 <p className="chat-empty-state">…</p>
+              ) : historyError ? (
+                <div className="chat-empty-state">
+                  <p>{t.chat.historyErrorBody}</p>
+                  <button
+                    type="button"
+                    className="btn btn-primary hard-border hard-shadow-sm"
+                    onClick={() => setHistoryRetryCount((c) => c + 1)}
+                  >
+                    {t.chat.planErrorRetry}
+                  </button>
+                </div>
               ) : messages.length === 0 ? (
                 <p className="chat-empty-state">{result ? t.chat.emptyState : t.chat.emptyStateGeneral}</p>
               ) : (

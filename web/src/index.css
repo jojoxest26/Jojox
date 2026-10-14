@@ -2472,6 +2472,9 @@ body::after {
   font-size: 0.9rem;
   color: var(--text-muted);
 }
+.chat-empty-state p {
+  margin: 0 0 0.75rem;
+}
 .chat-bubble {
   padding: 0.7rem 1rem;
   border-radius: 0.75rem;

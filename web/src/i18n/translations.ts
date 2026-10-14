@@ -258,6 +258,7 @@ export interface TranslationTree {
     planErrorTitle: string;
     planErrorBody: string;
     planErrorRetry: string;
+    historyErrorBody: string;
   };
   github: {
     title: string;
@@ -728,6 +729,7 @@ const it: TranslationTree = {
     planErrorTitle: "Qualcosa non ha risposto in tempo",
     planErrorBody: "Non siamo riusciti a verificare il tuo piano. Spesso è un'estensione del browser (es. Google Translate) che interferisce con la pagina — prova a disattivarla per questo sito, poi riprova.",
     planErrorRetry: "Riprova",
+    historyErrorBody: "Non siamo riusciti a caricare la cronologia della chat.",
   },
   github: {
     title: "GitHub App + CI",
@@ -1239,6 +1241,7 @@ const en: TranslationTree = {
     planErrorTitle: "Something didn't respond in time",
     planErrorBody: "We couldn't check your plan. This is often a browser extension (e.g. Google Translate) interfering with the page — try turning it off for this site, then retry.",
     planErrorRetry: "Retry",
+    historyErrorBody: "We couldn't load the chat history.",
   },
   github: {
     title: "GitHub App + CI",
