@@ -207,11 +207,22 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
       messages: [...history.map((h) => ({ role: h.role, content: h.content })), { role: "user" as const, content: message }],
     });
 
-    const reply = response.content
+    let reply = response.content
       .filter((block): block is Extract<(typeof response.content)[number], { type: "text" }> => block.type === "text")
       .map((block) => block.text)
       .join("\n")
       .trim();
+
+    // Senza questo controllo, una risposta che finisce il budget di token si
+    // tronca a metà frase senza nessun avviso — sembra che la chat non abbia
+    // risposto affatto (è successo davvero, su una domanda difficile). Alzare
+    // ancora il tetto costerebbe di più ad ogni messaggio; meglio dirlo.
+    if (response.stop_reason === "max_tokens") {
+      reply +=
+        lang === "en"
+          ? "\n\n*(Answer cut off — it hit the length limit. Ask to continue, or for a shorter version.)*"
+          : "\n\n*(Risposta troncata per il limite di lunghezza — chiedi di continuare, o una versione più corta.)*";
+    }
 
     const { error: insertError } = await supabaseAdmin.from("chat_messages").insert([
       { user_id: req.userId!, role: "user", content: message },
