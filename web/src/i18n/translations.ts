@@ -23,6 +23,7 @@ export interface TranslationTree {
   meta: {
     dateLocale: string;
     title: string;
+    description: string;
   };
   common: {
     severity: { critical: string; high: string; medium: string; low: string };
@@ -387,6 +388,8 @@ const it: TranslationTree = {
   meta: {
     dateLocale: "it-IT",
     title: "JoJoX — Sicurezza per il tuo codice",
+    description:
+      "JoJoX controlla il tuo codice — scritto a mano o generato dall'AI — con 49 controlli di sicurezza pubblici, un punteggio 0-100 e correzioni pronte da copiare.",
   },
   common: {
     severity: {
@@ -869,6 +872,8 @@ const en: TranslationTree = {
   meta: {
     dateLocale: "en-GB",
     title: "JoJoX — Security for your code",
+    description:
+      "JoJoX checks your code — hand-written or AI-generated — with 49 public security checks, a 0-100 score, and fixes ready to copy.",
   },
   common: {
     severity: {
