@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
-import { sendChatMessage, fetchChatHistory, type ChatMessage } from "../lib/api.js";
+import { sendChatMessage, fetchChatHistory, fetchProfile, type ChatMessage, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
 import { legalPages } from "../i18n/legalPages.js";
@@ -34,6 +34,15 @@ function goHome(e: MouseEvent) {
 
 function openLogin() {
   window.dispatchEvent(new Event("jojox-open-login"));
+}
+
+function goToPricing(e: MouseEvent) {
+  e.preventDefault();
+  window.history.pushState({}, "", "/");
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  setTimeout(() => {
+    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+  }, 50);
 }
 
 const LANGUAGE_TAG = /^[a-zA-Z0-9+#.-]{0,20}$/;
@@ -93,20 +102,33 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   const { t, lang } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(!!session);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState(!!session);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const canUseChat = plan === "pro" || plan === "team";
 
   useEffect(() => {
     if (!session) return;
+    setLoadingPlan(true);
+    fetchProfile(session.access_token)
+      .then(setPlan)
+      .catch(() => setPlan("free"))
+      .finally(() => setLoadingPlan(false));
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    if (!session || !canUseChat) return;
     setLoadingHistory(true);
     fetchChatHistory(session.access_token)
       .then(setMessages)
       .catch(() => {})
       .finally(() => setLoadingHistory(false));
-  }, [session?.access_token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.access_token, canUseChat]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -187,6 +209,16 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
             <button type="button" className="btn btn-primary hard-border hard-shadow-sm" onClick={openLogin}>
               {t.chat.gateCta}
             </button>
+          </div>
+        ) : loadingPlan ? (
+          <p className="chat-empty-state">…</p>
+        ) : !canUseChat ? (
+          <div className="card chat-gate">
+            <strong>{t.chat.planGateTitle}</strong>
+            <p className="chat-gate-body">{t.chat.planGateBody}</p>
+            <a href="/#pricing" onClick={goToPricing} className="btn btn-primary hard-border hard-shadow-sm">
+              {t.chat.planGateCta}
+            </a>
           </div>
         ) : (
           <>

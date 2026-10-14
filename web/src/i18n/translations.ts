@@ -252,6 +252,9 @@ export interface TranslationTree {
     gateTitle: string;
     gateBody: string;
     gateCta: string;
+    planGateTitle: string;
+    planGateBody: string;
+    planGateCta: string;
   };
   github: {
     title: string;
@@ -714,6 +717,9 @@ const it: TranslationTree = {
     gateTitle: "Accedi per usare la chat",
     gateBody: "Basta l'email, è gratis — serve solo per tenere traccia della tua cronologia e dei messaggi usati.",
     gateCta: "Accedi o registrati",
+    planGateTitle: "Chiedi a JoJoX è un vantaggio dei piani Pro e Team",
+    planGateBody: "Scrive codice vero e risponde a domande difficili — per tenerne il costo sotto controllo è inclusa solo nei piani a pagamento, non nel piano gratis.",
+    planGateCta: "Vedi i piani",
   },
   github: {
     title: "GitHub App + CI",
@@ -1217,6 +1223,9 @@ const en: TranslationTree = {
     gateTitle: "Log in to use the chat",
     gateBody: "Just an email, it's free — only needed to keep track of your history and messages used.",
     gateCta: "Log in or sign up",
+    planGateTitle: "Ask JoJoX is a Pro and Team perk",
+    planGateBody: "It writes real code and answers hard questions — to keep the cost in check it's included only in the paid plans, not the free one.",
+    planGateCta: "See the plans",
   },
   github: {
     title: "GitHub App + CI",

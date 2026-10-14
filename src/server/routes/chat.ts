@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { z } from "zod";
 import { anthropic, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -117,7 +117,23 @@ function buildSystemPrompt(
 
 export const chatRouter = Router();
 
+// Chat disponibile solo per chi paga (Pro/Team), non per il piano gratis:
+// ogni messaggio è una chiamata a pagamento all'API Anthropic, e tenerla
+// aperta a tutti renderebbe il costo imprevedibile man mano che crescono
+// gli account gratuiti — farla un vantaggio dei piani a pagamento tiene i
+// costi proporzionati alle entrate, senza dover alzare i prezzi.
+async function requirePaidPlan(req: AuthedRequest, res: Response): Promise<boolean> {
+  const plan = await getPlanForUser(req.userId!);
+  if (plan === "free") {
+    res.status(403).json({ error: "La chat è disponibile per i piani Pro e Team", requiresPlan: true });
+    return false;
+  }
+  return true;
+}
+
 chatRouter.get("/api/chat/history", requireAuth, async (req: AuthedRequest, res) => {
+  if (!(await requirePaidPlan(req, res))) return;
+
   const { data, error } = await supabaseAdmin
     .from("chat_messages")
     .select("role, content, created_at")
@@ -148,6 +164,10 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
   const { message, findings, score, lang, history } = parsed.data;
 
   const plan = await getPlanForUser(req.userId!);
+  if (plan === "free") {
+    res.status(403).json({ error: "La chat è disponibile per i piani Pro e Team", requiresPlan: true });
+    return;
+  }
   const limit = DAILY_CHAT_MESSAGE_LIMIT[plan];
   const { count, error: countError } = await supabaseAdmin
     .from("chat_messages")
