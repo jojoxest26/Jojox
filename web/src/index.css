@@ -231,6 +231,17 @@ body::after {
   filter: blur(16px);
   opacity: 0.4;
 }
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  right: 8px;
+  height: 42%;
+  border-radius: 999px / 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.04) 75%, transparent);
+  pointer-events: none;
+}
 .btn-primary:hover {
   background: var(--accent-hover);
 }
