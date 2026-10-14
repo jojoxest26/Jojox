@@ -112,12 +112,29 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const canUseChat = plan === "pro" || plan === "team";
+  const sessionUserId = session?.user?.id ?? null;
+  // Supabase rinnova l'access_token da solo ogni ora circa (e quando si
+  // torna sulla tab), producendo un nuovo session con un nuovo
+  // access_token anche se l'utente è sempre lo stesso. Prima questi due
+  // effetti scattavano su ogni cambio di access_token e azzeravano piano e
+  // cronologia già caricati, facendo "sparire" nel nulla una chat in corso
+  // senza nessun errore (il vero bug dietro al blocco su "…"). Questi ref
+  // tengono traccia di PER QUALE UTENTE abbiamo già caricato piano/storico,
+  // così un refresh del token della stessa persona non tocca la UI.
+  const planLoadedForUserRef = useRef<string | null>(null);
+  const historyLoadedForUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session) {
+      planLoadedForUserRef.current = null;
+      return;
+    }
     let cancelled = false;
-    setLoadingPlan(true);
-    setPlanError(false);
+    const isFreshLoad = planLoadedForUserRef.current !== sessionUserId;
+    if (isFreshLoad) {
+      setLoadingPlan(true);
+      setPlanError(false);
+    }
 
     // Non deve mai restare bloccata in attesa per sempre: se la richiesta
     // non risponde entro un tempo ragionevole (rete lenta, un intoppo del
@@ -130,31 +147,43 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     Promise.race([fetchProfile(session.access_token), timeout])
       .then((p) => {
         if (cancelled) return;
+        planLoadedForUserRef.current = sessionUserId;
         setPlan(p);
       })
       .catch(() => {
         if (cancelled) return;
-        setPlanError(true);
+        // Se il piano era già stato caricato con successo per questo utente,
+        // un refresh del token in background che fallisce non deve bloccare
+        // una chat già aperta: restiamo con l'ultimo piano conosciuto.
+        if (isFreshLoad) setPlanError(true);
       })
       .finally(() => {
         if (cancelled) return;
-        setLoadingPlan(false);
+        if (isFreshLoad) setLoadingPlan(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [session?.access_token, planRetryCount]);
+  }, [session?.access_token, sessionUserId, planRetryCount]);
 
   useEffect(() => {
-    if (!session || !canUseChat) return;
+    if (!session) {
+      historyLoadedForUserRef.current = null;
+      return;
+    }
+    if (!canUseChat) return;
+    if (historyLoadedForUserRef.current === sessionUserId) return;
     setLoadingHistory(true);
     fetchChatHistory(session.access_token)
-      .then(setMessages)
+      .then((h) => {
+        historyLoadedForUserRef.current = sessionUserId;
+        setMessages(h);
+      })
       .catch(() => {})
       .finally(() => setLoadingHistory(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.access_token, canUseChat]);
+  }, [session?.access_token, canUseChat, sessionUserId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
