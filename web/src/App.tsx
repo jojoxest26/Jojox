@@ -18,7 +18,8 @@ import { PrivacyPolicyPage, TermsOfServicePage, SecurityPolicyPage } from "./com
 import { PublicScorePage } from "./components/PublicScorePage.js";
 import { FullSiteAudit } from "./components/FullSiteAudit.js";
 import { Reveal } from "./components/Reveal.js";
-import { ChatPanel } from "./components/ChatPanel.js";
+import { ChatPage } from "./components/ChatPage.js";
+import { ChatFab } from "./components/ChatFab.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 import type { AnalysisResult } from "../../src/types.js";
@@ -35,8 +36,10 @@ function App() {
   // Caricate qui (non nei singoli componenti) così Header e GithubSection
   // mostrano sempre lo stesso stato "collegato o no", senza disallinearsi.
   const [installations, setInstallations] = useState<GithubInstallation[] | null>(null);
-  // Ultima analisi fatta, per dare contesto al widget globale "Chiedi a
-  // JoJoX" — se è null, la chat resta in modalità generale su JoJoX stesso.
+  // Ultima analisi fatta, per dare contesto alla pagina "Chiedi a JoJoX" —
+  // se è null, la chat resta in modalità generale su JoJoX stesso. Vive qui
+  // (non dentro Analyzer) così sopravvive quando si naviga via da /chat e
+  // si torna indietro, dato che App non si rimonta tra le due pagine.
   const [chatResult, setChatResult] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
@@ -108,6 +111,7 @@ function App() {
   if (path === "/privacy") return <PrivacyPolicyPage />;
   if (path === "/termini") return <TermsOfServicePage />;
   if (path === "/sicurezza") return <SecurityPolicyPage />;
+  if (path === "/chat") return <ChatPage session={session} result={chatResult} />;
   if (path.startsWith("/r/")) {
     const [owner, repo] = path.slice(3).split("/");
     if (owner && repo) return <PublicScorePage owner={owner} repo={repo} />;
@@ -157,7 +161,7 @@ function App() {
         <ChecksList />
       </Reveal>
       <Footer />
-      <ChatPanel result={chatResult} session={session} />
+      <ChatFab />
     </>
   );
 }

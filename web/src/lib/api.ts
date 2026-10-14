@@ -94,6 +94,12 @@ export function sendChatMessage(
   });
 }
 
+/** Cronologia della chat per chi è loggato (vuota per gli ospiti: la tengono in locale nel browser). */
+export async function fetchChatHistory(accessToken: string): Promise<ChatMessage[]> {
+  const { messages } = await apiFetch<{ messages: ChatMessage[] }>("/api/chat/history", { accessToken });
+  return messages;
+}
+
 export async function fetchHistory(accessToken: string): Promise<AnalysisHistoryEntry[]> {
   const { analyses } = await apiFetch<{ analyses: AnalysisHistoryEntry[] }>("/api/analyses", { accessToken });
   return analyses;

@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
 import { Icon } from "./Icon.js";
@@ -9,8 +10,11 @@ export function Hero() {
     document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
   }
 
-  function openChat() {
-    window.dispatchEvent(new Event("jojox-open-chat"));
+  function openChat(e: MouseEvent) {
+    e.preventDefault();
+    window.history.pushState({}, "", "/chat");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.scrollTo({ top: 0 });
   }
 
   return (
@@ -106,10 +110,10 @@ export function Hero() {
             <button type="button" className="btn btn-primary shine hard-border hard-shadow" onClick={scrollToPricing}>
               {t.hero.cta}
             </button>
-            <button type="button" className="btn btn-secondary hard-border hard-shadow-sm hero-ask-btn" onClick={openChat}>
+            <a href="/chat" className="btn btn-secondary hard-border hard-shadow-sm hero-ask-btn" onClick={openChat}>
               <Icon name="bot" className="hero-ask-btn-icon" />
               {t.chat.toggleOpen}
-            </button>
+            </a>
           </div>
           <p className="hero-guest-note">{t.hero.guestNote}</p>
         </div>
