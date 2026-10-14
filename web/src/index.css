@@ -409,6 +409,88 @@ body {
   }
 }
 
+/* ---------- Sentinella (mascotte) ---------- */
+.hero-sentinel {
+  width: clamp(96px, 11vw, 136px);
+  flex-shrink: 0;
+  animation: sentinelBob 4.2s ease-in-out infinite;
+}
+@keyframes sentinelBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.sentinel-eye {
+  animation: sentinelEyePulse 2.6s ease-in-out infinite;
+  transform-origin: 110px 66px;
+}
+@keyframes sentinelEyePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+.sentinel-antenna-blink {
+  animation: sentinelBlink 1.8s steps(1, end) infinite;
+}
+@keyframes sentinelBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.25;
+  }
+}
+.sentinel-scan-sweep {
+  animation: sentinelSweep 3.6s ease-in-out infinite;
+}
+@keyframes sentinelSweep {
+  0%,
+  100% {
+    transform: rotate(-34deg);
+  }
+  50% {
+    transform: rotate(34deg);
+  }
+}
+.sentinel-arm-left,
+.sentinel-arm-right {
+  transform-origin: 54px 130px;
+  animation: sentinelArmSway 4.2s ease-in-out infinite;
+}
+.sentinel-arm-right {
+  transform-origin: 166px 130px;
+  animation-delay: -2.1s;
+}
+@keyframes sentinelArmSway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-sentinel,
+  .sentinel-eye,
+  .sentinel-antenna-blink,
+  .sentinel-scan-sweep,
+  .sentinel-arm-left,
+  .sentinel-arm-right {
+    animation: none;
+  }
+}
+
 /* ---------- scan panel, connected to the page by trace lines ---------- */
 .panel-wrap {
   position: relative;
@@ -446,6 +528,9 @@ body {
 }
 @media (max-width: 720px) {
   .trace {
+    display: none;
+  }
+  .hero-sentinel {
     display: none;
   }
 }
