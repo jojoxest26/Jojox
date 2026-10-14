@@ -441,6 +441,7 @@ body::after {
 .hero-pitch .hero-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
   margin: 4px 0 10px;
 }
 @media (max-width: 640px) {
