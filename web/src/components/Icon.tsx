@@ -58,6 +58,9 @@ const icons: Record<string, ReactNode> = {
   gitBranch: (
     <path d="M6 3v12M18 9v9M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 6c4 0 9 1 9 3" />
   ),
+  refresh: (
+    <path d="M4 4v5h5 M20 20v-5h-5 M5.5 9a7.5 7.5 0 0 1 12.7-3.3L20 8 M18.5 15a7.5 7.5 0 0 1-12.7 3.3L4 16" />
+  ),
   bot: (
     <>
       <rect x="5" y="9" width="14" height="11" rx="4" />

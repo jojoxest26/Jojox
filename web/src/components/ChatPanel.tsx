@@ -91,9 +91,25 @@ export function ChatPanel({ result, session }: { result: AnalysisResult | null; 
               <p className="chat-panel-title">{t.chat.title}</p>
               <p className="chat-panel-subtitle">{result ? t.chat.subtitle : t.chat.subtitleGeneral}</p>
             </div>
-            <button type="button" className="chat-close" onClick={() => setOpen(false)} aria-label={t.chat.toggleClose}>
-              <Icon name="plus" />
-            </button>
+            <div className="chat-head-actions">
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  className="chat-reset"
+                  onClick={() => {
+                    setMessages([]);
+                    setError(null);
+                  }}
+                  aria-label={t.chat.newConversation}
+                  title={t.chat.newConversation}
+                >
+                  <Icon name="refresh" />
+                </button>
+              )}
+              <button type="button" className="chat-close" onClick={() => setOpen(false)} aria-label={t.chat.toggleClose}>
+                <Icon name="plus" />
+              </button>
+            </div>
           </div>
 
           <div className="chat-messages">

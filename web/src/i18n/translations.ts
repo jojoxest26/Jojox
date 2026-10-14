@@ -247,6 +247,7 @@ export interface TranslationTree {
     errorGeneric: string;
     toggleOpen: string;
     toggleClose: string;
+    newConversation: string;
   };
   github: {
     title: string;
@@ -704,6 +705,7 @@ const it: TranslationTree = {
     errorGeneric: "Errore nella chat, riprova.",
     toggleOpen: "Chiedi a JoJoX",
     toggleClose: "Chiudi la chat",
+    newConversation: "Nuova conversazione",
   },
   github: {
     title: "GitHub App + CI",
@@ -1202,6 +1204,7 @@ const en: TranslationTree = {
     errorGeneric: "Chat error, try again.",
     toggleOpen: "Ask JoJoX",
     toggleClose: "Close chat",
+    newConversation: "New conversation",
   },
   github: {
     title: "GitHub App + CI",
