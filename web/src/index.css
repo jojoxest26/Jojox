@@ -1473,6 +1473,22 @@ body {
   gap: 1.25rem;
   justify-content: space-between;
 }
+.guest-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(127, 176, 224, 0.16);
+  border: 1px solid rgba(127, 176, 224, 0.4);
+  color: #7fb0e0;
+}
+.guest-title-icon svg {
+  width: 18px;
+  height: 18px;
+}
 .guest-callout .guest-title {
   display: flex;
   align-items: center;
@@ -1740,6 +1756,15 @@ body {
   font-weight: 700;
   font-size: 0.88rem !important;
   color: var(--text) !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.github-badge-title-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: var(--accent);
 }
 .github-badge-snippet {
   margin: 0.75rem 0 0;
@@ -1753,35 +1778,60 @@ body {
   word-break: break-all;
 }
 
-/* ---------- supabase check ---------- */
-.supabase-check-section {
+/* ---------- cloud & dependency checks (Supabase, Maven, AWS IAM, AWS S3) ---------- */
+.cloud-checks-section {
   padding: 0 0 3rem;
 }
-.supabase-check-card {
-  padding: 1.75rem 2rem;
+.cloud-checks-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
 }
-.supabase-check-card .supabase-check-title {
+@media (min-width: 760px) {
+  .cloud-checks-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.cloud-check-card {
+  padding: 1.5rem 1.75rem;
+}
+.cloud-check-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+  background: rgba(107, 207, 158, 0.12);
+  border: 1px solid rgba(107, 207, 158, 0.35);
+  color: #6bcf9e;
+}
+.cloud-check-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.cloud-check-card .supabase-check-title {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
-.supabase-check-card h2 {
+.cloud-check-card h3 {
   margin: 0;
   font-family: "Anton", "Inter", sans-serif;
   text-transform: uppercase;
   font-weight: 400;
   letter-spacing: -0.005em;
-  font-size: 1.4rem;
+  font-size: 1.15rem;
 }
-.supabase-check-card p {
+.cloud-check-card p {
   margin: 0.75rem 0 0;
-  font-size: 0.9rem;
+  font-size: 0.87rem;
   color: var(--text-muted);
-  max-width: 640px;
   line-height: 1.6;
 }
-.supabase-check-card code {
+.cloud-check-card code {
   font-family: ui-monospace, SFMono-Regular, monospace;
   font-size: 0.85em;
   background: var(--surface-muted);
@@ -1859,12 +1909,33 @@ body {
 .roadmap-item.span-2 {
   grid-column: 1 / -1;
 }
-.roadmap-item p:first-child {
+.roadmap-item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.roadmap-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+}
+.roadmap-item-icon svg {
+  width: 15px;
+  height: 15px;
+}
+.roadmap-item-head p {
   margin: 0;
   font-size: 0.88rem;
   font-weight: 700;
 }
-.roadmap-item p:last-child {
+.roadmap-item > p:last-child {
   margin: 0.4rem 0 0;
   font-size: 0.78rem;
   color: var(--text-muted);

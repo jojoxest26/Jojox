@@ -10,10 +10,7 @@ import { HistoryPanel } from "./components/HistoryPanel.js";
 import { Pricing } from "./components/Pricing.js";
 import { GithubSection } from "./components/GithubSection.js";
 import { TeamSection } from "./components/TeamSection.js";
-import { SupabaseCheckSection } from "./components/SupabaseCheckSection.js";
-import { MavenCheckSection } from "./components/MavenCheckSection.js";
-import { AwsIamCheckSection } from "./components/AwsIamCheckSection.js";
-import { AwsS3CheckSection } from "./components/AwsS3CheckSection.js";
+import { CloudChecksSection } from "./components/CloudChecksSection.js";
 import { WaitlistForm } from "./components/WaitlistForm.js";
 import { ChecksList } from "./components/ChecksList.js";
 import { Footer } from "./components/Footer.js";
@@ -146,11 +143,8 @@ function App() {
         <TeamSection session={session} />
       </Reveal>
       <Reveal>
-        <SupabaseCheckSection />
+        <CloudChecksSection />
       </Reveal>
-      <MavenCheckSection />
-      <AwsIamCheckSection />
-      <AwsS3CheckSection />
       <Reveal>
         <WaitlistForm />
       </Reveal>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createCheckoutSession, createPortalSession, fetchProfile, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
+import { Icon } from "./Icon.js";
 
 function openLogin() {
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -99,7 +100,9 @@ export function Pricing({ session }: { session: Session | null }) {
       <div className="card guest-callout">
         <div>
           <div className="guest-title">
-            <span>👤</span>
+            <span className="guest-title-icon">
+              <Icon name="user" />
+            </span>
             <h3>{t.pricing.guestTitle}</h3>
           </div>
           <ul>

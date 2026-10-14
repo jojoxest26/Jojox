@@ -30,6 +30,8 @@ export interface TranslationTree {
     heuristic: string;
     before: string;
     after: string;
+    showCommand: string;
+    hideCommand: string;
     correctionsManifest: {
       fileName: string;
       zipFileName: string;
@@ -98,6 +100,7 @@ export interface TranslationTree {
     audience: string;
     pricing: string;
     integrations: string;
+    cloudChecks: string;
     team: string;
     roadmap: string;
     checks: string;
@@ -106,6 +109,10 @@ export interface TranslationTree {
     eyebrow: string;
     title: string;
     items: AudienceItem[];
+  };
+  cloudChecks: {
+    title: string;
+    subtitle: string;
   };
   pricing: {
     title: string;
@@ -392,6 +399,8 @@ const it: TranslationTree = {
     heuristic: "da verificare",
     before: "Prima",
     after: "Dopo",
+    showCommand: "▾ Mostra il comando",
+    hideCommand: "▴ Nascondi il comando",
     correctionsManifest: {
       fileName: "CORREZIONI.txt",
       zipFileName: "jojox-correzioni.zip",
@@ -481,6 +490,7 @@ const it: TranslationTree = {
     audience: "Per chi è",
     pricing: "Prezzi",
     integrations: "Integrazioni",
+    cloudChecks: "Controlli cloud e dipendenze",
     team: "Il tuo team",
     roadmap: "In arrivo",
     checks: "Trasparenza totale",
@@ -510,6 +520,11 @@ const it: TranslationTree = {
         text: "Controlla il codice scritto o modificato da agenti AI come Claude Code, prima che finisca in produzione.",
       },
     ],
+  },
+  cloudChecks: {
+    title: "Controlli opzionali su cloud e dipendenze.",
+    subtitle:
+      "Comandi di sola lettura che esegui tu — JoJoX non chiede mai le tue credenziali. Carichi il risultato insieme al resto del codice e si aggiunge agli altri 49 controlli.",
   },
   pricing: {
     title: "Paghi il monitoraggio continuo, non le singole analisi",
@@ -634,13 +649,13 @@ const it: TranslationTree = {
     analyzing: "Analisi in corso…",
     errorGuestUsed: "Risulta già usata l'analisi gratuita senza email (magari da un altro dispositivo sulla stessa rete). Accedi con la tua email per continuare — 5 analisi gratuite al mese.",
     errorGeneric: "Analisi fallita, riprova.",
-    autofixFixedOne: "🔧 Ho corretto da solo {{files}} file per {{types}} tipo di problema.",
-    autofixFixedMany: "🔧 Ho corretto da solo {{files}} file per {{types}} tipi di problema.",
+    autofixFixedOne: "Ho corretto da solo {{files}} file per {{types}} tipo di problema.",
+    autofixFixedMany: "Ho corretto da solo {{files}} file per {{types}} tipi di problema.",
     autofixManualSuffix: " Altri {{count}} restano da sistemare a mano — richiedono decisioni sul tuo progetto che non possiamo prendere al posto tuo.",
     autofixManualOnly: "I problemi trovati richiedono decisioni sul tuo progetto che non possiamo correggere in automatico — guarda gli esempi \"prima/dopo\" qui sotto.",
     downloadZip: "Scarica file corretti (.zip)",
     downloadPdf: "Scarica report PDF",
-    newAnalysis: "🔁 Nuova analisi",
+    newAnalysis: "Nuova analisi",
   },
   history: {
     title: "Il tuo storico",
@@ -656,8 +671,8 @@ const it: TranslationTree = {
   },
   findingsList: {
     scoreLabel: "Punteggio di sicurezza",
-    emptyState: "Nessun problema trovato nei 49 controlli. 🎉",
-    autoFixed: "🔧 già corretto nel file scaricabile",
+    emptyState: "Nessun problema trovato nei 49 controlli.",
+    autoFixed: "già corretto nel file scaricabile",
   },
   github: {
     title: "GitHub App + CI",
@@ -676,16 +691,16 @@ const it: TranslationTree = {
     connectedLabel: "✓ COLLEGATO",
     toggleShow: "▼ Vedi anche: notifiche Slack, badge, CLI, VS Code e agenti AI",
     toggleHide: "▲ Nascondi dettagli avanzati",
-    badgeTitle: "🏷️ Badge sempre aggiornato nel README",
+    badgeTitle: "Badge sempre aggiornato nel README",
     badgeBody: "Dopo aver collegato il repository, incolla questa riga nel tuo {{readme}} (sostituisci {{repo}} con i tuoi) — il punteggio si aggiorna da solo a ogni analisi, senza bisogno di rigenerarlo a mano:",
-    publicScoreTitle: "🔗 Una pagina pubblica da condividere",
+    publicScoreTitle: "Una pagina pubblica da condividere",
     publicScoreBody: "Oltre al badge, ogni repository collegato ha anche una pagina di punteggio pubblica e condivisibile — utile per un post, un tweet, o semplicemente per mostrare quanto è sicuro il tuo codice:",
-    terminalTitle: "🖥️ Anche da terminale, in VS Code e per agenti AI",
+    terminalTitle: "Anche da terminale, in VS Code e per agenti AI",
     terminalBody: "JoJoX si può usare anche senza sito: da riga di comando (con {{fix}} per correggere in automatico), come estensione VS Code che sottolinea i problemi mentre scrivi, o come strumento MCP per Claude Code e altri agenti AI, che così possono controllarsi da soli mentre scrivono codice. Istruzioni complete nel {{link}}.",
     terminalLink: "README del repository",
-    hookTitle: "🪝 Blocco commit in locale",
+    hookTitle: "Blocco commit in locale",
     hookBody: "Un comando da terminale ({{cmd}}) installa un controllo che ferma il commit sul tuo computer, prima ancora che il codice arrivi su GitHub, se trova un problema critico — così il problema non entra mai nella cronologia del repository.",
-    slackTitle: "🔔 Notifiche su Slack",
+    slackTitle: "Notifiche su Slack",
     slackConnectFirst: "Collega prima GitHub (bottone qui sopra) per poter impostare le notifiche Slack.",
     slackBody: "Incolla qui l'URL di un {{link}} per ricevere un avviso sul canale del team quando una pull request viene bloccata o corretta in automatico:",
     slackLink: "Incoming Webhook Slack",
@@ -701,37 +716,37 @@ const it: TranslationTree = {
     toggleHide: "▲ Nascondi la roadmap",
     roadmap: [
       {
-        icon: "🏢",
+        icon: "office",
         title: "Piani Business / Enterprise",
         text: "Sappiamo che alcune aziende più grandi hanno esigenze diverse da Pro e Team — fatturazione dedicata, contratti, supporto prioritario. Non abbiamo ancora deciso cosa includere di preciso: preferiamo dirlo chiaramente ora, piuttosto che promettere dettagli che non esistono ancora.",
       },
       {
-        icon: "🌍",
+        icon: "globe",
         title: "Sito in più lingue",
         text: "Già disponibile in italiano e inglese, sito e i 49 controlli inclusi. Altre lingue in arrivo più avanti.",
       },
       {
-        icon: "➕",
+        icon: "plus",
         title: "Sempre più correzioni automatiche",
         text: "Oggi l'autofix corregge in automatico solo quando la risposta giusta è certa e non dipende dal tuo progetto — mai indovinando le tue regole di accesso. In arrivo: correzioni più sofisticate, anche su blocchi di codice interi e non solo righe singole, estese a sempre più problemi man mano che crescono i controlli — sempre con logica deterministica, mai un modello che indovina.",
       },
       {
-        icon: "🧩",
+        icon: "puzzle",
         title: "Controlli per altri linguaggi",
         text: "Oltre a JavaScript/TypeScript e SQL/Supabase, i 49 controlli ora riconoscono anche Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel), testati su codice reale. Un linguaggio nuovo fatto bene — controlli e test per non generare falsi positivi — richiede giorni di lavoro dedicato per ognuno.",
       },
       {
-        icon: "📦",
+        icon: "package",
         title: "Controllo delle librerie che usi",
         text: "Oggi JoJoX controlla il codice che scrivi tu. In arrivo: un controllo in più che guarda le librerie esterne del tuo progetto (es. il tuo package.json) e verifica, contro database pubblici come OSV.dev e GitHub Advisory, se una versione che usi ha una vulnerabilità già nota — l'unico controllo che, per funzionare, deve contattare un servizio esterno (mai il tuo codice, solo nome e versione della libreria).",
       },
       {
-        icon: "🧱",
+        icon: "bricks",
         title: "Controllo dell'infrastruttura (Terraform, Kubernetes)",
         text: "Stessa logica di pattern matching di oggi, applicata a un tipo di file diverso: configurazioni Terraform o Kubernetes, per trovare errori come un database lasciato accessibile a tutti per sbaglio.",
       },
       {
-        icon: "🧠",
+        icon: "brain",
         title: "Livello AI per i bug difficilissimi",
         text: "I 49 controlli restano il cuore di JoJoX: sempre uguali, sempre verificabili — il punteggio su cui contare. In arrivo: un livello AI in più, pensato per scovare anche i bug di logica difficilissimi da trovare, quelli che nessun pattern può catturare — ma sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da solo.",
       },
@@ -794,7 +809,7 @@ const it: TranslationTree = {
     notFoundBody: "Non risulta ancora nessuna analisi collegata a questo repository tramite la GitHub App di JoJoX.",
     scoreLabel: "Punteggio di sicurezza",
     issuesLabel: "Problemi trovati nell'ultima analisi",
-    noIssues: "Nessun problema trovato. 🎉",
+    noIssues: "Nessun problema trovato.",
     updatedLabel: "Ultima analisi: {{date}}",
     ctaText: "Analizza il tuo codice — gratis",
     copyLink: "Copia link",
@@ -826,7 +841,7 @@ const it: TranslationTree = {
     errorGeneric: "Audit fallito, riprova.",
     downloadPdf: "Scarica report PDF",
     downloadZip: "Scarica file corretti (.zip)",
-    newAudit: "🔁 Nuovo Controllo Completo del Sito",
+    newAudit: "Nuovo Controllo Completo del Sito",
     changeFiles: "Cambia file",
     scoreBefore: "Prima",
     scoreAfter: "Dopo la correzione automatica",
@@ -866,6 +881,8 @@ const en: TranslationTree = {
     heuristic: "to verify",
     before: "Before",
     after: "After",
+    showCommand: "▾ Show the command",
+    hideCommand: "▴ Hide the command",
     correctionsManifest: {
       fileName: "CORRECTIONS.txt",
       zipFileName: "jojox-fixes.zip",
@@ -955,6 +972,7 @@ const en: TranslationTree = {
     audience: "Who it's for",
     pricing: "Pricing",
     integrations: "Integrations",
+    cloudChecks: "Cloud & dependency checks",
     team: "Your team",
     roadmap: "Coming soon",
     checks: "Full transparency",
@@ -984,6 +1002,11 @@ const en: TranslationTree = {
         text: "Check code written or modified by AI agents like Claude Code, before it reaches production.",
       },
     ],
+  },
+  cloudChecks: {
+    title: "Optional checks on cloud config and dependencies.",
+    subtitle:
+      "Read-only commands you run yourself — JoJoX never asks for your credentials. Upload the result together with the rest of your code and it's added to the other 49 checks.",
   },
   pricing: {
     title: "You pay for continuous monitoring, not for individual analyses",
@@ -1108,13 +1131,13 @@ const en: TranslationTree = {
     analyzing: "Analyzing…",
     errorGuestUsed: "The free analysis without email has already been used (maybe from another device on the same network). Sign in with your email to continue — 5 free analyses a month.",
     errorGeneric: "Analysis failed, try again.",
-    autofixFixedOne: "🔧 I fixed {{files}} file myself for {{types}} type of issue.",
-    autofixFixedMany: "🔧 I fixed {{files}} files myself for {{types}} types of issue.",
+    autofixFixedOne: "I fixed {{files}} file myself for {{types}} type of issue.",
+    autofixFixedMany: "I fixed {{files}} files myself for {{types}} types of issue.",
     autofixManualSuffix: " Another {{count}} still need fixing by hand — they need decisions about your project we can't make for you.",
     autofixManualOnly: "The issues found need decisions about your project we can't fix automatically — see the \"before/after\" examples below.",
     downloadZip: "Download fixed files (.zip)",
     downloadPdf: "Download PDF report",
-    newAnalysis: "🔁 New analysis",
+    newAnalysis: "New analysis",
   },
   history: {
     title: "Your history",
@@ -1130,8 +1153,8 @@ const en: TranslationTree = {
   },
   findingsList: {
     scoreLabel: "Security score",
-    emptyState: "No problems found across the 49 checks. 🎉",
-    autoFixed: "🔧 already fixed in the downloadable file",
+    emptyState: "No problems found across the 49 checks.",
+    autoFixed: "already fixed in the downloadable file",
   },
   github: {
     title: "GitHub App + CI",
@@ -1150,16 +1173,16 @@ const en: TranslationTree = {
     connectedLabel: "✓ CONNECTED",
     toggleShow: "▼ Also see: Slack notifications, badge, CLI, VS Code and AI agents",
     toggleHide: "▲ Hide advanced details",
-    badgeTitle: "🏷️ Always up-to-date badge in the README",
+    badgeTitle: "Always up-to-date badge in the README",
     badgeBody: "After connecting the repository, paste this line into your {{readme}} (replace {{repo}} with yours) — the score updates itself on every analysis, no need to regenerate it by hand:",
-    publicScoreTitle: "🔗 A public page to share",
+    publicScoreTitle: "A public page to share",
     publicScoreBody: "Besides the badge, every connected repository also gets a public, shareable score page — handy for a post, a tweet, or just showing off how secure your code is:",
-    terminalTitle: "🖥️ Also from the terminal, in VS Code, and for AI agents",
+    terminalTitle: "Also from the terminal, in VS Code, and for AI agents",
     terminalBody: "JoJoX can also be used without the website: from the command line (with {{fix}} to fix automatically), as a VS Code extension that underlines issues as you type, or as an MCP tool for Claude Code and other AI agents, so they can check themselves while writing code. Full instructions in the {{link}}.",
     terminalLink: "repository README",
-    hookTitle: "🪝 Local commit blocking",
+    hookTitle: "Local commit blocking",
     hookBody: "A terminal command ({{cmd}}) installs a check that stops the commit on your computer, before the code even reaches GitHub, if it finds a critical issue — so the problem never enters the repository's history.",
-    slackTitle: "🔔 Slack notifications",
+    slackTitle: "Slack notifications",
     slackConnectFirst: "Connect GitHub first (button above) to set up Slack notifications.",
     slackBody: "Paste the URL of an {{link}} here to get an alert on the team channel when a pull request is blocked or automatically fixed:",
     slackLink: "Incoming Webhook Slack",
@@ -1175,37 +1198,37 @@ const en: TranslationTree = {
     toggleHide: "▲ Hide the roadmap",
     roadmap: [
       {
-        icon: "🏢",
+        icon: "office",
         title: "Business / Enterprise plans",
         text: "We know some larger companies need something different from Pro and Team — dedicated billing, contracts, priority support. We haven't decided exactly what's included yet: we'd rather say that clearly now than promise details that don't exist.",
       },
       {
-        icon: "🌍",
+        icon: "globe",
         title: "Site in more languages",
         text: "Already available in Italian and English, site and all 49 checks included. More languages coming later.",
       },
       {
-        icon: "➕",
+        icon: "plus",
         title: "More and more automatic fixes",
         text: "Today autofix only corrects automatically when the right answer is certain and doesn't depend on your project — never guessing your access rules. Coming soon: more sophisticated fixes, including whole blocks of code and not just single lines, extended to more and more issues as the checks grow — always with deterministic logic, never a model guessing.",
       },
       {
-        icon: "🧩",
+        icon: "puzzle",
         title: "Checks for more languages",
         text: "Besides JavaScript/TypeScript and SQL/Supabase, the 49 checks now also recognize Python (Flask, Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel), tested on real code. A new language done properly — checks and tests to avoid false positives — takes days of dedicated work each.",
       },
       {
-        icon: "📦",
+        icon: "package",
         title: "Checking the libraries you use",
         text: "Today JoJoX checks the code you write. Coming soon: an extra check that looks at your project's external libraries (e.g. your package.json) and verifies, against public databases like OSV.dev and GitHub Advisory, whether a version you use has a known vulnerability — the only check that, to work, needs to contact an external service (never your code, only the library's name and version).",
       },
       {
-        icon: "🧱",
+        icon: "bricks",
         title: "Infrastructure checks (Terraform, Kubernetes)",
         text: "Same pattern-matching logic as today, applied to a different kind of file: Terraform or Kubernetes configuration, to catch mistakes like a database accidentally left open to everyone.",
       },
       {
-        icon: "🧠",
+        icon: "brain",
         title: "AI layer for the hardest bugs",
         text: "The 49 checks stay the heart of JoJoX: always the same, always verifiable — the score you can count on. Coming soon: an extra AI layer, built to catch the logic bugs that are hardest to find, the ones no pattern can catch — but always with a person reviewing before code is actually changed, never on its own.",
       },
@@ -1268,7 +1291,7 @@ const en: TranslationTree = {
     notFoundBody: "No analysis linked to this repository through the JoJoX GitHub App yet.",
     scoreLabel: "Security score",
     issuesLabel: "Issues found in the latest analysis",
-    noIssues: "No problems found. 🎉",
+    noIssues: "No problems found.",
     updatedLabel: "Last analysis: {{date}}",
     ctaText: "Analyze your code — free",
     copyLink: "Copy link",
@@ -1300,7 +1323,7 @@ const en: TranslationTree = {
     errorGeneric: "Audit failed, try again.",
     downloadPdf: "Download PDF report",
     downloadZip: "Download fixed files (.zip)",
-    newAudit: "🔁 New Full Site Audit",
+    newAudit: "New Full Site Audit",
     changeFiles: "Change files",
     scoreBefore: "Before",
     scoreAfter: "After the automatic fixes",

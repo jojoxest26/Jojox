@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { fetchProfile, saveSlackWebhook, type GithubInstallation, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
+import { Icon } from "./Icon.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const API_URL = import.meta.env.VITE_API_URL;
@@ -56,7 +57,10 @@ function SlackNotifications({ session, installations }: { session: Session; inst
 
   return (
     <div className="github-badge-howto">
-      <p className="github-badge-title">{t.github.slackTitle}</p>
+      <p className="github-badge-title">
+        <Icon name="bell" className="github-badge-title-icon" />
+        {t.github.slackTitle}
+      </p>
       {!installations || installations.length === 0 ? (
         <p>{t.github.slackConnectFirst}</p>
       ) : (
@@ -160,7 +164,10 @@ export function GithubSection({
         {showDetails && (
           <>
             <div className="github-badge-howto">
-              <p className="github-badge-title">{t.github.badgeTitle}</p>
+              <p className="github-badge-title">
+                <Icon name="tag" className="github-badge-title-icon" />
+                {t.github.badgeTitle}
+              </p>
               <p>
                 {renderWithTokens(t.github.badgeBody, {
                   readme: <code>README.md</code>,
@@ -173,13 +180,19 @@ export function GithubSection({
             </div>
 
             <div className="github-badge-howto">
-              <p className="github-badge-title">{t.github.publicScoreTitle}</p>
+              <p className="github-badge-title">
+                <Icon name="link" className="github-badge-title-icon" />
+                {t.github.publicScoreTitle}
+              </p>
               <p>{t.github.publicScoreBody}</p>
               <pre className="github-badge-snippet">{`${window.location.origin}/r/proprietario/repo`}</pre>
             </div>
 
             <div className="github-badge-howto">
-              <p className="github-badge-title">{t.github.terminalTitle}</p>
+              <p className="github-badge-title">
+                <Icon name="terminal" className="github-badge-title-icon" />
+                {t.github.terminalTitle}
+              </p>
               <p>
                 {renderWithTokens(t.github.terminalBody, {
                   fix: <code>--fix</code>,
@@ -193,7 +206,10 @@ export function GithubSection({
             </div>
 
             <div className="github-badge-howto">
-              <p className="github-badge-title">{t.github.hookTitle}</p>
+              <p className="github-badge-title">
+                <Icon name="webhook" className="github-badge-title-icon" />
+                {t.github.hookTitle}
+              </p>
               <p>{renderWithTokens(t.github.hookBody, { cmd: <code>install-hook</code> })}</p>
             </div>
 

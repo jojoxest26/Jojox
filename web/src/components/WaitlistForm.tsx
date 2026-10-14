@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { joinWaitlist } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
+import { Icon } from "./Icon.js";
 
 export function WaitlistForm() {
   const { t } = useTranslation();
@@ -40,9 +41,12 @@ export function WaitlistForm() {
           <div className="roadmap-grid">
             {t.waitlist.roadmap.map((item) => (
               <div key={item.title} className="roadmap-item">
-                <p>
-                  {item.icon} {item.title}
-                </p>
+                <div className="roadmap-item-head">
+                  <span className="roadmap-item-icon">
+                    <Icon name={item.icon} />
+                  </span>
+                  <p>{item.title}</p>
+                </div>
                 <p>{item.text}</p>
               </div>
             ))}
