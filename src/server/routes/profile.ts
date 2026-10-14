@@ -9,16 +9,16 @@ export const profileRouter = Router();
 profileRouter.get("/api/profile", requireAuth, async (req: AuthedRequest, res) => {
   // Se questa email ha un invito Team in sospeso, lo completa qui — così un
   // membro invitato ottiene l'accesso al primo caricamento dopo il login,
-  // senza bisogno di un link speciale o di un passaggio in più.
+  // senza bisogno di un link speciale o di un passaggio in più. Deve finire
+  // PRIMA di calcolare il piano, perché getPlanForUser legge proprio
+  // l'appartenenza al team che questa riga appena scritto — le due righe
+  // sotto, invece, sono due letture indipendenti e possono partire insieme.
   await claimPendingTeamInvite(req.userId!, req.userEmail);
 
-  const plan = await getPlanForUser(req.userId!);
-
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("plan_trial_expires_at")
-    .eq("id", req.userId)
-    .single();
+  const [plan, { data: profile }] = await Promise.all([
+    getPlanForUser(req.userId!),
+    supabaseAdmin.from("profiles").select("plan_trial_expires_at").eq("id", req.userId).single(),
+  ]);
 
   const trialExpiresAt = profile?.plan_trial_expires_at ?? null;
   res.json({

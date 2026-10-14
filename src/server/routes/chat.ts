@@ -1,4 +1,4 @@
-import { Router, type Response } from "express";
+import { Router } from "express";
 import { z } from "zod";
 import { anthropic, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -126,25 +126,26 @@ export const chatRouter = Router();
 // aperta a tutti renderebbe il costo imprevedibile man mano che crescono
 // gli account gratuiti — farla un vantaggio dei piani a pagamento tiene i
 // costi proporzionati alle entrate, senza dover alzare i prezzi.
-async function requirePaidPlan(req: AuthedRequest, res: Response): Promise<boolean> {
-  const plan = await getPlanForUser(req.userId!);
-  if (plan === "free") {
-    res.status(403).json({ error: "La chat è disponibile per i piani Pro e Team", requiresPlan: true });
-    return false;
-  }
-  return true;
-}
 
 chatRouter.get("/api/chat/history", requireAuth, async (req: AuthedRequest, res) => {
-  if (!(await requirePaidPlan(req, res))) return;
+  // Il piano e la cronologia sono due letture indipendenti (nessuna delle
+  // due dipende dal risultato dell'altra): farle in parallelo invece che
+  // una dopo l'altra dimezza il tempo di questa rotta, che prima era la
+  // più lenta della chat proprio perché le metteva in fila.
+  const [plan, { data, error }] = await Promise.all([
+    getPlanForUser(req.userId!),
+    supabaseAdmin
+      .from("chat_messages")
+      .select("role, content, created_at")
+      .eq("user_id", req.userId!)
+      .order("created_at", { ascending: false })
+      .limit(40),
+  ]);
 
-  const { data, error } = await supabaseAdmin
-    .from("chat_messages")
-    .select("role, content, created_at")
-    .eq("user_id", req.userId!)
-    .order("created_at", { ascending: false })
-    .limit(40);
-
+  if (plan === "free") {
+    res.status(403).json({ error: "La chat è disponibile per i piani Pro e Team", requiresPlan: true });
+    return;
+  }
   if (error) {
     res.status(500).json({ error: "Errore nel recupero della cronologia" });
     return;
