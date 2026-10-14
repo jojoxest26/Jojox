@@ -2378,6 +2378,14 @@ body::after {
   overflow-y: auto;
   padding-bottom: 1rem;
 }
+.chat-gate {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+.chat-gate-body {
+  margin: 0.5rem 0 1.25rem;
+  color: var(--text-muted);
+}
 .chat-page-input-row {
   position: sticky;
   bottom: 1.25rem;

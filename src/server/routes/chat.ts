@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import { anthropic, CHAT_MODEL } from "../anthropic.js";
-import { optionalAuth, type AuthedRequest } from "../auth/middleware.js";
+import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, GUEST_DAILY_CHAT_MESSAGE_LIMIT, startOfTodayUtc } from "../plan.js";
+import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, startOfTodayUtc } from "../plan.js";
 
 // Limiti generosi per un uso normale ma che tengono comunque un tetto fisso
 // ai token (quindi al costo) di ogni singola richiesta, indipendentemente
@@ -66,14 +66,14 @@ function buildSystemPrompt(
   if (findings.length === 0) {
     if (lang === "en") {
       return [
-        "You are the JoJoX assistant, available on the JoJoX website to anyone — logged in or not.",
+        "You are the JoJoX assistant, available to logged-in users of the JoJoX website.",
         `Facts about JoJoX:\n${facts}`,
         "Rules: answer questions about JoJoX itself (what it does, pricing, plans, how the GitHub integration works) and general security best practices. Don't write or debug code for the user, don't act as a general-purpose coding assistant, don't help with topics unrelated to JoJoX — politely say that's outside what this chat does.",
         "Don't just restate the facts above verbatim — the person can already read them on the page. Synthesize: answer the actual question, compare options when relevant, give a concrete recommendation suited to what they described about their own situation, and only mention the numbers/features that actually matter for their question instead of listing everything. Sound like a knowledgeable person giving advice, not a page summary. Keep it conversational, a few sentences, longer only if the question genuinely needs it.",
       ].join("\n\n");
     }
     return [
-      "Sei l'assistente di JoJoX, disponibile sul sito a chiunque — loggato o no.",
+      "Sei l'assistente di JoJoX, disponibile per chi ha fatto login sul sito.",
       `Fatti su JoJoX:\n${facts}`,
       "Regole: rispondi a domande su JoJoX stesso (cosa fa, prezzi, piani, come funziona l'integrazione GitHub) e a consigli generali di sicurezza. Non scrivere o correggere codice per l'utente, non comportarti come un assistente di programmazione generico, non aiutare su argomenti non legati a JoJoX — rispondi con gentilezza che non è quello che fa questa chat.",
       "Non limitarti a ripetere i fatti sopra parola per parola — la persona può già leggerli sulla pagina. Sintetizza: rispondi alla domanda vera, confronta le opzioni quando è utile, dai un consiglio concreto calibrato su quello che la persona racconta della propria situazione, e cita solo i numeri/le funzioni che contano davvero per quella domanda invece di elencare tutto. Suona come una persona esperta che dà un consiglio, non come il riassunto di una pagina. Tono colloquiale, poche frasi, più lungo solo se la domanda lo richiede davvero.",
@@ -110,20 +110,11 @@ function buildSystemPrompt(
 
 export const chatRouter = Router();
 
-// Cronologia solo per chi è loggato: per un ospite l'IP non è un'identità
-// abbastanza propria da mostrargli indietro una conversazione — potrebbe
-// essere condiviso con altri (rete aziendale, hotspot). Il browser di un
-// ospite tiene la sua cronologia in locale, lato client.
-chatRouter.get("/api/chat/history", optionalAuth, async (req: AuthedRequest, res) => {
-  if (!req.userId) {
-    res.json({ messages: [] });
-    return;
-  }
-
+chatRouter.get("/api/chat/history", requireAuth, async (req: AuthedRequest, res) => {
   const { data, error } = await supabaseAdmin
     .from("chat_messages")
     .select("role, content, created_at")
-    .eq("user_id", req.userId)
+    .eq("user_id", req.userId!)
     .order("created_at", { ascending: false })
     .limit(40);
 
@@ -135,7 +126,7 @@ chatRouter.get("/api/chat/history", optionalAuth, async (req: AuthedRequest, res
   res.json({ messages: (data ?? []).reverse().map(({ role, content }) => ({ role, content })) });
 });
 
-chatRouter.post("/api/chat", optionalAuth, async (req: AuthedRequest, res) => {
+chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
   if (!anthropic) {
     res.status(503).json({ error: "La chat non è ancora disponibile" });
     return;
@@ -149,34 +140,22 @@ chatRouter.post("/api/chat", optionalAuth, async (req: AuthedRequest, res) => {
 
   const { message, findings, score, lang, history } = parsed.data;
 
-  // Loggato: limite per piano, tracciato per utente. Ospite: limite più
-  // basso tracciato per IP — altrimenti un bottone pubblico nell'hero,
-  // senza nessuna barriera, sarebbe un invito aperto a far girare a vuoto
-  // una chiamata a pagamento.
-  let limit: number;
-  let countQuery = supabaseAdmin
+  const plan = await getPlanForUser(req.userId!);
+  const limit = DAILY_CHAT_MESSAGE_LIMIT[plan];
+  const { count, error: countError } = await supabaseAdmin
     .from("chat_messages")
     .select("id", { count: "exact", head: true })
+    .eq("user_id", req.userId!)
     .eq("role", "user")
     .gte("created_at", startOfTodayUtc().toISOString());
 
-  if (req.userId) {
-    const plan = await getPlanForUser(req.userId);
-    limit = DAILY_CHAT_MESSAGE_LIMIT[plan];
-    countQuery = countQuery.eq("user_id", req.userId);
-  } else {
-    limit = GUEST_DAILY_CHAT_MESSAGE_LIMIT;
-    countQuery = countQuery.eq("ip_address", req.ip).is("user_id", null);
-  }
-
-  const { count, error: countError } = await countQuery;
   if (countError) console.error("Errore nel conteggio dei messaggi di chat", countError);
   if ((count ?? 0) >= limit) {
     res.status(429).json({
       error:
         lang === "en"
-          ? `Daily limit of ${limit} chat messages reached${req.userId ? " for your plan" : ""}`
-          : `Limite di ${limit} messaggi al giorno raggiunto${req.userId ? " per il tuo piano" : ""}`,
+          ? `Daily limit of ${limit} chat messages reached for your plan`
+          : `Limite di ${limit} messaggi al giorno raggiunto per il tuo piano`,
     });
     return;
   }
@@ -195,14 +174,13 @@ chatRouter.post("/api/chat", optionalAuth, async (req: AuthedRequest, res) => {
       .join("\n")
       .trim();
 
-    const identity = req.userId ? { user_id: req.userId, ip_address: null } : { user_id: null, ip_address: req.ip };
     const { error: insertError } = await supabaseAdmin.from("chat_messages").insert([
-      { ...identity, role: "user", content: message },
-      { ...identity, role: "assistant", content: reply },
+      { user_id: req.userId!, role: "user", content: message },
+      { user_id: req.userId!, role: "assistant", content: reply },
     ]);
-    // Non blocchiamo la risposta all'utente se il log fallisce (es. la
-    // tabella non è ancora stata aggiornata su Supabase) — ma lo segnaliamo
-    // nei log del server, altrimenti un problema del genere resta invisibile.
+    // Non blocchiamo la risposta all'utente se il log fallisce — ma lo
+    // segnaliamo nei log del server, altrimenti un problema del genere
+    // resta invisibile.
     if (insertError) console.error("Errore nel salvataggio del messaggio di chat", insertError);
 
     res.json({ reply });

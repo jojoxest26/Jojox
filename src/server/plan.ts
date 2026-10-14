@@ -15,9 +15,6 @@ export const DAILY_CHAT_MESSAGE_LIMIT: Record<Plan, number> = {
   team: 200,
 };
 
-/** Per chi scrive alla chat senza aver fatto login, tracciato per IP — più basso del piano free per restare una barriera vera. */
-export const GUEST_DAILY_CHAT_MESSAGE_LIMIT = 8;
-
 /**
  * Il piano che conta davvero: il piano pagato, salvo una prova gratuita del
  * Pro ancora attiva per chi è sul piano free — non declassa mai un piano

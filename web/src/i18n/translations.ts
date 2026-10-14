@@ -248,6 +248,9 @@ export interface TranslationTree {
     toggleOpen: string;
     toggleClose: string;
     newConversation: string;
+    gateTitle: string;
+    gateBody: string;
+    gateCta: string;
   };
   github: {
     title: string;
@@ -706,6 +709,9 @@ const it: TranslationTree = {
     toggleOpen: "Chiedi a JoJoX",
     toggleClose: "Chiudi la chat",
     newConversation: "Nuova conversazione",
+    gateTitle: "Accedi per usare la chat",
+    gateBody: "Basta l'email, è gratis — serve solo per tenere traccia della tua cronologia e dei messaggi usati.",
+    gateCta: "Accedi o registrati",
   },
   github: {
     title: "GitHub App + CI",
@@ -1205,6 +1211,9 @@ const en: TranslationTree = {
     toggleOpen: "Ask JoJoX",
     toggleClose: "Close chat",
     newConversation: "New conversation",
+    gateTitle: "Log in to use the chat",
+    gateBody: "Just an email, it's free — only needed to keep track of your history and messages used.",
+    gateCta: "Log in or sign up",
   },
   github: {
     title: "GitHub App + CI",
