@@ -19,7 +19,8 @@ export function HowItWorks() {
       <section className="how-it-works-section container">
         <p className="section-eyebrow">{t.howItWorks.eyebrow}</p>
         <h2 className="section-title">{t.howItWorks.title}</h2>
-        <div className="how-it-works-grid">
+        <div className="how-it-works-flow">
+          <div className="how-it-works-line" aria-hidden="true"></div>
           {steps.map((s) => (
             <div key={s.n} className="how-it-works-step">
               <span className="step-number">{s.n}</span>
