@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { anthropic, CHAT_MODEL } from "../anthropic.js";
+import { anthropic, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, startOfTodayUtc } from "../plan.js";
@@ -22,14 +22,19 @@ const findingSchema = z.object({
 });
 
 const chatRequestSchema = z.object({
-  message: z.string().min(1).max(1000),
+  // Più alto di prima: in modalità generale può includere uno snippet di
+  // codice da correggere, non solo una domanda breve.
+  message: z.string().min(1).max(6000),
   // Vuoti quando la chat è usata in modalità generale (es. dal bottone
   // "Chiedi a JoJoX" nell'hero, senza che sia stata fatta un'analisi).
   findings: z.array(findingSchema).max(60).default([]),
   score: z.number().int().min(0).max(100).nullable().default(null),
   lang: z.enum(["it", "en"]).default("it"),
+  // Più alto del limite del messaggio nuovo: deve poter contenere anche una
+  // risposta precedente con un file di codice intero, rimandata indietro
+  // come contesto.
   history: z
-    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(1500) }))
+    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(20000) }))
     .max(40)
     .default([]),
 });
@@ -68,15 +73,17 @@ function buildSystemPrompt(
       return [
         "You are the JoJoX assistant, available to logged-in users of the JoJoX website.",
         `Facts about JoJoX:\n${facts}`,
-        "Rules: answer questions about JoJoX itself (what it does, pricing, plans, how the GitHub integration works) and general security best practices. Don't write or debug code for the user, don't act as a general-purpose coding assistant, don't help with topics unrelated to JoJoX — politely say that's outside what this chat does.",
+        "Rules: answer questions about JoJoX itself (what it does, pricing, plans, how the GitHub integration works) and general security best practices.",
         "Don't just restate the facts above verbatim — the person can already read them on the page. Synthesize: answer the actual question, compare options when relevant, give a concrete recommendation suited to what they described about their own situation, and only mention the numbers/features that actually matter for their question instead of listing everything. Sound like a knowledgeable person giving advice, not a page summary. Keep it conversational, a few sentences, longer only if the question genuinely needs it.",
+        "You can also write and debug real code when asked — a function, a script, a full file, fixing an error in a pasted snippet. Write correct, clean code, use fenced code blocks with the right language tag, and ask a clarifying question instead of guessing when the request is genuinely ambiguous. You only see what's typed into this chat — no access to the person's real files or a way to run code. If asked about something with no connection to JoJoX or to writing/explaining code (e.g. unrelated trivia), politely say that's outside what this chat does.",
       ].join("\n\n");
     }
     return [
       "Sei l'assistente di JoJoX, disponibile per chi ha fatto login sul sito.",
       `Fatti su JoJoX:\n${facts}`,
-      "Regole: rispondi a domande su JoJoX stesso (cosa fa, prezzi, piani, come funziona l'integrazione GitHub) e a consigli generali di sicurezza. Non scrivere o correggere codice per l'utente, non comportarti come un assistente di programmazione generico, non aiutare su argomenti non legati a JoJoX — rispondi con gentilezza che non è quello che fa questa chat.",
+      "Regole: rispondi a domande su JoJoX stesso (cosa fa, prezzi, piani, come funziona l'integrazione GitHub) e a consigli generali di sicurezza.",
       "Non limitarti a ripetere i fatti sopra parola per parola — la persona può già leggerli sulla pagina. Sintetizza: rispondi alla domanda vera, confronta le opzioni quando è utile, dai un consiglio concreto calibrato su quello che la persona racconta della propria situazione, e cita solo i numeri/le funzioni che contano davvero per quella domanda invece di elencare tutto. Suona come una persona esperta che dà un consiglio, non come il riassunto di una pagina. Tono colloquiale, poche frasi, più lungo solo se la domanda lo richiede davvero.",
+      "Puoi anche scrivere e correggere codice vero quando te lo chiedono — una funzione, uno script, un file intero, il debug di un errore in uno snippet incollato. Scrivi codice corretto e pulito, usa blocchi di codice con il linguaggio giusto indicato, e fai la domanda giusta invece di indovinare quando la richiesta è davvero ambigua. Vedi solo quello che viene scritto in questa chat — nessun accesso ai file reali della persona, nessun modo di eseguire codice. Se ti viene chiesto qualcosa che non ha a che fare né con JoJoX né con scrivere/spiegare codice (es. curiosità generiche), rispondi con gentilezza che non è quello che fa questa chat.",
     ].join("\n\n");
   }
 
@@ -160,10 +167,15 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
     return;
   }
 
+  // In modalità generale (nessuna analisi aperta) la chat scrive anche
+  // codice vero: serve un modello più capace e risposte che possono essere
+  // molto più lunghe di una spiegazione di un singolo finding.
+  const isGeneralMode = findings.length === 0;
+
   try {
     const response = await anthropic.messages.create({
-      model: CHAT_MODEL,
-      max_tokens: 700,
+      model: isGeneralMode ? CODE_MODEL : CHAT_MODEL,
+      max_tokens: isGeneralMode ? 3000 : 700,
       system: buildSystemPrompt(findings, score, lang),
       messages: [...history.map((h) => ({ role: h.role, content: h.content })), { role: "user" as const, content: message }],
     });

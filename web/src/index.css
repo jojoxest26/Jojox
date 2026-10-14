@@ -2503,9 +2503,11 @@ body::after {
 }
 .chat-input-row {
   display: flex;
+  align-items: flex-end;
   gap: 0.6rem;
 }
-.chat-input-row input {
+.chat-input-row input,
+.chat-input-row textarea {
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -2514,7 +2516,56 @@ body::after {
   color: var(--text);
   font-size: 0.86rem;
 }
-.chat-input-row input:focus {
+.chat-input-row textarea {
+  font-family: inherit;
+  line-height: 1.5;
+  resize: none;
+  max-height: 240px;
+}
+.chat-input-row input:focus,
+.chat-input-row textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+.chat-page-input-row .btn {
+  flex-shrink: 0;
+}
+.chat-code-block {
+  position: relative;
+  margin: 0.5rem 0;
+}
+.chat-code-block pre {
+  margin: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.chat-code-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.chat-code-copy svg {
+  width: 13px;
+  height: 13px;
+}
+.chat-code-copy:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
 }

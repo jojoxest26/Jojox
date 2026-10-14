@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
 import { sendChatMessage, fetchChatHistory, type ChatMessage } from "../lib/api.js";
@@ -36,6 +36,50 @@ function openLogin() {
   window.dispatchEvent(new Event("jojox-open-login"));
 }
 
+const LANGUAGE_TAG = /^[a-zA-Z0-9+#.-]{0,20}$/;
+
+function CodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="chat-code-block">
+      <button
+        type="button"
+        className="chat-code-copy"
+        onClick={() => {
+          navigator.clipboard?.writeText(code).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          });
+        }}
+      >
+        {copied ? "✓" : <Icon name="copy" />}
+      </button>
+      <pre>
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+/** Divide il testo di un messaggio sui blocchi ```codice``` e dà a ciascuno il rendering giusto — niente evidenziazione sintassi, ma almeno font monospace, sfondo distinto e un bottone per copiare. */
+function MessageContent({ content }: { content: string }) {
+  const parts = content.split("```");
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (i % 2 === 0) {
+          return part ? <span key={i}>{part}</span> : null;
+        }
+        const firstBreak = part.indexOf("\n");
+        const firstLine = (firstBreak === -1 ? part : part.slice(0, firstBreak)).trim();
+        const hasLangTag = firstBreak !== -1 && LANGUAGE_TAG.test(firstLine) && firstLine.length > 0;
+        const code = (hasLangTag ? part.slice(firstBreak + 1) : part).replace(/\n$/, "");
+        return <CodeBlock key={i} code={code} />;
+      })}
+    </>
+  );
+}
+
 /**
  * Pagina intera di "Chiedi a JoJoX" (punto 25a) — prima era un riquadro
  * piccolo in basso a destra, ma per una vera conversazione serve spazio
@@ -53,6 +97,7 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -74,6 +119,7 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     const nextMessages: ChatMessage[] = [...messages, { role: "user", content: text }];
     setMessages(nextMessages);
     setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
     setSending(true);
     setError(null);
 
@@ -93,6 +139,18 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
   function handleReset() {
     setMessages([]);
     setError(null);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  function autoGrow(el: HTMLTextAreaElement) {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
   }
 
   return (
@@ -138,7 +196,7 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
               ) : (
                 messages.map((m, i) => (
                   <div key={i} className={`chat-bubble chat-bubble-${m.role}`}>
-                    {m.content}
+                    <MessageContent content={m.content} />
                   </div>
                 ))
               )}
@@ -149,14 +207,16 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
             {error && <p className="chat-error">{error}</p>}
 
             <div className="chat-input-row chat-page-input-row">
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
+                rows={1}
                 value={input}
                 placeholder={result ? t.chat.placeholder : t.chat.placeholderGeneral}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSend();
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  autoGrow(e.target);
                 }}
+                onKeyDown={handleKeyDown}
                 disabled={sending}
                 autoFocus
               />
