@@ -10,7 +10,11 @@ import { Icon } from "./Icon.js";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
 const MAX_FINDINGS_SENT = 60;
-const MAX_HISTORY_SENT = 10;
+// Stesso tetto del backend (chatRequestSchema in src/server/routes/chat.ts):
+// più lo alziamo, più ogni messaggio nuovo costa (si rimanda tutta la
+// cronologia ogni volta) — 40 copre conversazioni lunghe vere restando
+// comunque limitato.
+const MAX_HISTORY_SENT = 40;
 
 function findingsForChat(findings: Finding[], lang: "it" | "en"): Finding[] {
   const sorted = [...findings].sort(

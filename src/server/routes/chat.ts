@@ -30,7 +30,7 @@ const chatRequestSchema = z.object({
   lang: z.enum(["it", "en"]).default("it"),
   history: z
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(1500) }))
-    .max(10)
+    .max(40)
     .default([]),
 });
 
