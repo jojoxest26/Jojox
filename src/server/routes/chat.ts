@@ -119,6 +119,31 @@ function buildSystemPrompt(
   ].join("\n\n");
 }
 
+/**
+ * Salva lo scambio (domanda + risposta) nella cronologia, dopo che
+ * l'utente ha già ricevuto la risposta. Non lancia mai un'eccezione — un
+ * fallimento qui non deve rompere nient'altro — ma ritenta una volta prima
+ * di arrendersi, perché un insert fallito sparisce dalla cronologia senza
+ * che nessuno se ne accorga finché non ricarica la pagina.
+ */
+async function saveChatExchange(userId: string, userMessage: string, assistantReply: string): Promise<void> {
+  const rows = [
+    { user_id: userId, role: "user" as const, content: userMessage },
+    { user_id: userId, role: "assistant" as const, content: assistantReply },
+  ];
+  const { error } = await supabaseAdmin.from("chat_messages").insert(rows);
+  if (!error) return;
+
+  console.error("Errore nel salvataggio del messaggio di chat, riprovo una volta", error);
+  const { error: retryError } = await supabaseAdmin.from("chat_messages").insert(rows);
+  if (retryError) {
+    console.error(
+      "Errore nel salvataggio del messaggio di chat anche al secondo tentativo — sparirà dalla cronologia",
+      retryError
+    );
+  }
+}
+
 export const chatRouter = Router();
 
 // Chat disponibile solo per chi paga (Pro/Team), non per il piano gratis:
@@ -224,16 +249,16 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
           : "\n\n*(Risposta troncata per il limite di lunghezza — chiedi di continuare, o una versione più corta.)*";
     }
 
-    const { error: insertError } = await supabaseAdmin.from("chat_messages").insert([
-      { user_id: req.userId!, role: "user", content: message },
-      { user_id: req.userId!, role: "assistant", content: reply },
-    ]);
-    // Non blocchiamo la risposta all'utente se il log fallisce — ma lo
-    // segnaliamo nei log del server, altrimenti un problema del genere
-    // resta invisibile.
-    if (insertError) console.error("Errore nel salvataggio del messaggio di chat", insertError);
-
     res.json({ reply });
+
+    // Il salvataggio nella cronologia parte DOPO aver risposto: l'utente
+    // non deve aspettare un'altra richiesta a Supabase solo per vedere la
+    // propria risposta — un giro in meno nel percorso che l'utente aspetta
+    // davvero, oltre a quelli già tolti ieri sera da piano e cronologia.
+    // Un fallimento qui farebbe sparire lo scambio dalla cronologia senza
+    // nessun avviso (è già successo, su una domanda di ieri): ritentiamo
+    // una volta prima di arrenderci, e logghiamo sempre l'esito.
+    void saveChatExchange(req.userId!, message, reply);
   } catch (err) {
     console.error("Errore nella chiamata all'API Anthropic", err);
     res.status(502).json({
