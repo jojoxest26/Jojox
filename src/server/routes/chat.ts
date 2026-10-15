@@ -159,11 +159,16 @@ chatRouter.get("/api/chat/history", requireAuth, async (req: AuthedRequest, res)
   // più lenta della chat proprio perché le metteva in fila.
   const [plan, { data, error }] = await Promise.all([
     getPlanForUser(req.userId!),
+    // Ordina per "seq" (un numero che cresce a ogni riga inserita), non
+    // per "created_at": un singolo scambio si salva con UN insert a due
+    // righe (domanda + risposta), e Postgres dà a entrambe lo STESSO
+    // timestamp — created_at da solo non garantisce quale delle due viene
+    // prima, e la cronologia poteva tornare con l'ordine scambiato.
     supabaseAdmin
       .from("chat_messages")
-      .select("role, content, created_at")
+      .select("role, content, seq")
       .eq("user_id", req.userId!)
-      .order("created_at", { ascending: false })
+      .order("seq", { ascending: false })
       .limit(40),
   ]);
 
