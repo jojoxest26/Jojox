@@ -119,6 +119,11 @@ export async function fetchProfile(accessToken: string): Promise<Plan> {
   return plan;
 }
 
+/** Completa un eventuale invito Team in sospeso — va chiamata una sola volta per sessione, non ad ogni fetchProfile (vedi useSession.ts). */
+export function claimInvite(accessToken: string): Promise<{ ok: boolean }> {
+  return apiFetch<{ ok: boolean }>("/api/claim-invite", { method: "POST", accessToken });
+}
+
 export interface ProfileDetails {
   plan: Plan;
   /** true se la prova gratuita del monitoraggio continuo è già stata usata (attiva o scaduta). */

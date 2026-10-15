@@ -6,20 +6,19 @@ import { supabaseAdmin } from "../db/supabase.js";
 
 export const profileRouter = Router();
 
-profileRouter.get("/api/profile", requireAuth, async (req: AuthedRequest, res) => {
-  // Se questa email ha un invito Team in sospeso, lo completa qui — così un
-  // membro invitato ottiene l'accesso al primo caricamento dopo il login,
-  // senza bisogno di un link speciale o di un passaggio in più. Deve finire
-  // PRIMA di calcolare il piano, perché getPlanForUser legge proprio
-  // l'appartenenza al team che questa riga appena scritto.
-  //
-  // (Provato anche a farla partire insieme alle altre due, per risparmiare
-  // una richiesta in fila — ma in pratica ha allungato i tempi invece di
-  // accorciarli, probabilmente per troppe richieste in parallelo verso
-  // Supabase nello stesso istante. Tornati a farla prima: più sicuro e,
-  // a conti fatti, anche più veloce.)
+// Completa un eventuale invito Team in sospeso per questa email — chiamata
+// una sola volta per sessione dal frontend (vedi useSession.ts), non più
+// da /api/profile stesso: prima girava ad ogni singolo caricamento del
+// profilo (Prezzi, GitHub, Team, chat lo chiamano tutte, anche più volte
+// sulla stessa pagina), pagando una richiesta in più a Supabase ogni volta
+// per un controllo che in pratica serve solo la primissima volta dopo un
+// invito vero.
+profileRouter.post("/api/claim-invite", requireAuth, async (req: AuthedRequest, res) => {
   await claimPendingTeamInvite(req.userId!, req.userEmail);
+  res.json({ ok: true });
+});
 
+profileRouter.get("/api/profile", requireAuth, async (req: AuthedRequest, res) => {
   const [plan, { data: profile }] = await Promise.all([
     getPlanForUser(req.userId!),
     supabaseAdmin.from("profiles").select("plan_trial_expires_at").eq("id", req.userId).single(),
