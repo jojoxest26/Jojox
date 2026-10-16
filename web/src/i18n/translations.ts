@@ -453,7 +453,7 @@ const it: TranslationTree = {
   hero: {
     titleLine1: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu?",
     titleLine2Suffix: "lo sorveglia.",
-    body: "Non un controllo una tantum. {{monitoring}}. 55 controlli pubblici sugli errori più comuni nel codice, un {{score}} chiaro, e correzioni pronte da copiare.",
+    body: "Non un controllo una tantum. {{monitoring}}. 55 controlli pubblici sui problemi di sicurezza nel codice, un {{score}} chiaro, e correzioni pronte da copiare.",
     bodyMonitoring: "Monitoraggio continuo",
     bodyScore: "punteggio di sicurezza",
     sub: "Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.",
