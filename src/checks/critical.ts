@@ -63,6 +63,38 @@ const GHA_DANGEROUS_EXPRESSION =
 // l'indentazione torna al livello di "run:" stesso).
 const GHA_RUN_STEP = /^(\s*)(?:-\s*)?run:\s*(.*)$/;
 
+/**
+ * Deriva un nome di variabile d'ambiente dall'espressione catturata (es.
+ * "github.event.pull_request.title" -> "PULL_REQUEST_TITLE"), scartando i
+ * segmenti "github"/"event" e gli indici numerici (es. "commits.0.message"
+ * -> "COMMITS_MESSAGE"). Null se non resta nessun segmento utile.
+ */
+function ghaEnvVarNameFor(expression: string): string | null {
+  const parts = expression.split(".").filter((p) => p !== "github" && p !== "event" && !/^\d+$/.test(p));
+  if (parts.length === 0) return null;
+  return parts.map((p) => p.toUpperCase()).join("_");
+}
+
+/**
+ * True se il passo che contiene la riga `runLineIdx` ha già una chiave
+ * "env:" propria (stesso livello di indentazione di "run:"). In quel caso
+ * l'autofix lascia stare: unire alla cieca in un blocco env: già esistente
+ * rischia un duplicato o di perdere variabili già lì.
+ */
+function stepHasOwnEnvKey(lines: string[], runLineIdx: number, runIndent: number): boolean {
+  for (let j = runLineIdx - 1; j >= Math.max(0, runLineIdx - 20); j--) {
+    const line = lines[j];
+    if (line.trim() === "") continue;
+    const lineIndent = line.length - line.trimStart().length;
+    if (lineIndent < runIndent) return false; // usciti dal passo: nessun env: trovato
+    if (lineIndent > runIndent) continue; // continuazione multilinea di una chiave precedente
+    const content = line.trimStart();
+    if (/^env:/.test(content.replace(/^-\s*/, ""))) return true;
+    if (content.startsWith("-")) return false; // raggiunto l'inizio del passo, env: non c'è
+  }
+  return false;
+}
+
 // "pull_request_target" gira con i permessi e i segreti del repository di
 // base anche per una pull request da un fork esterno — a differenza di
 // "pull_request", che gira con permessi minimi. Se in più il workflow fa il
@@ -1020,9 +1052,57 @@ export const criticalChecks: Check[] = [
 
       return matches;
     },
-    // Nessun autofix: richiede introdurre un blocco "env:" e sostituire ogni
-    // occorrenza nel comando con la variabile — una riscrittura strutturale,
-    // non una singola riga, che rischia di rompere il workflow se fatta alla cieca.
+    // Autofix solo per il caso sicuro e verificabile: un comando su una sola
+    // riga ("run: ..."), senza che il passo abbia già un suo "env:" da unire
+    // alla cieca, e senza che "run:" sia la primissima chiave del passo
+    // (introdotta dal trattino, richiederebbe un'indentazione diversa). Il
+    // blocco multilinea ("run: |") resta manuale: capire dove finisce lo
+    // script per riscriverlo tutto è troppo delicato da fare alla cieca.
+    autofix(file) {
+      if (!isGithubActionsWorkflow(file)) return null;
+      const lines = file.content.split("\n");
+      let changed = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const m = GHA_RUN_STEP.exec(lines[i]);
+        if (!m) continue;
+        const [, indent, inline] = m;
+        const trimmedInline = inline.trim();
+        if (trimmedInline === "" || trimmedInline === "|" || trimmedInline === ">" || /^[|>][+-]?\s*$/.test(trimmedInline)) continue;
+        if (lines[i].trimStart().startsWith("-")) continue;
+
+        const found = [...inline.matchAll(new RegExp(GHA_DANGEROUS_EXPRESSION.source, "g"))];
+        if (found.length === 0) continue;
+        if (stepHasOwnEnvKey(lines, i, indent.length)) continue;
+
+        const mapping = new Map<string, string>(); // espressione completa (con ${{ }}) -> nome variabile
+        let ok = true;
+        for (const f of found) {
+          const varName = ghaEnvVarNameFor(f[1]);
+          if (!varName) {
+            ok = false;
+            break;
+          }
+          mapping.set(f[0], varName);
+        }
+        // Due espressioni diverse che finirebbero sullo stesso nome di
+        // variabile (raro — es. due messaggi di commit diversi nello stesso
+        // comando) sono troppo rischiose da scegliere alla cieca.
+        if (!ok || new Set(mapping.values()).size !== mapping.size) continue;
+
+        let newInline = inline;
+        for (const [expr, varName] of mapping) {
+          newInline = newInline.split(expr).join(`$${varName}`);
+        }
+
+        const envLines = [...mapping.entries()].map(([expr, varName]) => `${indent}  ${varName}: ${expr}`);
+        lines.splice(i, 1, `${indent}env:`, ...envLines, `${indent}run: ${newInline}`);
+        i += envLines.length + 1;
+        changed = true;
+      }
+
+      return changed ? lines.join("\n") : null;
+    },
   },
 
   {
