@@ -1,32 +1,93 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient.js";
 import { LoginPanel } from "./LoginPanel.js";
 import type { GithubInstallation } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { LANG_NAMES, type Lang } from "../i18n/translations.js";
+import { Icon } from "./Icon.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 
 const LANG_OPTIONS = Object.keys(LANG_NAMES) as Lang[];
 
+// Una bandiera per lingua, puramente decorativa (il nome nativo accanto resta
+// il modo "vero" per riconoscere la propria lingua). Dove una lingua è
+// parlata in più paesi, scegliamo lo stesso paese usato per il formato data
+// in translations.ts, per coerenza interna.
+const LANG_FLAGS: Record<Lang, string> = {
+  it: "🇮🇹",
+  en: "🇬🇧",
+  es: "🇪🇸",
+  fr: "🇫🇷",
+  pt: "🇵🇹",
+  zh: "🇨🇳",
+  hi: "🇮🇳",
+  ru: "🇷🇺",
+  ar: "🇸🇦",
+  bn: "🇧🇩",
+  ur: "🇵🇰",
+  id: "🇮🇩",
+};
+
 export function LanguageSwitcher() {
   const { lang, setLang } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  function choose(next: Lang) {
+    setLang(next);
+    setOpen(false);
+  }
 
   return (
-    <div className="lang-switcher">
-      <select
-        className="lang-select"
+    <div className="lang-switcher" ref={rootRef}>
+      <button
+        type="button"
+        className="lang-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         aria-label="Lingua / Language"
-        value={lang}
-        onChange={(e) => setLang(e.target.value as Lang)}
+        onClick={() => setOpen((v) => !v)}
       >
-        {LANG_OPTIONS.map((code) => (
-          <option key={code} value={code}>
-            {LANG_NAMES[code]}
-          </option>
-        ))}
-      </select>
+        <span className="lang-flag">{LANG_FLAGS[lang]}</span>
+        <span className="lang-code">{lang.toUpperCase()}</span>
+        <Icon name="chevronDown" className={open ? "lang-chevron lang-chevron-open" : "lang-chevron"} />
+      </button>
+      {open && (
+        <div className="lang-panel" role="listbox">
+          {LANG_OPTIONS.map((code) => (
+            <button
+              type="button"
+              key={code}
+              role="option"
+              aria-selected={code === lang}
+              className={code === lang ? "lang-option lang-option-active" : "lang-option"}
+              onClick={() => choose(code)}
+            >
+              <span className="lang-flag">{LANG_FLAGS[code]}</span>
+              <span className="lang-name">{LANG_NAMES[code]}</span>
+              {code === lang && <Icon name="check" className="lang-check" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

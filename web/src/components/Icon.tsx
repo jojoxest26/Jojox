@@ -64,6 +64,8 @@ const icons: Record<string, ReactNode> = {
   refresh: (
     <path d="M4 4v5h5 M20 20v-5h-5 M5.5 9a7.5 7.5 0 0 1 12.7-3.3L20 8 M18.5 15a7.5 7.5 0 0 1-12.7 3.3L4 16" />
   ),
+  check: <path d="M4 12.5 9.5 18 20 6" />,
+  chevronDown: <path d="M5 8.5 12 15.5 19 8.5" />,
   bot: (
     <>
       <rect x="5" y="9" width="14" height="11" rx="4" />
