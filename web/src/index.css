@@ -356,7 +356,27 @@ body::after {
 /* ---------- hero (poster) ---------- */
 .hero {
   position: relative;
-  padding: 2rem 0 3rem;
+  padding-block: 2rem 3rem;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
+  align-items: center;
+  gap: clamp(32px, 5vw, 64px);
+}
+@media (max-width: 960px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(28px, 6vw, 40px);
+  }
+}
+.hero-main,
+.hero-visual {
+  min-width: 0;
+}
+.hero-visual {
+  display: flex;
+  justify-content: center;
 }
 .hero-eyebrow {
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -394,7 +414,7 @@ body::after {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px 18px;
   margin: clamp(18px, 4vw, 30px) 0 0;
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -410,19 +430,39 @@ body::after {
   color: var(--accent);
   font-weight: 600;
 }
-.herofoot {
+.hero-pitch {
+  max-width: 50ch;
+  margin-top: clamp(22px, 4vw, 34px);
+}
+.hero-pitch p {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+.hero-pitch .hero-pitch-lead {
+  color: var(--text);
+  font-weight: 700;
+}
+.hero-pitch .hero-sub,
+.hero-pitch .hero-badge,
+.hero-pitch .hero-guest-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.hero-pitch .hero-actions {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 28px;
-  flex-wrap: wrap;
-  margin-top: clamp(28px, 5vw, 46px);
-  padding-top: clamp(18px, 3vw, 26px);
-  border-top: 1px solid var(--border);
+  justify-content: flex-start;
+  gap: 0.75rem;
+  margin: 4px 0 10px;
 }
 .hero-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: clamp(20px, 4vw, 40px);
+  margin-top: clamp(28px, 5vw, 42px);
+  padding-top: clamp(18px, 3vw, 24px);
+  border-top: 1px solid var(--border);
 }
 .hero-stats .stat {
   display: flex;
@@ -443,45 +483,6 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-}
-.hero-pitch {
-  max-width: 440px;
-  text-align: right;
-}
-.hero-pitch p {
-  margin: 0 0 10px;
-  color: var(--text-muted);
-  font-size: 0.92rem;
-  line-height: 1.55;
-}
-.hero-pitch .hero-pitch-lead {
-  color: var(--text);
-  font-weight: 700;
-}
-.hero-pitch .hero-sub,
-.hero-pitch .hero-badge,
-.hero-pitch .hero-guest-note {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-.hero-pitch .hero-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin: 4px 0 10px;
-}
-@media (max-width: 640px) {
-  .herofoot {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .hero-pitch {
-    text-align: left;
-    max-width: 100%;
-  }
-  .hero-pitch .hero-actions {
-    justify-content: flex-start;
-  }
 }
 
 /* ---------- Sentinella (mascotte) — componente non usato nell'hero per ora,
@@ -540,15 +541,7 @@ body::after {
   }
 }
 
-/* ---------- scan panel, connected to the page by trace lines ---------- */
-.panel-wrap {
-  position: relative;
-  z-index: 1;
-  margin: clamp(6px, 1.5vw, 14px) 0;
-  display: flex;
-  align-items: center;
-  gap: clamp(10px, 3vw, 28px);
-}
+/* ---------- trace lines, used as decorative section dividers sitewide ---------- */
 .trace {
   flex: 1 1 auto;
   height: 1px;
@@ -583,7 +576,9 @@ body::after {
 
 .scanpanel-wrap {
   position: relative;
-  flex: 0 1 640px;
+  width: 100%;
+  min-width: 0;
+  max-width: 440px;
 }
 .scanpanel {
   position: relative;
@@ -597,7 +592,6 @@ body::after {
 }
 @media (max-width: 720px) {
   .scanpanel-wrap {
-    flex: 1 1 auto;
     max-width: 480px;
     margin: 0 auto;
   }
