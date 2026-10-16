@@ -24,6 +24,27 @@
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* ---------- scrollbar del sito, sullo stile scuro + ambra invece del grigio di default del browser ---------- */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--surface);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 999px;
+  border: 2px solid var(--surface);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-hover);
+}
+
 .font-logo {
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
