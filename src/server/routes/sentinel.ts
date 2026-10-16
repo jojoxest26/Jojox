@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { env } from "../env.js";
 import { runSentinelScan } from "../sentinel/scan.js";
+import { notifyEmail, buildAlertEmailHtml } from "../email/notify.js";
 
 export const sentinelRouter = Router();
 
@@ -37,4 +38,41 @@ sentinelRouter.post("/api/internal/sentinel/run", (req, res) => {
   runSentinelScan().catch((err) => {
     console.error("Sentinella 24/7: errore nello scan avviato manualmente", err);
   });
+});
+
+/**
+ * Manda un'email di prova con l'aspetto reale delle notifiche di JoJoX, per
+ * verificare che RESEND_API_KEY sia configurata correttamente senza dover
+ * aspettare un evento vero (una pull request bloccata, uno scan della
+ * Sentinella). Stesso segreto operativo del trigger della Sentinella sopra
+ * — niente di specifico per la Sentinella in sé, solo uno strumento
+ * interno in più protetto allo stesso modo.
+ */
+sentinelRouter.post("/api/internal/test-email", async (req, res) => {
+  const configured = env.sentinelTriggerSecret;
+  const provided = req.header("x-sentinel-secret");
+
+  if (!configured || !provided || !secretsMatch(provided, configured)) {
+    res.status(404).end();
+    return;
+  }
+
+  const to = typeof req.body?.to === "string" ? req.body.to : null;
+  if (!to) {
+    res.status(400).json({ error: 'Specifica un indirizzo email nel campo "to"' });
+    return;
+  }
+
+  await notifyEmail(
+    to,
+    "JoJoX — email di prova",
+    buildAlertEmailHtml({
+      title: "Questa è un'email di prova",
+      body: "Se la stai leggendo, l'integrazione con Resend funziona correttamente — le notifiche vere avranno questo stesso aspetto.",
+      ctaLabel: "Vai a JoJoX",
+      ctaUrl: "https://jojox.it",
+    })
+  );
+
+  res.json({ sent: true });
 });
