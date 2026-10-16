@@ -44,22 +44,25 @@ sentinelRouter.post("/api/internal/sentinel/run", (req, res) => {
  * Manda un'email di prova con l'aspetto reale delle notifiche di JoJoX, per
  * verificare che RESEND_API_KEY sia configurata correttamente senza dover
  * aspettare un evento vero (una pull request bloccata, uno scan della
- * Sentinella). Stesso segreto operativo del trigger della Sentinella sopra
- * — niente di specifico per la Sentinella in sé, solo uno strumento
- * interno in più protetto allo stesso modo.
+ * Sentinella). Una GET con parametri nell'URL, apposta: basta incollare un
+ * indirizzo nel browser, senza aprire un terminale — un comando POST con
+ * header ed escaping di virgolette si è rivelato troppo delicato da far
+ * digitare a mano. Stesso segreto operativo del trigger della Sentinella
+ * sopra, passato come parametro invece che come header per lo stesso
+ * motivo (un indirizzo si incolla, un header no).
  */
-sentinelRouter.post("/api/internal/test-email", async (req, res) => {
+sentinelRouter.get("/api/internal/test-email", async (req, res) => {
   const configured = env.sentinelTriggerSecret;
-  const provided = req.header("x-sentinel-secret");
+  const provided = typeof req.query.secret === "string" ? req.query.secret : null;
 
   if (!configured || !provided || !secretsMatch(provided, configured)) {
     res.status(404).end();
     return;
   }
 
-  const to = typeof req.body?.to === "string" ? req.body.to : null;
+  const to = typeof req.query.to === "string" ? req.query.to : null;
   if (!to) {
-    res.status(400).json({ error: 'Specifica un indirizzo email nel campo "to"' });
+    res.status(400).json({ error: 'Specifica un indirizzo email nel parametro "to"' });
     return;
   }
 
