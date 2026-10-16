@@ -7,6 +7,7 @@ import { ALL_CHECKS } from "../../../checks/index.js";
 import { checkRunConclusion, formatPrComment } from "../../github/report.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import { notifySlack } from "../../slack/notify.js";
+import { notifyEmail, buildAlertEmailHtml } from "../../email/notify.js";
 import { getPlanForUser } from "../../plan.js";
 import { mapWithConcurrency } from "../../util/concurrency.js";
 import { reportError } from "../../sentry.js";
@@ -233,12 +234,39 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
       installation?.slack_webhook_url,
       `🛑 JoJoX ha bloccato una pull request su *${owner}/${repo}* (punteggio ${result.score}/100): ${prUrl}`
     );
+    await notifyEmail(
+      await ownerEmail(installation?.installed_by),
+      `JoJoX ha bloccato una pull request su ${owner}/${repo}`,
+      buildAlertEmailHtml({
+        title: "Una pull request è stata bloccata",
+        body: `JoJoX ha trovato problemi di sicurezza bloccanti su <strong>${owner}/${repo}</strong> (punteggio ${result.score}/100).`,
+        ctaLabel: "Vedi la pull request",
+        ctaUrl: prUrl,
+      })
+    );
   } else if (fixPrUrl) {
     await notifySlack(
       installation?.slack_webhook_url,
       `🔧 JoJoX ha proposto correzioni automatiche per una pull request su *${owner}/${repo}*: ${fixPrUrl}`
     );
+    await notifyEmail(
+      await ownerEmail(installation?.installed_by),
+      `JoJoX ha proposto correzioni per una pull request su ${owner}/${repo}`,
+      buildAlertEmailHtml({
+        title: "Correzioni automatiche proposte",
+        body: `JoJoX ha trovato problemi su <strong>${owner}/${repo}</strong> e ha aperto una pull request con le correzioni automatiche disponibili.`,
+        ctaLabel: "Vedi la pull request",
+        ctaUrl: fixPrUrl,
+      })
+    );
   }
+}
+
+/** Email dell'account che ha installato la GitHub App — null se l'installazione non è collegata a nessun account, o se il campo non è impostato. */
+async function ownerEmail(userId: string | null | undefined): Promise<string | null> {
+  if (!userId) return null;
+  const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+  return data.user?.email ?? null;
 }
 
 async function getInstallation(

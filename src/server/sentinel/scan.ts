@@ -8,6 +8,7 @@ import { fetchRepoFiles } from "../github/repoContent.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser } from "../plan.js";
 import { notifySlack } from "../slack/notify.js";
+import { notifyEmail, buildAlertEmailHtml } from "../email/notify.js";
 
 // Un'installazione (specie su un'organizzazione) può avere centinaia di
 // repository: un tetto di sicurezza per non far durare uno scan notturno
@@ -39,6 +40,7 @@ interface SentinelInstallation {
   installation_id: number;
   installed_by: string;
   slack_webhook_url: string | null;
+  ownerEmail: string | null;
 }
 
 /** Installazioni collegate a un account su un piano a pagamento (Pro o Team) — il monitoraggio continuo, come quello sulle pull request, non è una funzionalità del piano free. */
@@ -50,7 +52,11 @@ async function eligibleInstallations(): Promise<SentinelInstallation[]> {
     if (!installation.installed_by) continue;
     const plan = await getPlanForUser(installation.installed_by);
     if (plan === "free") continue;
-    eligible.push(installation as SentinelInstallation);
+    // Risolto una volta per installazione (non per repository): più
+    // repository nella stessa installazione condividono lo stesso
+    // proprietario, non ha senso richiederlo di nuovo ad ogni scanRepo.
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(installation.installed_by);
+    eligible.push({ ...installation, ownerEmail: userData.user?.email ?? null } as SentinelInstallation);
   }
   return eligible;
 }
@@ -96,9 +102,20 @@ async function scanRepo(
 
     const repoUrl = `https://github.com/${repo.fullName}`;
     const prLine = fixPrUrl ? ` Ho aperto una pull request con le correzioni automatiche: ${fixPrUrl}` : "";
+    const countLabel = newBlockingFindings.length === 1 ? "nuovo problema critico o alto" : "nuovi problemi critici o alti";
     await notifySlack(
       installation.slack_webhook_url,
-      `🌙 La Sentinella 24/7 di JoJoX ha trovato ${newBlockingFindings.length} ${newBlockingFindings.length === 1 ? "nuovo problema critico o alto" : "nuovi problemi critici o alti"} su *${repo.fullName}*, non legati a nessuna pull request aperta: ${repoUrl}.${prLine}`
+      `🌙 La Sentinella 24/7 di JoJoX ha trovato ${newBlockingFindings.length} ${countLabel} su *${repo.fullName}*, non legati a nessuna pull request aperta: ${repoUrl}.${prLine}`
+    );
+    await notifyEmail(
+      installation.ownerEmail,
+      `JoJoX: ${newBlockingFindings.length} ${countLabel} su ${repo.fullName}`,
+      buildAlertEmailHtml({
+        title: `La Sentinella 24/7 ha trovato qualcosa di nuovo`,
+        body: `${newBlockingFindings.length} ${countLabel} su <strong>${repo.fullName}</strong>, non legati a nessuna pull request aperta.${fixPrUrl ? " Ho già aperto una pull request con le correzioni automatiche." : ""}`,
+        ctaLabel: fixPrUrl ? "Vedi la pull request" : "Vedi il repository",
+        ctaUrl: fixPrUrl ?? repoUrl,
+      })
     );
   }
 

@@ -59,4 +59,13 @@ export const env = {
    * rotta chat risponde 503 invece di far crashare l'intero server.
    */
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? null,
+  /**
+   * Chiave API di Resend per le email di avviso brandizzate di JoJoX
+   * (Sentinella 24/7, pull request bloccate/corrette) — opzionale come le
+   * altre integrazioni: se non impostata, le email restano semplicemente
+   * spente, nessun errore. Il dominio jojox.it è già verificato su Resend
+   * (usato per l'SMTP di Supabase, vedi punto 9 della roadmap), quindi
+   * basta questa chiave per iniziare a mandare email dirette dal backend.
+   */
+  resendApiKey: process.env.RESEND_API_KEY ?? null,
 };
