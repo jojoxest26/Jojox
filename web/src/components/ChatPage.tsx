@@ -240,11 +240,15 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     });
 
     try {
-      const findings = result ? findingsForChat(result.findings, lang) : [];
+      // La chat "Chiedi a JoJoX" risponde solo in IT/EN per ora: le altre
+      // lingue del sito usano l'inglese come ripiego, invece di mandare al
+      // backend un codice lingua che non riconosce.
+      const chatLang = lang === "it" ? "it" : "en";
+      const findings = result ? findingsForChat(result.findings, chatLang) : [];
       const score = result ? result.score : null;
       const history = messages.slice(-MAX_HISTORY_SENT);
       const { reply } = await Promise.race([
-        sendChatMessage(text, history, lang, findings, score, session!.access_token),
+        sendChatMessage(text, history, chatLang, findings, score, session!.access_token),
         timeout,
       ]);
       setMessages([...nextMessages, { role: "assistant" as const, content: reply }]);
@@ -277,7 +281,7 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     <div className="chat-page">
       <div className="container chat-page-nav">
         <a href="/" onClick={goHome} className="legal-back">
-          {legalPages[lang].backHome}
+          {legalPages[lang === "it" ? "it" : "en"].backHome}
         </a>
         <LanguageSwitcher />
       </div>
@@ -349,12 +353,16 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
                 <p className="chat-empty-state">{result ? t.chat.emptyState : t.chat.emptyStateGeneral}</p>
               ) : (
                 messages.map((m, i) => (
-                  <div key={i} className={`chat-bubble chat-bubble-${m.role}`}>
+                  <div key={i} className={`chat-bubble chat-bubble-${m.role}`} dir="auto">
                     <MessageContent content={m.content} />
                   </div>
                 ))
               )}
-              {sending && <div className="chat-bubble chat-bubble-assistant chat-bubble-pending">{t.chat.sending}</div>}
+              {sending && (
+                <div className="chat-bubble chat-bubble-assistant chat-bubble-pending" dir="auto">
+                  {t.chat.sending}
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
 

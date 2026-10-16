@@ -4,33 +4,29 @@ import { supabase } from "../lib/supabaseClient.js";
 import { LoginPanel } from "./LoginPanel.js";
 import type { GithubInstallation } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
-import type { Lang } from "../i18n/translations.js";
+import { LANG_NAMES, type Lang } from "../i18n/translations.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
+
+const LANG_OPTIONS = Object.keys(LANG_NAMES) as Lang[];
 
 export function LanguageSwitcher() {
   const { lang, setLang } = useTranslation();
 
-  function toggle(next: Lang) {
-    if (next !== lang) setLang(next);
-  }
-
   return (
-    <div className="lang-switcher" role="group" aria-label="Lingua / Language">
-      <button
-        type="button"
-        className={lang === "it" ? "lang-btn lang-btn-active" : "lang-btn"}
-        onClick={() => toggle("it")}
+    <div className="lang-switcher">
+      <select
+        className="lang-select"
+        aria-label="Lingua / Language"
+        value={lang}
+        onChange={(e) => setLang(e.target.value as Lang)}
       >
-        IT
-      </button>
-      <button
-        type="button"
-        className={lang === "en" ? "lang-btn lang-btn-active" : "lang-btn"}
-        onClick={() => toggle("en")}
-      >
-        EN
-      </button>
+        {LANG_OPTIONS.map((code) => (
+          <option key={code} value={code}>
+            {LANG_NAMES[code]}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

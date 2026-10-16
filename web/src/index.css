@@ -2292,18 +2292,26 @@ body::after {
   overflow: hidden;
   box-shadow: none;
 }
-.lang-btn {
+.lang-select {
   border: none;
   background: var(--surface);
   color: var(--text);
   font-weight: 700;
   font-size: 0.72rem;
-  padding: 0.4rem 0.65rem;
+  font-family: inherit;
+  padding: 0.4rem 1.6rem 0.4rem 0.75rem;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23939ca8' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
 }
-.lang-btn-active {
-  background: var(--accent);
-  color: var(--accent-ink);
+.lang-select:hover {
+  color: var(--accent);
+}
+[dir="rtl"] .lang-select {
+  padding: 0.4rem 0.75rem 0.4rem 1.6rem;
+  background-position: left 0.6rem center;
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { LanguageSwitcher } from "./Header.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
-import { legalPages, type LegalDoc } from "../i18n/legalPages.js";
+import { legalPages, type LegalDoc, type LegalLang } from "../i18n/legalPages.js";
 
 function goHome(e: MouseEvent) {
   e.preventDefault();
@@ -9,9 +9,19 @@ function goHome(e: MouseEvent) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+// Le pagine legali esistono solo in IT/EN: le altre lingue del sito usano
+// l'inglese come ripiego invece di un testo legale mancante.
+function useLegalLang(): LegalLang {
+  const { lang } = useTranslation();
+  return lang === "it" ? "it" : "en";
+}
+
 function LegalDocView({ doc }: { doc: LegalDoc }) {
   return (
-    <article className="legal-doc">
+    // Testo legale esiste solo in IT/EN (mai RTL): forziamo ltr qui anche se
+    // la lingua del sito è RTL (arabo/urdu), altrimenti questo testo inglese
+    // di fallback verrebbe mostrato specchiato e illeggibile.
+    <article className="legal-doc" dir="ltr">
       <h1>{doc.title}</h1>
       <p className="legal-updated">{doc.lastUpdated}</p>
       <p className="legal-intro">{doc.intro}</p>
@@ -36,7 +46,7 @@ function LegalDocView({ doc }: { doc: LegalDoc }) {
 }
 
 export function PrivacyPolicyPage() {
-  const { lang } = useTranslation();
+  const lang = useLegalLang();
   return (
     <div className="legal-page">
       <div className="container legal-page-nav">
@@ -53,7 +63,7 @@ export function PrivacyPolicyPage() {
 }
 
 export function TermsOfServicePage() {
-  const { lang } = useTranslation();
+  const lang = useLegalLang();
   return (
     <div className="legal-page">
       <div className="container legal-page-nav">
@@ -70,7 +80,7 @@ export function TermsOfServicePage() {
 }
 
 export function SecurityPolicyPage() {
-  const { lang } = useTranslation();
+  const lang = useLegalLang();
   return (
     <div className="legal-page">
       <div className="container legal-page-nav">

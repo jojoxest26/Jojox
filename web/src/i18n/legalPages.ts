@@ -1,4 +1,6 @@
-import type { Lang } from "./translations.js";
+// Le pagine legali esistono solo in IT/EN per ora — le altre lingue del
+// sito usano l'inglese come ripiego (vedi LegalPage.tsx).
+export type LegalLang = "it" | "en";
 
 export type LegalBlock = { type: "p"; text: string } | { type: "list"; items: string[] };
 
@@ -576,4 +578,4 @@ const en: LegalPagesTree = {
   },
 };
 
-export const legalPages: Record<Lang, LegalPagesTree> = { it, en };
+export const legalPages: Record<LegalLang, LegalPagesTree> = { it, en };

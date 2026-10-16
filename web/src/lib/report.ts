@@ -3,7 +3,7 @@
 // dialogo nativo del browser. Nessuna libreria PDF da installare.
 import type { AnalysisResult, Finding, Severity, SourceFile } from "../../../src/types.js";
 import type { AutofixResult } from "../../../src/analyze.js";
-import { translations, type Lang } from "../i18n/translations.js";
+import { translations, RTL_LANGS, type Lang } from "../i18n/translations.js";
 import { interpolate } from "../i18n/richText.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
 
@@ -58,7 +58,7 @@ function findingHtml(
   const location = escapeHtml(finding.file) + (finding.line > 0 ? `:${finding.line}` : "");
   const text = translateCheckText(finding.checkId, finding, lang);
   return `
-    <div class="finding finding-${sev}">
+    <div class="finding finding-${sev}" dir="auto">
       <div class="finding-top">
         <div>
           <p class="finding-title">${escapeHtml(text.title)}</p>
@@ -135,7 +135,7 @@ export function buildReportHtml(
         : interpolate(t.report.manyProblems, { count: String(result.findings.length) });
 
   return `<!doctype html>
-<html lang="${lang}">
+<html lang="${lang}" dir="${RTL_LANGS.has(lang) ? "rtl" : "ltr"}">
 <head>
 <meta charset="utf-8" />
 <title>Report JoJoX — ${projectName}</title>

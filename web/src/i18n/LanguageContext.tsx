@@ -1,15 +1,23 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { translations, type Lang, type TranslationTree } from "./translations.js";
+import { translations, RTL_LANGS, type Lang, type TranslationTree } from "./translations.js";
 
 const STORAGE_KEY = "jojox_lang";
+const SUPPORTED_LANGS = Object.keys(translations) as Lang[];
+
+function isLang(value: string | null): value is Lang {
+  return value !== null && (SUPPORTED_LANGS as string[]).includes(value);
+}
 
 function detectInitialLang(): Lang {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "it" || saved === "en") return saved;
+    if (isLang(saved)) return saved;
   } catch {
     // localStorage non disponibile (es. modalità privata): va bene l'italiano di default.
   }
+  const browserLang = navigator.language.toLowerCase().split("-")[0];
+  if (browserLang === "zh") return "zh"; // zh-CN, zh-TW, ... → sempre il nostro cinese semplificato
+  if (isLang(browserLang)) return browserLang;
   return navigator.language.toLowerCase().startsWith("en") ? "en" : "it";
 }
 
@@ -26,6 +34,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    document.documentElement.dir = RTL_LANGS.has(lang) ? "rtl" : "ltr";
     document.title = translations[lang].meta.title;
     const descriptionTag = document.querySelector('meta[name="description"]');
     if (descriptionTag) descriptionTag.setAttribute("content", translations[lang].meta.description);

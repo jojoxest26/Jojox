@@ -21,14 +21,17 @@ type CheckTranslationEntry = CheckTranslation | ((original: CheckTranslation) =>
 /**
  * L'italiano è la lingua "nativa" del motore (src/checks/), quindi in
  * italiano restituiamo sempre il testo originale del Check/Finding così
- * com'è. In inglese, applichiamo la traduzione se esiste per quel checkId
- * — altrimenti (caso limite: id sconosciuto) restituiamo l'italiano invece
- * di mostrare un testo mancante.
+ * com'è. In inglese applichiamo la traduzione se esiste per quel checkId.
+ * Le altre lingue del sito non hanno ancora una traduzione dedicata per
+ * questo contenuto tecnico: usiamo l'inglese come ripiego (più comprensibile
+ * a livello globale dell'italiano) finché non viene tradotto anche questo.
+ * Caso limite (checkId sconosciuto): restituiamo l'italiano invece di
+ * mostrare un testo mancante.
  */
 export function translateCheckText<T extends { title: string; description: string; fix: { before: string; after: string } }>(
   checkId: string,
   original: T,
-  lang: "it" | "en"
+  lang: string
 ): { title: string; description: string; fix: { before: string; after: string } } {
   if (lang === "it") return original;
   const translated = checkTranslationsEn[checkId];

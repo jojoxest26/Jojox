@@ -47,7 +47,7 @@ export function FindingsList({ result, autofix }: { result: AnalysisResult; auto
             {grouped.get(sev)!.map((finding, i) => {
               const text = translateCheckText(finding.checkId, finding, lang);
               return (
-                <div key={`${finding.checkId}-${i}`} className={`finding finding-${sev}`}>
+                <div key={`${finding.checkId}-${i}`} className={`finding finding-${sev}`} dir="auto">
                   <div className="finding-head">
                     <span className="finding-title">{text.title}</span>
                     <span className="finding-location">

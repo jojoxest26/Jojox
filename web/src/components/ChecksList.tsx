@@ -34,7 +34,7 @@ export function ChecksList() {
             {ALL_CHECKS.filter((c) => c.severity === sev).map((check) => {
               const text = translateCheckText(check.id, check, lang);
               return (
-                <div key={check.id} className="check-item">
+                <div key={check.id} className="check-item" dir="auto">
                   <span>{text.title}</span>
                   <span className="check-confidence">
                     {check.confidence === "confirmed" ? t.common.confirmed : t.common.heuristic}
