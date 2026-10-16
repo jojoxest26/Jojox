@@ -86,7 +86,7 @@ export function Hero() {
       <div className="herofoot">
         <div className="hero-stats">
           <div className="stat">
-            <b>49</b>
+            <b>55</b>
             <span>{t.hero.statChecksLabel}</span>
           </div>
           <div className="stat">

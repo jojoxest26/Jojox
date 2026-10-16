@@ -1066,6 +1066,60 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
 
+    it("gcp-firewall-open-to-internet: flags a firewall rule open to 0.0.0.0/0 on SSH", () => {
+      const check = checkById("gcp-firewall-open-to-internet");
+      const vulnerable = file(
+        "main.tf",
+        'resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gcp-firewall-open-to-internet: does not flag HTTPS (443) open to 0.0.0.0/0", () => {
+      const check = checkById("gcp-firewall-open-to-internet");
+      const clean = file(
+        "main.tf",
+        'resource "google_compute_firewall" "allow-https" {\n  allow {\n    protocol = "tcp"\n    ports    = ["443"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gcp-firewall-open-to-internet: does not flag SSH restricted to a private range", () => {
+      const check = checkById("gcp-firewall-open-to-internet");
+      const clean = file(
+        "main.tf",
+        'resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("azure-nsg-open-to-internet: flags an inbound allow rule open to * on SSH", () => {
+      const check = checkById("azure-nsg-open-to-internet");
+      const vulnerable = file(
+        "main.tf",
+        'resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("azure-nsg-open-to-internet: does not flag an outbound rule", () => {
+      const check = checkById("azure-nsg-open-to-internet");
+      const clean = file(
+        "main.tf",
+        'resource "azurerm_network_security_rule" "allow-ssh-out" {\n  direction              = "Outbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("azure-nsg-open-to-internet: does not flag SSH restricted to a private prefix", () => {
+      const check = checkById("azure-nsg-open-to-internet");
+      const clean = file(
+        "main.tf",
+        'resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
     it("terraform-hardcoded-secret: flags a secret-looking variable default", () => {
       const check = checkById("terraform-hardcoded-secret");
       const vulnerable = file("variables.tf", 'variable "db_password" {\n  default = "supersecret123"\n}\n');

@@ -11,6 +11,7 @@ import {
   isKubernetesManifest,
   isTerraformFile,
   nearbyMatches,
+  fileMatch,
 } from "../util/scan.js";
 
 // Fase 2, IaC: manifest Kubernetes — stessa scelta di non usare un parser
@@ -467,6 +468,97 @@ export const highChecks: Check[] = [
     },
     // Nessun autofix: non conosciamo quali permessi servano davvero al
     // progetto — restringerli alla cieca romperebbe quasi certamente
+    // qualcosa che dipende da quell'accesso.
+  },
+
+  // Punto 13, altri provider cloud oltre AWS: stessi due pattern già fatti
+  // per AWS (storage pubblico, ruolo troppo ampio), per Google Cloud e Azure.
+  {
+    id: "gcp-storage-bucket-public",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Un bucket Google Cloud Storage è reso leggibile da chiunque",
+    description:
+      "Una risorsa \"google_storage_bucket_iam_member\" o \"google_storage_bucket_iam_binding\" concede un ruolo a \"allUsers\" o \"allAuthenticatedUsers\" — il primo rende il bucket leggibile da chiunque su internet, anche senza un account Google; il secondo da chiunque abbia un account Google qualsiasi, non solo chi dovrebbe avere accesso.",
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:qualcuno@example.com"  # solo chi deve davvero avervi accesso, non allUsers/allAuthenticatedUsers\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      if (!fileMatch(file, /resource\s+"google_storage_bucket_iam_(member|binding)"/)) return [];
+      return scanLines(file, /\bmembers?\s*=\s*\[?["'](allUsers|allAuthenticatedUsers)["']/i);
+    },
+    // Nessun autofix: rimuovere l'accesso pubblico alla cieca rischia di
+    // rompere un bucket pensato per essere pubblico di proposito (es. asset
+    // di un sito statico) — va confermato da chi conosce l'uso del bucket.
+  },
+
+  {
+    id: "azure-storage-public-access",
+    severity: "high",
+    confidence: "confirmed",
+    title: "L'accesso pubblico ai blob è abilitato su un account di archiviazione Azure",
+    description:
+      "\"allow_blob_public_access\" è impostato su true su un \"azurerm_storage_account\": chiunque conosca l'URL di un blob/container reso pubblico può leggerlo, senza nessuna autenticazione.",
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      if (!fileMatch(file, /resource\s+"azurerm_storage_account"/)) return [];
+      return scanLines(file, /\ballow_blob_public_access\s*=\s*true\b/i);
+    },
+    autofix(file) {
+      if (!isTerraformFile(file)) return null;
+      if (!fileMatch(file, /resource\s+"azurerm_storage_account"/)) return null;
+      const { content, changed } = replaceLines(file.content, /\ballow_blob_public_access\s*=\s*true\b/gi, (line) =>
+        line.replace(/true\b/i, "false")
+      );
+      return changed ? content : null;
+    },
+  },
+
+  {
+    id: "gcp-iam-overly-broad-role",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Un ruolo IAM Google Cloud concede accesso completo (Owner/Editor)",
+    description:
+      "Un \"google_project_iam_binding\"/\"google_project_iam_member\" (o l'equivalente su organizzazione/cartella) assegna il ruolo primitivo \"roles/owner\" o \"roles/editor\" — accesso quasi completo a ogni servizio nel progetto. Può essere voluto per un account di emergenza, ma va confermato: per l'uso quotidiano concedi solo i ruoli predefiniti più specifici che servono davvero.",
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # solo il ruolo predefinito che serve davvero, non roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      if (!fileMatch(file, /resource\s+"google_(project|organization|folder)_iam_(binding|member)"/)) return [];
+      return scanLines(file, /\brole\s*=\s*"roles\/(owner|editor)"/i);
+    },
+    // Nessun autofix: non conosciamo quale ruolo più specifico serva davvero
+    // al progetto — restringerlo alla cieca romperebbe quasi certamente
+    // qualcosa che dipende da quell'accesso.
+  },
+
+  {
+    id: "azure-role-assignment-owner",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Un'assegnazione di ruolo Azure concede accesso completo (Owner)",
+    description:
+      "Un \"azurerm_role_assignment\" assegna il ruolo \"Owner\" — accesso completo, incluso il controllo sui permessi di altri utenti, sull'intero scope assegnato (sottoscrizione, gruppo di risorse...). Può essere voluto per un account di emergenza, ma va confermato: per l'uso quotidiano concedi solo il ruolo più specifico che serve davvero (es. \"Contributor\" su un singolo gruppo di risorse).",
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # solo il ruolo più specifico che serve davvero, non Owner su tutta la sottoscrizione\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      if (!fileMatch(file, /resource\s+"azurerm_role_assignment"/)) return [];
+      return scanLines(file, /\brole_definition_name\s*=\s*"Owner"/i);
+    },
+    // Nessun autofix: non conosciamo quale ruolo più specifico serva davvero
+    // al progetto — restringerlo alla cieca romperebbe quasi certamente
     // qualcosa che dipende da quell'accesso.
   },
 

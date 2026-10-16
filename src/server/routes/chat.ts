@@ -40,10 +40,10 @@ const chatRequestSchema = z.object({
 });
 
 const PRODUCT_FACTS_IT = `
-JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di sicurezza con un motore deterministico a pattern — 49 controlli pubblici, nessuna AI nel rilevamento stesso. Copre JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel); su altri linguaggi alcuni controlli generici possono comunque aiutare.
+JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di sicurezza con un motore deterministico a pattern — 55 controlli pubblici, nessuna AI nel rilevamento stesso. Copre JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel); su altri linguaggi alcuni controlli generici possono comunque aiutare.
 
 Piani:
-- Gratis (0€): 5 analisi al mese, tutti i 49 controlli con esempi di correzione, punteggio di sicurezza (0-100) + badge scaricabile, storico delle ultime 20 analisi. Si può anche provare senza registrarsi (1 analisi gratuita, senza email).
+- Gratis (0€): 5 analisi al mese, tutti i 55 controlli con esempi di correzione, punteggio di sicurezza (0-100) + badge scaricabile, storico delle ultime 20 analisi. Si può anche provare senza registrarsi (1 analisi gratuita, senza email).
 - Pro (9,99€/mese o 99€/anno): analisi e storico illimitati, integrazione GitHub che controlla ogni push e blocca le modifiche più rischiose, un account/organizzazione GitHub collegato, commenti automatici sulle pull request, correzioni automatiche proposte come pull request, badge che si aggiorna da solo a ogni push, e questa chat stessa ("Chiedi a JoJoX").
 - Team (24,99€/mese o 249€/anno): come Pro ma con account/organizzazioni GitHub illimitati e fino a 5 persone con repository e storico condivisi.
 
@@ -53,10 +53,10 @@ Altre funzioni: Sentinella 24/7 (scan notturno automatico dei repository collega
 `.trim();
 
 const PRODUCT_FACTS_EN = `
-JoJoX analyzes code (AI-generated or hand-written) and finds security issues with a deterministic, pattern-based engine — 49 public checks, no AI in the detection itself. Covers JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel); some generic checks can still help on other languages.
+JoJoX analyzes code (AI-generated or hand-written) and finds security issues with a deterministic, pattern-based engine — 55 public checks, no AI in the detection itself. Covers JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel); some generic checks can still help on other languages.
 
 Plans:
-- Free (€0): 5 analyses/month, all 49 checks with fix examples, security score (0-100) + downloadable badge, history of the last 20 analyses. Can also be tried without signing up (1 free analysis, no email).
+- Free (€0): 5 analyses/month, all 55 checks with fix examples, security score (0-100) + downloadable badge, history of the last 20 analyses. Can also be tried without signing up (1 free analysis, no email).
 - Pro (€9.99/month or €99/year): unlimited analyses and history, GitHub integration that checks every push and blocks the riskiest changes, one connected GitHub account/organization, automatic pull request comments, automatic fixes proposed as pull requests, a badge that updates itself on every push, and this chat itself ("Ask JoJoX").
 - Team (€24.99/month or €249/year): same as Pro but with unlimited GitHub accounts/organizations and up to 5 people sharing repositories and history.
 

@@ -516,6 +516,88 @@ describe("high checks", () => {
       );
       expect(detect(check, clean)).toHaveLength(0);
     });
+
+    it("gcp-storage-bucket-public: flags a bucket shared with allUsers", () => {
+      const check = checkById("gcp-storage-bucket-public");
+      const vulnerable = file(
+        "main.tf",
+        'resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gcp-storage-bucket-public: flags a binding whose members include allAuthenticatedUsers", () => {
+      const check = checkById("gcp-storage-bucket-public");
+      const vulnerable = file(
+        "main.tf",
+        'resource "google_storage_bucket_iam_binding" "public" {\n  bucket  = google_storage_bucket.example.name\n  role    = "roles/storage.objectViewer"\n  members = ["allAuthenticatedUsers"]\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gcp-storage-bucket-public: does not flag a member scoped to a real user", () => {
+      const check = checkById("gcp-storage-bucket-public");
+      const clean = file(
+        "main.tf",
+        'resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:dev@example.com"\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("azure-storage-public-access: flags allow_blob_public_access = true", () => {
+      const check = checkById("azure-storage-public-access");
+      const vulnerable = file("main.tf", 'resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("azure-storage-public-access: does not flag allow_blob_public_access = false", () => {
+      const check = checkById("azure-storage-public-access");
+      const clean = file("main.tf", 'resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("azure-storage-public-access autofix: flips true to false", () => {
+      const check = checkById("azure-storage-public-access");
+      const vulnerable = file("main.tf", 'resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}\n');
+      const fixed = check.autofix?.(vulnerable);
+      expect(fixed).toContain("allow_blob_public_access = false");
+    });
+
+    it("gcp-iam-overly-broad-role: flags roles/owner granted on a project", () => {
+      const check = checkById("gcp-iam-overly-broad-role");
+      const vulnerable = file(
+        "main.tf",
+        'resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gcp-iam-overly-broad-role: does not flag a scoped predefined role", () => {
+      const check = checkById("gcp-iam-overly-broad-role");
+      const clean = file(
+        "main.tf",
+        'resource "google_project_iam_member" "viewer" {\n  project = "my-project"\n  role    = "roles/storage.objectViewer"\n  member  = "user:dev@example.com"\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("azure-role-assignment-owner: flags the Owner role", () => {
+      const check = checkById("azure-role-assignment-owner");
+      const vulnerable = file(
+        "main.tf",
+        'resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("azure-role-assignment-owner: does not flag a scoped role like Contributor", () => {
+      const check = checkById("azure-role-assignment-owner");
+      const clean = file(
+        "main.tf",
+        'resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"\n}\n'
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
   });
 
   describe("Nuovo blocco — token generati con RNG debole", () => {

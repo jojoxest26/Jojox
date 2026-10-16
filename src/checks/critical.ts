@@ -966,6 +966,75 @@ export const criticalChecks: Check[] = [
     // — non possiamo indovinarlo senza rischiare di bloccare un accesso legittimo.
   },
 
+  // Punto 13, altri provider cloud oltre AWS: stessi tre pattern già fatti
+  // per AWS (rete aperta a internet, storage pubblico, ruolo IAM troppo
+  // ampio), riscritti per la sintassi Terraform di Google Cloud e Azure.
+  {
+    id: "gcp-firewall-open-to-internet",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Una regola firewall Google Cloud apre una porta sensibile a tutto internet",
+    description:
+      "Una risorsa \"google_compute_firewall\" con \"source_ranges\" che include 0.0.0.0/0 (qualunque indirizzo IP) consente il traffico verso una porta sensibile — SSH (22), RDP (3389), o una porta tipica di database (MySQL, Postgres, MongoDB, Redis, SQL Server). Chiunque su internet può provare a connettersi a quel servizio, non solo chi dovrebbe.",
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # solo la tua rete privata, o un bastion host\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      if (!fileMatch(file, /resource\s+"google_compute_firewall"/)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+      const openSourceRangePattern = /source_ranges\s*=\s*\[[^\]]*0\.0\.0\.0\/0[^\]]*\]/i;
+      const sensitivePortPattern = /\bports\s*=\s*\[[^\]]*["'](22|3389|3306|5432|27017|6379|1433)["'][^\]]*\]/;
+
+      lines.forEach((lineText, idx) => {
+        if (!openSourceRangePattern.test(lineText)) return;
+        if (!nearbyMatches(file, idx + 1, 10, sensitivePortPattern)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+
+      return matches;
+    },
+    // Nessun autofix: stesso motivo del security group AWS — il CIDR giusto
+    // dipende dalla rete del progetto, non possiamo indovinarlo.
+  },
+
+  {
+    id: "azure-nsg-open-to-internet",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Una regola di rete Azure apre una porta sensibile a tutto internet",
+    description:
+      "Una regola di sicurezza di rete (\"azurerm_network_security_rule\", o un blocco \"security_rule\" dentro \"azurerm_network_security_group\") con \"source_address_prefix\" a \"*\" o \"0.0.0.0/0\", direzione \"Inbound\" e accesso \"Allow\", vicina a una porta sensibile — SSH (22), RDP (3389), o una porta tipica di database. Chiunque su internet può provare a connettersi a quel servizio, non solo chi dovrebbe.",
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # solo la tua rete privata, o un bastion host\n}`,
+    },
+    detect(file) {
+      if (!isTerraformFile(file)) return [];
+      if (!fileMatch(file, /resource\s+"azurerm_network_security_(rule|group)"/)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+      const openSourcePattern = /source_address_prefix\s*=\s*"(\*|0\.0\.0\.0\/0)"/i;
+      const sensitivePortPattern = /\bdestination_port_range\s*=\s*"(22|3389|3306|5432|27017|6379|1433)"/;
+      const inboundPattern = /\bdirection\s*=\s*"Inbound"/i;
+      const allowPattern = /\baccess\s*=\s*"Allow"/i;
+
+      lines.forEach((lineText, idx) => {
+        if (!openSourcePattern.test(lineText)) return;
+        if (!nearbyMatches(file, idx + 1, 10, sensitivePortPattern)) return;
+        if (!nearbyMatches(file, idx + 1, 10, inboundPattern)) return;
+        if (!nearbyMatches(file, idx + 1, 10, allowPattern)) return;
+        matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+      });
+
+      return matches;
+    },
+    // Nessun autofix: stesso motivo delle altre regole di rete aperta — il
+    // prefisso giusto dipende dalla rete del progetto, non possiamo indovinarlo.
+  },
+
   {
     id: "terraform-hardcoded-secret",
     severity: "critical",
