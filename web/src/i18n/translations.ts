@@ -965,7 +965,7 @@ const en: TranslationTree = {
   hero: {
     titleLine1: "Your AI agent writes code every day, or do you write it yourself?",
     titleLine2Suffix: "keeps watch.",
-    body: "Not a one-off check. {{monitoring}}. 55 public checks for the most common mistakes in your code, a clear {{score}}, and fixes ready to copy.",
+    body: "Not a one-off check. {{monitoring}}. 55 public checks for security issues in your code, a clear {{score}}, and fixes ready to copy.",
     bodyMonitoring: "Continuous monitoring",
     bodyScore: "security score",
     sub: "The checks that normally take hours, automated and always on.",
