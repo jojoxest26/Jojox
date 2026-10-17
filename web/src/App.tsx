@@ -20,6 +20,7 @@ import { FullSiteAudit } from "./components/FullSiteAudit.js";
 import { Reveal } from "./components/Reveal.js";
 import { ChatPage } from "./components/ChatPage.js";
 import { ChatFab } from "./components/ChatFab.js";
+import { AuthConfirmPage } from "./components/AuthConfirmPage.js";
 import { useSession } from "./hooks/useSession.js";
 import { claimGithubInstallation, fetchGithubInstallations, type GithubInstallation } from "./lib/api.js";
 import type { AnalysisResult } from "../../src/types.js";
@@ -112,6 +113,7 @@ function App() {
   if (path === "/termini") return <TermsOfServicePage />;
   if (path === "/sicurezza") return <SecurityPolicyPage />;
   if (path === "/chat") return <ChatPage session={session} result={chatResult} />;
+  if (path === "/auth/confirm") return <AuthConfirmPage />;
   if (path.startsWith("/r/")) {
     const [owner, repo] = path.slice(3).split("/");
     if (owner && repo) return <PublicScorePage owner={owner} repo={repo} />;
