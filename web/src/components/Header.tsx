@@ -28,6 +28,17 @@ const LANG_FLAGS: Record<Lang, string> = {
   bn: "🇧🇩",
   ur: "🇵🇰",
   id: "🇮🇩",
+  de: "🇩🇪",
+  fi: "🇫🇮",
+  nl: "🇳🇱",
+  pl: "🇵🇱",
+  sv: "🇸🇪",
+  da: "🇩🇰",
+  nb: "🇳🇴",
+  tr: "🇹🇷",
+  uk: "🇺🇦",
+  ja: "🇯🇵",
+  ko: "🇰🇷",
 };
 
 export function LanguageSwitcher() {

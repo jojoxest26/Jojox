@@ -17,6 +17,7 @@ function detectInitialLang(): Lang {
   }
   const browserLang = navigator.language.toLowerCase().split("-")[0];
   if (browserLang === "zh") return "zh"; // zh-CN, zh-TW, ... → sempre il nostro cinese semplificato
+  if (browserLang === "no") return "nb"; // "no" generico → il nostro norvegese bokmål
   if (isLang(browserLang)) return browserLang;
   return navigator.language.toLowerCase().startsWith("en") ? "en" : "it";
 }
