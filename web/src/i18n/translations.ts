@@ -3079,7 +3079,7 @@ const zh: TranslationTree = {
   howItWorks: {
     eyebrow: "三个步骤",
     title: "从头到尾,运作方式一目了然。",
-    step1Title: "上传",
+    step1Title: "分析",
     step1Text: "上传代码,或连接你的 GitHub 仓库。",
     step2Title: "检测",
     step2Text: "JoJoX 运行 55 项检查,找出安全问题。",
@@ -3590,7 +3590,7 @@ const hi: TranslationTree = {
   howItWorks: {
     eyebrow: "3 चरणों में",
     title: "शुरू से अंत तक, यह कैसे काम करता है।",
-    step1Title: "अपलोड करें",
+    step1Title: "विश्लेषण करें",
     step1Text: "कोड अपलोड करें, या अपना GitHub रिपॉज़िटरी कनेक्ट करें।",
     step2Title: "पहचानें",
     step2Text: "JoJoX 55 जांचें चलाता है और सुरक्षा समस्याएं ढूंढता है।",
@@ -4101,7 +4101,7 @@ const ru: TranslationTree = {
   howItWorks: {
     eyebrow: "В 3 шага",
     title: "Как это работает, от начала до конца.",
-    step1Title: "Загрузите",
+    step1Title: "Анализ",
     step1Text: "Загрузите код или подключите репозиторий GitHub.",
     step2Title: "Обнаружение",
     step2Text: "JoJoX выполняет 55 проверок и находит проблемы безопасности.",
@@ -4611,7 +4611,7 @@ const ar: TranslationTree = {
   howItWorks: {
     eyebrow: "في 3 خطوات",
     title: "كيف يعمل، من البداية إلى النهاية.",
-    step1Title: "ارفع",
+    step1Title: "حلّل",
     step1Text: "ارفع الكود، أو اربط مستودع GitHub الخاص بك.",
     step2Title: "اكتشف",
     step2Text: "يشغّل JoJoX الفحوصات الـ55 ويكتشف مشكلات الأمان.",
@@ -5122,7 +5122,7 @@ const bn: TranslationTree = {
   howItWorks: {
     eyebrow: "৩টি ধাপে",
     title: "শুরু থেকে শেষ পর্যন্ত এটি যেভাবে কাজ করে।",
-    step1Title: "আপলোড করুন",
+    step1Title: "বিশ্লেষণ করুন",
     step1Text: "কোড আপলোড করুন, অথবা আপনার GitHub রিপোজিটরি সংযুক্ত করুন।",
     step2Title: "শনাক্ত করুন",
     step2Text: "JoJoX 55টি পরীক্ষা চালায় এবং নিরাপত্তা সমস্যা খুঁজে বের করে।",
@@ -5632,7 +5632,7 @@ const ur: TranslationTree = {
   howItWorks: {
     eyebrow: "3 مراحل میں",
     title: "شروع سے آخر تک، یہ کیسے کام کرتا ہے۔",
-    step1Title: "اپ لوڈ کریں",
+    step1Title: "تجزیہ کریں",
     step1Text: "کوڈ اپ لوڈ کریں، یا اپنا GitHub ریپوزٹری مربوط کریں۔",
     step2Title: "شناخت کریں",
     step2Text: "JoJoX 55 چیکس چلاتا ہے اور سیکیورٹی مسائل تلاش کرتا ہے۔",
@@ -6143,7 +6143,7 @@ const id: TranslationTree = {
   howItWorks: {
     eyebrow: "Dalam 3 langkah",
     title: "Cara kerjanya, dari awal sampai akhir.",
-    step1Title: "Unggah",
+    step1Title: "Analisis",
     step1Text: "Unggah kode, atau hubungkan repositori GitHub Anda.",
     step2Title: "Deteksi",
     step2Text: "JoJoX menjalankan 55 pemeriksaan dan menemukan masalah keamanan.",
@@ -6655,7 +6655,7 @@ const de: TranslationTree = {
   howItWorks: {
     eyebrow: "In 3 Schritten",
     title: "So funktioniert's, von Anfang bis Ende.",
-    step1Title: "Hochladen",
+    step1Title: "Analysieren",
     step1Text: "Code hochladen oder GitHub-Repository verbinden.",
     step2Title: "Erkennen",
     step2Text: "JoJoX führt die 55 Checks aus und findet die Sicherheitsprobleme.",
@@ -7167,7 +7167,7 @@ const fi: TranslationTree = {
   howItWorks: {
     eyebrow: "3 vaiheessa",
     title: "Näin se toimii, alusta loppuun.",
-    step1Title: "Lataa",
+    step1Title: "Analysoi",
     step1Text: "Lataa koodi tai yhdistä GitHub-repositoriosi.",
     step2Title: "Tunnista",
     step2Text: "JoJoX suorittaa 55 tarkistusta ja löytää turvallisuusongelmat.",
@@ -7679,7 +7679,7 @@ const nl: TranslationTree = {
   howItWorks: {
     eyebrow: "In 3 stappen",
     title: "Zo werkt het, van begin tot eind.",
-    step1Title: "Upload",
+    step1Title: "Analyseer",
     step1Text: "Upload de code, of koppel je GitHub-repository.",
     step2Title: "Detecteer",
     step2Text: "JoJoX voert de 55 controles uit en vindt de beveiligingsproblemen.",
@@ -8191,7 +8191,7 @@ const pl: TranslationTree = {
   howItWorks: {
     eyebrow: "W 3 krokach",
     title: "Jak to działa, od początku do końca.",
-    step1Title: "Wgraj",
+    step1Title: "Analizuj",
     step1Text: "Wgraj kod lub połącz swoje repozytorium GitHub.",
     step2Title: "Wykryj",
     step2Text: "JoJoX uruchamia 55 kontroli i znajduje problemy bezpieczeństwa.",
@@ -8703,7 +8703,7 @@ const sv: TranslationTree = {
   howItWorks: {
     eyebrow: "I 3 steg",
     title: "Så fungerar det, från början till slut.",
-    step1Title: "Ladda upp",
+    step1Title: "Analysera",
     step1Text: "Ladda upp koden, eller anslut ditt GitHub-repo.",
     step2Title: "Upptäck",
     step2Text: "JoJoX kör de 55 kontrollerna och hittar säkerhetsproblemen.",
@@ -9215,7 +9215,7 @@ const da: TranslationTree = {
   howItWorks: {
     eyebrow: "I 3 trin",
     title: "Sådan fungerer det, fra start til slut.",
-    step1Title: "Upload",
+    step1Title: "Analysér",
     step1Text: "Upload koden, eller forbind dit GitHub-repository.",
     step2Title: "Opdag",
     step2Text: "JoJoX kører de 55 tjek og finder sikkerhedsproblemerne.",
@@ -9727,7 +9727,7 @@ const nb: TranslationTree = {
   howItWorks: {
     eyebrow: "I 3 trinn",
     title: "Slik fungerer det, fra start til slutt.",
-    step1Title: "Last opp",
+    step1Title: "Analysér",
     step1Text: "Last opp koden, eller koble til GitHub-repositoriet ditt.",
     step2Title: "Oppdag",
     step2Text: "JoJoX kjører de 55 sjekkene og finner sikkerhetsproblemene.",
@@ -10239,7 +10239,7 @@ const tr: TranslationTree = {
   howItWorks: {
     eyebrow: "3 adımda",
     title: "Baştan sona nasıl çalıştığı.",
-    step1Title: "Yükle",
+    step1Title: "Analiz et",
     step1Text: "Kodu yükleyin veya GitHub deponuzu bağlayın.",
     step2Title: "Tespit et",
     step2Text: "JoJoX 55 kontrolü çalıştırır ve güvenlik sorunlarını bulur.",
@@ -10751,7 +10751,7 @@ const uk: TranslationTree = {
   howItWorks: {
     eyebrow: "За 3 кроки",
     title: "Як це працює, від початку до кінця.",
-    step1Title: "Завантажте",
+    step1Title: "Проаналізуйте",
     step1Text: "Завантажте код або під'єднайте свій репозиторій GitHub.",
     step2Title: "Виявіть",
     step2Text: "JoJoX виконує 55 перевірок і знаходить проблеми безпеки.",
@@ -11263,7 +11263,7 @@ const ja: TranslationTree = {
   howItWorks: {
     eyebrow: "3ステップで",
     title: "最初から最後まで、どう機能するか。",
-    step1Title: "アップロード",
+    step1Title: "分析",
     step1Text: "コードをアップロードするか、GitHubリポジトリを接続します。",
     step2Title: "検出",
     step2Text: "JoJoXが55のチェックを実行し、セキュリティ問題を見つけます。",
@@ -11775,7 +11775,7 @@ const ko: TranslationTree = {
   howItWorks: {
     eyebrow: "3단계로",
     title: "처음부터 끝까지, 이렇게 작동합니다.",
-    step1Title: "업로드",
+    step1Title: "분석",
     step1Text: "코드를 업로드하거나 GitHub 저장소를 연결하세요.",
     step2Title: "탐지",
     step2Text: "JoJoX가 55개의 검사를 실행하고 보안 문제를 찾습니다.",
