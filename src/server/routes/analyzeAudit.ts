@@ -7,6 +7,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
 import { openAuditFixPr, getRepoFilePaths } from "../github/auditFixPr.js";
+import { excludeSelfScanFixtures } from "../util/selfScanFixtures.js";
 import { getTeamUserIds } from "../team.js";
 
 // Sotto questa quota di file caricati già presenti nel repository scelto,
@@ -108,8 +109,15 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     return;
   }
 
-  const depFindings = await scanDependencies(parsed.data.files);
-  const findings = [...analyzeFiles(parsed.data.files).findings, ...depFindings];
+  // Quando il repository collegato è il nostro stesso jojoxest26/jojox, i
+  // file che definiscono i controlli contengono i loro stessi esempi di
+  // pattern vulnerabili — esclusi qui prima di qualunque analisi, non solo
+  // dall'autofix, altrimenti il punteggio e il report pagato mostrerebbero
+  // "vulnerabilità" trovate nei nostri stessi esempi.
+  const files = githubTarget ? excludeSelfScanFixtures(parsed.data.files, githubTarget.owner, githubTarget.repo) : parsed.data.files;
+
+  const depFindings = await scanDependencies(files);
+  const findings = [...analyzeFiles(files).findings, ...depFindings];
   const result = { score: computeScore(findings), findings, summary: summarizeBySeverity(findings) };
 
   await supabaseAdmin.from("analyses").insert({
@@ -131,7 +139,7 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     // pushare su GitHub tramite l'installazione della GitHub App.
     // Il Full Site Audit carica l'intero progetto, non solo alcuni file: le
     // correzioni che toccano un file diverso da quello segnalato (es. .gitignore) sono sicure qui.
-    const autofix = applyAutofixes(parsed.data.files, { fullProject: true });
+    const autofix = applyAutofixes(files, { fullProject: true });
     const changedFiles = autofix.changedFiles;
 
     if (changedFiles.length > 0) {

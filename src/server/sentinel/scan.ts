@@ -5,6 +5,7 @@ import type { Finding } from "../../types.js";
 import { getGithubApp } from "../github/app.js";
 import { listInstallationRepos, openAuditFixPr } from "../github/auditFixPr.js";
 import { fetchRepoFiles } from "../github/repoContent.js";
+import { excludeSelfScanFixtures } from "../util/selfScanFixtures.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser } from "../plan.js";
 import { notifySlack } from "../slack/notify.js";
@@ -66,7 +67,8 @@ async function scanRepo(
   installation: SentinelInstallation,
   repo: { owner: string; repo: string; fullName: string }
 ): Promise<void> {
-  const { files } = await fetchRepoFiles(octokit, { owner: repo.owner, repo: repo.repo });
+  const { files: fetchedFiles } = await fetchRepoFiles(octokit, { owner: repo.owner, repo: repo.repo });
+  const files = excludeSelfScanFixtures(fetchedFiles, repo.owner, repo.repo);
   if (files.length === 0) return;
 
   const depFindings = await scanDependencies(files);

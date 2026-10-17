@@ -11,6 +11,7 @@ import { notifyEmail, buildAlertEmailHtml } from "../../email/notify.js";
 import { getPlanForUser } from "../../plan.js";
 import { mapWithConcurrency } from "../../util/concurrency.js";
 import { reportError } from "../../sentry.js";
+import { excludeSelfScanFixtures } from "../../util/selfScanFixtures.js";
 import type { SourceFile } from "../../../types.js";
 
 export { mapWithConcurrency };
@@ -171,7 +172,11 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
     }
   });
 
-  const files: SourceFile[] = fetchedFiles.filter((f): f is SourceFile => f !== null);
+  const files: SourceFile[] = excludeSelfScanFixtures(
+    fetchedFiles.filter((f): f is SourceFile => f !== null),
+    owner,
+    repo
+  );
 
   const result = analyzeFiles(files);
 
