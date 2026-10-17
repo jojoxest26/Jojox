@@ -1,4 +1,5 @@
 import type { AnalysisResult, Finding, SourceFile, Severity } from "../../../src/types.js";
+import type { Lang } from "../i18n/translations.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -82,7 +83,7 @@ export interface ChatMessage {
 export function sendChatMessage(
   message: string,
   history: ChatMessage[],
-  lang: "it" | "en",
+  lang: Lang,
   findings: Finding[] = [],
   score: number | null = null,
   accessToken?: string

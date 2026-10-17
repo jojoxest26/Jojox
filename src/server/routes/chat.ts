@@ -21,6 +21,27 @@ const findingSchema = z.object({
   fix: z.object({ before: z.string().max(800), after: z.string().max(800) }),
 });
 
+// Stessi 23 codici lingua dell'interfaccia (web/src/i18n/translations.ts,
+// tipo Lang) — duplicati qui invece che importati perché backend e
+// frontend sono due progetti TypeScript separati con root diverse.
+const SUPPORTED_CHAT_LANGS = [
+  "it", "en", "es", "fr", "pt", "zh", "hi", "ru", "ar", "bn", "ur", "id",
+  "de", "fi", "nl", "pl", "sv", "da", "nb", "tr", "uk", "ja", "ko",
+] as const;
+type ChatLang = (typeof SUPPORTED_CHAT_LANGS)[number];
+
+// Nomi in inglese usati solo per l'istruzione al modello ("Reply in
+// Spanish"), non mostrati mai all'utente — l'inglese è la lingua in cui il
+// modello ragiona meglio le proprie istruzioni, indipendentemente dalla
+// lingua in cui poi risponde.
+const LANGUAGE_NAMES: Record<ChatLang, string> = {
+  it: "Italian", en: "English", es: "Spanish", fr: "French", pt: "Portuguese",
+  zh: "Chinese", hi: "Hindi", ru: "Russian", ar: "Arabic", bn: "Bengali",
+  ur: "Urdu", id: "Indonesian", de: "German", fi: "Finnish", nl: "Dutch",
+  pl: "Polish", sv: "Swedish", da: "Danish", nb: "Norwegian", tr: "Turkish",
+  uk: "Ukrainian", ja: "Japanese", ko: "Korean",
+};
+
 const chatRequestSchema = z.object({
   // Più alto di prima: in modalità generale può includere uno snippet di
   // codice da correggere, non solo una domanda breve.
@@ -29,7 +50,7 @@ const chatRequestSchema = z.object({
   // "Chiedi a JoJoX" nell'hero, senza che sia stata fatta un'analisi).
   findings: z.array(findingSchema).max(60).default([]),
   score: z.number().int().min(0).max(100).nullable().default(null),
-  lang: z.enum(["it", "en"]).default("it"),
+  lang: z.enum(SUPPORTED_CHAT_LANGS).default("it"),
   // Più alto del limite del messaggio nuovo: deve poter contenere anche una
   // risposta precedente con un file di codice intero, rimandata indietro
   // come contesto.
@@ -65,7 +86,23 @@ This chat ("Ask JoJoX") is available only on the Pro and Team plans, not the fre
 Other features: Sentinel 24/7 (automatic nightly scan of connected GitHub repositories, only alerts on new issues), Slack notifications, Full Site Audit (one-off check of an entire site/project, a separate one-time payment), a public badge for the README, a terminal command via MCP for Claude Code and compatible editors.
 `.trim();
 
+// Le istruzioni di questa funzione esistono solo in italiano e inglese:
+// per le altre lingue dell'interfaccia usiamo i fatti e le regole in
+// inglese (il modello le capisce comunque) e aggiungiamo un'istruzione
+// esplicita ("Reply in Spanish") in coda — più robusto che tradurre questo
+// intero prompt in altre 21 lingue, con lo stesso rischio di deriva che
+// abbiamo già corretto una volta nelle traduzioni dell'interfaccia.
 function buildSystemPrompt(
+  findings: z.infer<typeof findingSchema>[],
+  score: number | null,
+  lang: ChatLang
+): string {
+  const base = buildBaseSystemPrompt(findings, score, lang === "it" ? "it" : "en");
+  if (lang === "it" || lang === "en") return base;
+  return `${base}\n\nReply in ${LANGUAGE_NAMES[lang]} — the language this person's JoJoX interface is set to, even though the instructions above are in English. If they write to you in a different language than ${LANGUAGE_NAMES[lang]}, match the language they actually used instead.`;
+}
+
+function buildBaseSystemPrompt(
   findings: z.infer<typeof findingSchema>[],
   score: number | null,
   lang: "it" | "en"
@@ -215,9 +252,9 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
   if ((count ?? 0) >= limit) {
     res.status(429).json({
       error:
-        lang === "en"
-          ? `Daily limit of ${limit} chat messages reached for your plan`
-          : `Limite di ${limit} messaggi al giorno raggiunto per il tuo piano`,
+        lang === "it"
+          ? `Limite di ${limit} messaggi al giorno raggiunto per il tuo piano`
+          : `Daily limit of ${limit} chat messages reached for your plan`,
     });
     return;
   }
@@ -249,9 +286,9 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
     // ancora il tetto costerebbe di più ad ogni messaggio; meglio dirlo.
     if (response.stop_reason === "max_tokens") {
       reply +=
-        lang === "en"
-          ? "\n\n*(Answer cut off — it hit the length limit. Ask to continue, or for a shorter version.)*"
-          : "\n\n*(Risposta troncata per il limite di lunghezza — chiedi di continuare, o una versione più corta.)*";
+        lang === "it"
+          ? "\n\n*(Risposta troncata per il limite di lunghezza — chiedi di continuare, o una versione più corta.)*"
+          : "\n\n*(Answer cut off — it hit the length limit. Ask to continue, or for a shorter version.)*";
     }
 
     res.json({ reply });
@@ -267,7 +304,7 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
   } catch (err) {
     console.error("Errore nella chiamata all'API Anthropic", err);
     res.status(502).json({
-      error: lang === "en" ? "Error generating the reply, try again." : "Errore nel generare la risposta, riprova.",
+      error: lang === "it" ? "Errore nel generare la risposta, riprova." : "Error generating the reply, try again.",
     });
   }
 });

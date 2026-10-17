@@ -4,6 +4,7 @@ import type { AnalysisResult, Finding, Severity } from "../../../src/types.js";
 import { sendChatMessage, fetchChatHistory, fetchProfile, type ChatMessage, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
+import type { Lang } from "../i18n/translations.js";
 import { legalPages } from "../i18n/legalPages.js";
 import { LanguageSwitcher } from "./Header.js";
 import { Icon } from "./Icon.js";
@@ -16,7 +17,7 @@ const MAX_FINDINGS_SENT = 60;
 // comunque limitato.
 const MAX_HISTORY_SENT = 40;
 
-function findingsForChat(findings: Finding[], lang: "it" | "en"): Finding[] {
+function findingsForChat(findings: Finding[], lang: Lang): Finding[] {
   const sorted = [...findings].sort(
     (a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
   );
@@ -240,15 +241,11 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     });
 
     try {
-      // La chat "Chiedi a JoJoX" risponde solo in IT/EN per ora: le altre
-      // lingue del sito usano l'inglese come ripiego, invece di mandare al
-      // backend un codice lingua che non riconosce.
-      const chatLang = lang === "it" ? "it" : "en";
-      const findings = result ? findingsForChat(result.findings, chatLang) : [];
+      const findings = result ? findingsForChat(result.findings, lang) : [];
       const score = result ? result.score : null;
       const history = messages.slice(-MAX_HISTORY_SENT);
       const { reply } = await Promise.race([
-        sendChatMessage(text, history, chatLang, findings, score, session!.access_token),
+        sendChatMessage(text, history, lang, findings, score, session!.access_token),
         timeout,
       ]);
       setMessages([...nextMessages, { role: "assistant" as const, content: reply }]);
