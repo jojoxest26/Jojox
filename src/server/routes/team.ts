@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { ensureOwnTeam, MAX_TEAM_SEATS } from "../team.js";
+import { reportError } from "../sentry.js";
 
 export const teamRouter = Router();
 
@@ -127,7 +128,11 @@ teamRouter.delete("/api/team/members/:email", requireAuth, async (req: AuthedReq
       .eq("installed_by", removedMember.user_id);
 
     if (transferError) {
+      // Se questo fallisce, il resto del team perde silenziosamente la
+      // visibilità su quel repository (la condivisione si basa su chi è
+      // ancora nel team) senza che nessuno se ne accorga — va su Sentry.
       console.error(`impossibile trasferire le installazioni GitHub di ${email} al proprietario`, transferError);
+      reportError(transferError);
     }
   }
 

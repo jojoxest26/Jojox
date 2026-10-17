@@ -4,6 +4,7 @@ import { anthropic, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, startOfTodayUtc } from "../plan.js";
+import { reportError } from "../sentry.js";
 
 // Limiti generosi per un uso normale ma che tengono comunque un tetto fisso
 // ai token (quindi al costo) di ogni singola richiesta, indipendentemente
@@ -248,7 +249,17 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
     .eq("role", "user")
     .gte("created_at", startOfTodayUtc().toISOString());
 
-  if (countError) console.error("Errore nel conteggio dei messaggi di chat", countError);
+  if (countError) {
+    // Un conteggio fallito con "(count ?? 0) >= limit" apriva il limite
+    // invece di chiuderlo (0 >= limit è sempre falso): in quella finestra
+    // ogni chiamata all'API di Anthropic passava senza nessun tetto di
+    // costo. Meglio fallire chiusi — un messaggio in più negato per errore
+    // costa meno di un limite di costo che si disattiva da solo in silenzio.
+    console.error("Errore nel conteggio dei messaggi di chat", countError);
+    reportError(countError);
+    res.status(500).json({ error: "Errore nel controllo del limite messaggi, riprova" });
+    return;
+  }
   if ((count ?? 0) >= limit) {
     res.status(429).json({
       error:

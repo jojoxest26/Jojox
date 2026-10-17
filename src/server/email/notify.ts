@@ -1,4 +1,5 @@
 import { env } from "../env.js";
+import { reportError } from "../sentry.js";
 
 const FROM_ADDRESS = "JoJoX <avvisi@jojox.it>";
 
@@ -9,7 +10,11 @@ const FROM_ADDRESS = "JoJoX <avvisi@jojox.it>";
  * dal backend. Spenta di default: se RESEND_API_KEY non è impostata su
  * Railway, non fa nulla, come Sentry/Stripe/Anthropic. Non lancia mai un
  * errore verso chi la chiama — un'email che non parte non deve mai far
- * fallire lo scan notturno o il webhook GitHub che la richiede.
+ * fallire lo scan notturno o il webhook GitHub che la richiede — ma un
+ * fallimento va comunque su Sentry: altrimenti un avviso critico che non
+ * parte (es. la Sentinella 24/7 che trova una vulnerabilità di notte)
+ * sparirebbe in un log che nessuno legge, senza che l'utente né il team se
+ * ne accorgano mai.
  */
 export async function notifyEmail(to: string | null | undefined, subject: string, html: string): Promise<void> {
   if (!env.resendApiKey || !to) return;
@@ -25,9 +30,11 @@ export async function notifyEmail(to: string | null | undefined, subject: string
     });
     if (!response.ok) {
       console.error(`notifica email rifiutata (${response.status})`);
+      reportError(new Error(`notifica email rifiutata (${response.status}) per "${subject}"`));
     }
   } catch (err) {
     console.error("errore nell'invio della notifica email", err);
+    reportError(err);
   }
 }
 

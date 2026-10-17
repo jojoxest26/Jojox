@@ -100,8 +100,46 @@ githubWebhookRouter.post("/webhooks/github", raw({ type: "application/json" }), 
   } catch (err) {
     console.error(`errore nell'elaborazione del webhook GitHub (${event})`, err);
     reportError(err);
+    // GitHub ha già ricevuto il 202 sopra: non ritenterà mai questo evento.
+    // Senza questo, una pull request che fallisce a metà analisi resterebbe
+    // silenziosamente senza check e senza commento — bloccata per sempre se
+    // il repository richiede il check JoJoX per il merge, senza che l'autore
+    // capisca perché. Un check "neutral" (non blocca di suo il merge) almeno
+    // rende visibile che qualcosa è andato storto e come rimediare.
+    if (event === "pull_request" && HANDLED_PR_ACTIONS.has(body.action)) {
+      try {
+        await reportPullRequestFailure(body as PullRequestPayload);
+      } catch (innerErr) {
+        console.error("impossibile pubblicare il check-run di fallimento", innerErr);
+        reportError(innerErr);
+      }
+    }
   }
 });
+
+/**
+ * Pubblica un check-run "neutral" (non blocca il merge di suo) su una pull
+ * request la cui analisi è fallita a metà — vedi il commento nella rotta
+ * sopra: senza questo la PR resterebbe senza nessun segnale visibile.
+ * Sforzo singolo: se fallisce anche questo, chi chiama la cattura e basta.
+ */
+async function reportPullRequestFailure(body: PullRequestPayload): Promise<void> {
+  const app = getGithubApp();
+  const octokit = await app.getInstallationOctokit(body.installation.id);
+  await octokit.request("POST /repos/{owner}/{repo}/check-runs", {
+    owner: body.repository.owner.login,
+    repo: body.repository.name,
+    name: "JoJoX security check",
+    head_sha: body.pull_request.head.sha,
+    status: "completed",
+    conclusion: "neutral",
+    output: {
+      title: "Analisi non completata",
+      summary:
+        "JoJoX non è riuscito a completare l'analisi di sicurezza di questa pull request per un errore temporaneo. Invia un nuovo commit sullo stesso branch per far ripartire l'analisi.",
+    },
+  });
+}
 
 async function recordInstallation(body: InstallationPayload): Promise<void> {
   await supabaseAdmin.from("github_installations").upsert({
