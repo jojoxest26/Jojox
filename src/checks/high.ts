@@ -337,7 +337,7 @@ export const highChecks: Check[] = [
         });
       }
       if (!result.changed) {
-        // Java: MessageDigest.getInstance("MD5").digest(password.getBytes())
+        // Java: await bcrypt.hash(password.getBytes(), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */
         // — stessa logica di md5.Sum in Go, sostituiamo solo la chiamata di
         // hashing. Nota: se l'argomento catturato include già .getBytes(),
         // jBCrypt (che vuole una String) andrà aggiustato a mano — lo stesso
