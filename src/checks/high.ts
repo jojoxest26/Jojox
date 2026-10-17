@@ -320,7 +320,7 @@ export const highChecks: Check[] = [
         });
       }
       if (!result.changed) {
-        // Go: md5.Sum([]byte(password)) — stessa logica dell'hashlib Python,
+        // Go: await bcrypt.hash([]byte(password), 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */ — stessa logica dell'hashlib Python,
         // sostituiamo solo la chiamata, quello che viene dopo (es. un
         // ulteriore uso del risultato) resta intatto sulla riga.
         const goSumPattern = new RegExp(`(?:md5|sha1)\\.Sum\\(\\s*(${BALANCED_ARG})\\s*\\)`, "gi");
