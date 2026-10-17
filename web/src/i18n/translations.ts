@@ -310,6 +310,7 @@ export interface TranslationTree {
     planErrorBody: string;
     planErrorRetry: string;
     historyErrorBody: string;
+    backHome: string;
   };
   github: {
     title: string;
@@ -781,6 +782,7 @@ const it: TranslationTree = {
     planErrorBody: "Non siamo riusciti a verificare il tuo piano. Spesso è un'estensione del browser (es. Google Translate) che interferisce con la pagina — prova a disattivarla per questo sito, poi riprova.",
     planErrorRetry: "Riprova",
     historyErrorBody: "Non siamo riusciti a caricare la cronologia della chat.",
+    backHome: "← Torna a JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -1293,6 +1295,7 @@ const en: TranslationTree = {
     planErrorBody: "We couldn't check your plan. This is often a browser extension (e.g. Google Translate) interfering with the page — try turning it off for this site, then retry.",
     planErrorRetry: "Retry",
     historyErrorBody: "We couldn't load the chat history.",
+    backHome: "← Back to JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -1805,6 +1808,7 @@ const es: TranslationTree = {
     planErrorBody: "No pudimos verificar tu plan. Suele ser una extensión del navegador (p. ej. Google Translate) que interfiere con la página — intenta desactivarla para este sitio y vuelve a intentarlo.",
     planErrorRetry: "Reintentar",
     historyErrorBody: "No pudimos cargar el historial del chat.",
+    backHome: "← Volver a JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -2317,6 +2321,7 @@ const fr: TranslationTree = {
     planErrorBody: "Nous n'avons pas pu vérifier votre plan. C'est souvent une extension de navigateur (p. ex. Google Translate) qui interfère avec la page — essayez de la désactiver pour ce site, puis réessayez.",
     planErrorRetry: "Réessayer",
     historyErrorBody: "Nous n'avons pas pu charger l'historique du chat.",
+    backHome: "← Retour à JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -2829,6 +2834,7 @@ const pt: TranslationTree = {
     planErrorBody: "Não conseguimos verificar o seu plano. Muitas vezes é uma extensão do navegador (por ex. o Google Translate) a interferir com a página — tente desativá-la para este site e tente novamente.",
     planErrorRetry: "Tentar novamente",
     historyErrorBody: "Não conseguimos carregar o histórico do chat.",
+    backHome: "← Voltar a JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -3337,6 +3343,7 @@ const zh: TranslationTree = {
     planErrorBody: "我们未能核实你的套餐。这通常是由浏览器扩展程序(例如 Google 翻译)干扰页面导致的 — 请尝试为本站禁用它，然后重试。",
     planErrorRetry: "重试",
     historyErrorBody: "无法加载聊天历史记录。",
+    backHome: "← 返回 JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -3848,6 +3855,7 @@ const hi: TranslationTree = {
     planErrorBody: "हम आपके प्लान की जांच नहीं कर पाए। अक्सर यह कोई ब्राउज़र एक्सटेंशन (जैसे Google Translate) होता है जो पेज में बाधा डालता है — इस साइट के लिए उसे बंद करने की कोशिश करें, फिर फिर से कोशिश करें।",
     planErrorRetry: "फिर कोशिश करें",
     historyErrorBody: "हम चैट का इतिहास लोड नहीं कर पाए।",
+    backHome: "← JoJoX पर वापस जाएँ",
   },
   github: {
     title: "GitHub App + CI",
@@ -4360,6 +4368,7 @@ const ru: TranslationTree = {
     planErrorBody: "Нам не удалось проверить ваш план. Часто это расширение браузера (например, Google Translate), которое мешает странице — попробуйте отключить его для этого сайта и повторите попытку.",
     planErrorRetry: "Повторить",
     historyErrorBody: "Не удалось загрузить историю чата.",
+    backHome: "← Назад к JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -4869,6 +4878,7 @@ const ar: TranslationTree = {
     planErrorBody: "لم نتمكن من التحقق من باقتك. غالبًا ما يكون السبب إضافة متصفح (مثل Google Translate) تتداخل مع الصفحة — جرّب تعطيلها لهذا الموقع، ثم أعد المحاولة.",
     planErrorRetry: "إعادة المحاولة",
     historyErrorBody: "لم نتمكن من تحميل سجل المحادثة.",
+    backHome: "→ العودة إلى JoJoX",
   },
   github: {
     title: "تطبيق GitHub + CI",
@@ -5380,6 +5390,7 @@ const bn: TranslationTree = {
     planErrorBody: "আমরা আপনার প্ল্যান যাচাই করতে পারিনি। এটি প্রায়ই একটি ব্রাউজার এক্সটেনশন (যেমন Google Translate) যা পেজে হস্তক্ষেপ করে — এই সাইটের জন্য এটি বন্ধ করার চেষ্টা করুন, তারপর আবার চেষ্টা করুন।",
     planErrorRetry: "আবার চেষ্টা করুন",
     historyErrorBody: "আমরা চ্যাটের ইতিহাস লোড করতে পারিনি।",
+    backHome: "← JoJoX-এ ফিরে যান",
   },
   github: {
     title: "GitHub App + CI",
@@ -5890,6 +5901,7 @@ const ur: TranslationTree = {
     planErrorBody: "ہم آپ کے پلان کی تصدیق نہیں کر سکے۔ اکثر یہ کوئی براؤزر ایکسٹینشن ہوتا ہے (مثلاً Google Translate) جو صفحے میں مداخلت کرتا ہے — اس سائٹ کے لیے اسے غیر فعال کرنے کی کوشش کریں، پھر دوبارہ کوشش کریں۔",
     planErrorRetry: "دوبارہ کوشش کریں",
     historyErrorBody: "ہم چیٹ کی تاریخ لوڈ نہیں کر سکے۔",
+    backHome: "→ JoJoX پر واپس جائیں",
   },
   github: {
     title: "GitHub App + CI",
@@ -6344,7 +6356,7 @@ const id: TranslationTree = {
     dropzoneHintGuest: "Mode tamu: 1 analisis gratis, tanpa email. Setelah itu, cukup email untuk melanjutkan (5 per bulan, gratis).",
     dropzoneHintAny: "Berfungsi pada kode apa pun — bahkan yang ditulis sepenuhnya manual, bukan hanya yang dihasilkan AI.",
     dropzoneHintLanguages: "55 pemeriksaan mencakup JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) dan PHP (Laravel). Untuk bahasa lain, beberapa pemeriksaan umum mungkin masih membantu, tetapi cakupannya belum lengkap.",
-    sectionEyebrow: "Analisis",
+    sectionEyebrow: "Alat analisis",
     sectionTitle: "Unggah kode, lihat apa yang ditemukannya.",
     moreFiles: "+{{count}} lainnya",
     analyzeButton: "Analisis",
@@ -6402,6 +6414,7 @@ const id: TranslationTree = {
     planErrorBody: "Kami tidak dapat memverifikasi paket Anda. Ini sering kali ekstensi browser (mis. Google Translate) yang mengganggu halaman — coba nonaktifkan untuk situs ini, lalu coba lagi.",
     planErrorRetry: "Coba lagi",
     historyErrorBody: "Kami tidak dapat memuat riwayat chat.",
+    backHome: "← Kembali ke JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -6914,6 +6927,7 @@ const de: TranslationTree = {
     planErrorBody: "Wir konnten deinen Plan nicht prüfen. Oft stört eine Browser-Erweiterung (z. B. Google Übersetzer) die Seite — versuch, sie für diese Website zu deaktivieren, und dann erneut.",
     planErrorRetry: "Erneut versuchen",
     historyErrorBody: "Wir konnten den Chat-Verlauf nicht laden.",
+    backHome: "← Zurück zu JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -7426,6 +7440,7 @@ const fi: TranslationTree = {
     planErrorBody: "Emme pystyneet tarkistamaan suunnitelmaasi. Usein kyse on selainlaajennuksesta (esim. Google Kääntäjä), joka häiritsee sivua — kokeile poistaa se käytöstä tälle sivustolle ja yritä sitten uudelleen.",
     planErrorRetry: "Yritä uudelleen",
     historyErrorBody: "Emme pystyneet lataamaan chat-historiaa.",
+    backHome: "← Takaisin JoJoXiin",
   },
   github: {
     title: "GitHub-sovellus + CI",
@@ -7938,6 +7953,7 @@ const nl: TranslationTree = {
     planErrorBody: "We konden je abonnement niet controleren. Vaak komt dit door een browserextensie (bijv. Google Translate) die de pagina verstoort — probeer deze voor deze site uit te schakelen en probeer het opnieuw.",
     planErrorRetry: "Opnieuw proberen",
     historyErrorBody: "We konden de chatgeschiedenis niet laden.",
+    backHome: "← Terug naar JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -8450,6 +8466,7 @@ const pl: TranslationTree = {
     planErrorBody: "Nie udało nam się zweryfikować Twojego planu. Często to rozszerzenie przeglądarki (np. Tłumacz Google) zakłóca stronę — spróbuj je wyłączyć dla tej strony i spróbuj ponownie.",
     planErrorRetry: "Spróbuj ponownie",
     historyErrorBody: "Nie udało nam się załadować historii czatu.",
+    backHome: "← Powrót do JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -8962,6 +8979,7 @@ const sv: TranslationTree = {
     planErrorBody: "Vi kunde inte verifiera ditt abonnemang. Det är ofta en webbläsartillägg (t.ex. Google Translate) som stör sidan — försök inaktivera det för denna webbplats och försök sedan igen.",
     planErrorRetry: "Försök igen",
     historyErrorBody: "Vi kunde inte ladda chatthistoriken.",
+    backHome: "← Tillbaka till JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -9474,6 +9492,7 @@ const da: TranslationTree = {
     planErrorBody: "Vi kunne ikke verificere din plan. Det er ofte en browserudvidelse (f.eks. Google Oversæt), der forstyrrer siden — prøv at deaktivere den for denne side, og prøv så igen.",
     planErrorRetry: "Prøv igen",
     historyErrorBody: "Vi kunne ikke indlæse chat-historikken.",
+    backHome: "← Tilbage til JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -9986,6 +10005,7 @@ const nb: TranslationTree = {
     planErrorBody: "Vi klarte ikke å verifisere planen din. Det er ofte en nettleserutvidelse (f.eks. Google Oversetter) som forstyrrer siden — prøv å deaktivere den for dette nettstedet, og prøv deretter igjen.",
     planErrorRetry: "Prøv igjen",
     historyErrorBody: "Vi klarte ikke å laste chat-historikken.",
+    backHome: "← Tilbake til JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -10498,6 +10518,7 @@ const tr: TranslationTree = {
     planErrorBody: "Planınızı doğrulayamadık. Bu genellikle sayfaya müdahale eden bir tarayıcı uzantısıdır (örn. Google Çeviri) — bu site için devre dışı bırakmayı deneyin, sonra tekrar deneyin.",
     planErrorRetry: "Tekrar dene",
     historyErrorBody: "Sohbet geçmişini yükleyemedik.",
+    backHome: "← JoJoX'a dön",
   },
   github: {
     title: "GitHub App + CI",
@@ -11010,6 +11031,7 @@ const uk: TranslationTree = {
     planErrorBody: "Нам не вдалося перевірити ваш план. Часто це розширення браузера (напр. Google Перекладач), яке заважає сторінці — спробуйте вимкнути його для цього сайту, а потім спробуйте ще раз.",
     planErrorRetry: "Спробувати ще раз",
     historyErrorBody: "Нам не вдалося завантажити історію чату.",
+    backHome: "← Назад до JoJoX",
   },
   github: {
     title: "GitHub App + CI",
@@ -11522,6 +11544,7 @@ const ja: TranslationTree = {
     planErrorBody: "プランを確認できませんでした。多くの場合、ブラウザ拡張機能（Google翻訳など）がページを妨害しています — このサイトで無効にしてから、もう一度お試しください。",
     planErrorRetry: "再試行",
     historyErrorBody: "チャット履歴を読み込めませんでした。",
+    backHome: "← JoJoXに戻る",
   },
   github: {
     title: "GitHub App + CI",
@@ -12034,6 +12057,7 @@ const ko: TranslationTree = {
     planErrorBody: "플랜을 확인할 수 없었습니다. 종종 브라우저 확장 프로그램(예: Google 번역)이 페이지를 방해하는 경우입니다 — 이 사이트에서 비활성화한 후 다시 시도해 보세요.",
     planErrorRetry: "다시 시도",
     historyErrorBody: "채팅 기록을 불러올 수 없었습니다.",
+    backHome: "← JoJoX로 돌아가기",
   },
   github: {
     title: "GitHub App + CI",

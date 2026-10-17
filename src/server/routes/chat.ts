@@ -24,17 +24,17 @@ const findingSchema = z.object({
 // Stessi 23 codici lingua dell'interfaccia (web/src/i18n/translations.ts,
 // tipo Lang) — duplicati qui invece che importati perché backend e
 // frontend sono due progetti TypeScript separati con root diverse.
-const SUPPORTED_CHAT_LANGS = [
+export const SUPPORTED_CHAT_LANGS = [
   "it", "en", "es", "fr", "pt", "zh", "hi", "ru", "ar", "bn", "ur", "id",
   "de", "fi", "nl", "pl", "sv", "da", "nb", "tr", "uk", "ja", "ko",
 ] as const;
-type ChatLang = (typeof SUPPORTED_CHAT_LANGS)[number];
+export type ChatLang = (typeof SUPPORTED_CHAT_LANGS)[number];
 
 // Nomi in inglese usati solo per l'istruzione al modello ("Reply in
 // Spanish"), non mostrati mai all'utente — l'inglese è la lingua in cui il
 // modello ragiona meglio le proprie istruzioni, indipendentemente dalla
 // lingua in cui poi risponde.
-const LANGUAGE_NAMES: Record<ChatLang, string> = {
+export const LANGUAGE_NAMES: Record<ChatLang, string> = {
   it: "Italian", en: "English", es: "Spanish", fr: "French", pt: "Portuguese",
   zh: "Chinese", hi: "Hindi", ru: "Russian", ar: "Arabic", bn: "Bengali",
   ur: "Urdu", id: "Indonesian", de: "German", fi: "Finnish", nl: "Dutch",
@@ -92,7 +92,7 @@ Other features: Sentinel 24/7 (automatic nightly scan of connected GitHub reposi
 // esplicita ("Reply in Spanish") in coda — più robusto che tradurre questo
 // intero prompt in altre 21 lingue, con lo stesso rischio di deriva che
 // abbiamo già corretto una volta nelle traduzioni dell'interfaccia.
-function buildSystemPrompt(
+export function buildSystemPrompt(
   findings: z.infer<typeof findingSchema>[],
   score: number | null,
   lang: ChatLang

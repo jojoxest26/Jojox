@@ -5,7 +5,6 @@ import { sendChatMessage, fetchChatHistory, fetchProfile, type ChatMessage, type
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
 import type { Lang } from "../i18n/translations.js";
-import { legalPages } from "../i18n/legalPages.js";
 import { LanguageSwitcher } from "./Header.js";
 import { Icon } from "./Icon.js";
 
@@ -278,7 +277,7 @@ export function ChatPage({ result, session }: { result: AnalysisResult | null; s
     <div className="chat-page">
       <div className="container chat-page-nav">
         <a href="/" onClick={goHome} className="legal-back">
-          {legalPages[lang === "it" ? "it" : "en"].backHome}
+          {t.chat.backHome}
         </a>
         <LanguageSwitcher />
       </div>
