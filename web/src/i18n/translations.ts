@@ -605,7 +605,7 @@ const it: TranslationTree = {
   cloudChecks: {
     title: "Controlli opzionali su cloud e dipendenze.",
     subtitle:
-      "Comandi di sola lettura che esegui tu — JoJoX non chiede mai le tue credenziali. Carichi il risultato insieme al resto del codice e si aggiunge agli altri 55 controlli.",
+      "Comandi di sola lettura che esegui tu — JoJoX non chiede mai le tue credenziali. Carichi il risultato insieme al resto del codice e si aggiunge agli altri 55 controlli (55 automatici + questi 4 opzionali = 59 in totale).",
   },
   pricing: {
     title: "Paghi il monitoraggio continuo, non le singole analisi",
@@ -1118,7 +1118,7 @@ const en: TranslationTree = {
   cloudChecks: {
     title: "Optional checks on cloud config and dependencies.",
     subtitle:
-      "Read-only commands you run yourself — JoJoX never asks for your credentials. Upload the result together with the rest of your code and it's added to the other 55 checks.",
+      "Read-only commands you run yourself — JoJoX never asks for your credentials. Upload the result together with the rest of your code and it's added to the other 55 checks (55 automatic + these 4 optional ones = 59 in total).",
   },
   pricing: {
     title: "You pay for continuous monitoring, not for individual analyses",
@@ -1631,7 +1631,7 @@ const es: TranslationTree = {
   cloudChecks: {
     title: "Controles opcionales sobre la nube y las dependencias.",
     subtitle:
-      "Comandos de solo lectura que ejecutas tú — JoJoX nunca pide tus credenciales. Subes el resultado junto con el resto del código y se añade a los otros 55 controles.",
+      "Comandos de solo lectura que ejecutas tú — JoJoX nunca pide tus credenciales. Subes el resultado junto con el resto del código y se añade a los otros 55 controles (55 automáticos + estos 4 opcionales = 59 en total).",
   },
   pricing: {
     title: "Pagas el monitoreo continuo, no los análisis individuales",
@@ -2144,7 +2144,7 @@ const fr: TranslationTree = {
   cloudChecks: {
     title: "Contrôles optionnels sur le cloud et les dépendances.",
     subtitle:
-      "Des commandes en lecture seule que vous exécutez vous-même — JoJoX ne demande jamais vos identifiants. Téléversez le résultat avec le reste du code et il s'ajoute aux 55 autres contrôles.",
+      "Des commandes en lecture seule que vous exécutez vous-même — JoJoX ne demande jamais vos identifiants. Téléversez le résultat avec le reste du code et il s'ajoute aux 55 autres contrôles (55 automatiques + ces 4 optionnels = 59 au total).",
   },
   pricing: {
     title: "Vous payez la surveillance continue, pas les analyses individuelles",
@@ -2657,7 +2657,7 @@ const pt: TranslationTree = {
   cloudChecks: {
     title: "Verificações opcionais na cloud e nas dependências.",
     subtitle:
-      "Comandos só de leitura que você próprio executa — o JoJoX nunca pede as suas credenciais. Carregue o resultado junto com o resto do código e ele junta-se às outras 55 verificações.",
+      "Comandos só de leitura que você próprio executa — o JoJoX nunca pede as suas credenciais. Carregue o resultado junto com o resto do código e ele junta-se às outras 55 verificações (55 automáticas + estas 4 opcionais = 59 no total).",
   },
   pricing: {
     title: "Paga a monitorização contínua, não as análises individuais",
@@ -3166,7 +3166,7 @@ const zh: TranslationTree = {
   },
   cloudChecks: {
     title: "针对云配置和依赖项的可选检查。",
-    subtitle: "由你自己运行的只读命令——JoJoX 绝不会索要你的凭证。把结果和其余代码一起上传，就会自动加入其余 55 项检查之中。",
+    subtitle: "由你自己运行的只读命令——JoJoX 绝不会索要你的凭证。把结果和其余代码一起上传，就会自动加入其余 55 项检查之中（55 项自动检查 + 这 4 项可选检查 = 共 59 项）。",
   },
   pricing: {
     title: "你付费购买的是持续监控，而不是单次分析",
@@ -3678,7 +3678,7 @@ const hi: TranslationTree = {
   },
   cloudChecks: {
     title: "क्लाउड कॉन्फ़िगरेशन और डिपेंडेंसी पर वैकल्पिक जांचें।",
-    subtitle: "सिर्फ़-पढ़ने वाले कमांड जो आप खुद चलाते हैं — JoJoX कभी आपकी क्रेडेंशियल्स नहीं मांगता। परिणाम को बाकी कोड के साथ अपलोड करें और यह बाकी 55 जांचों में जुड़ जाता है।",
+    subtitle: "सिर्फ़-पढ़ने वाले कमांड जो आप खुद चलाते हैं — JoJoX कभी आपकी क्रेडेंशियल्स नहीं मांगता। परिणाम को बाकी कोड के साथ अपलोड करें और यह बाकी 55 जांचों में जुड़ जाता है (55 स्वचालित + ये 4 वैकल्पिक = कुल 59)।",
   },
   pricing: {
     title: "आप लगातार निगरानी के लिए भुगतान करते हैं, अलग-अलग विश्लेषणों के लिए नहीं",
@@ -4191,7 +4191,7 @@ const ru: TranslationTree = {
   cloudChecks: {
     title: "Дополнительные проверки облачной конфигурации и зависимостей.",
     subtitle:
-      "Команды только для чтения, которые вы запускаете сами — JoJoX никогда не запрашивает ваши учётные данные. Загрузите результат вместе с остальным кодом, и он добавится к остальным 55 проверкам.",
+      "Команды только для чтения, которые вы запускаете сами — JoJoX никогда не запрашивает ваши учётные данные. Загрузите результат вместе с остальным кодом, и он добавится к остальным 55 проверкам (55 автоматических + эти 4 опциональные = 59 всего).",
   },
   pricing: {
     title: "Вы платите за непрерывный мониторинг, а не за отдельные проверки",
@@ -4701,7 +4701,7 @@ const ar: TranslationTree = {
   },
   cloudChecks: {
     title: "فحوصات اختيارية لإعدادات السحابة والتبعيات.",
-    subtitle: "أوامر للقراءة فقط تنفّذها بنفسك — لا يطلب JoJoX بياناتك السرية أبدًا. ارفع النتيجة مع بقية الكود لتُضاف تلقائيًا إلى الفحوصات الـ55 الأخرى.",
+    subtitle: "أوامر للقراءة فقط تنفّذها بنفسك — لا يطلب JoJoX بياناتك السرية أبدًا. ارفع النتيجة مع بقية الكود لتُضاف تلقائيًا إلى الفحوصات الـ55 الأخرى (55 تلقائيًا + هذه الـ4 الاختيارية = 59 إجمالًا).",
   },
   pricing: {
     title: "أنت تدفع مقابل المراقبة المستمرة، لا مقابل كل تحليل على حدة",
@@ -5213,7 +5213,7 @@ const bn: TranslationTree = {
   },
   cloudChecks: {
     title: "ক্লাউড কনফিগারেশন ও ডিপেন্ডেন্সির উপর ঐচ্ছিক পরীক্ষা।",
-    subtitle: "শুধু-পঠনযোগ্য কমান্ড যা আপনি নিজে চালান — JoJoX কখনো আপনার ক্রেডেনশিয়াল চায় না। ফলাফল বাকি কোডের সাথে আপলোড করুন, এটি স্বয়ংক্রিয়ভাবে বাকি 55টি পরীক্ষায় যুক্ত হয়ে যায়।",
+    subtitle: "শুধু-পঠনযোগ্য কমান্ড যা আপনি নিজে চালান — JoJoX কখনো আপনার ক্রেডেনশিয়াল চায় না। ফলাফল বাকি কোডের সাথে আপলোড করুন, এটি স্বয়ংক্রিয়ভাবে বাকি 55টি পরীক্ষায় যুক্ত হয়ে যায় (55টি স্বয়ংক্রিয় + এই 4টি ঐচ্ছিক = মোট 59টি)।",
   },
   pricing: {
     title: "আপনি ক্রমাগত পর্যবেক্ষণের জন্য টাকা দেন, আলাদা আলাদা বিশ্লেষণের জন্য নয়",
@@ -5724,7 +5724,7 @@ const ur: TranslationTree = {
   },
   cloudChecks: {
     title: "کلاؤڈ کنفیگریشن اور انحصار پر اختیاری جانچ۔",
-    subtitle: "صرف پڑھنے والے کمانڈز جو آپ خود چلاتے ہیں — JoJoX کبھی آپ کی کریڈینشلز نہیں مانگتا۔ نتیجہ باقی کوڈ کے ساتھ اپ لوڈ کریں اور یہ باقی 55 چیکس میں شامل ہو جاتا ہے۔",
+    subtitle: "صرف پڑھنے والے کمانڈز جو آپ خود چلاتے ہیں — JoJoX کبھی آپ کی کریڈینشلز نہیں مانگتا۔ نتیجہ باقی کوڈ کے ساتھ اپ لوڈ کریں اور یہ باقی 55 چیکس میں شامل ہو جاتا ہے (55 خودکار + یہ 4 اختیاری = کل 59)۔",
   },
   pricing: {
     title: "آپ مسلسل نگرانی کی قیمت ادا کرتے ہیں، انفرادی تجزیوں کی نہیں",
@@ -6237,7 +6237,7 @@ const id: TranslationTree = {
   cloudChecks: {
     title: "Pemeriksaan opsional pada konfigurasi cloud dan dependensi.",
     subtitle:
-      "Perintah hanya-baca yang Anda jalankan sendiri — JoJoX tidak pernah meminta kredensial Anda. Unggah hasilnya bersama sisa kode, dan akan otomatis ditambahkan ke 55 pemeriksaan lainnya.",
+      "Perintah hanya-baca yang Anda jalankan sendiri — JoJoX tidak pernah meminta kredensial Anda. Unggah hasilnya bersama sisa kode, dan akan otomatis ditambahkan ke 55 pemeriksaan lainnya (55 otomatis + 4 opsional ini = 59 totalnya).",
   },
   pricing: {
     title: "Anda membayar pemantauan berkelanjutan, bukan analisis satuan",
@@ -6750,7 +6750,7 @@ const de: TranslationTree = {
   cloudChecks: {
     title: "Optionale Checks für Cloud-Konfiguration und Abhängigkeiten.",
     subtitle:
-      "Nur lesende Befehle, die du selbst ausführst — JoJoX fragt nie nach deinen Zugangsdaten. Lade das Ergebnis zusammen mit dem restlichen Code hoch, und es wird automatisch den anderen 55 Checks hinzugefügt.",
+      "Nur lesende Befehle, die du selbst ausführst — JoJoX fragt nie nach deinen Zugangsdaten. Lade das Ergebnis zusammen mit dem restlichen Code hoch, und es wird automatisch den anderen 55 Checks hinzugefügt (55 automatische + diese 4 optionalen = 59 insgesamt).",
   },
   pricing: {
     title: "Du bezahlst für fortlaufende Überwachung, nicht für einzelne Analysen",
@@ -7263,7 +7263,7 @@ const fi: TranslationTree = {
   cloudChecks: {
     title: "Valinnaiset tarkistukset pilviasetuksille ja riippuvuuksille.",
     subtitle:
-      "Vain luku -komentoja, jotka ajat itse — JoJoX ei koskaan pyydä tunnuksiasi. Lataa tulos muun koodin mukana, ja se lisätään automaattisesti muihin 55 tarkistukseen.",
+      "Vain luku -komentoja, jotka ajat itse — JoJoX ei koskaan pyydä tunnuksiasi. Lataa tulos muun koodin mukana, ja se lisätään automaattisesti muihin 55 tarkistukseen (55 automaattista + nämä 4 valinnaista = yhteensä 59).",
   },
   pricing: {
     title: "Maksat jatkuvasta valvonnasta, et yksittäisistä analyyseista",
@@ -7776,7 +7776,7 @@ const nl: TranslationTree = {
   cloudChecks: {
     title: "Optionele controles op cloudconfiguratie en dependencies.",
     subtitle:
-      "Alleen-lezen commando's die je zelf uitvoert — JoJoX vraagt nooit om je inloggegevens. Upload het resultaat samen met de rest van de code en het wordt automatisch toegevoegd aan de andere 55 controles.",
+      "Alleen-lezen commando's die je zelf uitvoert — JoJoX vraagt nooit om je inloggegevens. Upload het resultaat samen met de rest van de code en het wordt automatisch toegevoegd aan de andere 55 controles (55 automatische + deze 4 optionele = 59 in totaal).",
   },
   pricing: {
     title: "Je betaalt voor continue monitoring, niet voor losse analyses",
@@ -8289,7 +8289,7 @@ const pl: TranslationTree = {
   cloudChecks: {
     title: "Opcjonalne kontrole konfiguracji chmury i zależności.",
     subtitle:
-      "Polecenia tylko do odczytu, które uruchamiasz sam — JoJoX nigdy nie prosi o Twoje dane uwierzytelniające. Wgraj wynik razem z resztą kodu, a zostanie automatycznie dodany do pozostałych 55 kontroli.",
+      "Polecenia tylko do odczytu, które uruchamiasz sam — JoJoX nigdy nie prosi o Twoje dane uwierzytelniające. Wgraj wynik razem z resztą kodu, a zostanie automatycznie dodany do pozostałych 55 kontroli (55 automatycznych + te 4 opcjonalne = 59 łącznie).",
   },
   pricing: {
     title: "Płacisz za ciągłe monitorowanie, nie za pojedyncze analizy",
@@ -8802,7 +8802,7 @@ const sv: TranslationTree = {
   cloudChecks: {
     title: "Valfria kontroller av molnkonfiguration och beroenden.",
     subtitle:
-      "Skrivskyddade kommandon som du kör själv — JoJoX frågar aldrig efter dina inloggningsuppgifter. Ladda upp resultatet tillsammans med resten av koden, och det läggs automatiskt till de andra 55 kontrollerna.",
+      "Skrivskyddade kommandon som du kör själv — JoJoX frågar aldrig efter dina inloggningsuppgifter. Ladda upp resultatet tillsammans med resten av koden, och det läggs automatiskt till de andra 55 kontrollerna (55 automatiska + dessa 4 valfria = 59 totalt).",
   },
   pricing: {
     title: "Du betalar för kontinuerlig övervakning, inte för enskilda analyser",
@@ -9315,7 +9315,7 @@ const da: TranslationTree = {
   cloudChecks: {
     title: "Valgfrie tjek af cloud-konfiguration og afhængigheder.",
     subtitle:
-      "Skrivebeskyttede kommandoer, du selv kører — JoJoX beder aldrig om dine loginoplysninger. Upload resultatet sammen med resten af koden, og det føjes automatisk til de andre 55 tjek.",
+      "Skrivebeskyttede kommandoer, du selv kører — JoJoX beder aldrig om dine loginoplysninger. Upload resultatet sammen med resten af koden, og det føjes automatisk til de andre 55 tjek (55 automatiske + disse 4 valgfrie = 59 i alt).",
   },
   pricing: {
     title: "Du betaler for løbende overvågning, ikke for enkelte analyser",
@@ -9828,7 +9828,7 @@ const nb: TranslationTree = {
   cloudChecks: {
     title: "Valgfrie sjekker av skykonfigurasjon og avhengigheter.",
     subtitle:
-      "Skrivebeskyttede kommandoer du kjører selv — JoJoX spør aldri om påloggingsinformasjonen din. Last opp resultatet sammen med resten av koden, og det legges automatisk til de andre 55 sjekkene.",
+      "Skrivebeskyttede kommandoer du kjører selv — JoJoX spør aldri om påloggingsinformasjonen din. Last opp resultatet sammen med resten av koden, og det legges automatisk til de andre 55 sjekkene (55 automatiske + disse 4 valgfrie = 59 totalt).",
   },
   pricing: {
     title: "Du betaler for kontinuerlig overvåking, ikke for enkeltanalyser",
@@ -10341,7 +10341,7 @@ const tr: TranslationTree = {
   cloudChecks: {
     title: "Bulut yapılandırması ve bağımlılıklar üzerinde isteğe bağlı kontroller.",
     subtitle:
-      "Kendiniz çalıştırdığınız salt okunur komutlar — JoJoX kimlik bilgilerinizi asla istemez. Sonucu kodun geri kalanıyla birlikte yükleyin, otomatik olarak diğer 55 kontrole eklensin.",
+      "Kendiniz çalıştırdığınız salt okunur komutlar — JoJoX kimlik bilgilerinizi asla istemez. Sonucu kodun geri kalanıyla birlikte yükleyin, otomatik olarak diğer 55 kontrole eklensin (55 otomatik + bu 4 isteğe bağlı = toplam 59).",
   },
   pricing: {
     title: "Tek tek analizler için değil, sürekli izleme için ödeme yaparsınız",
@@ -10854,7 +10854,7 @@ const uk: TranslationTree = {
   cloudChecks: {
     title: "Додаткові перевірки конфігурації хмари та залежностей.",
     subtitle:
-      "Команди лише для читання, які ви запускаєте самостійно — JoJoX ніколи не запитує ваші облікові дані. Завантажте результат разом із рештою коду, і він автоматично додасться до інших 55 перевірок.",
+      "Команди лише для читання, які ви запускаєте самостійно — JoJoX ніколи не запитує ваші облікові дані. Завантажте результат разом із рештою коду, і він автоматично додасться до інших 55 перевірок (55 автоматичних + ці 4 опціональні = 59 загалом).",
   },
   pricing: {
     title: "Ви платите за безперервний моніторинг, а не за окремі аналізи",
@@ -11367,7 +11367,7 @@ const ja: TranslationTree = {
   cloudChecks: {
     title: "クラウド設定と依存関係のオプションチェック。",
     subtitle:
-      "あなた自身が実行する読み取り専用コマンド — JoJoXは決して認証情報を求めません。結果を残りのコードと一緒にアップロードすると、自動的に他の55のチェックに追加されます。",
+      "あなた自身が実行する読み取り専用コマンド — JoJoXは決して認証情報を求めません。結果を残りのコードと一緒にアップロードすると、自動的に他の55のチェックに追加されます（55の自動チェック + この4つのオプション = 合計59）。",
   },
   pricing: {
     title: "個別の分析ではなく、継続的な監視に対して支払う",
@@ -11880,7 +11880,7 @@ const ko: TranslationTree = {
   cloudChecks: {
     title: "클라우드 설정 및 의존성에 대한 선택적 검사.",
     subtitle:
-      "직접 실행하는 읽기 전용 명령어 — JoJoX는 절대 자격 증명을 요구하지 않습니다. 결과를 나머지 코드와 함께 업로드하면 자동으로 다른 55개 검사에 추가됩니다.",
+      "직접 실행하는 읽기 전용 명령어 — JoJoX는 절대 자격 증명을 요구하지 않습니다. 결과를 나머지 코드와 함께 업로드하면 자동으로 다른 55개 검사에 추가됩니다 (55개 자동 + 이 4개 선택 = 총 59개).",
   },
   pricing: {
     title: "개별 분석이 아니라 지속적인 모니터링에 대해 지불합니다",
