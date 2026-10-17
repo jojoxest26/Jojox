@@ -158,7 +158,7 @@ describe("awsIamConfigFindings", () => {
 describe("analyzeFiles with an AWS IAM snapshot file", () => {
   it("merges live-config findings with code findings and excludes the snapshot from code scanning", () => {
     const result = analyzeFiles([
-      { path: "src/index.ts", content: 'const password = "hunter2super";' },
+      { path: "src/index.ts", content: 'const password = process.env.PASSWORD;' },
       {
         path: AWS_IAM_SNAPSHOT_FILENAME,
         content: JSON.stringify(snapshot({ UserDetailList: [{ UserName: "alice", AttachedManagedPolicies: [{ PolicyArn: ADMIN_ARN }] }] })),
@@ -379,7 +379,7 @@ describe("analyzeFiles with an AWS S3 snapshot file", () => {
       JSON.stringify({ name: "public-bucket", policy: { Statement: [{ Effect: "Allow", Principal: "*" }] }, acl: { Grants: [] }, publicAccessBlock: FULL_PAB }),
     ];
     const result = analyzeFiles([
-      { path: "src/index.ts", content: 'const password = "hunter2super";' },
+      { path: "src/index.ts", content: 'const password = process.env.PASSWORD;' },
       { path: AWS_S3_SNAPSHOT_FILENAME, content: lines.join("\n") },
     ]);
 

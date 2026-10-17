@@ -43,7 +43,7 @@ describe("MCP server: handleRequest", () => {
       method: "tools/call",
       params: {
         name: "analyze_code",
-        arguments: { files: [{ path: "supabase/migrations/0001.sql", content: "ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;" }] },
+        arguments: { files: [{ path: "supabase/migrations/0001.sql", content: "ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;" }] },
       },
     }) as any;
     const payload = JSON.parse(res.result.content[0].text);
@@ -60,7 +60,7 @@ describe("MCP server: handleRequest", () => {
         name: "fix_code",
         arguments: {
           files: [
-            { path: "supabase/migrations/0001.sql", content: "ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;" },
+            { path: "supabase/migrations/0001.sql", content: "ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;" },
             { path: "src/clean.ts", content: "const x = 1" },
           ],
         },

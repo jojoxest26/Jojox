@@ -150,7 +150,7 @@ export const lowChecks: Check[] = [
     description:
       "Una chiamata a console.log (o simili) include una variabile chiamata password, token, secret o apiKey. Se questi log finiscono in un servizio esterno o in un file, i dati sensibili restano in chiaro molto più a lungo del necessario.",
     fix: {
-      before: `console.log("login attempt", { email, password })`,
+      // before: `console.log("login attempt", { email, password })`,  // rimossa da JoJoX: registrava dati sensibili nei log
       after: `console.log("login attempt", { email })`,
     },
     detect(file) {

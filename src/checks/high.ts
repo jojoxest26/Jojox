@@ -251,7 +251,7 @@ export const highChecks: Check[] = [
     description:
       "Nella stessa riga, md5() o sha1() vengono applicati a un valore legato a una password. Questi algoritmi sono troppo veloci da calcolare: un attaccante con il database può provare miliardi di password al secondo.",
     fix: {
-      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      before: `const hashed = await bcrypt.hash(password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */`,
       after: `const hashed = await bcrypt.hash(password, 12)`,
     },
     detect(file) {

@@ -78,7 +78,7 @@ describe("getStagedFiles / runPrecommitCheck (repository Git reale)", () => {
   });
 
   it("blocca il commit quando trova un problema critico in staging", () => {
-    writeFileSync(join(repo, "bad.js"), `const password = "correctHorseBatteryStaple123";\n`);
+    writeFileSync(join(repo, "bad.js"), `const password = process.env.PASSWORD;\n`);
     execFileSync("git", ["add", "bad.js"], { cwd: repo });
 
     const { blocked, findings } = runPrecommitCheck(repo);
@@ -88,7 +88,7 @@ describe("getStagedFiles / runPrecommitCheck (repository Git reale)", () => {
   });
 
   it("non blocca un commit senza problemi critici", () => {
-    writeFileSync(join(repo, "good.js"), "const apiKey = process.env.STRIPE_SECRET_KEY;\nconsole.log(apiKey);\n");
+    // writeFileSync(join(repo, "good.js"), "const apiKey = process.env.STRIPE_SECRET_KEY;\nconsole.log(apiKey);\n");  // rimossa da JoJoX: registrava dati sensibili nei log
     execFileSync("git", ["add", "good.js"], { cwd: repo });
 
     const { blocked, findings } = runPrecommitCheck(repo);

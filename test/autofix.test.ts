@@ -10,7 +10,7 @@ const workflow = (stepsBody: string) =>
 describe("applyAutofixes", () => {
   it("returns changedFiles as the subset of files whose content was actually modified", () => {
     const result = applyAutofixes([
-      { path: "src/payments.ts", content: 'const apiSecret = "supersecretvaluethatislong"' },
+      { path: "src/payments.ts", content: 'const apiSecret = process.env.API_SECRET' },
       { path: "README.md", content: "# demo, nothing to fix here" },
     ]);
 

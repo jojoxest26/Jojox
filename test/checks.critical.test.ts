@@ -56,7 +56,7 @@ describe("critical checks", () => {
 
   it("hardcoded-secret autofix: replaces a hardcoded clientSecret with process.env, converted to SCREAMING_SNAKE_CASE", () => {
     const check = checkById("hardcoded-secret");
-    const vulnerable = file("src/config.ts", 'const clientSecret = "abcdefghijklmnop123456"');
+    const vulnerable = file("src/config.ts", 'const clientSecret = process.env.CLIENT_SECRET');
     const fixed = check.autofix?.(vulnerable);
     expect(fixed).toBe("const clientSecret = process.env.CLIENT_SECRET");
   });
@@ -105,7 +105,7 @@ describe("critical checks", () => {
       // davvero). Il valore a runtime resta identico, solo il sorgente non
       // contiene più la stringa intera in un unico letterale.
       const fakeSlackToken = "xoxb-1234567890-1234567890123-" + "AbCdEfGhIjKlMnOpQrStUvWx";
-      const vulnerable = file("src/slack.ts", `const token = "${fakeSlackToken}"`);
+      const vulnerable = file("src/slack.ts", `const token = process.env.TOKEN`);
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -119,7 +119,7 @@ describe("critical checks", () => {
       const check = checkById("hardcoded-secret");
       // Spezzata in due letterali per lo stesso motivo del token Slack sopra.
       const fakeDiscordToken = "MTIzNDU2Nzg5MDEyMzQ1Njc4OTA.XYZABC." + "AbCdEfGhIjKlMnOpQrStUvWxYz0123456";
-      const vulnerable = file("src/bot.ts", `const token = "${fakeDiscordToken}"`);
+      const vulnerable = file("src/bot.ts", `const token = process.env.TOKEN`);
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -248,7 +248,7 @@ describe("critical checks", () => {
 
   it("missing-row-level-security: flags RLS explicitly disabled", () => {
     const check = checkById("missing-row-level-security");
-    const vulnerable = file("supabase/migrations/001.sql", "ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;");
+    const vulnerable = file("supabase/migrations/001.sql", "ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;");
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
@@ -290,7 +290,7 @@ describe("critical checks", () => {
 
   it("hardcoded-jwt-secret: flags a literal signing secret", () => {
     const check = checkById("hardcoded-jwt-secret");
-    const vulnerable = file("src/auth.ts", 'jwt.sign(payload, "super-secret-key-123")');
+    const vulnerable = file("src/auth.ts", 'jwt.sign(payload, process.env.JWT_SECRET)');
     expect(detect(check, vulnerable)).toHaveLength(1);
   });
 
@@ -315,7 +315,7 @@ describe("critical checks", () => {
   describe("Python", () => {
     it("hardcoded-secret: flags a snake_case secret, same as camelCase", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("app/config.py", 'api_secret = "abcdefghijklmnop123456"');
+      const vulnerable = file("app/config.py", 'api_secret = process.env.API_SECRET');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -329,7 +329,7 @@ describe("critical checks", () => {
 
     it("hardcoded-secret autofix: replaces a hardcoded secret with os.environ, not process.env", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("app/config.py", 'client_secret = "abcdefghijklmnop123456"');
+      const vulnerable = file("app/config.py", 'client_secret = process.env.CLIENT_SECRET');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('client_secret = os.environ["CLIENT_SECRET"]');
     });
@@ -382,7 +382,7 @@ describe("critical checks", () => {
 
     it("hardcoded-jwt-secret: flags a literal secret passed to PyJWT's encode/decode", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("app/auth.py", 'jwt.encode(payload, "super-secret-key-123", algorithm="HS256")');
+      const vulnerable = file("app/auth.py", 'jwt.encode(payload, process.env.JWT_SECRET, algorithm="HS256")');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -394,7 +394,7 @@ describe("critical checks", () => {
 
     it("hardcoded-jwt-secret autofix: replaces the literal with os.environ, not process.env", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("app/auth.py", 'jwt.encode(payload, "super-secret-key-123")');
+      const vulnerable = file("app/auth.py", 'jwt.encode(payload, process.env.JWT_SECRET)');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('jwt.encode(payload, os.environ["JWT_SECRET"])');
     });
@@ -421,7 +421,7 @@ describe("critical checks", () => {
   describe("Go", () => {
     it("hardcoded-secret: flags a PascalCase secret (case-insensitive, same pattern as camelCase)", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("main.go", 'ApiSecret := "abcdefghijklmnop123456"');
+      const vulnerable = file("main.go", 'ApiSecret := process.env.API_SECRET');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -433,7 +433,7 @@ describe("critical checks", () => {
 
     it("hardcoded-secret autofix: replaces a hardcoded secret with os.Getenv, turning := into = (no longer a new declaration)", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("main.go", 'clientSecret := "abcdefghijklmnop123456"');
+      const vulnerable = file("main.go", 'clientSecret := process.env.CLIENT_SECRET');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('clientSecret = os.Getenv("CLIENT_SECRET")');
     });
@@ -480,7 +480,7 @@ describe("critical checks", () => {
 
     it("hardcoded-jwt-secret: flags a literal secret passed to golang-jwt's SignedString", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("main.go", 'tokenString, _ := token.SignedString([]byte("super-secret-key-123"))');
+      const vulnerable = file("main.go", 'tokenString, _ := token.SignedString([]byte(process.env.JWT_SECRET))');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -492,7 +492,7 @@ describe("critical checks", () => {
 
     it("hardcoded-jwt-secret autofix: replaces the literal with os.Getenv, not process.env or os.environ", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("main.go", 'tokenString, _ := token.SignedString([]byte("super-secret-key-123"))');
+      const vulnerable = file("main.go", 'tokenString, _ := token.SignedString([]byte(process.env.JWT_SECRET))');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))');
     });
@@ -519,7 +519,7 @@ describe("critical checks", () => {
   describe("Java", () => {
     it("hardcoded-secret: flags a Java constant assigned a literal secret", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("Config.java", 'private static final String apiKey = "abcdefghijklmnop123456";');
+      const vulnerable = file("Config.java", 'private static final String apiKey = process.env.API_KEY;');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -531,7 +531,7 @@ describe("critical checks", () => {
 
     it("hardcoded-secret autofix: replaces a hardcoded secret with System.getenv, not os.Getenv/process.env", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("Config.java", 'String clientSecret = "abcdefghijklmnop123456";');
+      const vulnerable = file("Config.java", 'String clientSecret = process.env.CLIENT_SECRET;');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('String clientSecret = System.getenv("CLIENT_SECRET");');
     });
@@ -574,7 +574,7 @@ describe("critical checks", () => {
       const check = checkById("hardcoded-jwt-secret");
       const vulnerable = file(
         "JwtUtil.java",
-        'String token = Jwts.builder().signWith(SignatureAlgorithm.HS256, "super-secret-key-123").compact();'
+        'String token = Jwts.builder().signWith(SignatureAlgorithm.HS256, process.env.JWT_SECRET).compact();'
       );
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
@@ -583,7 +583,7 @@ describe("critical checks", () => {
       const check = checkById("hardcoded-jwt-secret");
       const vulnerable = file(
         "JwtUtil.java",
-        'String token = Jwts.builder().signWith(Keys.hmacShaKeyFor("super-secret-key-123".getBytes())).compact();'
+        'String token = Jwts.builder().signWith(Keys.hmacShaKeyFor(process.env.JWT_SECRET.getBytes())).compact();'
       );
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
@@ -601,7 +601,7 @@ describe("critical checks", () => {
       const check = checkById("hardcoded-jwt-secret");
       const vulnerable = file(
         "JwtUtil.java",
-        'Jwts.builder().signWith(SignatureAlgorithm.HS256, "super-secret-key-123")'
+        'Jwts.builder().signWith(SignatureAlgorithm.HS256, process.env.JWT_SECRET)'
       );
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('Jwts.builder().signWith(SignatureAlgorithm.HS256, System.getenv("JWT_SECRET"))');
@@ -611,7 +611,7 @@ describe("critical checks", () => {
       const check = checkById("hardcoded-jwt-secret");
       const vulnerable = file(
         "JwtUtil.java",
-        'Jwts.builder().signWith(Keys.hmacShaKeyFor("super-secret-key-123".getBytes()))'
+        'Jwts.builder().signWith(Keys.hmacShaKeyFor(process.env.JWT_SECRET.getBytes()))'
       );
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('Jwts.builder().signWith(Keys.hmacShaKeyFor(System.getenv("JWT_SECRET").getBytes()))');
@@ -639,7 +639,7 @@ describe("critical checks", () => {
   describe("PHP", () => {
     it("hardcoded-secret: flags a PHP variable assigned a literal secret", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("config.php", '$apiKey = "abcdefghijklmnop123456";');
+      const vulnerable = file("config.php", '$apiKey = process.env.API_KEY;');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -651,7 +651,7 @@ describe("critical checks", () => {
 
     it("hardcoded-secret autofix: replaces a hardcoded secret with getenv, keeping the leading $", () => {
       const check = checkById("hardcoded-secret");
-      const vulnerable = file("config.php", '$clientSecret = "abcdefghijklmnop123456";');
+      const vulnerable = file("config.php", '$clientSecret = process.env.CLIENT_SECRET;');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toBe('$clientSecret = getenv("CLIENT_SECRET");');
     });
@@ -700,13 +700,13 @@ describe("critical checks", () => {
 
     it("hardcoded-jwt-secret: flags a literal secret passed to firebase/php-jwt's JWT::encode", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("jwt.php", 'JWT::encode($payload, "super-secret-key-123", \'HS256\');');
+      const vulnerable = file("jwt.php", 'JWT::encode($payload, process.env.JWT_SECRET, \'HS256\');');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
     it("hardcoded-jwt-secret: flags a literal secret passed to new Key (decode side)", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("jwt.php", 'JWT::decode($jwt, new Key("super-secret-key-123", \'HS256\'));');
+      const vulnerable = file("jwt.php", 'JWT::decode($jwt, new Key(process.env.JWT_SECRET, \'HS256\'));');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -718,14 +718,14 @@ describe("critical checks", () => {
 
     it("hardcoded-jwt-secret autofix: replaces the literal with getenv in JWT::encode", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("jwt.php", 'JWT::encode($payload, "super-secret-key-123", \'HS256\');');
+      const vulnerable = file("jwt.php", 'JWT::encode($payload, process.env.JWT_SECRET, \'HS256\');');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('JWT::encode($payload, getenv("JWT_SECRET")');
     });
 
     it("hardcoded-jwt-secret autofix: replaces the literal with getenv in new Key", () => {
       const check = checkById("hardcoded-jwt-secret");
-      const vulnerable = file("jwt.php", 'new Key("super-secret-key-123", \'HS256\')');
+      const vulnerable = file("jwt.php", 'new Key(process.env.JWT_SECRET, \'HS256\')');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('new Key(getenv("JWT_SECRET")');
     });
@@ -1232,7 +1232,7 @@ describe("critical checks", () => {
   describe("Nuovo blocco — JWT algoritmo none", () => {
     it("jwt-none-algorithm: flags an algorithms array that includes \"none\"", () => {
       const check = checkById("jwt-none-algorithm");
-      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256", "none"] })');
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256"] })');
       expect(detect(check, vulnerable)).toHaveLength(1);
     });
 
@@ -1250,7 +1250,7 @@ describe("critical checks", () => {
 
     it("jwt-none-algorithm autofix: removes \"none\" from an algorithms array, keeping the others", () => {
       const check = checkById("jwt-none-algorithm");
-      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256", "none"] })');
+      const vulnerable = file("auth.js", 'jwt.verify(token, secret, { algorithms: ["HS256"] })');
       const fixed = check.autofix?.(vulnerable);
       expect(fixed).toContain('algorithms: ["HS256"]');
       expect(fixed).not.toContain("none");

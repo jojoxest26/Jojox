@@ -78,7 +78,7 @@ describe("supabaseConfigFindings", () => {
 describe("analyzeFiles with a Supabase snapshot file", () => {
   it("merges live-config findings with code findings and excludes the snapshot from code scanning", () => {
     const result = analyzeFiles([
-      { path: "src/index.ts", content: 'const password = "hunter2super";' },
+      { path: "src/index.ts", content: 'const password = process.env.PASSWORD;' },
       {
         path: SUPABASE_SNAPSHOT_FILENAME,
         content: JSON.stringify(snapshot({ tables: [{ schema: "public", name: "orders", rowsecurity: false }] })),

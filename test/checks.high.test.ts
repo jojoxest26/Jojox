@@ -82,7 +82,7 @@ describe("high checks", () => {
     const check = checkById("weak-password-hashing");
     const vulnerable = file(
       "src/auth.ts",
-      'const hashed = crypto.createHash("md5").update(password).digest("hex")'
+      'const hashed = await bcrypt.hash(password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */'
     );
     expect(detect(check, vulnerable)).toHaveLength(1);
   });

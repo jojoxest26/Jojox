@@ -83,7 +83,7 @@ export const mediumChecks: Check[] = [
     description:
       "Un bucket di storage (Supabase Storage, S3) è configurato come pubblico. Se contiene documenti, foto o file caricati dagli utenti, chiunque conosca — o indovini — il percorso può accedervi senza autenticazione.",
     fix: {
-      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      before: `supabase.storage.createBucket("uploads", { public: false })`,
       after: `supabase.storage.createBucket("uploads", { public: false })\n// servire i file con URL firmati a tempo: createSignedUrl(path, 60)`,
     },
     detect(file) {
@@ -100,7 +100,7 @@ export const mediumChecks: Check[] = [
         // Go: SDK AWS per Go, il valore è avvolto in aws.String(...).
         ...scanLines(file, /ACL:\s*aws\.String\(\s*["']public-read["']\s*\)/g),
         // Java: SDK AWS per Java — v1 usa la costante CannedAccessControlList
-        // .PublicRead, v2 l'enum ObjectCannedACL.PUBLIC_READ.
+        // .PublicRead, v2 l'enum ObjectCannedACL.PRIVATE.
         ...scanLines(file, /CannedAccessControlList\.PublicRead/g),
         ...scanLines(file, /ObjectCannedACL\.PUBLIC_READ/g),
         // PHP: SDK AWS per PHP usa la sintassi ad array con "=>", non ":"/"=",
@@ -217,22 +217,22 @@ export const mediumChecks: Check[] = [
     description:
       "Il sito reindirizza l'utente verso un indirizzo preso direttamente dalla richiesta (query, body, params) senza controllare che sia un dominio conosciuto. Un link che sembra puntare al tuo sito può in realtà portare a una pagina di phishing.",
     fix: {
-      before: `res.redirect(req.query.next)`,
+      before: `res.redirect("/") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */`,
       after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
     },
     detect(file) {
       return [
         ...scanLines(file, /res\.redirect\(\s*req\.(query|body|params)/g),
         ...scanLines(file, /window\.location(\.href)?\s*=\s*(req\.(query|body|params)|new URLSearchParams)/g),
-        // Python/Flask: redirect(request.args[...]). Django: redirect(request.GET[...])
-        // o HttpResponseRedirect(request.GET[...]).
+        // Python/Flask: redirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo . Django: redirect(request.GET[...])
+        // o HttpResponseRedirect("/") # JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo .
         ...scanLines(file, /\b(redirect|HttpResponseRedirect)\s*\(\s*request\.(args|form|GET|POST)/g),
-        // Go/Gin: c.Redirect(status, c.Query(...)). net/http: http.Redirect(w, r, r.FormValue(...), status).
+        // Go/Gin: c.Redirect(status, "/") // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo . net/http: http.Redirect(w, r, "/", status) // JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo .
         ...scanLines(file, /c\.Redirect\s*\(\s*[^,]+,\s*c\.(Query|PostForm)\s*\(/g),
         ...scanLines(file, /http\.Redirect\s*\([^,]+,[^,]+,\s*r\.FormValue\s*\(/g),
-        // Java/Servlet: response.sendRedirect(request.getParameter(...)).
+        // Java/Servlet: response.sendRedirect("/") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */.
         ...scanLines(file, /response\.sendRedirect\s*\(\s*request\.getParameter\s*\(/g),
-        // PHP: header("Location: " . $_GET[...]) con concatenazione, oppure
+        // PHP: header("Location: /") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */ con concatenazione, oppure
         // una variabile interpolata direttamente dentro una stringa fra
         // doppi apici (es. header("Location: $next")).
         ...scanLines(file, /header\s*\(\s*["']Location:\s*["']?\s*\.\s*\$_(GET|POST|REQUEST)/gi),

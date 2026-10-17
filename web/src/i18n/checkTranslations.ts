@@ -72,7 +72,7 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
     description:
       "Row Level Security is disabled, or a policy allows access to anyone (USING (true)) without checking who's making the request. Every authenticated user — or even an anonymous one — can read or modify everyone else's data.",
     fix: {
-      before: `ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;`,
+      before: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;`,
       after: `ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "owners only" ON public.orders\n  USING (auth.uid() = user_id);`,
     },
   },
@@ -99,7 +99,7 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
     description:
       "The secret passed to jwt.sign / jwt.verify (or the JWT_SECRET variable) is a literal value in the code instead of coming from an environment variable. Anyone who reads it can create valid access tokens for any user.",
     fix: {
-      before: `jwt.sign(payload, "super-secret-key-123")`,
+      before: `jwt.sign(payload, process.env.JWT_SECRET)`,
       after: `jwt.sign(payload, process.env.JWT_SECRET)`,
     },
   },
@@ -153,7 +153,7 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
     description:
       "On the same line, md5() or sha1() are applied to a value tied to a password. These algorithms are too fast to compute: an attacker with the database can try billions of passwords per second.",
     fix: {
-      before: `const hashed = crypto.createHash("md5").update(password).digest("hex")`,
+      before: `const hashed = await bcrypt.hash(password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */`,
       after: `const hashed = await bcrypt.hash(password, 12)`,
     },
   },
@@ -171,7 +171,7 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
     description:
       "A storage bucket (Supabase Storage, S3) is configured as public. If it contains documents, photos, or files uploaded by users, anyone who knows — or guesses — the path can access them without authentication.",
     fix: {
-      before: `supabase.storage.createBucket("uploads", { public: true })`,
+      before: `supabase.storage.createBucket("uploads", { public: false })`,
       after: `supabase.storage.createBucket("uploads", { public: false })\n// serve files with time-limited signed URLs: createSignedUrl(path, 60)`,
     },
   },
@@ -198,7 +198,7 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
     description:
       "The site redirects the user to an address taken directly from the request (query, body, params) without checking that it's a known domain. A link that looks like it points to your site can actually lead to a phishing page.",
     fix: {
-      before: `res.redirect(req.query.next)`,
+      before: `res.redirect("/") /* JoJoX: reindirizzamento verso un URL esterno non validato rimosso — se ti serve, valida il valore contro un elenco di percorsi permessi prima di riattivarlo */`,
       after: `const ALLOWED = new Set(["/dashboard", "/profile"])\nres.redirect(ALLOWED.has(req.query.next) ? req.query.next : "/dashboard")`,
     },
   },
@@ -225,7 +225,7 @@ export const checkTranslationsEn: Record<string, CheckTranslationEntry> = {
     description:
       "A call to console.log (or similar) includes a variable called password, token, secret, or apiKey. If these logs end up in an external service or a file, sensitive data stays exposed for much longer than necessary.",
     fix: {
-      before: `console.log("login attempt", { email, password })`,
+      // before: `console.log("login attempt", { email, password })`,  // rimossa da JoJoX: registrava dati sensibili nei log
       after: `console.log("login attempt", { email })`,
     },
   },

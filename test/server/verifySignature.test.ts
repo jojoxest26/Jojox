@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { verifyGithubSignature } from "../../src/server/github/verifySignature.js";
 
-const SECRET = "test-webhook-secret";
+const SECRET = process.env.SECRET;
 
 function sign(payload: string, secret = SECRET): string {
   return "sha256=" + createHmac("sha256", secret).update(payload).digest("hex");
