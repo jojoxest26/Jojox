@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Header } from "./components/Header.js";
 import { Hero } from "./components/Hero.js";
 import { HowItWorks } from "./components/HowItWorks.js";
+import { LifecycleSection } from "./components/LifecycleSection.js";
 import { Features } from "./components/Features.js";
 import { WhyNotAiSection } from "./components/WhyNotAiSection.js";
 import { AudienceSection } from "./components/AudienceSection.js";
@@ -125,6 +126,9 @@ function App() {
       <Hero />
       <Reveal>
         <HowItWorks />
+      </Reveal>
+      <Reveal>
+        <LifecycleSection />
       </Reveal>
       <Reveal>
         <Features />

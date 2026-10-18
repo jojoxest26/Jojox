@@ -2730,3 +2730,84 @@ body::after {
   font-style: italic;
   color: var(--text-muted);
 }
+
+/* ---------- lifecycle coverage section ---------- */
+.lifecycle-section {
+  padding: 0 0 3rem;
+}
+.lifecycle-subtitle {
+  margin: 0.75rem 0 0;
+  max-width: 60ch;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.lifecycle-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
+@media (min-width: 640px) {
+  .lifecycle-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1100px) {
+  .lifecycle-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+.lifecycle-step {
+  position: relative;
+  border-radius: 0.9rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  padding: 1.25rem 1.1rem;
+}
+.lifecycle-step-number {
+  position: absolute;
+  top: 0.9rem;
+  right: 1rem;
+  font-family: "Anton", "Inter", sans-serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  color: var(--border);
+  line-height: 1;
+}
+.lifecycle-step-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--accent);
+  margin-bottom: 0.85rem;
+}
+.lifecycle-step-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.lifecycle-step h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding-right: 1.5rem;
+}
+.lifecycle-step p {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.lifecycle-closing {
+  margin: 2rem 0 0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px dashed var(--accent-soft);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text);
+}
