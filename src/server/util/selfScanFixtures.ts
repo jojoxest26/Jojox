@@ -4,7 +4,7 @@
  * Full Site Audit. I file che DEFINISCONO i 55 controlli (src/checks/*.ts) e
  * i loro test contengono però, come parte necessaria della loro stessa
  * definizione, esempi letterali del pattern che ciascun controllo cerca
- * (es. "md5(password)", "createHash(\"md5\")", "redirect(\"/\")" nei commenti
+ * (es. "await bcrypt.hash(password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */", "createHash(\"md5\")", "redirect(\"/\")" nei commenti
  * che spiegano un'altra sintassi equivalente). Il motore è un confronto
  * testuale, non un'analisi semantica: non distingue "questo è un esempio
  * dentro la definizione del controllo stesso" da "questo è vero codice
