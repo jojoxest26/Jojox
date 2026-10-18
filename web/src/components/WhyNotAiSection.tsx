@@ -15,6 +15,7 @@ export function WhyNotAiSection() {
           <p>{t.whyNotAi.point1}</p>
           <p>{t.whyNotAi.point2}</p>
           <p>{t.whyNotAi.point3}</p>
+          <p>{t.whyNotAi.point4}</p>
         </div>
       </details>
       <p className="why-not-ai-closing">
