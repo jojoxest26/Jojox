@@ -856,9 +856,9 @@ const it: TranslationTree = {
     toggleHide: "▲ Nascondi le novità",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Più linguaggi coperti",
-        text: "Oltre a JavaScript/TypeScript e SQL, i controlli ora riconoscono anche Python, Go, Java e PHP — stessa profondità, testati su codice reale.",
+        icon: "brain",
+        title: "Revisione AI per bug di logica",
+        text: "Un livello AI a parte, separato dai 55 controlli — cerca race condition ed errori nei controlli di autorizzazione che un pattern non può trovare da solo. Sempre un pulsante a parte, mai nel punteggio, mai una correzione automatica.",
       },
       {
         icon: "package",
@@ -1386,9 +1386,9 @@ const en: TranslationTree = {
     toggleHide: "▲ Hide what's new",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "More languages covered",
-        text: "Besides JavaScript/TypeScript and SQL, the checks now also recognize Python, Go, Java and PHP — same depth, tested on real code.",
+        icon: "brain",
+        title: "AI review for logic bugs",
+        text: "A separate AI layer, apart from the 55 checks — looks for race conditions and broken authorization-logic checks that a pattern can't find on its own. Always its own button, never counted in the score, never an automatic fix.",
       },
       {
         icon: "package",
@@ -1916,9 +1916,9 @@ const es: TranslationTree = {
     toggleHide: "▲ Ocultar las novedades",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Más lenguajes cubiertos",
-        text: "Además de JavaScript/TypeScript y SQL, los controles ahora también reconocen Python, Go, Java y PHP — misma profundidad, probados con código real.",
+        icon: "brain",
+        title: "Revisión AI para bugs de lógica",
+        text: "Un nivel de IA aparte, separado de los 55 controles — busca race conditions y errores en los controles de autorización que un patrón no puede encontrar por sí solo. Siempre un botón aparte, nunca en la puntuación, nunca una corrección automática.",
       },
       {
         icon: "package",
@@ -2446,9 +2446,9 @@ const fr: TranslationTree = {
     toggleHide: "▲ Masquer les nouveautés",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Plus de langages couverts",
-        text: "En plus de JavaScript/TypeScript et SQL, les contrôles reconnaissent désormais aussi Python, Go, Java et PHP — même niveau de détail, testés sur du code réel.",
+        icon: "brain",
+        title: "Revue IA pour les bugs logiques",
+        text: "Un niveau d'IA à part, séparé des 55 contrôles — cherche des race conditions et des erreurs dans les contrôles d'autorisation qu'un pattern ne peut pas trouver seul. Toujours un bouton à part, jamais dans le score, jamais une correction automatique.",
       },
       {
         icon: "package",
@@ -2976,9 +2976,9 @@ const pt: TranslationTree = {
     toggleHide: "▲ Ocultar as novidades",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Mais linguagens cobertas",
-        text: "Além de JavaScript/TypeScript e SQL, os controlos agora também reconhecem Python, Go, Java e PHP — mesma profundidade, testados em código real.",
+        icon: "brain",
+        title: "Revisão AI para bugs de lógica",
+        text: "Um nível de IA à parte, separado das 55 verificações — procura race conditions e erros nos controlos de autorização que um padrão não consegue encontrar sozinho. Sempre um botão à parte, nunca na pontuação, nunca uma correção automática.",
       },
       {
         icon: "package",
@@ -3502,9 +3502,9 @@ const zh: TranslationTree = {
     toggleHide: "▲ 隐藏最新动态",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "覆盖更多语言",
-        text: "除了 JavaScript/TypeScript 和 SQL，检查项现在还能识别 Python、Go、Java 和 PHP——同样深入，并已在真实代码上测试过。",
+        icon: "brain",
+        title: "针对逻辑漏洞的 AI 审查",
+        text: "一个独立于 55 项检查之外的 AI 层——查找竞态条件和模式无法单独发现的授权逻辑错误。始终是独立的按钮，绝不计入评分，绝不自动修复。",
       },
       {
         icon: "package",
@@ -4031,9 +4031,9 @@ const hi: TranslationTree = {
     toggleHide: "▲ नई चीज़ें छिपाएं",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "और भाषाएं शामिल",
-        text: "JavaScript/TypeScript और SQL के अलावा, जांचें अब Python, Go, Java और PHP को भी पहचानती हैं — उतनी ही गहराई से, असली कोड पर टेस्ट किया गया।",
+        icon: "brain",
+        title: "लॉजिक बग के लिए AI समीक्षा",
+        text: "55 जांचों से अलग एक AI लेयर — रेस कंडीशन और ऑथराइज़ेशन लॉजिक की वे गलतियां ढूंढता है जिन्हें कोई पैटर्न अकेले नहीं ढूंढ सकता। हमेशा अलग बटन, कभी स्कोर में नहीं, कभी अपने आप सुधार नहीं।",
       },
       {
         icon: "package",
@@ -4561,9 +4561,9 @@ const ru: TranslationTree = {
     toggleHide: "▲ Скрыть обновления",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Больше языков",
-        text: "Помимо JavaScript/TypeScript и SQL, проверки теперь распознают и Python, Go, Java и PHP — с той же глубиной, протестированы на реальном коде.",
+        icon: "brain",
+        title: "Проверка ИИ для логических багов",
+        text: "Отдельный слой ИИ, отдельно от 55 проверок — ищет race condition и ошибки в логике авторизации, которые шаблон не может найти сам. Всегда своя кнопка, никогда не в оценке, никогда автоматическое исправление.",
       },
       {
         icon: "package",
@@ -5088,9 +5088,9 @@ const ar: TranslationTree = {
     toggleHide: "▲ إخفاء آخر التحديثات",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "المزيد من اللغات",
-        text: "إلى جانب JavaScript/TypeScript وSQL، تتعرف الفحوصات الآن أيضًا على Python وGo وJava وPHP — بنفس العمق، واختُبرت على كود حقيقي.",
+        icon: "brain",
+        title: "مراجعة بالذكاء الاصطناعي لأخطاء المنطق",
+        text: "طبقة ذكاء اصطناعي منفصلة عن الفحوصات الـ55 — تبحث عن race condition وأخطاء في منطق التفويض لا يستطيع أي نمط اكتشافها بمفرده. دائمًا زر منفصل، لا تُحتسب أبدًا في النتيجة، ولا تُصلح تلقائيًا أبدًا.",
       },
       {
         icon: "package",
@@ -5617,9 +5617,9 @@ const bn: TranslationTree = {
     toggleHide: "▲ নতুন তথ্য লুকান",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "আরও ভাষা কভার করা",
-        text: "JavaScript/TypeScript ও SQL ছাড়াও, পরীক্ষাগুলো এখন Python, Go, Java এবং PHP-ও চেনে — একই গভীরতায়, প্রকৃত কোডে পরীক্ষিত।",
+        icon: "brain",
+        title: "লজিক বাগের জন্য AI পর্যালোচনা",
+        text: "55টি পরীক্ষা থেকে আলাদা একটি AI লেয়ার — রেস কন্ডিশন এবং অথরাইজেশন লজিকের এমন ভুল খোঁজে যা কোনো প্যাটার্ন একা খুঁজে পায় না। সবসময় আলাদা বাটন, কখনো স্কোরে নয়, কখনো স্বয়ংক্রিয় সংশোধন নয়।",
       },
       {
         icon: "package",
@@ -6145,9 +6145,9 @@ const ur: TranslationTree = {
     toggleHide: "▲ نئی باتیں چھپائیں",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "مزید زبانیں شامل",
-        text: "JavaScript/TypeScript اور SQL کے علاوہ، جانچیں اب Python، Go، Java اور PHP کو بھی پہچانتی ہیں — اتنی ہی گہرائی سے، حقیقی کوڈ پر ٹیسٹ شدہ۔",
+        icon: "brain",
+        title: "لاجک بگز کے لیے AI جائزہ",
+        text: "55 جانچوں سے الگ ایک AI لیئر — ریس کنڈیشن اور اجازت کی منطق کی وہ غلطیاں تلاش کرتا ہے جنہیں کوئی پیٹرن اکیلے نہیں ڈھونڈ سکتا۔ ہمیشہ الگ بٹن، کبھی اسکور میں نہیں، کبھی خودکار اصلاح نہیں۔",
       },
       {
         icon: "package",
@@ -6675,9 +6675,9 @@ const id: TranslationTree = {
     toggleHide: "▲ Sembunyikan pembaruan",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Lebih banyak bahasa yang didukung",
-        text: "Selain JavaScript/TypeScript dan SQL, pemeriksaan kini juga mengenali Python, Go, Java dan PHP — kedalaman yang sama, diuji pada kode nyata.",
+        icon: "brain",
+        title: "Tinjauan AI untuk bug logika",
+        text: "Lapisan AI terpisah dari 55 pemeriksaan — mencari race condition dan kesalahan logika otorisasi yang tidak bisa ditemukan oleh pola saja. Selalu tombol terpisah, tidak pernah masuk skor, tidak pernah perbaikan otomatis.",
       },
       {
         icon: "package",
@@ -7205,9 +7205,9 @@ const de: TranslationTree = {
     toggleHide: "▲ Neuigkeiten ausblenden",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Mehr Sprachen abgedeckt",
-        text: "Neben JavaScript/TypeScript und SQL erkennen die Checks jetzt auch Python, Go, Java und PHP — gleiche Tiefe, getestet an echtem Code.",
+        icon: "brain",
+        title: "KI-Prüfung für Logikfehler",
+        text: "Eine eigene KI-Ebene, getrennt von den 55 Checks — sucht nach Race Conditions und Fehlern in der Autorisierungslogik, die ein Pattern allein nicht finden kann. Immer ein eigener Button, nie im Score, nie eine automatische Korrektur.",
       },
       {
         icon: "package",
@@ -7735,9 +7735,9 @@ const fi: TranslationTree = {
     toggleHide: "▲ Piilota uutiset",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Lisää kieliä katettu",
-        text: "JavaScript/TypeScriptin ja SQL:n lisäksi tarkistukset tunnistavat nyt myös Pythonin, Gon, Javan ja PHP:n — samalla syvyydellä, testattuna oikealla koodilla.",
+        icon: "brain",
+        title: "Tekoälytarkistus logiikkavirheille",
+        text: "Erillinen tekoälykerros, erillään 55 tarkistuksesta — etsii race conditioneja ja valtuutuslogiikan virheitä, joita kaava ei pysty löytämään yksin. Aina oma painike, ei koskaan pisteisiin, ei koskaan automaattinen korjaus.",
       },
       {
         icon: "package",
@@ -8265,9 +8265,9 @@ const nl: TranslationTree = {
     toggleHide: "▲ Verberg het nieuws",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Meer talen gedekt",
-        text: "Naast JavaScript/TypeScript en SQL herkennen de controles nu ook Python, Go, Java en PHP — dezelfde diepgang, getest op echte code.",
+        icon: "brain",
+        title: "AI-controle voor logicafouten",
+        text: "Een aparte AI-laag, los van de 55 controles — zoekt naar race conditions en fouten in de autorisatielogica die een patroon niet alleen kan vinden. Altijd een eigen knop, nooit in de score, nooit een automatische correctie.",
       },
       {
         icon: "package",
@@ -8795,9 +8795,9 @@ const pl: TranslationTree = {
     toggleHide: "▲ Ukryj nowości",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Więcej obsługiwanych języków",
-        text: "Oprócz JavaScript/TypeScript i SQL, kontrole rozpoznają teraz też Python, Go, Java i PHP — z taką samą dokładnością, przetestowane na prawdziwym kodzie.",
+        icon: "brain",
+        title: "Kontrola AI dla błędów logicznych",
+        text: "Osobna warstwa AI, oddzielona od 55 kontroli — szuka race conditions i błędów w logice autoryzacji, których żaden wzorzec nie znajdzie samodzielnie. Zawsze osobny przycisk, nigdy w wyniku, nigdy automatyczna poprawka.",
       },
       {
         icon: "package",
@@ -9325,9 +9325,9 @@ const sv: TranslationTree = {
     toggleHide: "▲ Dölj nyheterna",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Fler språk täcks",
-        text: "Förutom JavaScript/TypeScript och SQL känner kontrollerna nu också igen Python, Go, Java och PHP — samma djup, testade på riktig kod.",
+        icon: "brain",
+        title: "AI-granskning för logikfel",
+        text: "Ett separat AI-lager, skilt från de 55 kontrollerna — letar efter race conditions och fel i auktoriseringslogiken som ett mönster inte kan hitta på egen hand. Alltid en egen knapp, aldrig i poängen, aldrig en automatisk rättning.",
       },
       {
         icon: "package",
@@ -9855,9 +9855,9 @@ const da: TranslationTree = {
     toggleHide: "▲ Skjul nyhederne",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Flere sprog dækket",
-        text: "Ud over JavaScript/TypeScript og SQL genkender tjekkene nu også Python, Go, Java og PHP — samme dybde, testet på rigtig kode.",
+        icon: "brain",
+        title: "AI-gennemgang for logikfejl",
+        text: "Et separat AI-lag, adskilt fra de 55 tjek — leder efter race conditions og fejl i autorisationslogikken, som et mønster ikke kan finde alene. Altid en separat knap, aldrig i scoren, aldrig en automatisk rettelse.",
       },
       {
         icon: "package",
@@ -10385,9 +10385,9 @@ const nb: TranslationTree = {
     toggleHide: "▲ Skjul det nyeste",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Flere språk dekket",
-        text: "I tillegg til JavaScript/TypeScript og SQL gjenkjenner sjekkene nå også Python, Go, Java og PHP — samme dybde, testet på ekte kode.",
+        icon: "brain",
+        title: "AI-gjennomgang for logikkfeil",
+        text: "Et eget AI-lag, atskilt fra de 55 sjekkene — leter etter race conditions og feil i autorisasjonslogikken som et mønster ikke kan finne alene. Alltid en egen knapp, aldri i poengsummen, aldri en automatisk retting.",
       },
       {
         icon: "package",
@@ -10915,9 +10915,9 @@ const tr: TranslationTree = {
     toggleHide: "▲ Güncellemeleri gizle",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Daha fazla dil desteği",
-        text: "JavaScript/TypeScript ve SQL'in yanı sıra, kontroller artık Python, Go, Java ve PHP'yi de tanıyor — aynı derinlikte, gerçek kod üzerinde test edildi.",
+        icon: "brain",
+        title: "Mantık hataları için AI incelemesi",
+        text: "55 kontrolden ayrı bir AI katmanı — bir desenin tek başına bulamayacağı race condition'ları ve yetkilendirme mantığı hatalarını arar. Her zaman ayrı bir buton, asla puana dahil değil, asla otomatik düzeltme değil.",
       },
       {
         icon: "package",
@@ -11445,9 +11445,9 @@ const uk: TranslationTree = {
     toggleHide: "▲ Сховати новини",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "Більше мов охоплено",
-        text: "Окрім JavaScript/TypeScript та SQL, перевірки тепер розпізнають і Python, Go, Java та PHP — з тією самою глибиною, протестовані на реальному коді.",
+        icon: "brain",
+        title: "Перевірка ШІ для логічних помилок",
+        text: "Окремий шар ШІ, відокремлений від 55 перевірок — шукає race condition та помилки в логіці авторизації, які шаблон не може знайти самостійно. Завжди окрема кнопка, ніколи не в оцінці, ніколи автоматичне виправлення.",
       },
       {
         icon: "package",
@@ -11975,9 +11975,9 @@ const ja: TranslationTree = {
     toggleHide: "▲ アップデートを隠す",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "対応言語の拡大",
-        text: "JavaScript/TypeScriptとSQLに加えて、チェックはPython、Go、Java、PHPも認識するようになりました — 同じ深さで、実際のコードでテスト済みです。",
+        icon: "brain",
+        title: "ロジックバグのためのAIレビュー",
+        text: "55のチェックとは別の、独立したAIレイヤーです。パターンだけでは見つけられない競合状態（race condition）や認可ロジックの誤りを探します。常に専用のボタンで、スコアに加算されることはなく、自動修正されることもありません。",
       },
       {
         icon: "package",
@@ -12505,9 +12505,9 @@ const ko: TranslationTree = {
     toggleHide: "▲ 업데이트 숨기기",
     roadmap: [
       {
-        icon: "puzzle",
-        title: "더 많은 언어 지원",
-        text: "JavaScript/TypeScript와 SQL 외에도, 검사는 이제 Python, Go, Java, PHP도 인식합니다 — 동일한 깊이로, 실제 코드에서 테스트했습니다.",
+        icon: "brain",
+        title: "논리 버그를 위한 AI 검토",
+        text: "55개의 검사와는 별도인 독립적인 AI 레이어입니다. 패턴만으로는 찾을 수 없는 경쟁 상태(race condition)와 권한 로직 오류를 찾습니다. 항상 별도의 버튼이며, 점수에 포함되지 않고, 자동으로 수정되지도 않습니다.",
       },
       {
         icon: "package",
