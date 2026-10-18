@@ -62,3 +62,19 @@ export interface AnalysisResult {
   findings: Finding[];
   summary: Record<Severity, number>;
 }
+
+/** Categorie di bug di logica che l'AI (non il motore a pattern) prova a trovare — vedi src/server/aiInsights.ts. */
+export type AiInsightCategory = "race-condition" | "authorization-logic";
+
+/**
+ * Un sospetto trovato dal livello AI aggiuntivo (non dal motore
+ * deterministico): mai una certezza, sempre da verificare — per questo non
+ * ha severity/confidence/fix come Finding, e non contribuisce mai al
+ * punteggio né viene mai corretto in automatico.
+ */
+export interface AiInsight {
+  category: AiInsightCategory;
+  title: string;
+  file: string;
+  explanation: string;
+}

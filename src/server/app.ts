@@ -24,6 +24,7 @@ import { planTrialRouter } from "./routes/planTrial.js";
 import { teamRouter } from "./routes/team.js";
 import { sentinelRouter } from "./routes/sentinel.js";
 import { chatRouter } from "./routes/chat.js";
+import { aiInsightsRouter } from "./routes/aiInsights.js";
 
 export function createApp(): Express {
   const app = express();
@@ -71,6 +72,7 @@ export function createApp(): Express {
   app.use(teamRouter);
   app.use(sentinelRouter);
   app.use(chatRouter);
+  app.use(aiInsightsRouter);
 
   // Va montato dopo tutte le rotte (è lì che intercetta i loro errori) e
   // prima del nostro gestore finale, che chiude sempre la risposta — se

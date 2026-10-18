@@ -16,6 +16,17 @@ export const DAILY_CHAT_MESSAGE_LIMIT: Record<Plan, number> = {
 };
 
 /**
+ * Revisioni AI aggiuntive al giorno (punto 14): più costosa di un messaggio
+ * di chat (manda file interi a Claude Sonnet, non solo testo breve), quindi
+ * un tetto più basso — è un controllo via pulsante, non una conversazione.
+ */
+export const DAILY_AI_INSIGHT_LIMIT: Record<Plan, number> = {
+  free: 0,
+  pro: 5,
+  team: 15,
+};
+
+/**
  * Il piano che conta davvero: il piano pagato, salvo una prova gratuita del
  * Pro ancora attiva per chi è sul piano free — non declassa mai un piano
  * già pagato (pro/team restano tali indipendentemente dalla prova).

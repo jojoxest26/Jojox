@@ -1,4 +1,4 @@
-import type { AnalysisResult, Finding, SourceFile, Severity } from "../../../src/types.js";
+import type { AiInsight, AnalysisResult, Finding, SourceFile, Severity } from "../../../src/types.js";
 import type { Lang } from "../i18n/translations.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -10,6 +10,17 @@ export interface AnalysisHistoryEntry {
   score: number;
   summary: Record<Severity, number>;
   created_at: string;
+}
+
+/** Come Error, ma porta con sé lo status e il flag requiresPlan — serve ai chiamanti che devono distinguere "serve un piano superiore" da un errore qualunque, senza dover riparsare il messaggio. */
+export class ApiError extends Error {
+  status: number;
+  requiresPlan: boolean;
+  constructor(message: string, status: number, requiresPlan: boolean) {
+    super(message);
+    this.status = status;
+    this.requiresPlan = requiresPlan;
+  }
 }
 
 async function apiFetch<T>(path: string, options: RequestInit & { accessToken?: string } = {}): Promise<T> {
@@ -25,7 +36,7 @@ async function apiFetch<T>(path: string, options: RequestInit & { accessToken?: 
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? `Richiesta fallita (${response.status})`);
+    throw new ApiError(body.error ?? `Richiesta fallita (${response.status})`, response.status, body.requiresPlan === true);
   }
 
   return response.json() as Promise<T>;
@@ -104,6 +115,19 @@ export async function fetchChatHistory(accessToken: string): Promise<ChatMessage
 export async function fetchHistory(accessToken: string): Promise<AnalysisHistoryEntry[]> {
   const { analyses } = await apiFetch<{ analyses: AnalysisHistoryEntry[] }>("/api/analyses", { accessToken });
   return analyses;
+}
+
+/**
+ * Punto 14: revisione AI aggiuntiva, separata dai 55 controlli deterministici
+ * — cerca solo race condition ed errori nei controlli di autorizzazione, mai
+ * in automatico (un pulsante a parte), mai contribuisce al punteggio.
+ */
+export function fetchAiInsights(files: SourceFile[], accessToken: string): Promise<{ insights: AiInsight[] }> {
+  return apiFetch<{ insights: AiInsight[] }>("/api/ai-insights", {
+    method: "POST",
+    body: JSON.stringify({ files }),
+    accessToken,
+  });
 }
 
 export function joinWaitlist(email: string): Promise<{ joined: boolean }> {

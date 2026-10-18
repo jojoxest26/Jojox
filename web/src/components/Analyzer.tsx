@@ -7,6 +7,7 @@ import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTEN
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
 import { FindingsList } from "./FindingsList.js";
+import { AiInsightsSection } from "./AiInsightsSection.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";
 
@@ -228,6 +229,8 @@ export function Analyzer({
       )}
 
       {result && <FindingsList result={result} autofix={autofix} />}
+
+      {result && session && <AiInsightsSection files={files} session={session} />}
     </section>
   );
 }
