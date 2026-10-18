@@ -5,7 +5,7 @@ import { scanDependencies } from "../../depscan.js";
 import { computeScore, summarizeBySeverity } from "../../scoring.js";
 import { optionalAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { getPlanForUser, MONTHLY_ANALYSIS_LIMIT, startOfCurrentMonthUtc } from "../plan.js";
+import { checkAndConsumeAnalysisQuota } from "../analysisQuota.js";
 
 const MAX_FILES = 300;
 const MAX_FILE_BYTES = 200_000;
@@ -32,20 +32,20 @@ analyzeRouter.post("/api/analyze", optionalAuth, async (req: AuthedRequest, res)
   }
 
   if (req.userId) {
-    const plan = await getPlanForUser(req.userId);
-    if (plan === "free") {
-      const { count } = await supabaseAdmin
-        .from("analyses")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", req.userId)
-        .gte("created_at", startOfCurrentMonthUtc().toISOString());
-
-      if ((count ?? 0) >= MONTHLY_ANALYSIS_LIMIT) {
+    const quota = await checkAndConsumeAnalysisQuota(req.userId);
+    if (!quota.allowed) {
+      if (quota.reason === "free_limit") {
         res.status(429).json({
-          error: `Limite di ${MONTHLY_ANALYSIS_LIMIT} analisi mensili raggiunto per il piano free`,
+          error: "Limite di analisi mensili raggiunto per il piano free — passa a Pro per continuare",
+          requiresPlan: true,
         });
         return;
       }
+      res.status(402).json({
+        error: "Limite mensile di analisi raggiunto — acquista un pacchetto extra per continuare",
+        creditsExhausted: true,
+      });
+      return;
     }
   }
 

@@ -148,6 +148,35 @@ stripeRouter.post("/api/stripe/create-audit-checkout-session", requireAuth, asyn
   }
 });
 
+stripeRouter.post("/api/stripe/create-analysis-pack-checkout-session", requireAuth, async (req: AuthedRequest, res) => {
+  if (!env.stripePriceIdAnalysisPack) {
+    res.status(503).json({ error: "Pagamenti non ancora configurati" });
+    return;
+  }
+
+  try {
+    const customerId = await getOrCreateStripeCustomer(req.userId!);
+    const session = await stripeRequest<StripeCheckoutSession>("POST", "/checkout/sessions", {
+      customer: customerId,
+      mode: "payment",
+      line_items: [{ price: env.stripePriceIdAnalysisPack, quantity: 1 }],
+      // Pagamento singolo, non un piano: il webhook usa questi metadata per
+      // capire che deve accreditare un pacchetto di analisi, non aggiornare un abbonamento.
+      metadata: { supabase_user_id: req.userId!, product: "analysis_pack" },
+      success_url: `${env.appUrl}/?analysis_pack=success`,
+      cancel_url: `${env.appUrl}/?analysis_pack=cancel`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    if (err instanceof StripeNotConfiguredError) {
+      res.status(503).json({ error: err.message });
+      return;
+    }
+    console.error("errore nella creazione della sessione di checkout per il pacchetto di analisi", err);
+    res.status(500).json({ error: "Errore nella creazione del pagamento" });
+  }
+});
+
 stripeRouter.post("/api/stripe/create-portal-session", requireAuth, async (req: AuthedRequest, res) => {
   const { data: profile } = await supabaseAdmin
     .from("profiles")

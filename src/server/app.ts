@@ -19,6 +19,7 @@ import { stripeRouter } from "./routes/stripe.js";
 import { profileRouter } from "./routes/profile.js";
 import { githubRouter } from "./routes/github.js";
 import { auditCreditsRouter } from "./routes/auditCredits.js";
+import { analysisCreditsRouter } from "./routes/analysisCredits.js";
 import { analyzeAuditRouter } from "./routes/analyzeAudit.js";
 import { planTrialRouter } from "./routes/planTrial.js";
 import { teamRouter } from "./routes/team.js";
@@ -67,6 +68,7 @@ export function createApp(): Express {
   app.use(profileRouter);
   app.use(githubRouter);
   app.use(auditCreditsRouter);
+  app.use(analysisCreditsRouter);
   app.use(analyzeAuditRouter);
   app.use(planTrialRouter);
   app.use(teamRouter);

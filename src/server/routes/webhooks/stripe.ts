@@ -5,7 +5,7 @@ import { planForPriceId } from "../../stripe/plans.js";
 import { stripeRequest, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../../stripe/client.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import { reportError } from "../../sentry.js";
-import type { Plan } from "../../plan.js";
+import { ANALYSIS_PACK_SIZE, type Plan } from "../../plan.js";
 
 interface SubscriptionEventObject {
   customer: string;
@@ -98,19 +98,27 @@ async function setPlanForCustomer(stripeCustomerId: string, plan: Plan): Promise
 }
 
 /**
- * Pagamento singolo per un Full Site Audit (mode "payment", non "subscription").
- * Riconosciuto dai metadata impostati alla creazione della sessione — un
- * abbonamento normale non ha mai product: "audit" nei suoi metadata.
+ * Pagamento singolo (mode "payment", non "subscription"), riconosciuto dai
+ * metadata impostati alla creazione della sessione — un abbonamento normale
+ * non ha mai `product` nei suoi metadata.
  */
 async function handleCheckoutCompleted(session: CheckoutSessionEventObject): Promise<void> {
-  if (session.mode !== "payment" || session.metadata?.product !== "audit") return;
+  if (session.mode !== "payment") return;
 
   const userId = session.metadata?.supabase_user_id;
   if (!userId) return;
 
+  if (session.metadata?.product === "audit") {
+    await grantAuditCredit(userId, session.id);
+  } else if (session.metadata?.product === "analysis_pack") {
+    await grantAnalysisPack(userId, session.id);
+  }
+}
+
+async function grantAuditCredit(userId: string, sessionId: string): Promise<void> {
   const { error } = await supabaseAdmin.from("audit_credits").insert({
     user_id: userId,
-    stripe_checkout_session_id: session.id,
+    stripe_checkout_session_id: sessionId,
   });
 
   // Stripe dichiara esplicitamente che lo stesso evento webhook può arrivare
@@ -121,6 +129,32 @@ async function handleCheckoutCompleted(session: CheckoutSessionEventObject): Pro
   // 500 e Stripe riprova, così un fallimento di rete o del database non
   // lascia un cliente che ha pagato senza il suo credito.
   if (error && error.code !== "23505") {
-    throw new Error(`impossibile accreditare il Full Site Audit per la sessione ${session.id}: ${error.message}`);
+    throw new Error(`impossibile accreditare il Full Site Audit per la sessione ${sessionId}: ${error.message}`);
+  }
+}
+
+/**
+ * Un pacchetto crea più crediti insieme (ANALYSIS_PACK_SIZE), non uno solo
+ * come l'audit: la deduplica (stesso ragionamento del codice 23505 sopra)
+ * vive sulla riga "acquisto" — se quella non si crea perché già esiste,
+ * non creiamo nemmeno i crediti che ne deriverebbero, evitando un doppio
+ * accredito se Stripe consegna lo stesso evento due volte.
+ */
+async function grantAnalysisPack(userId: string, sessionId: string): Promise<void> {
+  const { data: purchase, error } = await supabaseAdmin
+    .from("analysis_credit_purchases")
+    .insert({ user_id: userId, stripe_checkout_session_id: sessionId, credits: ANALYSIS_PACK_SIZE })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") return;
+    throw new Error(`impossibile registrare l'acquisto del pacchetto di analisi per la sessione ${sessionId}: ${error.message}`);
+  }
+
+  const rows = Array.from({ length: ANALYSIS_PACK_SIZE }, () => ({ user_id: userId, purchase_id: purchase.id }));
+  const { error: creditsError } = await supabaseAdmin.from("analysis_credits").insert(rows);
+  if (creditsError) {
+    throw new Error(`impossibile creare i crediti del pacchetto di analisi per la sessione ${sessionId}: ${creditsError.message}`);
   }
 }

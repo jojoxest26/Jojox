@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/analyze.js";
-import { analyzeViaApi, guestAnalyzeViaApi } from "../lib/api.js";
+import { analyzeViaApi, guestAnalyzeViaApi, createAnalysisPackCheckoutSession, ApiError } from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
@@ -37,6 +37,8 @@ export function Analyzer({
   const [autofix, setAutofix] = useState<AutofixResult | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditsExhausted, setCreditsExhausted] = useState(false);
+  const [buyingPack, setBuyingPack] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [guestUsed, setGuestUsed] = useState(() => localStorage.getItem(GUEST_USED_KEY) === "1");
 
@@ -51,6 +53,7 @@ export function Analyzer({
     onResult?.(null);
     setAutofix(null);
     setError(null);
+    setCreditsExhausted(false);
   }, [onResult]);
 
   const loadFromDrop = useCallback(async (dataTransfer: DataTransfer) => {
@@ -62,12 +65,29 @@ export function Analyzer({
     onResult?.(null);
     setAutofix(null);
     setError(null);
+    setCreditsExhausted(false);
   }, [onResult]);
+
+  async function buyAnalysisPack() {
+    if (!session) {
+      openLogin();
+      return;
+    }
+    setBuyingPack(true);
+    try {
+      const { url } = await createAnalysisPackCheckoutSession(session.access_token);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.analyzer.errorPurchase);
+      setBuyingPack(false);
+    }
+  }
 
   async function runAnalysis() {
     if (files.length === 0) return;
     setAnalyzing(true);
     setError(null);
+    setCreditsExhausted(false);
     try {
       if (session) {
         const analysisResult = await analyzeViaApi(files, session.access_token);
@@ -93,7 +113,12 @@ export function Analyzer({
       onResult?.(guestResult.result);
       setAutofix(applyAutofixes(files));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.analyzer.errorGeneric);
+      if (err instanceof ApiError && err.creditsExhausted) {
+        setCreditsExhausted(true);
+        setError(t.analyzer.creditsExhaustedBody);
+      } else {
+        setError(err instanceof Error ? err.message : t.analyzer.errorGeneric);
+      }
     } finally {
       setAnalyzing(false);
     }
@@ -172,6 +197,13 @@ export function Analyzer({
       )}
 
       {error && <p style={{ color: "var(--critical)", textAlign: "center", marginTop: "0.75rem" }}>{error}</p>}
+      {creditsExhausted && (
+        <div style={{ textAlign: "center", marginTop: "0.75rem" }}>
+          <button type="button" className="btn btn-primary hard-border hard-shadow-sm" disabled={buyingPack} onClick={buyAnalysisPack}>
+            {buyingPack ? t.analyzer.buyingPack : t.analyzer.buyPackCta}
+          </button>
+        </div>
+      )}
 
       {result && autofix && (
         <div className="card autofix-card">
@@ -220,6 +252,7 @@ export function Analyzer({
               onResult?.(null);
               setAutofix(null);
               setError(null);
+              setCreditsExhausted(false);
               document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
             }}
           >

@@ -12,14 +12,16 @@ export interface AnalysisHistoryEntry {
   created_at: string;
 }
 
-/** Come Error, ma porta con sé lo status e il flag requiresPlan — serve ai chiamanti che devono distinguere "serve un piano superiore" da un errore qualunque, senza dover riparsare il messaggio. */
+/** Come Error, ma porta con sé lo status e i flag requiresPlan/creditsExhausted — servono ai chiamanti che devono distinguere "serve un piano superiore" o "servono crediti extra" da un errore qualunque, senza dover riparsare il messaggio. */
 export class ApiError extends Error {
   status: number;
   requiresPlan: boolean;
-  constructor(message: string, status: number, requiresPlan: boolean) {
+  creditsExhausted: boolean;
+  constructor(message: string, status: number, requiresPlan: boolean, creditsExhausted = false) {
     super(message);
     this.status = status;
     this.requiresPlan = requiresPlan;
+    this.creditsExhausted = creditsExhausted;
   }
 }
 
@@ -36,7 +38,12 @@ async function apiFetch<T>(path: string, options: RequestInit & { accessToken?: 
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new ApiError(body.error ?? `Richiesta fallita (${response.status})`, response.status, body.requiresPlan === true);
+    throw new ApiError(
+      body.error ?? `Richiesta fallita (${response.status})`,
+      response.status,
+      body.requiresPlan === true,
+      body.creditsExhausted === true
+    );
   }
 
   return response.json() as Promise<T>;
@@ -201,6 +208,20 @@ export function createAuditCheckoutSession(accessToken: string): Promise<{ url: 
 /** Quanti Full Site Audit pagati e non ancora usati ha l'utente. */
 export async function fetchAuditCredits(accessToken: string): Promise<number> {
   const { available } = await apiFetch<{ available: number }>("/api/audit-credits", { accessToken });
+  return available;
+}
+
+/** Crea una sessione di Stripe Checkout a pagamento singolo per un pacchetto di analisi extra — non un abbonamento. */
+export function createAnalysisPackCheckoutSession(accessToken: string): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-analysis-pack-checkout-session", {
+    method: "POST",
+    accessToken,
+  });
+}
+
+/** Quante analisi extra acquistate (oltre la quota mensile del piano) ha ancora disponibili l'utente. */
+export async function fetchAnalysisCredits(accessToken: string): Promise<number> {
+  const { available } = await apiFetch<{ available: number }>("/api/analysis-credits", { accessToken });
   return available;
 }
 

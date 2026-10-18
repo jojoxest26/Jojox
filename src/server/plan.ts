@@ -2,7 +2,26 @@ import { supabaseAdmin } from "./db/supabase.js";
 
 export type Plan = "free" | "pro" | "team";
 
-export const MONTHLY_ANALYSIS_LIMIT = 5;
+/**
+ * Analisi incluse al mese per piano. Pro/Team erano "illimitate" — ora un
+ * tetto generoso ma finito: ogni push su un repository collegato genera
+ * un'analisi automatica, quindi senza limite i costi (scansione dipendenze
+ * incluse) crescono con l'uso senza alcun freno. Per un piano Team il conto
+ * è condiviso tra tutti i membri (vedi checkAndConsumeAnalysisQuota), come
+ * storico e repository.
+ */
+export const MONTHLY_ANALYSIS_LIMIT: Record<Plan, number> = {
+  free: 5,
+  pro: 100,
+  team: 500,
+};
+
+/**
+ * Quante analisi extra sblocca un pacchetto acquistato una tantum, per chi
+ * supera la quota mensile inclusa (vedi analysisQuota.ts) — pensato per non
+ * bloccare mai davvero un cliente pagante fino al mese successivo.
+ */
+export const ANALYSIS_PACK_SIZE = 50;
 
 /**
  * Messaggi di chat al giorno per piano — ogni messaggio è una chiamata a

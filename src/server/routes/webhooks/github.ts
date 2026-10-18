@@ -9,6 +9,7 @@ import { supabaseAdmin } from "../../db/supabase.js";
 import { notifySlack } from "../../slack/notify.js";
 import { notifyEmail, buildAlertEmailHtml } from "../../email/notify.js";
 import { getPlanForUser } from "../../plan.js";
+import { checkAndConsumeAnalysisQuota } from "../../analysisQuota.js";
 import { mapWithConcurrency } from "../../util/concurrency.js";
 import { reportError } from "../../sentry.js";
 import { excludeSelfScanFixtures } from "../../util/selfScanFixtures.js";
@@ -178,6 +179,29 @@ async function handlePullRequest(body: PullRequestPayload): Promise<void> {
         title: "Monitoraggio continuo disponibile con il piano Pro",
         summary:
           "Questo repository ha la GitHub App di JoJoX installata, ma il monitoraggio automatico a ogni pull request richiede il piano Pro o Team. Passa a un piano a pagamento su jojox.it per attivarlo qui.",
+      },
+    });
+    return;
+  }
+
+  // Anche il monitoraggio automatico conta ai fini della quota mensile di
+  // analisi del piano (vedi analysisQuota.ts): senza questo controllo un
+  // repository con push frequenti aggirerebbe del tutto il tetto introdotto
+  // per l'analisi manuale, dato che installed_by è garantito qui (il ramo
+  // "free" sopra è l'unico caso in cui può mancare).
+  const quota = await checkAndConsumeAnalysisQuota(installationForPlan!.installed_by!);
+  if (!quota.allowed) {
+    await octokit.request("POST /repos/{owner}/{repo}/check-runs", {
+      owner,
+      repo,
+      name: "JoJoX security check",
+      head_sha: headSha,
+      status: "completed",
+      conclusion: "neutral",
+      output: {
+        title: "Limite mensile di analisi raggiunto",
+        summary:
+          "Questo account ha esaurito le analisi incluse nel piano per questo mese. Acquista un pacchetto extra su jojox.it per riattivare il monitoraggio automatico subito, oppure aspetta il mese prossimo.",
       },
     });
     return;
