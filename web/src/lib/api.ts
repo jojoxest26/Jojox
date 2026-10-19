@@ -219,10 +219,16 @@ export function createAnalysisPackCheckoutSession(accessToken: string): Promise<
   });
 }
 
-/** Quante analisi extra acquistate (oltre la quota mensile del piano) ha ancora disponibili l'utente. */
-export async function fetchAnalysisCredits(accessToken: string): Promise<number> {
-  const { available } = await apiFetch<{ available: number }>("/api/analysis-credits", { accessToken });
-  return available;
+export interface AnalysisUsage {
+  plan: "free" | "pro" | "team";
+  monthlyLimit: number;
+  usedThisMonth: number;
+  extraCreditsAvailable: number;
+}
+
+/** Quante analisi ha già usato l'utente questo mese rispetto al tetto del piano, e quanti crediti extra acquistati gli restano. */
+export function fetchAnalysisUsage(accessToken: string): Promise<AnalysisUsage> {
+  return apiFetch<AnalysisUsage>("/api/analysis-usage", { accessToken });
 }
 
 export interface GithubTarget {

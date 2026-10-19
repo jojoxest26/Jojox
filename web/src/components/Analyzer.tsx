@@ -1,8 +1,15 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/analyze.js";
-import { analyzeViaApi, guestAnalyzeViaApi, createAnalysisPackCheckoutSession, ApiError } from "../lib/api.js";
+import {
+  analyzeViaApi,
+  guestAnalyzeViaApi,
+  createAnalysisPackCheckoutSession,
+  fetchAnalysisUsage,
+  ApiError,
+  type AnalysisUsage,
+} from "../lib/api.js";
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
@@ -39,8 +46,23 @@ export function Analyzer({
   const [error, setError] = useState<string | null>(null);
   const [creditsExhausted, setCreditsExhausted] = useState(false);
   const [buyingPack, setBuyingPack] = useState(false);
+  const [usage, setUsage] = useState<AnalysisUsage | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [guestUsed, setGuestUsed] = useState(() => localStorage.getItem(GUEST_USED_KEY) === "1");
+
+  const refreshUsage = useCallback(() => {
+    if (!session) {
+      setUsage(null);
+      return;
+    }
+    fetchAnalysisUsage(session.access_token)
+      .then(setUsage)
+      .catch(() => {});
+  }, [session]);
+
+  useEffect(() => {
+    refreshUsage();
+  }, [refreshUsage]);
 
   const loadFiles = useCallback(async (fileList: FileList) => {
     const entries = Array.from(fileList)
@@ -97,6 +119,7 @@ export function Analyzer({
         // inviata al server, anche se l'analisi lo è.
         setAutofix(applyAutofixes(files));
         onAnalysisSaved?.();
+        refreshUsage();
         return;
       }
 
@@ -130,6 +153,22 @@ export function Analyzer({
     <section className="analyzer container" id="analyzer">
       <p className="section-eyebrow">{t.analyzer.sectionEyebrow}</p>
       <h2 className="section-title">{t.analyzer.sectionTitle}</h2>
+      {usage && (
+        <p className="analyzer-usage">
+          {interpolate(t.analyzer.usageCount, { used: String(usage.usedThisMonth), limit: String(usage.monthlyLimit) })}
+          {usage.extraCreditsAvailable > 0 && (
+            <> · {interpolate(t.analyzer.usageExtra, { count: String(usage.extraCreditsAvailable) })}</>
+          )}
+          {usage.plan !== "free" && (
+            <>
+              {" · "}
+              <button type="button" className="analyzer-usage-buy" disabled={buyingPack} onClick={buyAnalysisPack}>
+                {buyingPack ? t.analyzer.buyingPack : t.analyzer.buyPackCta}
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {showGate ? (
         <div className="card" style={{ padding: "2.5rem 1.5rem", textAlign: "center" }}>
           <strong>{t.analyzer.gateTitle}</strong>

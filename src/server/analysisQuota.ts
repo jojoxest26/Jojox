@@ -1,10 +1,35 @@
 import { supabaseAdmin } from "./db/supabase.js";
-import { getPlanForUser, MONTHLY_ANALYSIS_LIMIT, startOfCurrentMonthUtc } from "./plan.js";
+import { getPlanForUser, MONTHLY_ANALYSIS_LIMIT, startOfCurrentMonthUtc, type Plan } from "./plan.js";
 import { getTeamUserIds } from "./team.js";
 
 export type AnalysisQuotaResult =
   | { allowed: true }
   | { allowed: false; reason: "free_limit" | "no_credits" };
+
+export interface AnalysisUsage {
+  plan: Plan;
+  monthlyLimit: number;
+  usedThisMonth: number;
+  extraCreditsAvailable: number;
+}
+
+async function monthlyAnalysisCount(teamUserIds: string[]): Promise<number> {
+  const { count } = await supabaseAdmin
+    .from("analyses")
+    .select("id", { count: "exact", head: true })
+    .in("user_id", teamUserIds)
+    .gte("created_at", startOfCurrentMonthUtc().toISOString());
+  return count ?? 0;
+}
+
+async function unusedCreditsCount(teamUserIds: string[]): Promise<number> {
+  const { count } = await supabaseAdmin
+    .from("analysis_credits")
+    .select("id", { count: "exact", head: true })
+    .in("user_id", teamUserIds)
+    .eq("status", "unused");
+  return count ?? 0;
+}
 
 /**
  * Verifica (ed eventualmente consuma un credito extra acquistato) la quota
@@ -20,13 +45,8 @@ export async function checkAndConsumeAnalysisQuota(userId: string): Promise<Anal
   const plan = await getPlanForUser(userId);
   const teamUserIds = plan === "team" ? await getTeamUserIds(userId) : [userId];
 
-  const { count } = await supabaseAdmin
-    .from("analyses")
-    .select("id", { count: "exact", head: true })
-    .in("user_id", teamUserIds)
-    .gte("created_at", startOfCurrentMonthUtc().toISOString());
-
-  if ((count ?? 0) < MONTHLY_ANALYSIS_LIMIT[plan]) {
+  const used = await monthlyAnalysisCount(teamUserIds);
+  if (used < MONTHLY_ANALYSIS_LIMIT[plan]) {
     return { allowed: true };
   }
 
@@ -66,4 +86,21 @@ export async function checkAndConsumeAnalysisQuota(userId: string): Promise<Anal
   }
 
   return { allowed: true };
+}
+
+/**
+ * Sola lettura, nessun consumo — usata dal contatore nell'Analyzer per
+ * mostrare quanto resta della quota mensile e quanti crediti extra sono
+ * ancora disponibili, prima ancora di bloccarsi.
+ */
+export async function getAnalysisUsage(userId: string): Promise<AnalysisUsage> {
+  const plan = await getPlanForUser(userId);
+  const teamUserIds = plan === "team" ? await getTeamUserIds(userId) : [userId];
+
+  const [usedThisMonth, extraCreditsAvailable] = await Promise.all([
+    monthlyAnalysisCount(teamUserIds),
+    unusedCreditsCount(teamUserIds),
+  ]);
+
+  return { plan, monthlyLimit: MONTHLY_ANALYSIS_LIMIT[plan], usedThisMonth, extraCreditsAvailable };
 }
