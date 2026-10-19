@@ -64,6 +64,21 @@ export function Analyzer({
     refreshUsage();
   }, [refreshUsage]);
 
+  // Tornare a questa pagina con "indietro" del browser dopo aver aperto il
+  // checkout Stripe (senza completarlo, o dopo) ripristina il JS congelato
+  // dalla bfcache — senza questo, il pulsante resterebbe bloccato su
+  // "Apertura del pagamento..." per sempre, e il contatore non vedrebbe un
+  // eventuale acquisto nel frattempo.
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (!e.persisted) return;
+      setBuyingPack(false);
+      refreshUsage();
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [refreshUsage]);
+
   const loadFiles = useCallback(async (fileList: FileList) => {
     const entries = Array.from(fileList)
       .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
@@ -155,10 +170,7 @@ export function Analyzer({
       <h2 className="section-title">{t.analyzer.sectionTitle}</h2>
       {usage && (
         <p className="analyzer-usage">
-          {interpolate(t.analyzer.usageCount, { used: String(usage.usedThisMonth), limit: String(usage.monthlyLimit) })}
-          {usage.extraCreditsAvailable > 0 && (
-            <> · {interpolate(t.analyzer.usageExtra, { count: String(usage.extraCreditsAvailable) })}</>
-          )}
+          {interpolate(t.analyzer.usageCount, { used: String(usage.usedThisMonth), limit: String(usage.effectiveLimit) })}
           {usage.plan !== "free" && (
             <>
               {" · "}

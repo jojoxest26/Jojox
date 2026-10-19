@@ -224,6 +224,7 @@ export interface AnalysisUsage {
   monthlyLimit: number;
   usedThisMonth: number;
   extraCreditsAvailable: number;
+  effectiveLimit: number;
 }
 
 /** Quante analisi ha già usato l'utente questo mese rispetto al tetto del piano, e quanti crediti extra acquistati gli restano. */

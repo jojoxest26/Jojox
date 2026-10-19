@@ -11,6 +11,14 @@ export interface AnalysisUsage {
   monthlyLimit: number;
   usedThisMonth: number;
   extraCreditsAvailable: number;
+  /**
+   * Quante analisi ci si può ancora aspettare di fare in totale questo mese:
+   * il tetto del piano più i crediti extra ancora da consumare, più quelli
+   * già consumati questo mese (altrimenti, una volta iniziato a consumare
+   * crediti, "usedThisMonth" supera "monthlyLimit" e il totale sembrerebbe
+   * scendere invece che riflettere davvero quanto è stato comprato).
+   */
+  effectiveLimit: number;
 }
 
 async function monthlyAnalysisCount(teamUserIds: string[]): Promise<number> {
@@ -102,5 +110,9 @@ export async function getAnalysisUsage(userId: string): Promise<AnalysisUsage> {
     unusedCreditsCount(teamUserIds),
   ]);
 
-  return { plan, monthlyLimit: MONTHLY_ANALYSIS_LIMIT[plan], usedThisMonth, extraCreditsAvailable };
+  const monthlyLimit = MONTHLY_ANALYSIS_LIMIT[plan];
+  const creditsAlreadyConsumedThisMonth = Math.max(0, usedThisMonth - monthlyLimit);
+  const effectiveLimit = monthlyLimit + extraCreditsAvailable + creditsAlreadyConsumedThisMonth;
+
+  return { plan, monthlyLimit, usedThisMonth, extraCreditsAvailable, effectiveLimit };
 }
