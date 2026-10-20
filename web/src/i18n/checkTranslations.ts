@@ -2179,7 +2179,7 @@ variables:
       "Uma instrução ADD com um URL http/https descarrega um ficheiro da internet durante a build, sem verificação de integridade e com o conteúdo invisível no repositório. Se esse URL alguma vez for comprometido, a build inclui conteúdo arbitrário sem que ninguém repare apenas lendo o Dockerfile.",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<hash esperado>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
     "gitlab-ci-script-injection": {
@@ -2719,7 +2719,7 @@ variables:
       "一条带有 http/https URL 的 ADD 指令会在构建过程中从互联网下载文件，既没有完整性校验，内容在仓库中也看不到。一旦这个 URL 遭到攻陷，构建过程就会悄悄拉入任意内容，而仅凭阅读 Dockerfile 没有人能察觉到这一点。",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<预期哈希>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
     "gitlab-ci-script-injection": {
@@ -3259,7 +3259,7 @@ variables:
       "http/https URL वाला एक ADD इंस्ट्रक्शन बिल्ड के दौरान इंटरनेट से एक फ़ाइल डाउनलोड करता है, बिना किसी इंटीग्रिटी जाँच के और कंटेंट रिपॉज़िटरी में दिखे बिना। अगर वह URL कभी हैक हो जाए, तो बिल्ड मनमाना कंटेंट खींच लेता है, और सिर्फ़ Dockerfile पढ़ने भर से किसी को पता भी नहीं चलता।",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<अपेक्षित hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
     "gitlab-ci-script-injection": {
@@ -4294,7 +4294,7 @@ variables:
       "تعليمة ADD برابط http/https تُنزّل ملفًا من الإنترنت أثناء عملية البناء، دون أي تحقق من السلامة ودون أن يكون المحتوى مرئيًا في المستودع. إذا تم اختراق ذلك الرابط مستقبلاً، يدمج البناء محتوى عشوائيًا دون أن يلاحظ أحد ذلك بمجرد قراءة Dockerfile.",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<hash متوقع>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
   "k8s-privileged-container": {
@@ -7742,7 +7742,7 @@ router.post("/login", loginLimiter, loginHandler)`,
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
       after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\
-    && echo "<hash atteso>  /tmp/install.sh" | sha256sum -c -`,
+    && echo "<verwachte hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
   "vulnerable-dependency": (original) => ({
@@ -8779,7 +8779,7 @@ variables:
       "En ADD-instruktion med en http/https-URL laddar ner en fil från internet under builden, utan integritetskontroll och med innehållet osynligt i repot. Om den URL:en någonsin komprometteras drar builden in godtyckligt innehåll utan att någon märker det bara genom att läsa Dockerfilen.",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<förväntad hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
   "k8s-privileged-container": {
@@ -9902,7 +9902,7 @@ variables:
       "En ADD-instruksjon med en http/https-URL laster ned en fil fra internett under builden, uten integritetssjekk og med innholdet usynlig i repositoriet. Blir den URL-en noensinne kompromittert, trekker builden inn vilkårlig innhold uten at noen merker det bare ved å lese Dockerfilen.",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<forventet hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
   "vulnerable-dependency": (original) => ({
@@ -10388,7 +10388,7 @@ variables:
       "http/https URL'li bir ADD talimatı, build sırasında internetten bir dosya indiriyor, hiçbir bütünlük kontrolü olmadan ve içerik depoda görünmüyor. O URL bir gün ele geçirilirse, build hiç kimse Dockerfile'ı okuyarak fark etmeden rastgele içerik çeker.",
     fix: {
       before: `ADD https://example.com/install.sh /tmp/install.sh`,
-      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
+      after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<beklenen hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
   "docker-hardcoded-secret": {
