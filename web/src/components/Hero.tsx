@@ -83,6 +83,8 @@ export function Hero() {
         </span>
       </div>
 
+      <p className="hero-trial-note">{t.hero.guestNote}</p>
+
       <div className="herofoot">
         <div className="hero-stats">
           <div className="stat">
@@ -115,7 +117,6 @@ export function Hero() {
               {t.chat.toggleOpen}
             </a>
           </div>
-          <p className="hero-guest-note">{t.hero.guestNote}</p>
         </div>
       </div>
     </section>
