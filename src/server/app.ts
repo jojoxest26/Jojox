@@ -26,6 +26,7 @@ import { teamRouter } from "./routes/team.js";
 import { sentinelRouter } from "./routes/sentinel.js";
 import { chatRouter } from "./routes/chat.js";
 import { aiInsightsRouter } from "./routes/aiInsights.js";
+import { sarifImportRouter } from "./routes/sarifImport.js";
 
 export function createApp(): Express {
   const app = express();
@@ -55,6 +56,10 @@ export function createApp(): Express {
   // del parser generico, altrimenti quello con il limite più basso avrebbe
   // già troncato/rifiutato la richiesta.
   app.use("/api/analyze-audit", express.json({ limit: "20mb" }));
+  // Un report SARIF esportato da un altro strumento può essere molto più
+  // verboso del normale corpo JSON dell'API (metadati di ogni regola
+  // ripetuti per ogni risultato).
+  app.use("/api/sarif-import", express.json({ limit: "10mb" }));
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
@@ -75,6 +80,7 @@ export function createApp(): Express {
   app.use(sentinelRouter);
   app.use(chatRouter);
   app.use(aiInsightsRouter);
+  app.use(sarifImportRouter);
 
   // Va montato dopo tutte le rotte (è lì che intercetta i loro errori) e
   // prima del nostro gestore finale, che chiude sempre la risposta — se

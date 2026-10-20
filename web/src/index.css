@@ -2102,6 +2102,22 @@ body::after {
   color: var(--text);
 }
 
+/* ---------- switch to JoJoX (import SARIF) ---------- */
+.switch-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+.switch-page-cta {
+  text-align: center;
+  margin-top: 1.75rem;
+  padding: 1.75rem;
+}
+.switch-page-cta p {
+  color: var(--text-muted);
+  margin-bottom: 1.1rem;
+}
+
 /* ---------- legal pages (privacy / termini) ---------- */
 .legal-page {
   min-height: 100vh;

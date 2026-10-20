@@ -124,6 +124,54 @@ export async function fetchHistory(accessToken: string): Promise<AnalysisHistory
   return analyses;
 }
 
+export interface SarifFinding {
+  ruleId: string;
+  severity: Severity;
+  message: string;
+  file: string | null;
+  line: number | null;
+}
+
+export interface SarifImportResult {
+  toolName: string | null;
+  totalFindings: number;
+  returnedFindings: number;
+  bySeverity: Record<Severity, number>;
+  findings: SarifFinding[];
+}
+
+export type SarifImportErrorCode = "invalid_sarif" | "invalid_json" | "request_failed";
+export type SarifImportOutcome =
+  | { ok: true; result: SarifImportResult }
+  | { ok: false; errorCode: SarifImportErrorCode };
+
+/**
+ * Pagina "Passa a JoJoX" (punto 22, versione leggera): legge un report SARIF
+ * esportato da un altro strumento (Snyk Code, Semgrep, GitHub code
+ * scanning...). Pubblica, senza login — nessun credito consumato.
+ *
+ * Non passa da apiFetch: il backend risponde con un errorCode
+ * machine-readable (mai un messaggio già in italiano), perché è il
+ * frontend a dover scegliere la stringa tradotta nella lingua di chi
+ * visita il sito.
+ */
+export async function importSarifFile(sarifContent: string): Promise<SarifImportOutcome> {
+  const response = await fetch(`${API_URL}/api/sarif-import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sarif: sarifContent }),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const errorCode: SarifImportErrorCode =
+      body.errorCode === "invalid_json" || body.errorCode === "invalid_sarif" ? body.errorCode : "request_failed";
+    return { ok: false, errorCode };
+  }
+
+  return { ok: true, result: (await response.json()) as SarifImportResult };
+}
+
 /**
  * Punto 14: revisione AI aggiuntiva, separata dai 55 controlli deterministici
  * — cerca solo race condition ed errori nei controlli di autorizzazione, mai
