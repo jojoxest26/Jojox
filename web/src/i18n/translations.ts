@@ -1015,7 +1015,7 @@ const it: TranslationTree = {
     eyebrow: "Novità",
     title: "Controllo Completo del Sito",
     subtitle: "Hai un sito già online da un po'? Un controllo completo su tutto il progetto, una volta sola — non un abbonamento.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "pagamento singolo, non un abbonamento",
     features: [
       "Analizza l'intero progetto — frontend e backend insieme, non solo poche modifiche",
@@ -1568,7 +1568,7 @@ const en: TranslationTree = {
     eyebrow: "New",
     title: "Full Site Audit",
     subtitle: "Already have a site live for a while? A complete check on the whole project, once — not a subscription.",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "one-time payment, not a subscription",
     features: [
       "Scans the whole project — frontend and backend together, not just a few changes",
@@ -2121,7 +2121,7 @@ const es: TranslationTree = {
     eyebrow: "Novedad",
     title: "Auditoría Completa del Sitio",
     subtitle: "¿Ya tienes un sitio en producción desde hace tiempo? Una revisión completa de todo el proyecto, de una sola vez — no una suscripción.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "pago único, no una suscripción",
     features: [
       "Analiza todo el proyecto — frontend y backend juntos, no solo unos pocos cambios",
@@ -2674,7 +2674,7 @@ const fr: TranslationTree = {
     eyebrow: "Nouveau",
     title: "Audit Complet du Site",
     subtitle: "Vous avez déjà un site en ligne depuis un moment ? Un contrôle complet de tout le projet, une seule fois — pas un abonnement.",
-    priceLabel: "49 €",
+    priceLabel: "49,99 €",
     priceNote: "paiement unique, pas un abonnement",
     features: [
       "Analyse tout le projet — frontend et backend ensemble, pas juste quelques changements",
@@ -3227,7 +3227,7 @@ const pt: TranslationTree = {
     eyebrow: "Novidade",
     title: "Auditoria Completa do Site",
     subtitle: "Já tem um site online há algum tempo? Uma verificação completa a todo o projeto, uma única vez — não uma subscrição.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "pagamento único, não uma subscrição",
     features: [
       "Analisa o projeto inteiro — frontend e backend juntos, não só algumas alterações",
@@ -3776,7 +3776,7 @@ const zh: TranslationTree = {
     eyebrow: "新功能",
     title: "全站审计",
     subtitle: "网站已经上线一段时间了？对整个项目进行一次全面检查，仅此一次 — 不是订阅服务。",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "一次性付款，非订阅",
     features: [
       "分析整个项目——前端和后端一起，而不仅仅是部分改动",
@@ -4328,7 +4328,7 @@ const hi: TranslationTree = {
     eyebrow: "नया",
     title: "फुल साइट ऑडिट",
     subtitle: "आपकी साइट कुछ समय से लाइव है? पूरे प्रोजेक्ट की एक पूरी जांच, बस एक बार — सब्सक्रिप्शन नहीं।",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "एक बार का भुगतान, सब्सक्रिप्शन नहीं",
     features: [
       "पूरे प्रोजेक्ट का विश्लेषण — फ्रंटएंड और बैकएंड साथ में, सिर्फ़ कुछ बदलाव नहीं",
@@ -4881,7 +4881,7 @@ const ru: TranslationTree = {
     eyebrow: "Новое",
     title: "Полный аудит сайта",
     subtitle: "Ваш сайт уже какое-то время работает? Полная проверка всего проекта, один раз — не подписка.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "разовый платёж, не подписка",
     features: [
       "Анализирует весь проект — фронтенд и бэкенд вместе, а не только несколько изменений",
@@ -5431,7 +5431,7 @@ const ar: TranslationTree = {
     eyebrow: "جديد",
     title: "تدقيق كامل للموقع",
     subtitle: "هل موقعك يعمل منذ فترة؟ فحص كامل لكل المشروع، لمرة واحدة — وليس اشتراكًا.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "دفعة واحدة، وليس اشتراكًا",
     features: [
       "يحلّل المشروع بأكمله — الواجهة الأمامية والخلفية معًا، وليس بضعة تغييرات فقط",
@@ -5983,7 +5983,7 @@ const bn: TranslationTree = {
     eyebrow: "নতুন",
     title: "সম্পূর্ণ সাইট অডিট",
     subtitle: "আপনার সাইট কিছুদিন ধরে লাইভ আছে? পুরো প্রজেক্টের একটি সম্পূর্ণ পরীক্ষা, একবার মাত্র — সাবস্ক্রিপশন নয়।",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "একবার পেমেন্ট, সাবস্ক্রিপশন নয়",
     features: [
       "পুরো প্রজেক্ট বিশ্লেষণ করে — ফ্রন্টএন্ড ও ব্যাকএন্ড একসাথে, শুধু কয়েকটি পরিবর্তন নয়",
@@ -6534,7 +6534,7 @@ const ur: TranslationTree = {
     eyebrow: "نیا",
     title: "مکمل سائٹ آڈٹ",
     subtitle: "کیا آپ کی سائٹ کچھ عرصے سے لائیو ہے؟ پورے پراجیکٹ کی ایک مکمل جانچ، صرف ایک بار — سبسکرپشن نہیں۔",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "ایک بار کی ادائیگی، سبسکرپشن نہیں",
     features: [
       "پورے پراجیکٹ کا تجزیہ کرتا ہے — فرنٹ اینڈ اور بیک اینڈ ایک ساتھ، صرف چند تبدیلیاں نہیں",
@@ -7087,7 +7087,7 @@ const id: TranslationTree = {
     eyebrow: "Baru",
     title: "Audit Situs Lengkap",
     subtitle: "Sudah punya situs yang online sejak lama? Pemeriksaan lengkap untuk seluruh proyek, sekali saja — bukan langganan.",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "pembayaran sekali, bukan langganan",
     features: [
       "Menganalisis seluruh proyek — frontend dan backend bersama-sama, bukan hanya beberapa perubahan",
@@ -7640,7 +7640,7 @@ const de: TranslationTree = {
     eyebrow: "Neu",
     title: "Vollständiges Website-Audit",
     subtitle: "Deine Website ist schon eine Weile online? Eine vollständige Prüfung des gesamten Projekts, einmalig — kein Abo.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "einmalige Zahlung, kein Abo",
     features: [
       "Analysiert das gesamte Projekt — Frontend und Backend zusammen, nicht nur ein paar Änderungen",
@@ -8193,7 +8193,7 @@ const fi: TranslationTree = {
     eyebrow: "Uutta",
     title: "Täysi sivustoauditointi",
     subtitle: "Onko sivustosi ollut jo jonkin aikaa verkossa? Täysi tarkistus koko projektille, kerran — ei tilaus.",
-    priceLabel: "49 €",
+    priceLabel: "49,99 €",
     priceNote: "kertamaksu, ei tilaus",
     features: [
       "Analysoi koko projektin — frontend ja backend yhdessä, ei vain muutamia muutoksia",
@@ -8746,7 +8746,7 @@ const nl: TranslationTree = {
     eyebrow: "Nieuw",
     title: "Volledige site-audit",
     subtitle: "Staat je site al een tijdje online? Een volledige controle van het hele project, eenmalig — geen abonnement.",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "eenmalige betaling, geen abonnement",
     features: [
       "Analyseert het hele project — frontend en backend samen, niet slechts een paar wijzigingen",
@@ -9299,7 +9299,7 @@ const pl: TranslationTree = {
     eyebrow: "Nowość",
     title: "Pełny audyt strony",
     subtitle: "Twoja strona jest już online od jakiegoś czasu? Pełna kontrola całego projektu, jednorazowo — nie subskrypcja.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "jednorazowa płatność, nie subskrypcja",
     features: [
       "Analizuje cały projekt — frontend i backend razem, nie tylko kilka zmian",
@@ -9852,7 +9852,7 @@ const sv: TranslationTree = {
     eyebrow: "Nytt",
     title: "Fullständig webbplatsgranskning",
     subtitle: "Har du redan en webbplats som varit live ett tag? En fullständig kontroll av hela projektet, en gång — inget abonnemang.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "engångsbetalning, inget abonnemang",
     features: [
       "Analyserar hela projektet — frontend och backend tillsammans, inte bara ett fåtal ändringar",
@@ -10405,7 +10405,7 @@ const da: TranslationTree = {
     eyebrow: "Nyt",
     title: "Fuldt site-audit",
     subtitle: "Har du allerede haft en side live et stykke tid? Et fuldt tjek af hele projektet, én gang — ikke et abonnement.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "engangsbetaling, ikke et abonnement",
     features: [
       "Analyserer hele projektet — frontend og backend sammen, ikke bare nogle få ændringer",
@@ -10958,7 +10958,7 @@ const nb: TranslationTree = {
     eyebrow: "Nytt",
     title: "Fullstendig nettstedsrevisjon",
     subtitle: "Har du allerede et nettsted som har vært live en stund? En fullstendig sjekk av hele prosjektet, én gang — ikke et abonnement.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "engangsbetaling, ikke et abonnement",
     features: [
       "Analyserer hele prosjektet — frontend og backend sammen, ikke bare noen få endringer",
@@ -11511,7 +11511,7 @@ const tr: TranslationTree = {
     eyebrow: "Yeni",
     title: "Tam Site Denetimi",
     subtitle: "Bir süredir yayında olan bir siteniz mi var? Tüm proje üzerinde tek seferlik tam bir kontrol — abonelik değil.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "tek seferlik ödeme, abonelik değil",
     features: [
       "Yalnızca birkaç değişikliği değil, tüm projeyi — frontend ve backend birlikte — analiz eder",
@@ -12064,7 +12064,7 @@ const uk: TranslationTree = {
     eyebrow: "Нове",
     title: "Повний аудит сайту",
     subtitle: "У вас уже якийсь час є сайт онлайн? Повна перевірка всього проєкту, один раз — не підписка.",
-    priceLabel: "49€",
+    priceLabel: "49,99€",
     priceNote: "одноразова оплата, не підписка",
     features: [
       "Аналізує весь проєкт — фронтенд і бекенд разом, а не лише кілька змін",
@@ -12617,7 +12617,7 @@ const ja: TranslationTree = {
     eyebrow: "新機能",
     title: "サイト全体監査",
     subtitle: "すでにしばらく公開されているサイトがありますか？プロジェクト全体の完全なチェックを1回だけ — サブスクリプションではありません。",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "一回払い、サブスクリプションではありません",
     features: [
       "プロジェクト全体を分析 — 一部の変更だけでなく、フロントエンドとバックエンドを一緒に",
@@ -13170,7 +13170,7 @@ const ko: TranslationTree = {
     eyebrow: "신규",
     title: "전체 사이트 감사",
     subtitle: "이미 한동안 운영 중인 사이트가 있나요? 전체 프로젝트에 대한 완전한 점검, 한 번만 — 구독이 아닙니다.",
-    priceLabel: "€49",
+    priceLabel: "€49.99",
     priceNote: "일회성 결제, 구독 아님",
     features: [
       "몇 가지 변경 사항만이 아니라 프런트엔드와 백엔드를 함께, 프로젝트 전체를 분석",
