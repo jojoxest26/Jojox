@@ -1,6 +1,6 @@
 # JoJoX — motore, backend e sito
 
-Sicurezza per codice scritto (anche) da AI: 55 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — stesso codice riusato sul server (l'analisi sul sito, sia ospite sia loggato, passa dal backend), nel browser (le correzioni automatiche restano sempre e solo lì, mai inviate al server) e in locale per chi usa la CLI o il server MCP, che non fa mai una chiamata di rete.
+Sicurezza per codice scritto (anche) da AI: 58 controlli statici, punteggio 0-100 trasparente, esempio di correzione prima/dopo per ogni problema. Il motore è pattern matching puro (nessun LLM) — stesso codice riusato sul server (l'analisi sul sito, sia ospite sia loggato, passa dal backend), nel browser (le correzioni automatiche restano sempre e solo lì, mai inviate al server) e in locale per chi usa la CLI o il server MCP, che non fa mai una chiamata di rete.
 
 ## Struttura
 
@@ -88,8 +88,8 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 - Bottone "Collega GitHub" verso l'installazione reale della GitHub App, con indicazione chiara di quando è già collegato
 - Notifiche Slack: chi ha collegato GitHub può impostare un Incoming Webhook per ricevere un avviso quando una pull request viene bloccata o corretta in automatico
 - Scheda "Controllo Supabase": verifica la configurazione reale di un progetto (RLS, policy, bucket), non solo quella dedotta dal codice
-- Elenco dei 55 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
-- Sito disponibile in italiano e inglese, incluso il testo dei 55 controlli e il report PDF (`web/src/i18n/`)
+- Elenco dei 58 controlli generato dai metadati veri dell'engine (`ALL_CHECKS`), sempre sincronizzato col codice
+- Sito disponibile in italiano e inglese, incluso il testo dei 58 controlli e il report PDF (`web/src/i18n/`)
 
 ## Uso
 
@@ -134,6 +134,6 @@ Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md
 ## Prossimi passi
 
 - **Controlli per altri linguaggi** — oggi JoJoX copre JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel) su tutti i controlli applicabili al codice applicativo (fatto, un linguaggio alla volta, testato su codice reale per ognuno); più Dockerfile, Kubernetes e Terraform per l'infrastruttura, indipendenti dal linguaggio del progetto. Altri linguaggi (es. Rust, Ruby, C#) restano da aggiungere se diventa priorità, stessa logica: giorni di lavoro dedicato per linguaggio, non ore
-- **Sempre più correzioni automatiche** — oggi 16 controlli su 55 sanno correggersi da soli; estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
+- **Sempre più correzioni automatiche** — oggi 16 controlli su 58 sanno correggersi da soli; estese a sempre più problemi man mano che crescono i controlli, anche su blocchi di codice interi e non solo righe singole; sempre con logica deterministica, mai un modello che indovina le regole del tuo progetto
 - **Un livello aggiuntivo con l'intelligenza artificiale** per i problemi più difficili da individuare — sempre con una persona che controlla prima che il codice venga davvero cambiato, mai in automatico e da sola
 - **Sito in più lingue** — già disponibile in italiano e inglese, altre lingue in arrivo più avanti

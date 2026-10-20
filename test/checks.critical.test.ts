@@ -1268,4 +1268,36 @@ describe("critical checks", () => {
       expect(check.autofix?.(vulnerable)).toBeNull();
     });
   });
+
+  describe("Nuovo blocco — GitLab CI", () => {
+    it("gitlab-ci-script-injection: flags an inline script: line using bash -c with the MR title", () => {
+      const check = checkById("gitlab-ci-script-injection");
+      const vulnerable = file(".gitlab-ci.yml", 'deploy:\n  script:\n    - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gitlab-ci-script-injection: flags eval used with the commit message", () => {
+      const check = checkById("gitlab-ci-script-injection");
+      const vulnerable = file(".gitlab-ci.yml", 'deploy:\n  script:\n    - eval "echo $CI_COMMIT_MESSAGE"\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gitlab-ci-script-injection: does not flag a plain shell reference without a second shell", () => {
+      const check = checkById("gitlab-ci-script-injection");
+      const clean = file(".gitlab-ci.yml", 'deploy:\n  script:\n    - echo "$CI_COMMIT_MESSAGE"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gitlab-ci-script-injection: does not flag sh -c used with a trusted value only", () => {
+      const check = checkById("gitlab-ci-script-injection");
+      const clean = file(".gitlab-ci.yml", 'deploy:\n  script:\n    - sh -c "echo $CI_PROJECT_NAME"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gitlab-ci-script-injection: does not flag anything outside a GitLab CI file", () => {
+      const check = checkById("gitlab-ci-script-injection");
+      const clean = file("deploy.sh", 'bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

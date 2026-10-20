@@ -7,7 +7,22 @@ import {
   isDockerfile,
   isKubernetesManifest,
   isGithubActionsWorkflow,
+  isGitlabCiFile,
 } from "../util/scan.js";
+
+/**
+ * Tag dell'immagine Docker da un riferimento completo (es.
+ * "registry.example.com:5000/team/app:v1" -> "v1"), guardando solo dopo
+ * l'ultimo "/" — altrimenti un ":porta" nell'host del registry verrebbe
+ * scambiato per il tag. Null se non c'è nessun tag (equivale a "latest"
+ * implicito per Docker).
+ */
+function dockerImageTag(ref: string): string | null {
+  const afterLastSlash = ref.slice(ref.lastIndexOf("/") + 1);
+  const colonIdx = afterLastSlash.lastIndexOf(":");
+  if (colonIdx === -1) return null;
+  return afterLastSlash.slice(colonIdx + 1);
+}
 
 // Azioni di terze parti referenziate per tag/branch invece che per commit
 // SHA: chi le mantiene (o chi ne compromette l'account) può spostare quel
@@ -536,5 +551,38 @@ export const mediumChecks: Check[] = [
     // Nessun autofix: potrebbe già esserci un oggetto di opzioni su più
     // righe con altre impostazioni (maxAge, domain...) — riscriverlo alla
     // cieca rischia di perderle, meglio segnalarlo soltanto.
+  },
+
+  {
+    id: "gitlab-ci-unpinned-image",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "L'immagine Docker della pipeline GitLab CI non è fissata a una versione precisa",
+    description:
+      "Un \"image:\" della pipeline punta a un'immagine senza tag (equivale a \":latest\") o esplicitamente a \":latest\". Chi mantiene quell'immagine può sostituirne il contenuto in qualsiasi momento senza che il repository cambi — la stessa pipeline può iniziare a usare codice diverso da un giorno all'altro, con un rischio di supply chain concettualmente identico a un'azione GitHub referenziata per tag invece che per commit.",
+    fix: {
+      before: `image: node:latest`,
+      after: `image: node:20.11.1  # tag specifico (o ancora meglio un digest "node@sha256:...") invece di "latest"`,
+    },
+    detect(file) {
+      if (!isGitlabCiFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const m = /^\s*image:\s*["']?([^"'\s]+)["']?\s*$/.exec(lineText);
+        if (!m) return;
+        const ref = m[1];
+        if (ref.startsWith("$")) return; // riferimento a una variabile: non valutabile staticamente
+        if (ref.includes("@sha256:")) return; // già fissata per digest
+        const tag = dockerImageTag(ref);
+        if (tag === null || tag === "latest") {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: non possiamo sapere quale sia la versione giusta a cui fissarla.
   },
 ];

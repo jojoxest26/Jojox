@@ -706,4 +706,48 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — GitLab CI", () => {
+    it("gitlab-ci-unpinned-image: flags an explicit :latest tag", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const vulnerable = file(".gitlab-ci.yml", "image: node:latest\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gitlab-ci-unpinned-image: flags an image with no tag at all", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const vulnerable = file(".gitlab-ci.yml", "image: node\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gitlab-ci-unpinned-image: does not flag a specific version tag", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const clean = file(".gitlab-ci.yml", "image: node:20.11.1\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gitlab-ci-unpinned-image: does not flag a digest-pinned image", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const clean = file(".gitlab-ci.yml", "image: node@sha256:abc123def456\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gitlab-ci-unpinned-image: does not mistake a registry host's port for the tag", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const clean = file(".gitlab-ci.yml", "image: registry.example.com:5000/team/app:v1\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gitlab-ci-unpinned-image: flags an unpinned image behind a registry host with a port", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const vulnerable = file(".gitlab-ci.yml", "image: registry.example.com:5000/team/app\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gitlab-ci-unpinned-image: does not flag a variable reference it can't evaluate", () => {
+      const check = checkById("gitlab-ci-unpinned-image");
+      const clean = file(".gitlab-ci.yml", "image: $BUILD_IMAGE\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

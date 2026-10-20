@@ -10,6 +10,7 @@ import {
   isPhpFile,
   isKubernetesManifest,
   isTerraformFile,
+  isGitlabCiFile,
   nearbyMatches,
   fileMatch,
 } from "../util/scan.js";
@@ -619,5 +620,26 @@ export const highChecks: Check[] = [
     // Nessun autofix: la funzione di escape giusta dipende dalla libreria
     // LDAP in uso — non ne aggiungiamo una generica senza sapere se il
     // progetto ne ha già una propria.
+  },
+
+  {
+    id: "gitlab-ci-privileged-dind-no-tls",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Docker-in-Docker nella pipeline GitLab CI gira con la cifratura TLS disattivata",
+    description:
+      "Il job usa il servizio \"docker:dind\" (Docker-in-Docker, necessario per costruire immagini dentro la pipeline) ma imposta \"DOCKER_TLS_CERTDIR\" a una stringa vuota, disattivando del tutto la cifratura TLS tra il client Docker e il demone dind. Senza TLS, chiunque riesca a raggiungere quella porta sulla stessa rete interna del runner può controllare il demone Docker — che gira con privilegi estesi — invece di limitarsi al job che dovrebbe usarlo.",
+    fix: {
+      before: `services:\n  - docker:dind\nvariables:\n  DOCKER_TLS_CERTDIR: ""`,
+      after: `services:\n  - docker:dind\nvariables:\n  DOCKER_TLS_CERTDIR: "/certs"  # TLS attivo tra il client Docker e il demone dind — "" lo disattiva del tutto`,
+    },
+    detect(file) {
+      if (!isGitlabCiFile(file)) return [];
+      if (!/^\s*-\s*(?:name:\s*)?["']?docker:(?:[\w.-]+-)?dind["']?\s*$/im.test(file.content)) return [];
+      return scanLines(file, /DOCKER_TLS_CERTDIR\s*:\s*(?:""|'')/);
+    },
+    // Nessun autofix: disattivare TLS è quasi sempre una scelta esplicita
+    // (spesso per evitare problemi di certificati) — riattivarlo alla cieca
+    // potrebbe rompere la pipeline se non è configurata per gestirlo.
   },
 ];

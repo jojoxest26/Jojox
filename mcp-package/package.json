@@ -1,7 +1,7 @@
 {
   "name": "jojox-mcp",
-  "version": "0.1.2",
-  "description": "Server MCP di JoJoX: 55 controlli di sicurezza per codice generato da AI (pattern matching deterministico, nessun LLM, nessun dato inviato fuori dal tuo editor). Si collega a Claude Code, Claude Desktop, Cursor e altri agenti compatibili con il Model Context Protocol.",
+  "version": "0.1.3",
+  "description": "Server MCP di JoJoX: 58 controlli di sicurezza per codice generato da AI (pattern matching deterministico, nessun LLM, nessun dato inviato fuori dal tuo editor). Si collega a Claude Code, Claude Desktop, Cursor e altri agenti compatibili con il Model Context Protocol.",
   "type": "module",
   "bin": {
     "jojox-mcp": "./dist/mcp/server.js"

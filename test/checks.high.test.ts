@@ -651,4 +651,27 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — GitLab CI", () => {
+    it("gitlab-ci-privileged-dind-no-tls: flags docker:dind with TLS disabled", () => {
+      const check = checkById("gitlab-ci-privileged-dind-no-tls");
+      const vulnerable = file(
+        ".gitlab-ci.yml",
+        'services:\n  - docker:dind\nvariables:\n  DOCKER_TLS_CERTDIR: ""\n'
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("gitlab-ci-privileged-dind-no-tls: does not flag docker:dind when TLS stays on", () => {
+      const check = checkById("gitlab-ci-privileged-dind-no-tls");
+      const clean = file(".gitlab-ci.yml", 'services:\n  - docker:dind\nvariables:\n  DOCKER_TLS_CERTDIR: "/certs"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("gitlab-ci-privileged-dind-no-tls: does not flag an empty TLS certdir without the dind service", () => {
+      const check = checkById("gitlab-ci-privileged-dind-no-tls");
+      const clean = file(".gitlab-ci.yml", 'variables:\n  DOCKER_TLS_CERTDIR: ""\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

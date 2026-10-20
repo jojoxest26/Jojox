@@ -173,7 +173,7 @@ export async function importSarifFile(sarifContent: string): Promise<SarifImport
 }
 
 /**
- * Punto 14: revisione AI aggiuntiva, separata dai 55 controlli deterministici
+ * Punto 14: revisione AI aggiuntiva, separata dai 58 controlli deterministici
  * — cerca solo race condition ed errori nei controlli di autorizzazione, mai
  * in automatico (un pulsante a parte), mai contribuisce al punteggio.
  */

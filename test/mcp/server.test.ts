@@ -75,9 +75,9 @@ describe("MCP server: handleRequest", () => {
 });
 
 describe("MCP server: callTool", () => {
-  it("list_checks elenca tutti i 55 controlli (punto 13, GCP/Azure oltre AWS)", () => {
+  it("list_checks elenca tutti i 58 controlli (punto 13, GitLab CI oltre GitHub Actions)", () => {
     const result = callTool("list_checks", {}) as unknown[];
-    expect(result).toHaveLength(55);
+    expect(result).toHaveLength(58);
   });
 
   it("analyze_code richiede il parametro 'files'", () => {

