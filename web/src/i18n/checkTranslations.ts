@@ -8435,7 +8435,7 @@ variables:
       "En utgående HTTP-förfrågan (fetch, axios) använder direkt ett värde från en användares förfrågan som mål-URL. En illvillig användare kan få din server att anropa interna eller godtyckliga adresser — Server-Side Request Forgery.",
     fix: {
       before: `const data = await fetch(req.query.url)`,
-      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL not allowed")\nconst data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL inte tillåten")\nconst data = await fetch(req.query.url)`,
     },
   },
   "weak-password-hashing": {
