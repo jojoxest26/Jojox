@@ -4121,7 +4121,7 @@ variables:
       "pickle (بايثون)، unserialize() (بي إتش بي)، ObjectInputStream (جافا)، أو مكتبة node-serialize (Node) تقوم بتفكيك تسلسلي لقيمة مأخوذة مباشرة من الطلب. على عكس JSON، يمكن لهذه الصيغ تمثيل وتنفيذ كود أثناء عملية التفكيك التسلسلي نفسها — من يتحكم بالقيمة المُرسَلة يمكنه تحقيق تنفيذ كود عشوائي على الخادم.",
     fix: {
       before: `data = pickle.loads(request.data)`,
-      after: `import json\ndata = json.loads(request.data)  // JSON لا ينفّذ أبدًا كودًا أثناء التحليل، على عكس pickle`,
+      after: `import json\ndata = json.loads(request.data)  # JSON لا ينفّذ أبدًا كودًا أثناء التحليل، على عكس pickle`,
     },
   },
   "jwt-none-algorithm": {
@@ -5396,7 +5396,7 @@ variables:
   "docker-unpinned-base-image": {
     title: 'Dockerfile کی base image ":latest" ٹیگ استعمال کرتی ہے',
     description:
-      '"ایک FROM instruction واضح طور پر کسی مخصوص ورژن کے بجائے ":latest" ٹیگ استعمال کرتی ہے۔ "latest" وقت کے ساتھ بدلتا رہتا ہے: وہی build کسی اور وقت دوبارہ کرنے پر base image کا مختلف ورژن مل سکتا ہے — ایک non-reproducible build، اور کوئی ناپسندیدہ اپ ڈیٹ بغیر کسی کے فیصلے کے آ سکتی ہے۔',
+      'ایک FROM instruction واضح طور پر کسی مخصوص ورژن کے بجائے ":latest" ٹیگ استعمال کرتی ہے۔ "latest" وقت کے ساتھ بدلتا رہتا ہے: وہی build کسی اور وقت دوبارہ کرنے پر base image کا مختلف ورژن مل سکتا ہے — ایک non-reproducible build، اور کوئی ناپسندیدہ اپ ڈیٹ بغیر کسی کے فیصلے کے آ سکتی ہے۔',
     fix: {
       before: `FROM node:latest`,
       after: `FROM node:20.11-slim`,
@@ -5947,7 +5947,7 @@ variables:
   "docker-unpinned-base-image": {
     title: 'Image dasar Dockerfile menggunakan tag ":latest"',
     description:
-      '"latest" berubah seiring waktu: build yang sama, diulang di waktu lain, bisa mendapatkan versi image dasar yang berbeda — build yang tidak reproducible, dan pembaruan yang tidak diinginkan bisa datang tanpa ada yang memutuskannya. Sebuah instruksi FROM secara eksplisit menggunakan tag ":latest" alih-alih versi yang presisi.',
+      'Sebuah instruksi FROM secara eksplisit menggunakan tag ":latest" alih-alih versi yang presisi. "latest" berubah seiring waktu: build yang sama, diulang di waktu lain, bisa mendapatkan versi image dasar yang berbeda — build yang tidak reproducible, dan pembaruan yang tidak diinginkan bisa datang tanpa ada yang memutuskannya.',
     fix: {
       before: `FROM node:latest`,
       after: `FROM node:20.11-slim`,
@@ -9650,7 +9650,7 @@ variables:
       "En utgående HTTP-forespørsel (fetch, axios) bruker direkte en verdi fra en brukers forespørsel som mål-URL. En ondsinnet bruker kan få serveren din til å kalle interne eller vilkårlige adresser — Server-Side Request Forgery.",
     fix: {
       before: `const data = await fetch(req.query.url)`,
-      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL not allowed")\nconst data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL ikke tillatt")\nconst data = await fetch(req.query.url)`,
     },
   },
   "weak-password-hashing": {
@@ -10055,7 +10055,7 @@ variables:
       "Giden bir HTTP isteği (fetch, axios), hedef URL olarak doğrudan bir kullanıcının isteğinden gelen bir değer kullanıyor. Kötü niyetli bir kullanıcı, sunucunuzun dahili veya rastgele adreslere istek göndermesini sağlayabilir — Server-Side Request Forgery.",
     fix: {
       before: `const data = await fetch(req.query.url)`,
-      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("URL not allowed")\nconst data = await fetch(req.query.url)`,
+      after: `const ALLOWED = new Set(["https://api.yourservice.com"])\nif (!ALLOWED.has(req.query.url)) throw new Error("İzin verilmeyen URL")\nconst data = await fetch(req.query.url)`,
     },
   },
   "weak-password-hashing": {
