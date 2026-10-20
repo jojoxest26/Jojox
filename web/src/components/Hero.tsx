@@ -1,4 +1,5 @@
 import type { MouseEvent } from "react";
+import { ALL_CHECKS } from "../../../src/checks/index.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
 import { Icon } from "./Icon.js";
@@ -88,7 +89,7 @@ export function Hero() {
       <div className="herofoot">
         <div className="hero-stats">
           <div className="stat">
-            <b>55</b>
+            <b>{ALL_CHECKS.length}</b>
             <span>{t.hero.statChecksLabel}</span>
           </div>
           <div className="stat">
