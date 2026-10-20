@@ -11263,7 +11263,7 @@ const nb: TranslationTree = {
     autofixFixedOne: "Jeg rettet selv {{files}} fil for {{types}} problemtype.",
     autofixFixedMany: "Jeg rettet selv {{files}} filer for {{types}} problemtyper.",
     autofixManualSuffix: " Ytterligere {{count}} gjenstår å rette manuelt — de krever beslutninger om prosjektet ditt som vi ikke kan ta for deg.",
-    autofixManualOnly: "De funnede problemene krever beslutninger om prosjektet ditt som vi ikke kan rette automatisk — se eksemplene «før/etter» nedenfor.",
+    autofixManualOnly: "De funne problemene krever beslutninger om prosjektet ditt som vi ikke kan rette automatisk — se eksemplene «før/etter» nedenfor.",
     downloadZip: "Last ned rettede filer (.zip)",
     downloadPdf: "Last ned PDF-rapport",
     newAnalysis: "Ny analyse",
