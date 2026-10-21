@@ -1,3 +1,4 @@
+import { ALL_CHECKS } from "../../checks/index.js";
 import type { AnalysisResult, Finding, Severity } from "../../types.js";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
@@ -22,7 +23,7 @@ export function formatPrComment(result: AnalysisResult, fixPrUrl?: string | null
     return [
       `## JoJoX — Punteggio di sicurezza: ${result.score}/100`,
       "",
-      "Nessun problema trovato nei 40 controlli. ✅",
+      `Nessun problema trovato nei ${ALL_CHECKS.length} controlli. ✅`,
     ].join("\n");
   }
 
