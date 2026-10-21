@@ -35,6 +35,19 @@ export const DAILY_CHAT_MESSAGE_LIMIT: Record<Plan, number> = {
 };
 
 /**
+ * Sotto-limite dei messaggi di chat in modalità generale (nessuna analisi
+ * aperta): lì la chat usa il modello più caro con risposte fino a 16.000
+ * token, circa 100-200 volte il costo di un messaggio che spiega un
+ * risultato. Con il solo DAILY_CHAT_MESSAGE_LIMIT un utente Pro poteva
+ * costare centinaia di euro al mese di API contro 9,99€ di incasso.
+ */
+export const DAILY_GENERAL_CHAT_LIMIT: Record<Plan, number> = {
+  free: 0,
+  pro: 15,
+  team: 30,
+};
+
+/**
  * Revisioni AI aggiuntive al giorno (punto 14): più costosa di un messaggio
  * di chat (manda file interi a Claude Sonnet, non solo testo breve), quindi
  * un tetto più basso — è un controllo via pulsante, non una conversazione.
