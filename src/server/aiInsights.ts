@@ -78,11 +78,17 @@ export function selectFilesForReview(files: readonly SourceFile[]): SourceFile[]
   return selected;
 }
 
-export async function findAiInsights(files: readonly SourceFile[]): Promise<AiInsight[]> {
-  if (!anthropic) return [];
+export interface AiInsightsResult {
+  insights: AiInsight[];
+  /** null quando non è stata fatta nessuna chiamata (nessun file selezionato). */
+  usage: { inputTokens: number; outputTokens: number } | null;
+}
+
+export async function findAiInsights(files: readonly SourceFile[]): Promise<AiInsightsResult> {
+  if (!anthropic) return { insights: [], usage: null };
 
   const selected = selectFilesForReview(files);
-  if (selected.length === 0) return [];
+  if (selected.length === 0) return { insights: [], usage: null };
 
   const filesText = selected.map((f) => `--- ${f.path} ---\n${f.content}`).join("\n\n");
 
@@ -99,5 +105,8 @@ export async function findAiInsights(files: readonly SourceFile[]): Promise<AiIn
     .join("")
     .trim();
 
-  return parseAiInsightsResponse(text);
+  return {
+    insights: parseAiInsightsResponse(text),
+    usage: { inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens },
+  };
 }

@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
-import { anthropic } from "../anthropic.js";
+import { anthropic, CODE_MODEL } from "../anthropic.js";
 import { findAiInsights } from "../aiInsights.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, DAILY_AI_INSIGHT_LIMIT, startOfTodayUtc } from "../plan.js";
 import { reportError } from "../sentry.js";
+import { logAiUsage } from "../aiUsageLog.js";
 
 const MAX_FILES = 300;
 const MAX_FILE_BYTES = 200_000;
@@ -70,12 +71,22 @@ aiInsightsRouter.post("/api/ai-insights", requireAuth, async (req: AuthedRequest
   }
 
   try {
-    const insights = await findAiInsights(parsed.data.files);
+    const { insights, usage } = await findAiInsights(parsed.data.files);
     // Contata solo un'esecuzione riuscita: un tentativo fallito (errore di
     // rete verso Anthropic, timeout) non deve consumare un posto nel
     // limite giornaliero dell'utente.
     await supabaseAdmin.from("ai_insight_runs").insert({ user_id: req.userId! });
     res.json({ insights });
+
+    if (usage) {
+      void logAiUsage({
+        userId: req.userId!,
+        route: "ai_insight",
+        model: CODE_MODEL,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+      });
+    }
   } catch (err) {
     console.error("Errore nella revisione AI aggiuntiva", err);
     reportError(err);

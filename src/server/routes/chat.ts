@@ -5,6 +5,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, startOfTodayUtc } from "../plan.js";
 import { reportError } from "../sentry.js";
+import { logAiUsage } from "../aiUsageLog.js";
 
 // Limiti generosi per un uso normale ma che tengono comunque un tetto fisso
 // ai token (quindi al costo) di ogni singola richiesta, indipendentemente
@@ -59,7 +60,18 @@ const chatRequestSchema = z.object({
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(20000) }))
     .max(40)
     .default([]),
-});
+})
+  // Il limite giornaliero di messaggi (DAILY_CHAT_MESSAGE_LIMIT) conta le
+  // richieste, non la loro dimensione: senza un tetto anche sul totale della
+  // cronologia, 40 voci da 20000 caratteri l'una potevano passare in UNA
+  // richiesta (~200k token di input, varie decine di centesimi), ripetibile
+  // fino al limite giornaliero — un costo per utente slegato dal piano
+  // pagato. 60000 caratteri (~15k token) restano generosi per una
+  // conversazione vera, ma tengono il costo per messaggio prevedibile.
+  .refine((data) => data.history.reduce((sum, h) => sum + h.content.length, 0) <= 60_000, {
+    message: "Cronologia troppo lunga",
+    path: ["history"],
+  });
 
 const PRODUCT_FACTS_IT = `
 JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di sicurezza con un motore deterministico a pattern — 58 controlli pubblici, nessuna AI nel rilevamento stesso. Copre JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel); su altri linguaggi alcuni controlli generici possono comunque aiutare.
@@ -312,6 +324,13 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
     // nessun avviso (è già successo, su una domanda di ieri): ritentiamo
     // una volta prima di arrenderci, e logghiamo sempre l'esito.
     void saveChatExchange(req.userId!, message, reply);
+    void logAiUsage({
+      userId: req.userId!,
+      route: isGeneralMode ? "chat_general" : "chat_findings",
+      model: isGeneralMode ? CODE_MODEL : CHAT_MODEL,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    });
   } catch (err) {
     console.error("Errore nella chiamata all'API Anthropic", err);
     res.status(502).json({
