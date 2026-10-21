@@ -3,7 +3,7 @@ import { z } from "zod";
 import { anthropic, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, startOfTodayUtc } from "../plan.js";
+import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, DAILY_GENERAL_CHAT_LIMIT, startOfTodayUtc } from "../plan.js";
 import { reportError } from "../sentry.js";
 import { logAiUsage } from "../aiUsageLog.js";
 
@@ -288,6 +288,36 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
   // tetto consigliato per una chiamata senza streaming (come questa) —
   // andare oltre rischierebbe un timeout prima che la risposta finisca.
   const isGeneralMode = findings.length === 0;
+
+  // La modalità generale ha un suo tetto più basso (vedi
+  // DAILY_GENERAL_CHAT_LIMIT): si contano le chiamate già registrate in
+  // ai_usage_log con route "chat_general". Come sopra, un conteggio
+  // fallito chiude invece di aprire.
+  if (isGeneralMode) {
+    const generalLimit = DAILY_GENERAL_CHAT_LIMIT[plan];
+    const { count: generalCount, error: generalCountError } = await supabaseAdmin
+      .from("ai_usage_log")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", req.userId!)
+      .eq("route", "chat_general")
+      .gte("created_at", startOfTodayUtc().toISOString());
+
+    if (generalCountError) {
+      console.error("Errore nel conteggio dei messaggi di chat generale", generalCountError);
+      reportError(generalCountError);
+      res.status(500).json({ error: "Errore nel controllo del limite messaggi, riprova" });
+      return;
+    }
+    if ((generalCount ?? 0) >= generalLimit) {
+      res.status(429).json({
+        error:
+          lang === "it"
+            ? `Limite di ${generalLimit} domande generali al giorno raggiunto per il tuo piano. Puoi ancora chiedere spiegazioni sui risultati di un'analisi.`
+            : `Daily limit of ${generalLimit} general questions reached for your plan. You can still ask about the results of an analysis.`,
+      });
+      return;
+    }
+  }
 
   try {
     const response = await anthropic.messages.create({
