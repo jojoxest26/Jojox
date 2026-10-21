@@ -1165,6 +1165,37 @@ variables:
         after: `image: node:20.11.1  # una etiqueta concreta (o mejor aún un digest "node@sha256:...") en vez de "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "Un parámetro de pipeline entra directamente en un comando de shell de CircleCI",
+      description: "Un paso \"run:\" de la configuración de CircleCI usa \"<< pipeline.parameters.NOMBRE >>\" (o \"<< pipeline.trigger_parameters.NOMBRE >>\") directamente dentro del comando. A diferencia de una variable de entorno normal, este valor se sustituye en el YAML ANTES de que la shell lo vea siquiera — una sustitución de texto en tiempo de compilación, no una variable que se pueda proteger entre comillas. Cualquiera que pueda lanzar el pipeline con sus propios parámetros (vía API, un disparador externo, un proyecto conectado) puede ejecutar comandos arbitrarios en la CI, con acceso a todos los secretos disponibles en ese job.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # pasado como variable de entorno, nunca interpolado directamente en el comando — aquí la shell puede ponerlo entre comillas, la sustitución de YAML no`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "El paso add_ssh_keys de CircleCI no restringe qué clave SSH usa",
+      description: "Un paso \"add_ssh_keys\" no define ningún \"fingerprints:\". Sin esa lista, CircleCI conecta a ese job TODAS las claves SSH configuradas en el proyecto, no solo la que realmente necesita — un job comprometido o una dependencia maliciosa obtendría acceso a todas las claves de despliegue del proyecto en vez de a una sola.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # solo la clave que necesita de verdad este job, no todas las del proyecto`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "La imagen Docker del executor de CircleCI no está fijada a una versión concreta",
+      description: "Una imagen del executor \"docker:\" apunta a una imagen sin etiqueta (equivale a \":latest\") o explícitamente a \":latest\". Quien mantiene esa imagen puede reemplazar su contenido en cualquier momento sin que la configuración cambie — el mismo pipeline puede empezar a usar código distinto de un día para otro, el mismo riesgo de cadena de suministro ya cubierto para GitHub Actions y GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # una etiqueta concreta (o mejor aún un digest "node@sha256:...") en vez de "latest"`,
+      },
+    },
 },
   fr: {
   "supabase-service-role-in-client": {
@@ -1703,6 +1734,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # un tag précis (ou mieux encore un digest "node@sha256:...") plutôt que "latest"`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "Un paramètre de pipeline entre directement dans une commande shell CircleCI",
+      description: "Une étape \"run:\" de la configuration CircleCI utilise \"<< pipeline.parameters.NOM >>\" (ou \"<< pipeline.trigger_parameters.NOM >>\") directement dans la commande. Contrairement à une variable d'environnement normale, cette valeur est substituée dans le YAML AVANT même que le shell ne la voie — une substitution de texte à la compilation, pas une variable qu'on peut protéger avec des guillemets. Quiconque peut déclencher le pipeline avec ses propres paramètres (via l'API, un déclencheur externe, un projet connecté) peut exécuter des commandes arbitraires dans la CI, avec accès à tous les secrets disponibles dans ce job.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # passé comme variable d'environnement, jamais interpolé directement dans la commande — ici le shell peut le mettre entre guillemets, la substitution YAML non`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "L'étape add_ssh_keys de CircleCI ne restreint pas quelle clé SSH utiliser",
+      description: "Une étape \"add_ssh_keys\" ne définit aucun \"fingerprints:\". Sans cette liste, CircleCI attache à ce job TOUTES les clés SSH configurées sur le projet, pas seulement celle dont il a vraiment besoin — un job compromis ou une dépendance malveillante obtiendrait l'accès à toutes les clés de déploiement du projet au lieu d'une seule.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # seulement la clé dont ce job a vraiment besoin, pas toutes celles du projet`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "L'image Docker de l'executor CircleCI n'est pas fixée à une version précise",
+      description: "Une image de l'executor \"docker:\" pointe vers une image sans tag (équivaut à \":latest\") ou explicitement vers \":latest\". Qui maintient cette image peut remplacer son contenu à tout moment sans que la configuration change — le même pipeline peut se mettre à exécuter du code différent d'un jour à l'autre, le même risque de chaîne d'approvisionnement déjà couvert pour GitHub Actions et GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # un tag précis (ou mieux encore un digest "node@sha256:...") plutôt que "latest"`,
       },
     },
 },
@@ -2245,6 +2307,37 @@ variables:
         after: `image: node:20.11.1  # uma tag específica (ou melhor ainda um digest "node@sha256:...") em vez de "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "Um parâmetro de pipeline entra diretamente num comando shell do CircleCI",
+      description: "Um passo \"run:\" da configuração do CircleCI usa \"<< pipeline.parameters.NOME >>\" (ou \"<< pipeline.trigger_parameters.NOME >>\") diretamente dentro do comando. Ao contrário de uma variável de ambiente normal, este valor é substituído no YAML ANTES de a shell sequer o ver — uma substituição de texto em tempo de compilação, não uma variável que se possa proteger com aspas. Quem consiga disparar o pipeline com os seus próprios parâmetros (via API, um gatilho externo, um projeto ligado) pode executar comandos arbitrários na CI, com acesso a todos os segredos disponíveis nesse job.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # passado como variável de ambiente, nunca interpolado diretamente no comando — aqui a shell consegue pô-lo entre aspas, a substituição do YAML não`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "O passo add_ssh_keys do CircleCI não restringe qual chave SSH usar",
+      description: "Um passo \"add_ssh_keys\" não define nenhum \"fingerprints:\". Sem essa lista, o CircleCI liga a esse job TODAS as chaves SSH configuradas no projeto, não só a que ele realmente precisa — um job comprometido ou uma dependência maliciosa ganharia acesso a todas as chaves de deploy do projeto em vez de a uma só.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # só a chave de que este job realmente precisa, não todas as do projeto`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "A imagem Docker do executor CircleCI não está fixada numa versão específica",
+      description: "Uma imagem do executor \"docker:\" aponta para uma imagem sem tag (equivale a \":latest\") ou explicitamente a \":latest\". Quem mantém essa imagem pode substituir o seu conteúdo a qualquer momento sem que a configuração mude — o mesmo pipeline pode passar a executar código diferente de um dia para o outro, o mesmo risco de cadeia de fornecimento já coberto para o GitHub Actions e o GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # uma tag específica (ou melhor ainda um digest "node@sha256:...") em vez de "latest"`,
+      },
+    },
 },
   zh: {
   "supabase-service-role-in-client": {
@@ -2783,6 +2876,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # 使用具体标签（或者更好地使用摘要 "node@sha256:..."）而不是 "latest"`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "流水线参数直接进入了 CircleCI 的 shell 命令",
+      description: "CircleCI 配置中的一个 \"run:\" 步骤在命令里直接使用了 \"<< pipeline.parameters.名称 >>\"（或 \"<< pipeline.trigger_parameters.名称 >>\"）。与普通环境变量不同，这个值是在 YAML 层面、shell 看到之前就被替换进去的 —— 是编译期的文本替换，不是可以用引号保护的变量。任何能用自己的参数触发该流水线的人（通过 API、外部触发器、已连接的项目）都能在 CI 中执行任意命令，并访问该任务可用的所有密钥。",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # 作为环境变量传递，而不是直接拼进命令里 —— shell 能给它加引号，YAML 的替换不能`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI 的 add_ssh_keys 步骤没有限制使用哪个 SSH 密钥",
+      description: "一个 \"add_ssh_keys\" 步骤完全没有设置 \"fingerprints:\"。没有这个列表，CircleCI 会把该项目配置的所有 SSH 密钥都接入这个任务，而不只是它真正需要的那一个 —— 一个被攻陷的任务或恶意依赖会因此获得项目所有部署密钥的访问权，而不只是其中一个。",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # 只保留这个任务真正需要的那把密钥，而不是项目里所有的密钥`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executor 的 Docker 镜像没有固定到具体版本",
+      description: "\"docker:\" executor 的一个镜像没有标签（等同于 \":latest\"）或明确写成了 \":latest\"。维护该镜像的人可以随时替换其内容而不需要改动配置 —— 同一条流水线可能从某一天起开始运行不同的代码，这和已经在 GitHub Actions、GitLab CI 中覆盖的供应链风险在概念上完全相同。",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # 使用具体标签（或者更好地使用摘要 "node@sha256:..."）而不是 "latest"`,
       },
     },
 },
@@ -3325,6 +3449,37 @@ variables:
         after: `image: node:20.11.1  # "latest" के बजाय एक निश्चित टैग (या इससे भी बेहतर एक डाइजेस्ट "node@sha256:...")`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "एक पाइपलाइन पैरामीटर सीधे CircleCI के शेल कमांड में चला जाता है",
+      description: "CircleCI कॉन्फ़िगरेशन का एक \"run:\" स्टेप कमांड के अंदर सीधे \"<< pipeline.parameters.NAME >>\" (या \"<< pipeline.trigger_parameters.NAME >>\") का उपयोग करता है। एक सामान्य एनवायरनमेंट वेरिएबल के विपरीत, यह वैल्यू शेल के देखने से पहले ही YAML में बदल दी जाती है — यह कंपाइल-टाइम पर एक टेक्स्ट सब्स्टिट्यूशन है, कोई ऐसा वेरिएबल नहीं जिसे कोट्स में रखकर सुरक्षित किया जा सके। जो कोई भी अपने खुद के पैरामीटर्स के साथ पाइपलाइन ट्रिगर कर सकता है (API के ज़रिए, किसी बाहरी ट्रिगर से, किसी जुड़े हुए प्रोजेक्ट से), वह CI में मनमाने कमांड चला सकता है, उस जॉब में उपलब्ध सभी सीक्रेट्स तक पहुंच के साथ।",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # एनवायरनमेंट वेरिएबल के रूप में दिया गया, कभी भी कमांड में सीधे इंटरपोलेट नहीं किया गया — यहां शेल इसे कोट्स में रख सकता है, YAML का सब्स्टिट्यूशन नहीं`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI का add_ssh_keys स्टेप यह सीमित नहीं करता कि कौन-सी SSH की इस्तेमाल हो",
+      description: "एक \"add_ssh_keys\" स्टेप में कोई \"fingerprints:\" सेट नहीं किया गया है। उस लिस्ट के बिना, CircleCI उस जॉब से प्रोजेक्ट में कॉन्फ़िगर की गई हर SSH की जोड़ देता है, सिर्फ़ उसे नहीं जिसकी उसे वाकई ज़रूरत है — एक समझौता किया गया जॉब या एक दुर्भावनापूर्ण डिपेंडेंसी को प्रोजेक्ट की सिर्फ़ एक नहीं, बल्कि हर डिप्लॉय की तक पहुंच मिल जाएगी।",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # सिर्फ़ वह की जो इस जॉब को वाकई चाहिए, प्रोजेक्ट की हर की नहीं`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executor की Docker इमेज किसी निश्चित वर्शन पर फिक्स नहीं है",
+      description: "एक \"docker:\" executor इमेज बिना टैग के किसी इमेज की ओर इशारा करती है (जो \":latest\" के बराबर है) या स्पष्ट रूप से \":latest\" की ओर। जो उस इमेज को मेंटेन करता है, वह कॉन्फ़िगरेशन बदले बिना कभी भी उसकी सामग्री बदल सकता है — वही पाइपलाइन एक दिन से दूसरे दिन अलग कोड चलाना शुरू कर सकती है, वही सप्लाई-चेन रिस्क जो GitHub Actions और GitLab CI के लिए पहले ही कवर किया जा चुका है।",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # "latest" के बजाय एक निश्चित टैग (या इससे भी बेहतर एक डाइजेस्ट "node@sha256:...")`,
+      },
+    },
 },
   ru: {
   "supabase-service-role-in-client": {
@@ -3863,6 +4018,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # конкретный тег (или ещё лучше дайджест "node@sha256:...") вместо "latest"`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "Параметр пайплайна напрямую попадает в команду оболочки CircleCI",
+      description: "Шаг \"run:\" в конфигурации CircleCI использует \"<< pipeline.parameters.ИМЯ >>\" (или \"<< pipeline.trigger_parameters.ИМЯ >>\") прямо внутри команды. В отличие от обычной переменной окружения, это значение подставляется в YAML ДО того, как его вообще увидит оболочка — это текстовая подстановка на этапе компиляции, а не переменная, которую можно защитить кавычками. Любой, кто может запустить пайплайн со своими параметрами (через API, внешний триггер, подключённый проект), может выполнить произвольные команды в CI с доступом ко всем секретам, доступным в этой задаче.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # передано как переменная окружения, никогда не подставлено напрямую в команду — здесь оболочка может взять это в кавычки, а подстановка YAML — нет`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "Шаг add_ssh_keys в CircleCI не ограничивает, какой SSH-ключ использовать",
+      description: "Шаг \"add_ssh_keys\" не задаёт никакого \"fingerprints:\". Без этого списка CircleCI подключает к этой задаче ВСЕ SSH-ключи, настроенные в проекте, а не только тот, что ей действительно нужен — скомпрометированная задача или вредоносная зависимость получит доступ ко всем деплой-ключам проекта вместо одного.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # только ключ, который действительно нужен этой задаче, а не все ключи проекта`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "Docker-образ executor'а CircleCI не зафиксирован на конкретной версии",
+      description: "Образ executor'а \"docker:\" указывает на образ без тега (что равносильно \":latest\") или явно на \":latest\". Тот, кто поддерживает этот образ, может заменить его содержимое в любой момент без изменения конфигурации — один и тот же пайплайн может в один прекрасный день начать запускать другой код, тот же риск цепочки поставок, что уже покрыт для GitHub Actions и GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # конкретный тег (или ещё лучше дайджест "node@sha256:...") вместо "latest"`,
       },
     },
 },
@@ -4405,6 +4591,37 @@ variables:
         after: `image: node:20.11.1  # وسم محدد (أو أفضل من ذلك ملخّص "node@sha256:...") بدلاً من "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "مُعامل خط الأنابيب يدخل مباشرة في أمر صَدَفة CircleCI",
+      description: "تستخدم خطوة \"run:\" في إعدادات CircleCI القيمة \"<< pipeline.parameters.NAME >>\" (أو \"<< pipeline.trigger_parameters.NAME >>\") مباشرة داخل الأمر. على عكس متغيّر البيئة العادي، تُستبدل هذه القيمة داخل YAML قبل أن تراها الصَدَفة أصلًا — استبدال نصي وقت الترجمة، لا متغيّر يمكن حمايته بوضعه بين علامتي اقتباس. أي شخص يستطيع تشغيل خط الأنابيب بمعاملاته الخاصة (عبر الواجهة البرمجية API، أو مُطلِق خارجي، أو مشروع متصل) يمكنه تنفيذ أوامر عشوائية في CI، مع وصول إلى كل الأسرار المتاحة في تلك المهمة.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # يُمرَّر كمتغيّر بيئة، لا يُدرَج مطلقًا مباشرة داخل الأمر — هنا يمكن للصَدَفة وضعه بين علامتي اقتباس، أما استبدال YAML فلا`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "خطوة add_ssh_keys في CircleCI لا تقيّد أي مفتاح SSH يُستخدم",
+      description: "لا تحدد خطوة \"add_ssh_keys\" أي \"fingerprints:\" على الإطلاق. بدون تلك القائمة، يربط CircleCI بتلك المهمة كل مفاتيح SSH المهيأة في المشروع، لا المفتاح الذي تحتاجه فعلًا فقط — فتحصل مهمة مخترقة أو تبعية ضارة على وصول إلى كل مفاتيح النشر الخاصة بالمشروع بدلًا من واحد فقط.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # فقط المفتاح الذي تحتاجه هذه المهمة فعلًا، لا كل مفاتيح المشروع`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "صورة Docker الخاصة بـ executor في CircleCI غير مثبّتة على إصدار محدد",
+      description: "تشير صورة executor من نوع \"docker:\" إلى صورة بلا وسم (ما يعادل \":latest\") أو صراحةً إلى \":latest\". يستطيع من يصون تلك الصورة استبدال محتواها في أي وقت دون أن يتغير الإعداد — يمكن لخط الأنابيب نفسه أن يبدأ بتشغيل شيفرة مختلفة من يوم لآخر، وهو نفس خطر سلسلة التوريد المغطى بالفعل لـ GitHub Actions وGitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # وسم محدد (أو أفضل من ذلك ملخّص "node@sha256:...") بدلاً من "latest"`,
+      },
+    },
 },
   bn: {
   "supabase-service-role-in-client": {
@@ -4943,6 +5160,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # "latest" এর বদলে একটি নির্দিষ্ট ট্যাগ (বা আরও ভালো একটি ডাইজেস্ট "node@sha256:...")`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "একটি পাইপলাইন প্যারামিটার সরাসরি CircleCI-এর শেল কমান্ডে প্রবেশ করে",
+      description: "CircleCI কনফিগারেশনের একটি \"run:\" স্টেপ কমান্ডের ভেতরে সরাসরি \"<< pipeline.parameters.NAME >>\" (বা \"<< pipeline.trigger_parameters.NAME >>\") ব্যবহার করে। সাধারণ এনভায়রনমেন্ট ভেরিয়েবলের বিপরীতে, এই মান শেল দেখার আগেই YAML-এ প্রতিস্থাপিত হয়ে যায় — এটি কম্পাইল-টাইমের টেক্সট প্রতিস্থাপন, এমন কোনো ভেরিয়েবল নয় যাকে কোট দিয়ে সুরক্ষিত করা যায়। যে কেউ নিজের প্যারামিটার দিয়ে পাইপলাইন ট্রিগার করতে পারে (API-এর মাধ্যমে, বাহ্যিক ট্রিগার, সংযুক্ত প্রজেক্ট থেকে), সে CI-তে যেকোনো কমান্ড চালাতে পারে, সেই জবে উপলব্ধ সব সিক্রেটের অ্যাক্সেস সহ।",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # এনভায়রনমেন্ট ভেরিয়েবল হিসেবে পাঠানো হয়েছে, কখনোই সরাসরি কমান্ডে বসানো হয়নি — এখানে শেল একে কোট করতে পারে, YAML-এর প্রতিস্থাপন পারে না`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI-এর add_ssh_keys স্টেপ কোন SSH কী ব্যবহার হবে তা সীমাবদ্ধ করে না",
+      description: "একটি \"add_ssh_keys\" স্টেপ কোনো \"fingerprints:\" সেট করে না। সেই তালিকা ছাড়া, CircleCI সেই জবের সাথে প্রজেক্টে কনফিগার করা সব SSH কী যুক্ত করে দেয়, শুধু যেটা তার আসলেই দরকার সেটা নয় — একটি আপোসকৃত জব বা একটি ক্ষতিকর ডিপেন্ডেন্সি প্রজেক্টের একটি নয়, সব ডিপ্লয় কী-এর অ্যাক্সেস পেয়ে যাবে।",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # শুধু সেই কী যা এই জবের আসলেই দরকার, প্রজেক্টের সব কী নয়`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executor-এর Docker ইমেজ কোনো নির্দিষ্ট ভার্সনে পিন করা নেই",
+      description: "একটি \"docker:\" executor ইমেজ কোনো ট্যাগ ছাড়া একটি ইমেজের দিকে নির্দেশ করে (যা \":latest\"-এর সমতুল্য) অথবা স্পষ্টভাবে \":latest\"-এর দিকে। যে সেই ইমেজ মেইনটেইন করে, সে কনফিগারেশন পরিবর্তন না করেই যেকোনো সময় এর বিষয়বস্তু প্রতিস্থাপন করতে পারে — একই পাইপলাইন একদিন থেকে পরের দিন ভিন্ন কোড চালানো শুরু করতে পারে, GitHub Actions এবং GitLab CI-এর জন্য ইতিমধ্যে কভার করা একই সাপ্লাই-চেইন ঝুঁকি।",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # "latest"-এর বদলে একটি নির্দিষ্ট ট্যাগ (বা আরও ভালো একটি ডাইজেস্ট "node@sha256:...")`,
       },
     },
 },
@@ -5485,6 +5733,37 @@ variables:
         after: `image: node:20.11.1  # "latest" کے بجائے ایک مخصوص ٹیگ (یا اس سے بھی بہتر ایک ڈائجسٹ "node@sha256:...")`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "ایک پائپ لائن پیرامیٹر براہ راست CircleCI کے شیل کمانڈ میں داخل ہوتا ہے",
+      description: "CircleCI کنفیگریشن کا ایک \"run:\" سٹیپ کمانڈ کے اندر براہ راست \"<< pipeline.parameters.NAME >>\" (یا \"<< pipeline.trigger_parameters.NAME >>\") استعمال کرتا ہے۔ ایک عام ماحولیاتی متغیر کے برعکس، یہ ویلیو شیل کے دیکھنے سے پہلے ہی YAML میں تبدیل کر دی جاتی ہے — یہ کمپائل ٹائم پر ایک متنی تبدیلی ہے، کوئی ایسا متغیر نہیں جسے کوٹس میں رکھ کر محفوظ کیا جا سکے۔ جو کوئی بھی اپنے پیرامیٹرز کے ساتھ پائپ لائن ٹریگر کر سکتا ہے (API کے ذریعے، کسی بیرونی ٹریگر سے، کسی منسلک پراجیکٹ سے)، وہ CI میں من مانے کمانڈز چلا سکتا ہے، اس جاب میں دستیاب تمام سیکریٹس تک رسائی کے ساتھ۔",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # ماحولیاتی متغیر کے طور پر دیا گیا، کبھی بھی کمانڈ میں براہ راست نہیں ڈالا گیا — یہاں شیل اسے کوٹس میں رکھ سکتا ہے، YAML کی تبدیلی نہیں رکھ سکتی`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI کا add_ssh_keys سٹیپ یہ محدود نہیں کرتا کہ کون سی SSH کی استعمال ہو",
+      description: "ایک \"add_ssh_keys\" سٹیپ کوئی \"fingerprints:\" سیٹ نہیں کرتا۔ اس فہرست کے بغیر، CircleCI اس جاب سے پراجیکٹ میں کنفیگر کی گئی ہر SSH کی جوڑ دیتا ہے، صرف وہ نہیں جس کی اسے واقعی ضرورت ہے — ایک سمجھوتہ شدہ جاب یا ایک نقصان دہ ڈیپنڈنسی کو پراجیکٹ کی صرف ایک نہیں بلکہ ہر ڈیپلائے کی تک رسائی مل جائے گی۔",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # صرف وہ کی جو اس جاب کو واقعی چاہیے، پراجیکٹ کی ہر کی نہیں`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executor کی Docker امیج کسی مخصوص ورژن پر فکس نہیں ہے",
+      description: "ایک \"docker:\" executor امیج بغیر ٹیگ کے کسی امیج کی طرف اشارہ کرتی ہے (جو \":latest\" کے برابر ہے) یا واضح طور پر \":latest\" کی طرف۔ جو اس امیج کو مینٹین کرتا ہے، وہ کنفیگریشن بدلے بغیر کسی بھی وقت اس کا مواد تبدیل کر سکتا ہے — وہی پائپ لائن ایک دن سے دوسرے دن مختلف کوڈ چلانا شروع کر سکتی ہے، وہی سپلائی چین رسک جو GitHub Actions اور GitLab CI کے لیے پہلے ہی کور کیا جا چکا ہے۔",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # "latest" کے بجائے ایک مخصوص ٹیگ (یا اس سے بھی بہتر ایک ڈائجسٹ "node@sha256:...")`,
+      },
+    },
 },
   id: {
   "supabase-service-role-in-client": {
@@ -6023,6 +6302,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # tag spesifik (atau lebih baik lagi digest "node@sha256:...") alih-alih "latest"`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "Parameter pipeline masuk langsung ke perintah shell CircleCI",
+      description: "Langkah \"run:\" dalam konfigurasi CircleCI menggunakan \"<< pipeline.parameters.NAMA >>\" (atau \"<< pipeline.trigger_parameters.NAMA >>\") langsung di dalam perintah. Berbeda dengan environment variable biasa, nilai ini disubstitusikan ke dalam YAML SEBELUM shell sempat melihatnya — substitusi teks pada waktu kompilasi, bukan variabel yang bisa dilindungi dengan tanda kutip. Siapa pun yang bisa memicu pipeline dengan parameter miliknya sendiri (via API, trigger eksternal, proyek yang terhubung) dapat menjalankan perintah apa pun di CI, dengan akses ke semua secret yang tersedia di job tersebut.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # diteruskan sebagai environment variable, tidak pernah diinterpolasi langsung ke dalam perintah — di sini shell bisa memberinya tanda kutip, substitusi YAML tidak bisa`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "Langkah add_ssh_keys CircleCI tidak membatasi SSH key mana yang digunakan",
+      description: "Langkah \"add_ssh_keys\" tidak menetapkan \"fingerprints:\" sama sekali. Tanpa daftar itu, CircleCI menghubungkan SEMUA SSH key yang dikonfigurasi di proyek ke job tersebut, bukan hanya yang benar-benar dibutuhkannya — job yang disusupi atau dependency berbahaya akan mendapat akses ke semua deploy key proyek, bukan hanya satu.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # hanya key yang benar-benar dibutuhkan job ini, bukan semua key proyek`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "Image Docker milik executor CircleCI tidak dipatok ke versi tertentu",
+      description: "Sebuah image executor \"docker:\" mengarah ke image tanpa tag (yang berarti \":latest\") atau secara eksplisit ke \":latest\". Siapa pun yang memelihara image itu dapat mengganti isinya kapan saja tanpa konfigurasi berubah — pipeline yang sama bisa mulai menjalankan kode berbeda dari satu hari ke hari berikutnya, risiko supply chain yang sama yang sudah dicakup untuk GitHub Actions dan GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # tag spesifik (atau lebih baik lagi digest "node@sha256:...") alih-alih "latest"`,
       },
     },
 },
@@ -6565,6 +6875,37 @@ variables:
         after: `image: node:20.11.1  # ein konkreter Tag (oder noch besser ein Digest "node@sha256:...") statt "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "Ein Pipeline-Parameter gelangt direkt in einen CircleCI-Shell-Befehl",
+      description: "Ein \"run:\"-Schritt in der CircleCI-Konfiguration verwendet \"<< pipeline.parameters.NAME >>\" (oder \"<< pipeline.trigger_parameters.NAME >>\") direkt im Befehl. Anders als eine normale Umgebungsvariable wird dieser Wert in das YAML eingesetzt, BEVOR die Shell ihn überhaupt sieht — eine Textsubstitution zur Kompilierzeit, keine Variable, die man durch Anführungszeichen schützen kann. Wer auch immer die Pipeline mit eigenen Parametern auslösen kann (über die API, einen externen Trigger, ein verbundenes Projekt), kann beliebige Befehle in der CI ausführen, mit Zugriff auf alle in diesem Job verfügbaren Secrets.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # als Umgebungsvariable übergeben, nie direkt in den Befehl interpoliert — hier kann die Shell sie in Anführungszeichen setzen, die YAML-Substitution kann das nicht`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "Der add_ssh_keys-Schritt von CircleCI schränkt nicht ein, welcher SSH-Schlüssel verwendet wird",
+      description: "Ein \"add_ssh_keys\"-Schritt legt überhaupt kein \"fingerprints:\" fest. Ohne diese Liste hängt CircleCI ALLE im Projekt konfigurierten SSH-Schlüssel an diesen Job, nicht nur den, den er tatsächlich braucht — ein kompromittierter Job oder eine bösartige Abhängigkeit erhielte dadurch Zugriff auf jeden Deploy-Schlüssel des Projekts statt nur auf einen.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # nur der Schlüssel, den dieser Job wirklich braucht, nicht jeder Schlüssel des Projekts`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "Das Docker-Image des CircleCI-Executors ist nicht auf eine bestimmte Version festgelegt",
+      description: "Ein \"docker:\"-Executor-Image zeigt auf ein Image ohne Tag (was \":latest\" entspricht) oder explizit auf \":latest\". Wer dieses Image pflegt, kann seinen Inhalt jederzeit ersetzen, ohne dass sich die Konfiguration ändert — dieselbe Pipeline kann von einem Tag auf den anderen plötzlich anderen Code ausführen, dasselbe Supply-Chain-Risiko, das für GitHub Actions und GitLab CI bereits abgedeckt ist.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # ein konkreter Tag (oder noch besser ein Digest "node@sha256:...") statt "latest"`,
+      },
+    },
 },
   fi: {
   "supabase-service-role-in-client": {
@@ -7103,6 +7444,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # tietty tagi (tai vielä parempi digest "node@sha256:...") "latest"-tagin sijaan`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "Putken parametri päätyy suoraan CircleCI:n komentotulkkiin",
+      description: "CircleCI-konfiguraation \"run:\"-vaihe käyttää arvoa \"<< pipeline.parameters.NIMI >>\" (tai \"<< pipeline.trigger_parameters.NIMI >>\") suoraan komennon sisällä. Toisin kuin tavallinen ympäristömuuttuja, tämä arvo korvataan YAML:ssa ENNEN kuin komentotulkki edes näkee sen — tekstikorvaus käännösaikana, ei muuttuja, jota voisi suojata lainausmerkeillä. Kuka tahansa, joka voi laukaista putken omilla parametreillaan (APIn, ulkoisen laukaisimen tai yhdistetyn projektin kautta), voi suorittaa mielivaltaisia komentoja CI:ssä, pääsyllä kaikkiin kyseisessä jobissa saatavilla oleviin secreteihin.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # välitetty ympäristömuuttujana, ei koskaan interpoloitu suoraan komentoon — komentotulkki voi laittaa tämän lainausmerkkeihin, YAML:n korvaus ei voi`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI:n add_ssh_keys-vaihe ei rajoita, mitä SSH-avainta käytetään",
+      description: "\"add_ssh_keys\"-vaihe ei aseta lainkaan \"fingerprints:\"-arvoa. Ilman sitä listaa CircleCI liittää kyseiseen jobiin KAIKKI projektiin määritetyt SSH-avaimet, ei vain sitä, jota se oikeasti tarvitsee — vaarantunut job tai haitallinen riippuvuus saisi näin pääsyn jokaiseen projektin deploy-avaimeen yhden sijaan.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # vain se avain, jota tämä job oikeasti tarvitsee, ei kaikkia projektin avaimia`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI-executorin Docker-image ei ole kiinnitetty tiettyyn versioon",
+      description: "\"docker:\"-executorin image osoittaa imageen ilman tagia (joka vastaa tagia \":latest\") tai suoraan tagiin \":latest\". Kuka tahansa, joka ylläpitää tuota imagea, voi vaihtaa sen sisällön milloin tahansa ilman että konfiguraatio muuttuu — sama putki voi alkaa ajaa eri koodia päivästä toiseen, sama toimitusketjuriski, joka on jo katettu GitHub Actionsille ja GitLab CI:lle.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # tietty tagi (tai vielä parempi digest "node@sha256:...") "latest"-tagin sijaan`,
       },
     },
 },
@@ -7819,6 +8191,37 @@ variables:
         after: `image: node:20.11.1  # een specifieke tag (of nog beter een digest "node@sha256:...") in plaats van "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "Een pipeline-parameter komt rechtstreeks in een CircleCI-shellcommando terecht",
+      description: "Een \"run:\"-stap in de CircleCI-configuratie gebruikt \"<< pipeline.parameters.NAAM >>\" (of \"<< pipeline.trigger_parameters.NAAM >>\") rechtstreeks in het commando. In tegenstelling tot een gewone omgevingsvariabele wordt deze waarde in de YAML gesubstitueerd VOORDAT de shell hem ooit ziet — een tekstsubstitutie op compileertijd, geen variabele die je met aanhalingstekens kunt beschermen. Iedereen die de pipeline met eigen parameters kan triggeren (via de API, een externe trigger, een gekoppeld project) kan willekeurige commando's uitvoeren in de CI, met toegang tot alle secrets die in die job beschikbaar zijn.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # doorgegeven als omgevingsvariabele, nooit rechtstreeks in het commando geïnterpoleerd — hier kan de shell het tussen aanhalingstekens zetten, de YAML-substitutie niet`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "De add_ssh_keys-stap van CircleCI beperkt niet welke SSH-sleutel wordt gebruikt",
+      description: "Een \"add_ssh_keys\"-stap stelt helemaal geen \"fingerprints:\" in. Zonder die lijst koppelt CircleCI ALLE SSH-sleutels die in het project zijn geconfigureerd aan die job, niet alleen degene die hij echt nodig heeft — een gecompromitteerde job of een kwaadaardige dependency krijgt zo toegang tot elke deploy-sleutel van het project in plaats van er maar één.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # alleen de sleutel die deze job echt nodig heeft, niet elke sleutel van het project`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "De Docker-image van de CircleCI-executor is niet vastgezet op een specifieke versie",
+      description: "Een image van de \"docker:\"-executor verwijst naar een image zonder tag (wat gelijkstaat aan \":latest\") of expliciet naar \":latest\". Wie die image onderhoudt, kan de inhoud op elk moment vervangen zonder dat de configuratie verandert — dezelfde pipeline kan van de ene op de andere dag andere code gaan draaien, hetzelfde supply-chain-risico dat al gedekt is voor GitHub Actions en GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # een specifieke tag (of nog beter een digest "node@sha256:...") in plaats van "latest"`,
+      },
+    },
 },
   pl: {
   "supabase-service-role-in-client": {
@@ -8357,6 +8760,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # konkretny tag (albo jeszcze lepiej digest "node@sha256:...") zamiast "latest"`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "Parametr pipeline'u trafia bezpośrednio do polecenia powłoki CircleCI",
+      description: "Krok \"run:\" w konfiguracji CircleCI używa \"<< pipeline.parameters.NAZWA >>\" (lub \"<< pipeline.trigger_parameters.NAZWA >>\") bezpośrednio wewnątrz polecenia. W przeciwieństwie do zwykłej zmiennej środowiskowej, ta wartość jest podstawiana w YAML-u, ZANIM powłoka w ogóle ją zobaczy — to podstawienie tekstu na etapie kompilacji, nie zmienna, którą można zabezpieczyć cudzysłowami. Każdy, kto może uruchomić pipeline z własnymi parametrami (przez API, zewnętrzny trigger, połączony projekt), może wykonać dowolne polecenia w CI, z dostępem do wszystkich sekretów dostępnych w tym zadaniu.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # przekazane jako zmienna środowiskowa, nigdy nie interpolowane bezpośrednio w poleceniu — tutaj powłoka może ująć to w cudzysłów, podstawienie YAML-a nie może`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "Krok add_ssh_keys w CircleCI nie ogranicza, który klucz SSH jest używany",
+      description: "Krok \"add_ssh_keys\" w ogóle nie ustawia \"fingerprints:\". Bez tej listy CircleCI podłącza do tego zadania WSZYSTKIE klucze SSH skonfigurowane w projekcie, nie tylko ten, którego naprawdę potrzebuje — przejęte zadanie lub złośliwa zależność uzyska dostęp do każdego klucza wdrożeniowego projektu zamiast tylko jednego.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # tylko klucz, którego naprawdę potrzebuje to zadanie, nie każdy klucz projektu`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "Obraz Docker executora CircleCI nie jest przypięty do konkretnej wersji",
+      description: "Obraz executora \"docker:\" wskazuje na obraz bez tagu (co odpowiada \":latest\") lub jawnie na \":latest\". Ktokolwiek utrzymuje ten obraz, może zastąpić jego zawartość w dowolnym momencie bez zmiany konfiguracji — ten sam pipeline może zacząć uruchamiać inny kod z dnia na dzień, to samo ryzyko łańcucha dostaw, które jest już pokryte dla GitHub Actions i GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # konkretny tag (albo jeszcze lepiej digest "node@sha256:...") zamiast "latest"`,
       },
     },
 },
@@ -8899,6 +9333,37 @@ variables:
         after: `image: node:20.11.1  # en specifik tagg (eller ännu hellre ett digest "node@sha256:...") istället för "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "En pipeline-parameter hamnar direkt i ett CircleCI-skalkommando",
+      description: "Ett \"run:\"-steg i CircleCI-konfigurationen använder \"<< pipeline.parameters.NAMN >>\" (eller \"<< pipeline.trigger_parameters.NAMN >>\") direkt i kommandot. Till skillnad från en vanlig miljövariabel ersätts detta värde i YAML:en INNAN skalet ens ser det — en textersättning vid kompileringstid, inte en variabel man kan skydda med citattecken. Vem som helst som kan trigga pipelinen med sina egna parametrar (via API:et, en extern trigger, ett anslutet projekt) kan köra godtyckliga kommandon i CI:n, med tillgång till alla hemligheter som är tillgängliga i det jobbet.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # skickas som miljövariabel, aldrig interpolerad direkt i kommandot — här kan skalet sätta citattecken runt den, YAML-ersättningen kan inte`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI:s add_ssh_keys-steg begränsar inte vilken SSH-nyckel som används",
+      description: "Ett \"add_ssh_keys\"-steg anger ingen \"fingerprints:\" alls. Utan den listan kopplar CircleCI ALLA SSH-nycklar som är konfigurerade i projektet till det jobbet, inte bara den det faktiskt behöver — ett komprometterat jobb eller ett skadligt beroende skulle då få tillgång till varenda deploy-nyckel i projektet istället för bara en.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # bara nyckeln som detta jobb faktiskt behöver, inte alla nycklar i projektet`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI-executorns Docker-avbild är inte fäst vid en specifik version",
+      description: "En \"docker:\"-executoravbild pekar på en avbild utan tagg (vilket motsvarar \":latest\") eller uttryckligen på \":latest\". Den som underhåller den avbilden kan ersätta dess innehåll när som helst utan att konfigurationen ändras — samma pipeline kan börja köra annan kod från en dag till en annan, samma supply chain-risk som redan är täckt för GitHub Actions och GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # en specifik tagg (eller ännu hellre ett digest "node@sha256:...") istället för "latest"`,
+      },
+    },
 },
   da: {
   "supabase-service-role-in-client": {
@@ -9437,6 +9902,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # et specifikt tag (eller endnu bedre et digest "node@sha256:...") i stedet for "latest"`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "En pipeline-parameter går direkte ind i en CircleCI-shell-kommando",
+      description: "Et \"run:\"-trin i CircleCI-konfigurationen bruger \"<< pipeline.parameters.NAVN >>\" (eller \"<< pipeline.trigger_parameters.NAVN >>\") direkte inde i kommandoen. I modsætning til en normal miljøvariabel bliver denne værdi substitueret ind i YAML'en, FØR shellen overhovedet ser den — en tekstsubstitution ved kompileringstid, ikke en variabel man kan beskytte med anførselstegn. Enhver, der kan udløse pipelinen med sine egne parametre (via API'et, en ekstern trigger, et forbundet projekt), kan køre vilkårlige kommandoer i CI'en med adgang til alle hemmeligheder tilgængelige i det job.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # sendt som miljøvariabel, aldrig interpoleret direkte i kommandoen — her kan shellen sætte anførselstegn om den, YAML-substitutionen kan ikke`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI's add_ssh_keys-trin begrænser ikke, hvilken SSH-nøgle der bruges",
+      description: "Et \"add_ssh_keys\"-trin angiver slet ingen \"fingerprints:\". Uden den liste kobler CircleCI ALLE SSH-nøgler konfigureret på projektet til det job, ikke kun den det rent faktisk har brug for — et kompromitteret job eller en ondsindet afhængighed ville dermed få adgang til hver eneste deploy-nøgle i projektet i stedet for kun én.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # kun nøglen dette job rent faktisk har brug for, ikke hver nøgle i projektet`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI-executorens Docker-image er ikke fastlåst til en bestemt version",
+      description: "Et \"docker:\"-executor-image peger på et image uden tag (hvilket svarer til \":latest\") eller eksplicit til \":latest\". Den, der vedligeholder det image, kan erstatte dets indhold når som helst uden at konfigurationen ændres — den samme pipeline kan fra den ene dag til den anden begynde at køre anden kode, samme supply chain-risiko der allerede er dækket for GitHub Actions og GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # et specifikt tag (eller endnu bedre et digest "node@sha256:...") i stedet for "latest"`,
       },
     },
 },
@@ -9979,6 +10475,37 @@ variables:
         after: `image: node:20.11.1  # en spesifikk tag (eller enda bedre et digest "node@sha256:...") i stedet for "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "En pipeline-parameter går rett inn i en CircleCI-skallkommando",
+      description: "Et \"run:\"-steg i CircleCI-konfigurasjonen bruker \"<< pipeline.parameters.NAVN >>\" (eller \"<< pipeline.trigger_parameters.NAVN >>\") direkte inne i kommandoen. I motsetning til en vanlig miljøvariabel blir denne verdien satt inn i YAML-en FØR skallet i det hele tatt ser den — en tekstsubstitusjon ved kompileringstid, ikke en variabel man kan beskytte med anførselstegn. Hvem som helst som kan utløse pipelinen med sine egne parametre (via API-et, en ekstern trigger, et tilkoblet prosjekt), kan kjøre vilkårlige kommandoer i CI-en, med tilgang til alle hemmeligheter tilgjengelige i den jobben.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # sendt som miljøvariabel, aldri interpolert direkte i kommandoen — her kan skallet sette anførselstegn rundt den, YAML-substitusjonen kan ikke`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCIs add_ssh_keys-steg begrenser ikke hvilken SSH-nøkkel som brukes",
+      description: "Et \"add_ssh_keys\"-steg setter ingen \"fingerprints:\" i det hele tatt. Uten den listen kobler CircleCI ALLE SSH-nøkler konfigurert på prosjektet til den jobben, ikke bare den den faktisk trenger — en kompromittert jobb eller en ondsinnet avhengighet ville dermed fått tilgang til hver eneste deploy-nøkkel i prosjektet i stedet for bare én.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # bare nøkkelen denne jobben faktisk trenger, ikke hver nøkkel i prosjektet`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "Docker-imaget til CircleCI-executoren er ikke festet til en bestemt versjon",
+      description: "Et \"docker:\"-executor-image peker på et image uten tag (som tilsvarer \":latest\") eller eksplisitt til \":latest\". Den som vedlikeholder det imaget, kan erstatte innholdet når som helst uten at konfigurasjonen endres — samme pipeline kan begynne å kjøre annen kode fra én dag til den neste, samme forsyningskjederisiko som allerede er dekket for GitHub Actions og GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # en spesifikk tag (eller enda bedre et digest "node@sha256:...") i stedet for "latest"`,
+      },
+    },
 },
   tr: {
   "supabase-service-role-in-client": {
@@ -10517,6 +11044,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # "latest" yerine belirli bir etiket (ya da daha iyisi bir digest "node@sha256:...")`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "Bir pipeline parametresi doğrudan bir CircleCI shell komutuna giriyor",
+      description: "CircleCI yapılandırmasındaki bir \"run:\" adımı, komutun içinde doğrudan \"<< pipeline.parameters.AD >>\" (veya \"<< pipeline.trigger_parameters.AD >>\") kullanıyor. Normal bir ortam değişkeninin aksine, bu değer shell onu görmeden ÖNCE YAML içine yerleştirilir — bu, tırnak işaretleriyle korunabilecek bir değişken değil, derleme zamanında yapılan bir metin ikamesidir. Pipeline'ı kendi parametreleriyle tetikleyebilen herkes (API üzerinden, harici bir tetikleyiciyle, bağlı bir projeden), o job'da kullanılabilen tüm sırlara erişimle birlikte CI'da rastgele komutlar çalıştırabilir.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # ortam değişkeni olarak geçirildi, komuta asla doğrudan interpolasyon yapılmadı — burada shell onu tırnak içine alabilir, YAML ikamesi alamaz`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI'nin add_ssh_keys adımı hangi SSH anahtarının kullanılacağını sınırlamıyor",
+      description: "Bir \"add_ssh_keys\" adımı hiç \"fingerprints:\" belirlemiyor. O liste olmadan, CircleCI o job'a projede yapılandırılmış TÜM SSH anahtarlarını bağlar, sadece gerçekten ihtiyacı olanı değil — ele geçirilmiş bir job veya kötü niyetli bir bağımlılık, projenin tek bir değil her bir deploy anahtarına erişim kazanır.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # sadece bu job'ın gerçekten ihtiyacı olan anahtar, projenin her anahtarı değil`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executor'ının Docker imajı belirli bir sürüme sabitlenmemiş",
+      description: "Bir \"docker:\" executor imajı, etiketi olmayan bir imajı (\":latest\" ile aynı anlama gelir) veya açıkça \":latest\"i gösteriyor. O imajı kim sürdürüyorsa, yapılandırma değişmeden içeriğini istediği an değiştirebilir — aynı pipeline bir günden diğerine farklı kod çalıştırmaya başlayabilir, GitHub Actions ve GitLab CI için zaten ele alınmış olan aynı tedarik zinciri riski.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # "latest" yerine belirli bir etiket (ya da daha iyisi bir digest "node@sha256:...")`,
       },
     },
 },
@@ -11059,6 +11617,37 @@ variables:
         after: `image: node:20.11.1  # конкретний тег (або ще краще дайджест "node@sha256:...") замість "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "Параметр пайплайна напряму потрапляє у команду оболонки CircleCI",
+      description: "Крок \"run:\" у конфігурації CircleCI використовує \"<< pipeline.parameters.ІМ'Я >>\" (або \"<< pipeline.trigger_parameters.ІМ'Я >>\") прямо всередині команди. На відміну від звичайної змінної середовища, це значення підставляється в YAML ЩЕ ДО того, як його взагалі побачить оболонка — це текстова підстановка на етапі компіляції, а не змінна, яку можна захистити лапками. Будь-хто, хто може запустити пайплайн із власними параметрами (через API, зовнішній тригер, підключений проєкт), може виконати довільні команди в CI з доступом до всіх секретів, доступних у цьому завданні.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # передано як змінну середовища, ніколи не підставлено напряму в команду — тут оболонка може взяти це в лапки, а підстановка YAML — ні`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "Крок add_ssh_keys у CircleCI не обмежує, який SSH-ключ використовувати",
+      description: "Крок \"add_ssh_keys\" взагалі не задає жодного \"fingerprints:\". Без цього списку CircleCI підключає до цього завдання УСІ SSH-ключі, налаштовані в проєкті, а не лише той, що йому справді потрібен — скомпрометоване завдання чи шкідлива залежність отримає доступ до кожного ключа розгортання проєкту замість одного.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # лише ключ, який справді потрібен цьому завданню, а не кожен ключ проєкту`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "Docker-образ executor'а CircleCI не зафіксований на конкретній версії",
+      description: "Образ executor'а \"docker:\" вказує на образ без тегу (що відповідає \":latest\") або явно на \":latest\". Той, хто підтримує цей образ, може замінити його вміст у будь-який момент без зміни конфігурації — той самий пайплайн може одного дня почати запускати інший код, той самий ризик ланцюга постачання, який уже покрито для GitHub Actions і GitLab CI.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # конкретний тег (або ще краще дайджест "node@sha256:...") замість "latest"`,
+      },
+    },
 },
   ja: {
   "supabase-service-role-in-client": {
@@ -11599,6 +12188,37 @@ variables:
         after: `image: node:20.11.1  # "latest" の代わりに具体的なタグ（さらに良いのはダイジェスト "node@sha256:..."）`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "パイプラインパラメータがCircleCIのシェルコマンドに直接入り込みます",
+      description: "CircleCI設定の \"run:\" ステップが、コマンドの中で直接 \"<< pipeline.parameters.名前 >>\"（または \"<< pipeline.trigger_parameters.名前 >>\"）を使用しています。通常の環境変数と違い、この値はシェルがそれを見る前にYAML内で置き換えられます — コンパイル時のテキスト置換であり、引用符で保護できる変数ではありません。自分のパラメータでパイプラインをトリガーできる人（API経由、外部トリガー、接続されたプロジェクトから）なら誰でも、そのジョブで使えるすべてのシークレットにアクセスしながらCIで任意のコマンドを実行できてしまいます。",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # 環境変数として渡す。コマンドに直接埋め込まない — ここならシェルが引用符で囲めるが、YAMLの置換はそれができない`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCIのadd_ssh_keysステップはどのSSHキーを使うか制限していません",
+      description: "\"add_ssh_keys\" ステップに \"fingerprints:\" が一切設定されていません。そのリストがないと、CircleCIはそのジョブに、本当に必要な1つだけでなく、プロジェクトに設定されているすべてのSSHキーを接続してしまいます — 侵害されたジョブや悪意のある依存関係が、1つではなくプロジェクトのすべてのデプロイキーへのアクセスを得ることになります。",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # このジョブが本当に必要とするキーだけ、プロジェクトの全キーではない`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executorのDockerイメージが特定のバージョンに固定されていません",
+      description: "\"docker:\" executorのイメージが、タグなしのイメージ（\":latest\" と同じ扱い）を指しているか、明示的に \":latest\" を指しています。そのイメージを管理している人は、設定を変えることなくいつでも中身を差し替えられます — 同じパイプラインがある日を境に別のコードを実行し始める可能性があり、GitHub ActionsやGitLab CIですでにカバーされているのと同じサプライチェーンのリスクです。",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # "latest" の代わりに具体的なタグ（さらに良いのはダイジェスト "node@sha256:..."）`,
+      },
+    },
 },
   ko: {
   "supabase-service-role-in-client": {
@@ -12137,6 +12757,37 @@ variables:
       fix: {
         before: `image: node:latest`,
         after: `image: node:20.11.1  # "latest" 대신 구체적인 태그(더 좋게는 다이제스트 "node@sha256:...")`,
+      },
+    },
+    "circleci-pipeline-parameter-injection": {
+      title: "파이프라인 매개변수가 CircleCI 셸 명령어에 직접 들어갑니다",
+      description: "CircleCI 설정의 \"run:\" 단계가 명령어 안에서 \"<< pipeline.parameters.이름 >>\"(또는 \"<< pipeline.trigger_parameters.이름 >>\")을 직접 사용합니다. 일반 환경 변수와 달리, 이 값은 셸이 보기도 전에 YAML에서 치환됩니다 — 컴파일 타임의 텍스트 치환이지, 따옴표로 보호할 수 있는 변수가 아닙니다. 자신의 매개변수로 파이프라인을 트리거할 수 있는 사람이라면 누구나(API를 통해, 외부 트리거로, 연결된 프로젝트에서) 해당 작업에서 사용 가능한 모든 시크릿에 접근하면서 CI에서 임의의 명령을 실행할 수 있습니다.",
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # 환경 변수로 전달됨, 명령어에 직접 보간되지 않음 — 여기서는 셸이 따옴표로 감쌀 수 있지만 YAML 치환은 그럴 수 없음`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI의 add_ssh_keys 단계는 어떤 SSH 키를 사용할지 제한하지 않습니다",
+      description: "\"add_ssh_keys\" 단계가 \"fingerprints:\"를 전혀 설정하지 않습니다. 그 목록이 없으면 CircleCI는 그 작업에 실제로 필요한 키 하나가 아니라 프로젝트에 설정된 모든 SSH 키를 연결합니다 — 손상된 작업이나 악성 의존성이 프로젝트의 배포 키 하나가 아니라 전부에 접근하게 됩니다.",
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # 이 작업에 실제로 필요한 키만, 프로젝트의 모든 키가 아님`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "CircleCI executor의 Docker 이미지가 특정 버전에 고정되어 있지 않습니다",
+      description: "\"docker:\" executor 이미지가 태그 없는 이미지(\":latest\"와 동일)를 가리키거나 명시적으로 \":latest\"를 가리킵니다. 그 이미지를 관리하는 사람은 설정을 바꾸지 않고도 언제든 내용을 교체할 수 있습니다 — 같은 파이프라인이 어느 날을 기점으로 다른 코드를 실행하기 시작할 수 있으며, GitHub Actions와 GitLab CI에 대해 이미 다룬 것과 같은 공급망 위험입니다.",
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # "latest" 대신 구체적인 태그(더 좋게는 다이제스트 "node@sha256:...")`,
       },
     },
 },
