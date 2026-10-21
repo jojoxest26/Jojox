@@ -1,3 +1,4 @@
+import type { NextFunction, Response } from "express";
 import { Router } from "express";
 import { z } from "zod";
 import { analyzeFiles } from "../../analyze.js";
@@ -6,6 +7,7 @@ import { computeScore, summarizeBySeverity } from "../../scoring.js";
 import { optionalAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { checkAndConsumeAnalysisQuota } from "../analysisQuota.js";
+import { createIpRateLimit } from "../util/rateLimit.js";
 
 const MAX_FILES = 300;
 const MAX_FILE_BYTES = 200_000;
@@ -24,7 +26,29 @@ export const requestSchema = z.object({
 
 export const analyzeRouter = Router();
 
-analyzeRouter.post("/api/analyze", optionalAuth, async (req: AuthedRequest, res) => {
+// Punto 18 quinquies: optionalAuth lascia passare chi non manda nessun
+// token come ospite (req.userId resta undefined) — e per quel ramo il
+// controllo quota sotto viene saltato del tutto (solo "if (req.userId)"),
+// quindi senza questo limite un chiamante anonimo diretto all'API (non dal
+// sito, che instrada gli ospiti su /api/guest-analyze con il suo limite di
+// una sola analisi per IP) avrebbe analisi gratuite illimitate. Si applica
+// solo agli ospiti: un utente loggato resta comunque limitato dalla propria
+// quota mensile di piano più sotto.
+const analyzeGuestRateLimit = createIpRateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  message: "Troppe richieste anonime da questo indirizzo IP — accedi con un account per continuare, o riprova tra qualche minuto.",
+});
+
+function guestOnlyRateLimit(req: AuthedRequest, res: Response, next: NextFunction): void {
+  if (req.userId) {
+    next();
+    return;
+  }
+  analyzeGuestRateLimit(req, res, next);
+}
+
+analyzeRouter.post("/api/analyze", optionalAuth, guestOnlyRateLimit, async (req: AuthedRequest, res) => {
   const parsed = requestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Richiesta non valida", details: parsed.error.flatten() });

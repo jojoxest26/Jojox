@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import type { Severity } from "../../types.js";
+import { createIpRateLimit } from "../util/rateLimit.js";
 
 const MAX_FINDINGS_RETURNED = 300;
 
@@ -127,9 +128,21 @@ export function parseSarif(doc: unknown): SarifImportResult | { errorCode: Sarif
 
 export const sarifImportRouter = Router();
 
+// Punto 18 quinquies: unica rotta davvero pubblica (nessun login, nessun
+// credito da consumare) che fa comunque un lavoro non banale — il parsing
+// di un JSON arbitrario fino a 10MB — quindi è quella con più bisogno di un
+// tetto per IP contro l'uso automatizzato eccessivo, a differenza di
+// /api/analyze-audit (richiede login + un credito pagato) o del server MCP
+// (gira in locale sulla macchina di chi lo usa, non tocca questo server).
+const sarifImportRateLimit = createIpRateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  message: "Troppe richieste di import SARIF da questo indirizzo IP — riprova tra qualche minuto.",
+});
+
 // Pubblica, senza login: fa solo da lead magnet per chi arriva da un altro
 // strumento, nessuna chiamata AI né scrittura su database.
-sarifImportRouter.post("/api/sarif-import", (req, res) => {
+sarifImportRouter.post("/api/sarif-import", sarifImportRateLimit, (req, res) => {
   const parsed = requestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ errorCode: "invalid_sarif" });
