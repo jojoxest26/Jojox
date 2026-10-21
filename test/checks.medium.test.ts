@@ -750,4 +750,42 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — CircleCI", () => {
+    it("circleci-unpinned-image: flags an image with no tag", () => {
+      const check = checkById("circleci-unpinned-image");
+      const vulnerable = file(".circleci/config.yml", "jobs:\n  build:\n    docker:\n      - image: node\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-unpinned-image: flags an image explicitly pinned to :latest", () => {
+      const check = checkById("circleci-unpinned-image");
+      const vulnerable = file(".circleci/config.yml", "jobs:\n  build:\n    docker:\n      - image: node:latest\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-unpinned-image: does not flag an image pinned to a specific tag", () => {
+      const check = checkById("circleci-unpinned-image");
+      const clean = file(".circleci/config.yml", "jobs:\n  build:\n    docker:\n      - image: node:20.11.1\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("circleci-unpinned-image: does not flag an image pinned to a digest", () => {
+      const check = checkById("circleci-unpinned-image");
+      const clean = file(".circleci/config.yml", "jobs:\n  build:\n    docker:\n      - image: node@sha256:abcdef1234\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("circleci-unpinned-image: does not flag a pipeline-parameter image reference it can't evaluate", () => {
+      const check = checkById("circleci-unpinned-image");
+      const clean = file(".circleci/config.yml", "jobs:\n  build:\n    docker:\n      - image: << pipeline.parameters.image >>\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("circleci-unpinned-image: does not flag anything outside a CircleCI config file", () => {
+      const check = checkById("circleci-unpinned-image");
+      const clean = file("docker-compose.yml", "services:\n  app:\n    - image: node:latest\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

@@ -593,6 +593,37 @@ variables:
         after: `image: node:20.11.1  # a specific tag (or even better a digest "node@sha256:...") instead of "latest"`,
       },
     },
+    "circleci-pipeline-parameter-injection": {
+      title: "A pipeline parameter enters a CircleCI shell command directly",
+      description: 'A "run:" step in the CircleCI configuration uses "<< pipeline.parameters.NAME >>" (or "<< pipeline.trigger_parameters.NAME >>") directly inside the command. Unlike a normal environment variable, this value is substituted into the YAML BEFORE the shell ever sees it — a text substitution at compile time, not a variable you can protect by quoting. Anyone who can trigger the pipeline with their own parameters (via the API, an external trigger, a connected project) can run arbitrary commands in the CI, with access to every secret available in that job.',
+      fix: {
+        before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+        after: `- run:
+    environment:
+      DEPLOY_TARGET: << pipeline.parameters.target >>
+    command: ./deploy.sh "$DEPLOY_TARGET"  # passed as an environment variable, never interpolated directly in the command — the shell can quote this, the YAML substitution can't`,
+      },
+    },
+    "circleci-add-ssh-keys-no-fingerprint": {
+      title: "CircleCI's add_ssh_keys step doesn't restrict which SSH key it uses",
+      description: 'An "add_ssh_keys" step sets no "fingerprints:" at all. Without that list, CircleCI attaches EVERY SSH key configured on the project to that job, not just the one it actually needs — a compromised job or a malicious dependency gets access to every deploy key of the project instead of just one.',
+      fix: {
+        before: `- add_ssh_keys`,
+        after: `- add_ssh_keys:
+    fingerprints:
+      - "SO:ME:FIN:GER:PRINT:HE:RE"  # only the key this job actually needs, not every key on the project`,
+      },
+    },
+    "circleci-unpinned-image": {
+      title: "The CircleCI executor's Docker image isn't pinned to a specific version",
+      description: 'A "docker:" executor image points to an image with no tag (which defaults to ":latest") or explicitly to ":latest". Whoever maintains that image can replace its contents at any time without the configuration changing — the same pipeline can start running different code from one day to the next, the same supply-chain risk already covered for GitHub Actions and GitLab CI.',
+      fix: {
+        before: `docker:
+  - image: node:latest`,
+        after: `docker:
+  - image: node:20.11.1  # a specific tag (or even better a digest "node@sha256:...") instead of "latest"`,
+      },
+    },
   },
   es: {
   "supabase-service-role-in-client": {

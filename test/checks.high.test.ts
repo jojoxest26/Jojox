@@ -674,4 +674,36 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — CircleCI", () => {
+    it("circleci-add-ssh-keys-no-fingerprint: flags a bare add_ssh_keys step", () => {
+      const check = checkById("circleci-add-ssh-keys-no-fingerprint");
+      const vulnerable = file(".circleci/config.yml", "jobs:\n  deploy:\n    steps:\n      - checkout\n      - add_ssh_keys\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-add-ssh-keys-no-fingerprint: flags add_ssh_keys: with no fingerprints sub-key", () => {
+      const check = checkById("circleci-add-ssh-keys-no-fingerprint");
+      const vulnerable = file(
+        ".circleci/config.yml",
+        "jobs:\n  deploy:\n    steps:\n      - add_ssh_keys:\n          name: deploy key\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-add-ssh-keys-no-fingerprint: does not flag add_ssh_keys with fingerprints restricting it", () => {
+      const check = checkById("circleci-add-ssh-keys-no-fingerprint");
+      const clean = file(
+        ".circleci/config.yml",
+        "jobs:\n  deploy:\n    steps:\n      - add_ssh_keys:\n          fingerprints:\n            - \"SO:ME:FIN:GER:PRINT\"\n"
+      );
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("circleci-add-ssh-keys-no-fingerprint: does not flag anything outside a CircleCI config file", () => {
+      const check = checkById("circleci-add-ssh-keys-no-fingerprint");
+      const clean = file("notes.yml", "steps:\n  - add_ssh_keys\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

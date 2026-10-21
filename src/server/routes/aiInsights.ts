@@ -25,7 +25,7 @@ const requestSchema = z.object({
 
 export const aiInsightsRouter = Router();
 
-// Punto 14 della roadmap: un livello AI in più, separato dai 58 controlli
+// Punto 14 della roadmap: un livello AI in più, separato dai 61 controlli
 // deterministici, per i bug di logica che un pattern non può trovare (race
 // condition, errori nei controlli di autorizzazione). Mai in automatico:
 // un pulsante a parte, mai contribuisce al punteggio, mai applica una

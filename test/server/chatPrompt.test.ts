@@ -19,7 +19,7 @@ describe("buildSystemPrompt across all 23 chat languages", () => {
     expect(prompt.length).toBeGreaterThan(50);
     expect(prompt).toContain("JoJoX");
     // Le cifre dei fatti di prodotto non vanno mai perse in traduzione.
-    expect(prompt).toContain("58");
+    expect(prompt).toContain("61");
     expect(prompt).toContain("99");
     expect(prompt).toContain("249");
   });

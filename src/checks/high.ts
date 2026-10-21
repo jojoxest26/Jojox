@@ -11,6 +11,7 @@ import {
   isKubernetesManifest,
   isTerraformFile,
   isGitlabCiFile,
+  isCircleCiFile,
   nearbyMatches,
   fileMatch,
 } from "../util/scan.js";
@@ -641,5 +642,48 @@ export const highChecks: Check[] = [
     // Nessun autofix: disattivare TLS è quasi sempre una scelta esplicita
     // (spesso per evitare problemi di certificati) — riattivarlo alla cieca
     // potrebbe rompere la pipeline se non è configurata per gestirlo.
+  },
+
+  {
+    id: "circleci-add-ssh-keys-no-fingerprint",
+    severity: "high",
+    confidence: "heuristic",
+    title: "Il passo add_ssh_keys di CircleCI non limita quale chiave SSH usare",
+    description:
+      "Un passo \"add_ssh_keys\" non specifica nessun \"fingerprints:\". Senza quella lista, CircleCI collega a quel job TUTTE le chiavi SSH configurate sul progetto, non solo quella che il job usa davvero — un job compromesso o con una dipendenza malevola otterrebbe accesso a ogni chiave di deploy del progetto, invece che a una sola.",
+    fix: {
+      before: `- add_ssh_keys`,
+      after: `- add_ssh_keys:\n    fingerprints:\n      - "SO:ME:FIN:GER:PRINT:HE:RE"  # solo la chiave che serve davvero a questo job, non tutte quelle del progetto`,
+    },
+    detect(file) {
+      if (!isCircleCiFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const m = /^(\s*)-\s*add_ssh_keys\s*:?\s*$/.exec(lineText);
+        if (!m) return;
+        const baseIndent = m[1].length;
+
+        let hasFingerprints = false;
+        for (let j = idx + 1; j < lines.length; j++) {
+          const next = lines[j];
+          if (next.trim() === "") continue;
+          const nextIndent = next.length - next.trimStart().length;
+          if (nextIndent <= baseIndent) break;
+          if (/^\s*fingerprints\s*:/.test(next)) {
+            hasFingerprints = true;
+            break;
+          }
+        }
+
+        if (!hasFingerprints) {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: l'impronta della chiave giusta da restringere non è deducibile dal codice.
   },
 ];

@@ -1,7 +1,7 @@
 /**
  * Il nostro stesso repository (jojoxest26/jojox) ha la GitHub App di JoJoX
  * installata su se stesso — per CI sulle pull request, Sentinella 24/7 e
- * Full Site Audit. I file che DEFINISCONO i 58 controlli (src/checks/*.ts) e
+ * Full Site Audit. I file che DEFINISCONO i 61 controlli (src/checks/*.ts) e
  * i loro test contengono però, come parte necessaria della loro stessa
  * definizione, esempi letterali del pattern che ciascun controllo cerca
  * (es. "md5(password)", "createHash(\"md5\")", "redirect(\"/\")" nei commenti

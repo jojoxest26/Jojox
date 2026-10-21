@@ -8,7 +8,7 @@ import { Icon } from "./Icon.js";
 type Status = "idle" | "loading" | "done" | "error";
 
 /**
- * Punto 14 della roadmap: livello AI aggiuntivo, separato dai 58 controlli
+ * Punto 14 della roadmap: livello AI aggiuntivo, separato dai 61 controlli
  * deterministici (mai un numero che si somma al loro, mai un autofix da
  * solo). Sempre dietro un clic esplicito — mai lanciata insieme all'analisi
  * normale — così resta chiaro che è un livello a parte, non un 56° controllo.

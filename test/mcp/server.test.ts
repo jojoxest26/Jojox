@@ -75,9 +75,9 @@ describe("MCP server: handleRequest", () => {
 });
 
 describe("MCP server: callTool", () => {
-  it("list_checks elenca tutti i 58 controlli (punto 13, GitLab CI oltre GitHub Actions)", () => {
+  it("list_checks elenca tutti i 61 controlli (punto 13, CircleCI oltre GitHub Actions/GitLab CI)", () => {
     const result = callTool("list_checks", {}) as unknown[];
-    expect(result).toHaveLength(58);
+    expect(result).toHaveLength(61);
   });
 
   it("analyze_code richiede il parametro 'files'", () => {

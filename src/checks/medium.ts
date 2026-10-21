@@ -8,6 +8,7 @@ import {
   isKubernetesManifest,
   isGithubActionsWorkflow,
   isGitlabCiFile,
+  isCircleCiFile,
 } from "../util/scan.js";
 
 /**
@@ -574,6 +575,39 @@ export const mediumChecks: Check[] = [
         if (!m) return;
         const ref = m[1];
         if (ref.startsWith("$")) return; // riferimento a una variabile: non valutabile staticamente
+        if (ref.includes("@sha256:")) return; // già fissata per digest
+        const tag = dockerImageTag(ref);
+        if (tag === null || tag === "latest") {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: non possiamo sapere quale sia la versione giusta a cui fissarla.
+  },
+
+  {
+    id: "circleci-unpinned-image",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "L'immagine Docker dell'executor CircleCI non è fissata a una versione precisa",
+    description:
+      "Un'immagine dell'executor \"docker:\" di CircleCI punta a un'immagine senza tag (equivale a \":latest\") o esplicitamente a \":latest\". Chi mantiene quell'immagine può sostituirne il contenuto in qualsiasi momento senza che la configurazione cambi — la stessa pipeline può iniziare a usare codice diverso da un giorno all'altro, un rischio di supply chain identico a quello già coperto per GitHub Actions e GitLab CI.",
+    fix: {
+      before: `docker:\n  - image: node:latest`,
+      after: `docker:\n  - image: node:20.11.1  # tag specifico (o un digest "node@sha256:...") invece di "latest"`,
+    },
+    detect(file) {
+      if (!isCircleCiFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const m = /^\s*-\s*image:\s*["']?([^"'\s]+)["']?\s*$/.exec(lineText);
+        if (!m) return;
+        const ref = m[1];
+        if (ref.startsWith("$") || ref.startsWith("<<")) return; // variabile/parametro: non valutabile staticamente
         if (ref.includes("@sha256:")) return; // già fissata per digest
         const tag = dockerImageTag(ref);
         if (tag === null || tag === "latest") {

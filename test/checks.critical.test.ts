@@ -1300,4 +1300,54 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — CircleCI", () => {
+    it("circleci-pipeline-parameter-injection: flags the short inline form (\"- run: ...\")", () => {
+      const check = checkById("circleci-pipeline-parameter-injection");
+      const vulnerable = file(
+        ".circleci/config.yml",
+        "jobs:\n  deploy:\n    steps:\n      - run: ./deploy.sh << pipeline.parameters.target >>\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-pipeline-parameter-injection: flags the expanded form (\"command:\" sub-key), without double-counting", () => {
+      const check = checkById("circleci-pipeline-parameter-injection");
+      const vulnerable = file(
+        ".circleci/config.yml",
+        "jobs:\n  deploy:\n    steps:\n      - run:\n          name: Deploy\n          command: ./deploy.sh << pipeline.parameters.target >>\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-pipeline-parameter-injection: flags the short multiline block form (\"- run: |\")", () => {
+      const check = checkById("circleci-pipeline-parameter-injection");
+      const vulnerable = file(
+        ".circleci/config.yml",
+        "jobs:\n  deploy:\n    steps:\n      - run: |\n          echo start\n          ./deploy.sh << pipeline.parameters.target >>\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-pipeline-parameter-injection: flags trigger_parameters the same way as parameters", () => {
+      const check = checkById("circleci-pipeline-parameter-injection");
+      const vulnerable = file(
+        ".circleci/config.yml",
+        "jobs:\n  deploy:\n    steps:\n      - run: ./deploy.sh << pipeline.trigger_parameters.branch >>\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("circleci-pipeline-parameter-injection: does not flag a plain environment variable", () => {
+      const check = checkById("circleci-pipeline-parameter-injection");
+      const clean = file(".circleci/config.yml", "jobs:\n  deploy:\n    steps:\n      - run: ./deploy.sh $DEPLOY_TARGET\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("circleci-pipeline-parameter-injection: does not flag anything outside a CircleCI config file", () => {
+      const check = checkById("circleci-pipeline-parameter-injection");
+      const clean = file("deploy.sh", "./deploy.sh << pipeline.parameters.target >>\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

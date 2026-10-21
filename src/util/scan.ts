@@ -47,6 +47,15 @@ export function isGitlabCiFile(file: SourceFile): boolean {
   return /^\.gitlab-ci\.yml$/i.test(basename) || /\.gitlab-ci\.ya?ml$/i.test(basename);
 }
 
+/**
+ * True per il file di configurazione principale di CircleCI
+ * (".circleci/config.yml", anche come ".circleci/config.yaml"). Usato dai
+ * controlli sulla sicurezza della CI CircleCI.
+ */
+export function isCircleCiFile(file: SourceFile): boolean {
+  return /(^|\/)\.circleci\/config\.ya?ml$/i.test(file.path);
+}
+
 const K8S_WORKLOAD_KIND = /^kind:\s*["']?(Pod|Deployment|StatefulSet|DaemonSet|ReplicaSet|Job|CronJob)["']?\s*$/im;
 
 /**
