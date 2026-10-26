@@ -34,7 +34,7 @@ const it: LegalPagesTree = {
   backHome: "← Torna a JoJoX",
   privacy: {
     title: "Informativa sulla Privacy",
-    lastUpdated: "30 agosto 2026",
+    lastUpdated: "26 ottobre 2026",
     intro:
       "Questa informativa spiega quali dati raccoglie JoJoX, per quali scopi, e quali diritti hai. È scritta per corrispondere esattamente a come funziona il servizio oggi: se cambia il modo in cui trattiamo i dati, aggiorniamo questa pagina e la data qui sopra.",
     sections: [
@@ -54,8 +54,10 @@ const it: LegalPagesTree = {
             "Account — se ti registri, Supabase (il nostro fornitore di autenticazione) conserva la tua email e la password in forma protetta. Servono per farti accedere e per collegare le analisi al tuo account.",
             "Analisi manuale da account — il codice che incolli o carichi viene inviato ai nostri server per essere analizzato. Se scegli di salvare il risultato nello storico, salviamo solo il punteggio, un riepilogo dei problemi trovati e un frammento minimo (poche parole) della riga interessata da ogni problema — mai la riga intera, mai il file completo.",
             "Modalità ospite (senza account) — il codice passa comunque dai nostri server per essere analizzato, perché serve a calcolare il risultato e ad applicare il limite di un tentativo gratuito per visitatore. Il codice non viene però mai salvato: resta solo il risultato mostrato a te, più un'impronta crittografica (hash SHA-256) del tuo indirizzo IP, che ci serve esclusivamente a riconoscere se hai già usato il tentativo gratuito e non permette di risalire né al codice analizzato né al tuo indirizzo IP originale.",
-            "Integrazione GitHub — se colleghi un repository, ogni volta che c'è una nuova modifica il codice interessato viene inviato ai nostri server per l'analisi, con lo stesso trattamento dell'analisi manuale da account (si salvano solo punteggio, riepilogo e frammenti minimi).",
-            "Pagamenti — l'elaborazione dei pagamenti è gestita interamente da Stripe. JoJoX non riceve né conserva mai il numero della tua carta o altri dati di pagamento: dal nostro lato vediamo solo l'identificativo cliente Stripe e il piano attivo.",
+            "Integrazione GitHub — se colleghi un repository, ogni volta che c'è una nuova modifica il codice interessato viene inviato ai nostri server per l'analisi, con lo stesso trattamento dell'analisi manuale da account (si salvano solo punteggio, riepilogo e frammenti minimi). Per il Full Site Audit, con un repository collegato, il codice corretto può anche essere scritto direttamente in una Pull Request che apriamo per te.",
+            "Chat e revisione AI aggiuntiva — se hai un piano Pro, Team o Business e usi la chat \"Chiedi a JoJoX\" o il pulsante \"Revisione AI aggiuntiva\", i messaggi che scrivi e il codice che alleghi vengono inviati all'API di Anthropic (Claude) per generare la risposta. Salviamo la cronologia della conversazione legata al tuo account; Anthropic tratta questi dati secondo i propri termini.",
+            "Team condivisi — se fai parte di un piano Team o Business, l'email di chi inviti (o di chi ti invita) è visibile agli altri membri dello stesso team, e i repository collegati e lo storico delle analisi sono condivisi tra tutti i membri finché l'abbonamento resta attivo.",
+            "Pagamenti — l'elaborazione dei pagamenti è gestita interamente da Stripe, sia per gli abbonamenti che per gli acquisti singoli (Full Site Audit, pacchetti di analisi extra, posti aggiuntivi, addon per aziende). JoJoX non riceve né conserva mai il numero della tua carta o altri dati di pagamento: dal nostro lato vediamo solo l'identificativo cliente Stripe e il piano o i crediti attivi.",
             "Lista d'attesa — se lasci la tua email per essere avvisato di una nuova funzionalità, la conserviamo solo per quello scopo.",
             "Dati di utilizzo del sito — usiamo Vercel Web Analytics, un servizio di analisi aggregata che non usa cookie e non traccia i singoli visitatori tra siti diversi.",
           ]),
@@ -65,7 +67,7 @@ const it: LegalPagesTree = {
         heading: "Base giuridica del trattamento",
         blocks: [
           list([
-            "esecuzione di un contratto — per creare e gestire il tuo account, eseguire le analisi che richiedi ed erogare l'abbonamento che hai scelto;",
+            "esecuzione di un contratto — per creare e gestire il tuo account, eseguire le analisi e le funzionalità AI che richiedi (chat, revisione aggiuntiva) ed erogare il piano che hai scelto;",
             "legittimo interesse — per prevenire un uso eccessivo del tentativo gratuito in modalità ospite, tramite l'impronta anonima dell'indirizzo IP;",
             "consenso — per l'iscrizione alla lista d'attesa; puoi ritirarlo in qualsiasi momento scrivendoci.",
           ]),
@@ -82,7 +84,10 @@ const it: LegalPagesTree = {
             "Stripe — elaborazione dei pagamenti e degli abbonamenti;",
             "Railway — hosting del server che esegue le analisi;",
             "Vercel — hosting del sito e analisi di utilizzo aggregata (Web Analytics);",
-            "GitHub — solo se attivi l'integrazione, per ricevere il codice delle modifiche ai repository collegati.",
+            "GitHub — solo se attivi l'integrazione, per ricevere il codice delle modifiche ai repository collegati;",
+            "Resend — invio delle email transazionali (conferma di accesso, notifiche);",
+            "Anthropic — elabora i messaggi della chat e il codice inviato alla revisione AI aggiuntiva, solo per chi usa queste funzionalità;",
+            "Sentry — tracciamento tecnico degli errori del server, per diagnosticare malfunzionamenti: può contenere frammenti tecnici della richiesta che ha causato l'errore, mai l'intero codice analizzato.",
           ]),
         ],
       },
@@ -98,7 +103,7 @@ const it: LegalPagesTree = {
         heading: "Per quanto tempo conserviamo i dati",
         blocks: [
           list([
-            "account e analisi salvate — finché non chiudi l'account o ce ne chiedi la cancellazione; oggi la cancellazione va richiesta scrivendoci, perché non è ancora disponibile un pulsante \"elimina account\" nel sito;",
+            "account, analisi salvate e cronologia della chat — finché non chiudi l'account o ce ne chiedi la cancellazione; oggi la cancellazione va richiesta scrivendoci, perché non è ancora disponibile un pulsante \"elimina account\" nel sito;",
             "impronta dell'IP in modalità ospite — resta finché applichiamo il limite del tentativo gratuito; non è ancora impostata una scadenza automatica, ma non contiene mai il codice analizzato né l'indirizzo IP originale;",
             "email della lista d'attesa — finché non ci chiedi di rimuoverla, o finché non ti contattiamo per la funzionalità richiesta.",
           ]),
@@ -160,7 +165,7 @@ const it: LegalPagesTree = {
   },
   terms: {
     title: "Termini di Servizio",
-    lastUpdated: "30 agosto 2026",
+    lastUpdated: "26 ottobre 2026",
     intro:
       "Usando JoJoX accetti questi termini. Sono scritti per corrispondere esattamente a come funziona il servizio oggi: se cambia qualcosa di rilevante, aggiorniamo questa pagina e la data qui sopra.",
     sections: [
@@ -178,6 +183,9 @@ const it: LegalPagesTree = {
           p(
             "JoJoX è un aiuto, non una garanzia. I controlli disponibili individuano una parte dei problemi di sicurezza più comuni nel codice generato con AI, ma non possono individuare ogni possibile vulnerabilità, né sostituiscono un audit di sicurezza professionale, un penetration test o una revisione umana del codice. Usare JoJoX non elimina la tua responsabilità di verificare la sicurezza del software che pubblichi."
           ),
+          p(
+            "Anche le funzionalità basate su intelligenza artificiale (la chat \"Chiedi a JoJoX\" e la \"Revisione AI aggiuntiva\") sono un aiuto, non una garanzia: possono generare codice o risposte inesatte, e il codice che suggeriscono non passa automaticamente attraverso i controlli di sicurezza di JoJoX prima che tu lo usi. Verifica sempre tu stesso codice e risposte prima di usarli."
+          ),
         ],
       },
       {
@@ -193,11 +201,13 @@ const it: LegalPagesTree = {
         blocks: [
           list([
             "Ospite — un'analisi gratuita per visitatore, senza registrazione, senza salvataggio dello storico;",
-            "Gratis — analisi illimitate accedendo con un account, con storico salvato;",
-            "Pro e Team — funzionalità aggiuntive (come l'integrazione GitHub) a pagamento, con abbonamento gestito tramite Stripe.",
+            "Gratis — analisi illimitate accedendo con un account, storico salvato, monitoraggio continuo gratuito su 1 repository GitHub collegato;",
+            "Pro, Team e Business — funzionalità aggiuntive (integrazione GitHub, chat e revisione AI aggiuntiva, gestione di più persone) a pagamento, con abbonamento gestito tramite Stripe;",
+            "Enterprise — condizioni personalizzate per chi supera i limiti di Business, concordate direttamente con noi;",
+            "Acquisti singoli — alcune funzionalità (Full Site Audit, pacchetti di analisi extra, posti aggiuntivi oltre quelli inclusi, addon di monitoraggio per aziende) si pagano una volta sola, separatamente dall'abbonamento, anch'esse tramite Stripe.",
           ]),
           p(
-            "Gli abbonamenti a pagamento si rinnovano automaticamente finché non li disdici. Puoi disdire in qualsiasi momento dal portale abbonamento, raggiungibile dal tuo account: la disdetta ha effetto alla fine del periodo già pagato, senza penali."
+            "Gli abbonamenti a pagamento si rinnovano automaticamente finché non li disdici. Puoi disdire in qualsiasi momento dal portale abbonamento, raggiungibile dal tuo account: la disdetta ha effetto alla fine del periodo già pagato, senza penali. Gli acquisti singoli non si rinnovano: ogni pagamento corrisponde a un credito o a un periodo fisso, e un nuovo acquisto serve solo quando è consumato o scaduto."
           ),
         ],
       },
@@ -255,7 +265,7 @@ const it: LegalPagesTree = {
   },
   security: {
     title: "Sicurezza e segnalazione di vulnerabilità",
-    lastUpdated: "19 settembre 2026",
+    lastUpdated: "26 ottobre 2026",
     intro:
       "JoJoX è uno strumento di sicurezza: se un problema di sicurezza riguardasse JoJoX stesso, vogliamo saperlo il prima possibile, prima che lo scopra qualcun altro. Questa pagina spiega come segnalarcelo e cosa puoi aspettarti da noi dopo averlo fatto.",
     sections: [
@@ -286,7 +296,7 @@ const it: LegalPagesTree = {
         blocks: [
           p("Sono in ambito: il sito jojox.it, il server che esegue le analisi, la GitHub App, l'estensione VS Code e il server MCP."),
           p(
-            "Non sono in ambito i servizi di terze parti che usiamo (Supabase, Stripe, Railway, Vercel, GitHub): un problema di sicurezza in quei servizi va segnalato direttamente a loro, non a noi. Se non sei sicuro se un problema riguardi JoJoX o uno di questi fornitori, scrivici comunque: ti indirizziamo noi."
+            "Non sono in ambito i servizi di terze parti che usiamo (Supabase, Stripe, Railway, Vercel, GitHub, Resend, Anthropic, Sentry): un problema di sicurezza in quei servizi va segnalato direttamente a loro, non a noi. Se non sei sicuro se un problema riguardi JoJoX o uno di questi fornitori, scrivici comunque: ti indirizziamo noi."
           ),
         ],
       },
@@ -310,7 +320,7 @@ const en: LegalPagesTree = {
   backHome: "← Back to JoJoX",
   privacy: {
     title: "Privacy Policy",
-    lastUpdated: "August 30, 2026",
+    lastUpdated: "October 26, 2026",
     intro:
       "This policy explains what data JoJoX collects, why, and what rights you have. It's written to match exactly how the service works today: if how we handle data changes, we update this page and the date above.",
     sections: [
@@ -330,8 +340,10 @@ const en: LegalPagesTree = {
             "Account — if you sign up, Supabase (our authentication provider) stores your email and a protected version of your password. This lets you log in and links your analyses to your account.",
             "Manual analysis while logged in — the code you paste or upload is sent to our servers to be analyzed. If you choose to save the result to your history, we only save the score, a summary of the issues found, and a minimal fragment (a few words) of the line affected by each issue — never the whole line, never the whole file.",
             "Guest mode (no account) — the code still goes through our servers to be analyzed, because that's needed to compute the result and enforce the one-free-try limit per visitor. The code itself is never saved: only the result shown to you is kept, plus a cryptographic fingerprint (SHA-256 hash) of your IP address, used solely to recognize whether you've already used your free try — it cannot be used to recover the analyzed code or your original IP address.",
-            "GitHub integration — if you connect a repository, the changed code is sent to our servers for analysis every time there's a new change, handled the same way as manual analysis while logged in (only score, summary, and minimal fragments are saved).",
-            "Payments — payment processing is handled entirely by Stripe. JoJoX never receives or stores your card number or other payment details: on our side we only see your Stripe customer ID and active plan.",
+            "GitHub integration — if you connect a repository, the changed code is sent to our servers for analysis every time there's a new change, handled the same way as manual analysis while logged in (only score, summary, and minimal fragments are saved). For the Full Site Audit, with a connected repository, fixed code can also be written directly into a Pull Request we open for you.",
+            "Chat and additional AI review — if you're on a Pro, Team, or Business plan and use the \"Ask JoJoX\" chat or the \"Additional AI Review\" button, the messages you write and the code you attach are sent to Anthropic's API (Claude) to generate the response. We save the conversation history tied to your account; Anthropic processes this data under its own terms.",
+            "Shared teams — if you're part of a Team or Business plan, the email of whoever you invite (or whoever invited you) is visible to other members of the same team, and connected repositories and analysis history are shared among all members for as long as the subscription stays active.",
+            "Payments — payment processing is handled entirely by Stripe, both for subscriptions and for one-time purchases (Full Site Audit, extra analysis packs, extra seats, business monitoring add-ons). JoJoX never receives or stores your card number or other payment details: on our side we only see your Stripe customer ID and active plan or credits.",
             "Waitlist — if you leave your email to be notified about a feature, we keep it only for that purpose.",
             "Site usage data — we use Vercel Web Analytics, an aggregate analytics service that doesn't use cookies and doesn't track individual visitors across sites.",
           ]),
@@ -341,7 +353,7 @@ const en: LegalPagesTree = {
         heading: "Legal basis for processing",
         blocks: [
           list([
-            "performance of a contract — to create and manage your account, run the analyses you request, and deliver the plan you chose;",
+            "performance of a contract — to create and manage your account, run the analyses and AI features you request (chat, additional review), and deliver the plan you chose;",
             "legitimate interest — to prevent excessive use of the free guest-mode try, via the anonymous IP fingerprint;",
             "consent — for joining the waitlist; you can withdraw it at any time by writing to us.",
           ]),
@@ -356,7 +368,10 @@ const en: LegalPagesTree = {
             "Stripe — payment and subscription processing;",
             "Railway — hosting for the server that runs the analyses;",
             "Vercel — site hosting and aggregate usage analytics (Web Analytics);",
-            "GitHub — only if you enable the integration, to receive the code from changes to connected repositories.",
+            "GitHub — only if you enable the integration, to receive the code from changes to connected repositories;",
+            "Resend — sending transactional email (login confirmation, notifications);",
+            "Anthropic — processes chat messages and code sent to the additional AI review, only for people using those features;",
+            "Sentry — technical error tracking for our server, to diagnose failures: may contain technical fragments of the request that caused the error, never the full analyzed code.",
           ]),
         ],
       },
@@ -372,7 +387,7 @@ const en: LegalPagesTree = {
         heading: "How long we keep data",
         blocks: [
           list([
-            "account and saved analyses — until you close your account or ask us to delete it; today, account deletion has to be requested by email, since there isn't yet a self-service \"delete account\" button on the site;",
+            "account, saved analyses, and chat history — until you close your account or ask us to delete it; today, account deletion has to be requested by email, since there isn't yet a self-service \"delete account\" button on the site;",
             "IP fingerprint in guest mode — kept for as long as we enforce the free-try limit; there's no automatic expiry set yet, but it never contains the analyzed code or your original IP address;",
             "waitlist email — until you ask us to remove it, or until we contact you about the feature you signed up for.",
           ]),
@@ -432,7 +447,7 @@ const en: LegalPagesTree = {
   },
   terms: {
     title: "Terms of Service",
-    lastUpdated: "August 30, 2026",
+    lastUpdated: "October 26, 2026",
     intro:
       "By using JoJoX you agree to these terms. They're written to match exactly how the service works today: if anything meaningful changes, we update this page and the date above.",
     sections: [
@@ -450,6 +465,9 @@ const en: LegalPagesTree = {
           p(
             "JoJoX is a help, not a guarantee. The available checks catch a portion of the most common security issues in AI-generated code, but they can't catch every possible vulnerability, and they don't replace a professional security audit, a penetration test, or a human code review. Using JoJoX doesn't remove your responsibility to verify the security of the software you ship."
           ),
+          p(
+            "The AI-based features (the \"Ask JoJoX\" chat and the \"Additional AI Review\") are also a help, not a guarantee: they can generate inaccurate code or answers, and any code they suggest doesn't automatically go through JoJoX's own security checks before you use it. Always verify code and answers yourself before using them."
+          ),
         ],
       },
       {
@@ -465,11 +483,13 @@ const en: LegalPagesTree = {
         blocks: [
           list([
             "Guest — one free analysis per visitor, no sign-up, no saved history;",
-            "Free — unlimited analyses when logged in, with saved history;",
-            "Pro and Team — additional paid features (like the GitHub integration), with subscriptions managed through Stripe.",
+            "Free — unlimited analyses when logged in, saved history, free continuous monitoring on 1 connected GitHub repository;",
+            "Pro, Team, and Business — additional paid features (GitHub integration, chat and additional AI review, multi-person management), with subscriptions managed through Stripe;",
+            "Enterprise — custom terms for anyone beyond Business's limits, agreed directly with us;",
+            "One-time purchases — some features (Full Site Audit, extra analysis packs, extra seats beyond what's included, business monitoring add-ons) are paid once, separately from a subscription, also through Stripe.",
           ]),
           p(
-            "Paid subscriptions renew automatically until cancelled. You can cancel at any time from the subscription portal, reachable from your account: cancellation takes effect at the end of the period you already paid for, with no penalty."
+            "Paid subscriptions renew automatically until cancelled. You can cancel at any time from the subscription portal, reachable from your account: cancellation takes effect at the end of the period you already paid for, with no penalty. One-time purchases don't renew: each payment buys a credit or a fixed period, and a new purchase is only needed once it's used up or expired."
           ),
         ],
       },
@@ -527,7 +547,7 @@ const en: LegalPagesTree = {
   },
   security: {
     title: "Security and Vulnerability Disclosure",
-    lastUpdated: "September 19, 2026",
+    lastUpdated: "October 26, 2026",
     intro:
       "JoJoX is a security tool: if a security issue ever affected JoJoX itself, we want to know as soon as possible — before anyone else finds it. This page explains how to report it to us and what you can expect from us afterward.",
     sections: [
@@ -558,7 +578,7 @@ const en: LegalPagesTree = {
         blocks: [
           p("In scope: the jojox.it website, the server that runs analyses, the GitHub App, the VS Code extension, and the MCP server."),
           p(
-            "Third-party services we rely on (Supabase, Stripe, Railway, Vercel, GitHub) are out of scope: a security issue in those services should be reported directly to them, not to us. If you're not sure whether an issue is on JoJoX's side or one of these providers, write to us anyway — we'll point you in the right direction."
+            "Third-party services we rely on (Supabase, Stripe, Railway, Vercel, GitHub, Resend, Anthropic, Sentry) are out of scope: a security issue in those services should be reported directly to them, not to us. If you're not sure whether an issue is on JoJoX's side or one of these providers, write to us anyway — we'll point you in the right direction."
           ),
         ],
       },
