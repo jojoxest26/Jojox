@@ -3,6 +3,24 @@ import { supabaseAdmin } from "./db/supabase.js";
 /** Quante persone (proprietario incluso) può includere un team — vedi punto 10 della lista. */
 export const MAX_TEAM_SEATS = 5;
 
+/** Quante persone include di base il piano Business, prima di comprare posti extra. */
+export const MAX_BUSINESS_SEATS = 25;
+
+/**
+ * Quanti posti totali può avere il team di `ownerId`: il tetto del piano
+ * (Team 5, Business 25) più i posti extra comprati — solo Business ne
+ * vende (vedi stripe/plans.ts e il webhook Stripe). Stessa logica usata
+ * dal trigger a livello di database (migrazione 0019), qui per i
+ * messaggi d'errore e i controlli applicativi.
+ */
+export async function getTeamSeatCap(ownerId: string): Promise<number> {
+  const { data: profile } = await supabaseAdmin.from("profiles").select("plan").eq("id", ownerId).single();
+  if (profile?.plan !== "business") return MAX_TEAM_SEATS;
+
+  const { data: team } = await supabaseAdmin.from("teams").select("extra_seats").eq("owner_id", ownerId).maybeSingle();
+  return MAX_BUSINESS_SEATS + (team?.extra_seats ?? 0);
+}
+
 /**
  * Gli id utente che condividono la dashboard con `userId`: se fa parte di un
  * team (come proprietario o membro entrato), tutti i membri già entrati —
@@ -19,13 +37,14 @@ export async function getTeamUserIds(userId: string): Promise<string[]> {
 
   if (!membership) return [userId];
 
-  // Se il proprietario del team ha cancellato l'abbonamento o è sceso a Pro,
-  // la condivisione deve fermarsi subito — senza questo controllo, owner e
-  // membri continuerebbero a vedersi storico e repository a vicenda anche
-  // senza più pagare il piano Team che dà diritto a quella condivisione.
+  // Se il proprietario del team ha cancellato l'abbonamento o è sceso a un
+  // piano senza condivisione, questa deve fermarsi subito — senza questo
+  // controllo, owner e membri continuerebbero a vedersi storico e
+  // repository a vicenda anche senza più pagare un piano che dà diritto
+  // alla condivisione (Team o Business, entrambi la includono).
   const ownerId = (membership.teams as unknown as { owner_id: string }).owner_id;
   const { data: ownerProfile } = await supabaseAdmin.from("profiles").select("plan").eq("id", ownerId).single();
-  if (ownerProfile?.plan !== "team") return [userId];
+  if (ownerProfile?.plan !== "team" && ownerProfile?.plan !== "business") return [userId];
 
   const { data: members } = await supabaseAdmin
     .from("team_members")

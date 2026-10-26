@@ -1,7 +1,7 @@
 import { Router, raw } from "express";
 import { env } from "../../env.js";
 import { verifyStripeSignature } from "../../stripe/verifySignature.js";
-import { planForPriceId, isSentinelAddonPriceId } from "../../stripe/plans.js";
+import { planForPriceId, isSentinelAddonPriceId, isBusinessSeatPriceId } from "../../stripe/plans.js";
 import { stripeRequest, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../../stripe/client.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import { reportError } from "../../sentry.js";
@@ -14,7 +14,7 @@ interface SubscriptionEventObject {
 }
 
 interface StripeSubscriptionList {
-  data: { status: string; items: { data: { price: { id: string } }[] } }[];
+  data: { status: string; items: { data: { price: { id: string }; quantity?: number }[] } }[];
 }
 
 interface CheckoutSessionEventObject {
@@ -64,14 +64,15 @@ stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), 
 });
 
 /**
- * Ricalcola il piano di un cliente E lo stato del Controllo h24 da solo,
- * guardando TUTTI i suoi abbonamenti Stripe attivi, non solo quello
- * coinvolto nell'evento appena arrivato — un cliente può finire con più
- * abbonamenti attivi insieme (es. passa da Pro a Team senza cancellare il
- * vecchio, oppure ha sia un piano che il Controllo h24 da solo come
- * abbonamento separato), e il piano giusto è sempre il più alto tra quelli
- * davvero attivi, mai semplicemente "l'ultimo evento ricevuto". Tiene anche
- * al riparo da eventi Stripe che arrivano fuori ordine.
+ * Ricalcola il piano di un cliente, lo stato del Controllo h24 da solo, e
+ * quanti posti extra Business ha comprato — guardando TUTTI i suoi
+ * abbonamenti Stripe attivi, non solo quello coinvolto nell'evento appena
+ * arrivato — un cliente può finire con più abbonamenti attivi insieme (es.
+ * passa da Pro a Team senza cancellare il vecchio, oppure ha sia un piano
+ * che il Controllo h24 da solo come abbonamento separato), e il piano
+ * giusto è sempre il più alto tra quelli davvero attivi, mai semplicemente
+ * "l'ultimo evento ricevuto". Tiene anche al riparo da eventi Stripe che
+ * arrivano fuori ordine.
  */
 async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
   const subscriptions = await stripeRequest<StripeSubscriptionList>("GET", "/subscriptions", {
@@ -85,19 +86,33 @@ async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
   const PLAN_RANK: Record<Plan, number> = { free: 0, pro: 1, team: 2, business: 3 };
   let highestPlan: Plan = "free";
   let sentinelAddonActive = false;
+  let businessExtraSeats = 0;
   for (const subscription of subscriptions.data) {
     if (!STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)) continue;
-    const priceId = subscription.items.data[0]?.price.id;
+    const item = subscription.items.data[0];
+    const priceId = item?.price.id;
     if (!priceId) continue;
     const plan = planForPriceId(priceId);
     if (plan && PLAN_RANK[plan] > PLAN_RANK[highestPlan]) highestPlan = plan;
     if (isSentinelAddonPriceId(priceId)) sentinelAddonActive = true;
+    if (isBusinessSeatPriceId(priceId)) businessExtraSeats = item?.quantity ?? 0;
   }
 
-  await supabaseAdmin
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .update({ plan: highestPlan, sentinel_addon_active: sentinelAddonActive })
-    .eq("stripe_customer_id", stripeCustomerId);
+    .eq("stripe_customer_id", stripeCustomerId)
+    .select("id")
+    .single();
+
+  // upsert, non update: il team di questo proprietario può non esistere
+  // ancora (crea solo al primo invito, vedi team.ts) — se compra posti
+  // extra prima di invitare nessuno, il numero non va perso.
+  if (profile?.id) {
+    await supabaseAdmin
+      .from("teams")
+      .upsert({ owner_id: profile.id, extra_seats: businessExtraSeats }, { onConflict: "owner_id" });
+  }
 }
 
 /**

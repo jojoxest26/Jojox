@@ -380,19 +380,39 @@ export interface TeamMember {
 export interface TeamInfo {
   isOwner: boolean;
   members: TeamMember[];
+  /** Quante persone in totale può includere questo team — 5 per Team, 25 + posti extra per Business. */
+  seatCap: number;
 }
 
 /** Il team dell'utente loggato (come proprietario o come membro), o null se non ne fa parte. */
 export async function fetchTeam(accessToken: string): Promise<TeamInfo | null> {
   const { team } = await apiFetch<{
-    team: { isOwner: boolean; members: { email: string; role: "owner" | "member"; invited_at: string; joined_at: string | null }[] } | null;
+    team: {
+      isOwner: boolean;
+      members: { email: string; role: "owner" | "member"; invited_at: string; joined_at: string | null }[];
+      seatCap: number;
+    } | null;
   }>("/api/team", { accessToken });
 
   if (!team) return null;
   return {
     isOwner: team.isOwner,
     members: team.members.map((m) => ({ email: m.email, role: m.role, invitedAt: m.invited_at, joinedAt: m.joined_at })),
+    seatCap: team.seatCap,
   };
+}
+
+/** Crea una sessione di Stripe Checkout per comprare posti extra Business, oltre i 25 inclusi. */
+export function createBusinessSeatsCheckoutSession(
+  quantity: number,
+  accessToken: string,
+  interval: "monthly" | "annual" = "monthly"
+): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-business-seats-checkout-session", {
+    method: "POST",
+    body: JSON.stringify({ quantity, interval }),
+    accessToken,
+  });
 }
 
 /** Invita una persona nel team (solo il proprietario del piano Team può farlo). */

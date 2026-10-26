@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { ensureOwnTeam, MAX_TEAM_SEATS } from "../team.js";
+import { ensureOwnTeam, getTeamSeatCap, MAX_TEAM_SEATS as MAX_TEAM_SEATS_FALLBACK } from "../team.js";
 import { reportError } from "../sentry.js";
 
 export const teamRouter = Router();
@@ -41,7 +41,10 @@ teamRouter.get("/api/team", requireAuth, async (req: AuthedRequest, res) => {
     return;
   }
 
-  res.json({ team: { isOwner: ownedTeamId !== null, members } });
+  const { data: teamRow } = await supabaseAdmin.from("teams").select("owner_id").eq("id", teamId).single();
+  const seatCap = teamRow ? await getTeamSeatCap(teamRow.owner_id) : MAX_TEAM_SEATS_FALLBACK;
+
+  res.json({ team: { isOwner: ownedTeamId !== null, members, seatCap } });
 });
 
 const inviteSchema = z.object({ email: z.string().email() });
@@ -54,23 +57,25 @@ teamRouter.post("/api/team/invite", requireAuth, async (req: AuthedRequest, res)
   }
 
   // Controllato sul piano grezzo del proprio profilo (non su getPlanForUser,
-  // che per un membro invitato eredita "team" dal proprietario): solo chi ha
-  // davvero acquistato il piano può invitare, non un membro già invitato.
+  // che per un membro invitato eredita il piano dal proprietario): solo chi
+  // ha davvero acquistato Team o Business può invitare, non un membro già
+  // invitato.
   const { data: ownProfile } = await supabaseAdmin.from("profiles").select("plan").eq("id", req.userId!).single();
-  if (ownProfile?.plan !== "team") {
-    res.status(403).json({ error: "Solo chi ha acquistato il piano Team può invitare altre persone" });
+  if (ownProfile?.plan !== "team" && ownProfile?.plan !== "business") {
+    res.status(403).json({ error: "Solo chi ha acquistato il piano Team o Business può invitare altre persone" });
     return;
   }
 
   const teamId = await ensureOwnTeam(req.userId!, req.userEmail!);
+  const seatCap = await getTeamSeatCap(req.userId!);
 
   const { count } = await supabaseAdmin
     .from("team_members")
     .select("email", { count: "exact", head: true })
     .eq("team_id", teamId);
 
-  if ((count ?? 0) >= MAX_TEAM_SEATS) {
-    res.status(409).json({ error: `Il piano Team include al massimo ${MAX_TEAM_SEATS} persone` });
+  if ((count ?? 0) >= seatCap) {
+    res.status(409).json({ error: `Il tuo piano include al massimo ${seatCap} persone` });
     return;
   }
 
@@ -84,10 +89,11 @@ teamRouter.post("/api/team/invite", requireAuth, async (req: AuthedRequest, res)
     }
     // Scatta solo nella rara finestra in cui due inviti arrivano nello stesso
     // istante e superano il controllo sopra prima che l'altro abbia scritto:
-    // il trigger a livello di database (migrazione 0010) blocca comunque il
-    // sesto posto, qui traduciamo il suo errore in un messaggio leggibile.
+    // il trigger a livello di database (migrazioni 0010 e 0019) blocca
+    // comunque il posto in più, qui traduciamo il suo errore in un
+    // messaggio leggibile.
     if (error.message?.includes("team seat limit reached")) {
-      res.status(409).json({ error: `Il piano Team include al massimo ${MAX_TEAM_SEATS} persone` });
+      res.status(409).json({ error: `Il tuo piano include al massimo ${seatCap} persone` });
       return;
     }
     res.status(500).json({ error: "Errore nell'invito" });

@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { fetchProfile, fetchTeam, inviteTeamMember, removeTeamMember, type Plan, type TeamInfo } from "../lib/api.js";
+import {
+  fetchProfile,
+  fetchTeam,
+  inviteTeamMember,
+  removeTeamMember,
+  createBusinessSeatsCheckoutSession,
+  type Plan,
+  type TeamInfo,
+} from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";
-
-const MAX_TEAM_SEATS = 5;
 
 export function TeamSection({ session }: { session: Session | null }) {
   const { t } = useTranslation();
@@ -14,6 +20,8 @@ export function TeamSection({ session }: { session: Session | null }) {
   const [email, setEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [extraSeatsQty, setExtraSeatsQty] = useState(1);
+  const [buyingSeats, setBuyingSeats] = useState(false);
 
   useEffect(() => {
     if (!session) {
@@ -64,14 +72,30 @@ export function TeamSection({ session }: { session: Session | null }) {
     }
   }
 
+  async function handleBuySeats(e: React.FormEvent) {
+    e.preventDefault();
+    if (!session) return;
+    setError(null);
+    setBuyingSeats(true);
+    try {
+      const { url } = await createBusinessSeatsCheckoutSession(extraSeatsQty, session.access_token);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.team.errorBuySeats);
+      setBuyingSeats(false);
+    }
+  }
+
   // Niente da mostrare se non è ancora arrivata la risposta, o se il piano
-  // non è Team — questa sezione esiste solo per chi ha davvero i seat.
-  if (!loaded || plan !== "team") return null;
+  // non dà diritto a un team condiviso — questa sezione esiste solo per chi
+  // ha davvero i seat (Team o Business).
+  if (!loaded || (plan !== "team" && plan !== "business")) return null;
 
   // Nessun team creato ancora (mai invitato nessuno): sei tu, il proprietario.
   const members = team?.members ?? [];
   const isOwner = team?.isOwner ?? true;
   const seatsUsed = Math.max(members.length, 1);
+  const seatCap = team?.seatCap ?? (plan === "business" ? 25 : 5);
 
   return (
     <>
@@ -85,7 +109,7 @@ export function TeamSection({ session }: { session: Session | null }) {
         <p>{t.team.body}</p>
 
         <div className="card team-card">
-          <p className="team-seats-count">{interpolate(t.team.seatsCount, { used: String(seatsUsed), max: String(MAX_TEAM_SEATS) })}</p>
+          <p className="team-seats-count">{interpolate(t.team.seatsCount, { used: String(seatsUsed), max: String(seatCap) })}</p>
 
           <ul className="team-member-list">
             {members.length === 0 && session?.user.email && (
@@ -109,7 +133,7 @@ export function TeamSection({ session }: { session: Session | null }) {
             ))}
           </ul>
 
-          {isOwner && seatsUsed < MAX_TEAM_SEATS && (
+          {isOwner && seatsUsed < seatCap && (
             <form className="team-invite-form" onSubmit={handleInvite}>
               <input
                 type="email"
@@ -123,7 +147,23 @@ export function TeamSection({ session }: { session: Session | null }) {
               </button>
             </form>
           )}
-          {isOwner && seatsUsed >= MAX_TEAM_SEATS && <p className="dropzone-hint">{t.team.seatsFull}</p>}
+          {isOwner && seatsUsed >= seatCap && plan !== "business" && <p className="dropzone-hint">{t.team.seatsFull}</p>}
+          {isOwner && seatsUsed >= seatCap && plan === "business" && (
+            <form className="team-invite-form" onSubmit={handleBuySeats}>
+              <input
+                type="number"
+                min={1}
+                max={475}
+                required
+                aria-label={t.team.buySeatsQuantityLabel}
+                value={extraSeatsQty}
+                onChange={(e) => setExtraSeatsQty(Math.max(1, Number(e.target.value)))}
+              />
+              <button type="submit" className="btn btn-primary hard-border hard-shadow-sm" disabled={buyingSeats}>
+                {buyingSeats ? t.team.buyingSeats : t.team.buySeatsCta}
+              </button>
+            </form>
+          )}
           {error && <p style={{ color: "var(--critical)" }}>{error}</p>}
         </div>
       </section>

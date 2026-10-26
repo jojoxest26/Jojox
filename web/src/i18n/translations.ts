@@ -272,6 +272,10 @@ export interface TranslationTree {
     remove: string;
     errorInvite: string;
     errorRemove: string;
+    buySeatsCta: string;
+    buyingSeats: string;
+    buySeatsQuantityLabel: string;
+    errorBuySeats: string;
   };
   login: {
     sent: string;
@@ -849,6 +853,10 @@ const it: TranslationTree = {
     remove: "Rimuovi",
     errorInvite: "Errore nell'invio dell'invito",
     errorRemove: "Errore nella rimozione",
+    buySeatsCta: "Compra posti extra",
+    buyingSeats: "Acquisto...",
+    buySeatsQuantityLabel: "Quanti posti extra",
+    errorBuySeats: "Errore nell'acquisto dei posti extra",
   },
   login: {
     sent: "Controlla la tua email: ti abbiamo mandato un link per accedere. Puoi chiudere questo popup.",
@@ -1467,6 +1475,10 @@ const en: TranslationTree = {
     remove: "Remove",
     errorInvite: "Error sending the invite",
     errorRemove: "Error removing member",
+    buySeatsCta: "Buy extra seats",
+    buyingSeats: "Buying...",
+    buySeatsQuantityLabel: "How many extra seats",
+    errorBuySeats: "Error buying extra seats",
   },
   login: {
     sent: "Check your email: we've sent you a link to sign in. You can close this popup.",
@@ -2085,6 +2097,10 @@ const es: TranslationTree = {
     remove: "Eliminar",
     errorInvite: "Error al enviar la invitación",
     errorRemove: "Error al eliminar",
+    buySeatsCta: "Comprar plazas extra",
+    buyingSeats: "Comprando...",
+    buySeatsQuantityLabel: "Cuántas plazas extra",
+    errorBuySeats: "Error al comprar plazas extra",
   },
   login: {
     sent: "Revisa tu email: te hemos enviado un enlace para iniciar sesión. Puedes cerrar esta ventana.",
@@ -2703,6 +2719,10 @@ const fr: TranslationTree = {
     remove: "Retirer",
     errorInvite: "Erreur lors de l'envoi de l'invitation",
     errorRemove: "Erreur lors de la suppression",
+    buySeatsCta: "Acheter des postes supplémentaires",
+    buyingSeats: "Achat en cours...",
+    buySeatsQuantityLabel: "Combien de postes supplémentaires",
+    errorBuySeats: "Erreur lors de l'achat des postes supplémentaires",
   },
   login: {
     sent: "Vérifiez votre email : nous vous avons envoyé un lien de connexion. Vous pouvez fermer cette fenêtre.",
@@ -3321,6 +3341,10 @@ const pt: TranslationTree = {
     remove: "Remover",
     errorInvite: "Erro ao enviar o convite",
     errorRemove: "Erro ao remover",
+    buySeatsCta: "Comprar lugares extra",
+    buyingSeats: "A comprar...",
+    buySeatsQuantityLabel: "Quantos lugares extra",
+    errorBuySeats: "Erro ao comprar lugares extra",
   },
   login: {
     sent: "Verifique o seu email: enviámos-lhe um link para entrar. Pode fechar esta janela.",
@@ -3935,6 +3959,10 @@ const zh: TranslationTree = {
     remove: "移除",
     errorInvite: "发送邀请失败",
     errorRemove: "移除失败",
+    buySeatsCta: "购买额外名额",
+    buyingSeats: "购买中...",
+    buySeatsQuantityLabel: "额外名额数量",
+    errorBuySeats: "购买额外名额失败",
   },
   login: {
     sent: "请查收你的邮箱：我们已经发送了登录链接。你可以关闭此弹窗。",
@@ -4552,6 +4580,10 @@ const hi: TranslationTree = {
     remove: "हटाएं",
     errorInvite: "आमंत्रण भेजने में त्रुटि",
     errorRemove: "हटाने में त्रुटि",
+    buySeatsCta: "अतिरिक्त सीटें खरीदें",
+    buyingSeats: "खरीदा जा रहा है...",
+    buySeatsQuantityLabel: "कितनी अतिरिक्त सीटें",
+    errorBuySeats: "अतिरिक्त सीटें खरीदने में त्रुटि",
   },
   login: {
     sent: "अपना ईमेल देखें: हमने आपको लॉग इन करने के लिए एक लिंक भेजा है। आप यह पॉपअप बंद कर सकते हैं।",
@@ -5170,6 +5202,10 @@ const ru: TranslationTree = {
     remove: "Удалить",
     errorInvite: "Ошибка при отправке приглашения",
     errorRemove: "Ошибка при удалении",
+    buySeatsCta: "Купить дополнительные места",
+    buyingSeats: "Покупка...",
+    buySeatsQuantityLabel: "Сколько дополнительных мест",
+    errorBuySeats: "Ошибка при покупке дополнительных мест",
   },
   login: {
     sent: "Проверьте почту: мы отправили вам ссылку для входа. Это окно можно закрыть.",
@@ -5785,6 +5821,10 @@ const ar: TranslationTree = {
     remove: "إزالة",
     errorInvite: "خطأ في إرسال الدعوة",
     errorRemove: "خطأ في الإزالة",
+    buySeatsCta: "شراء مقاعد إضافية",
+    buyingSeats: "جارٍ الشراء...",
+    buySeatsQuantityLabel: "كم عدد المقاعد الإضافية",
+    errorBuySeats: "خطأ في شراء المقاعد الإضافية",
   },
   login: {
     sent: "تحقق من بريدك الإلكتروني: أرسلنا لك رابطًا لتسجيل الدخول. يمكنك إغلاق هذه النافذة.",
@@ -6402,6 +6442,10 @@ const bn: TranslationTree = {
     remove: "সরান",
     errorInvite: "আমন্ত্রণ পাঠাতে ত্রুটি",
     errorRemove: "সরাতে ত্রুটি",
+    buySeatsCta: "অতিরিক্ত সিট কিনুন",
+    buyingSeats: "কেনা হচ্ছে...",
+    buySeatsQuantityLabel: "কতগুলো অতিরিক্ত সিট",
+    errorBuySeats: "অতিরিক্ত সিট কিনতে ত্রুটি",
   },
   login: {
     sent: "আপনার ইমেইল দেখুন: আমরা আপনাকে লগ ইন করার একটি লিঙ্ক পাঠিয়েছি। আপনি এই পপআপটি বন্ধ করতে পারেন।",
@@ -7018,6 +7062,10 @@ const ur: TranslationTree = {
     remove: "ہٹائیں",
     errorInvite: "دعوت بھیجنے میں خرابی",
     errorRemove: "ہٹانے میں خرابی",
+    buySeatsCta: "اضافی نشستیں خریدیں",
+    buyingSeats: "خریدا جا رہا ہے...",
+    buySeatsQuantityLabel: "کتنی اضافی نشستیں",
+    errorBuySeats: "اضافی نشستیں خریدنے میں خرابی",
   },
   login: {
     sent: "اپنی ای میل چیک کریں: ہم نے آپ کو لاگ ان کرنے کے لیے ایک لنک بھیجا ہے۔ آپ یہ پاپ اپ بند کر سکتے ہیں۔",
@@ -7636,6 +7684,10 @@ const id: TranslationTree = {
     remove: "Hapus",
     errorInvite: "Kesalahan saat mengirim undangan",
     errorRemove: "Kesalahan saat menghapus",
+    buySeatsCta: "Beli slot tambahan",
+    buyingSeats: "Membeli...",
+    buySeatsQuantityLabel: "Berapa slot tambahan",
+    errorBuySeats: "Kesalahan saat membeli slot tambahan",
   },
   login: {
     sent: "Periksa email Anda: kami telah mengirimkan tautan untuk masuk. Anda bisa menutup popup ini.",
@@ -8254,6 +8306,10 @@ const de: TranslationTree = {
     remove: "Entfernen",
     errorInvite: "Fehler beim Senden der Einladung",
     errorRemove: "Fehler beim Entfernen",
+    buySeatsCta: "Zusätzliche Plätze kaufen",
+    buyingSeats: "Wird gekauft...",
+    buySeatsQuantityLabel: "Wie viele zusätzliche Plätze",
+    errorBuySeats: "Fehler beim Kauf zusätzlicher Plätze",
   },
   login: {
     sent: "Prüfe deine E-Mail: Wir haben dir einen Link zum Anmelden geschickt. Du kannst dieses Popup schließen.",
@@ -8872,6 +8928,10 @@ const fi: TranslationTree = {
     remove: "Poista",
     errorInvite: "Virhe kutsun lähetyksessä",
     errorRemove: "Virhe poistossa",
+    buySeatsCta: "Osta lisäpaikkoja",
+    buyingSeats: "Ostetaan...",
+    buySeatsQuantityLabel: "Kuinka monta lisäpaikkaa",
+    errorBuySeats: "Virhe lisäpaikkojen ostossa",
   },
   login: {
     sent: "Tarkista sähköpostisi: lähetimme sinulle linkin kirjautumiseen. Voit sulkea tämän ponnahdusikkunan.",
@@ -9490,6 +9550,10 @@ const nl: TranslationTree = {
     remove: "Verwijderen",
     errorInvite: "Fout bij het verzenden van de uitnodiging",
     errorRemove: "Fout bij het verwijderen",
+    buySeatsCta: "Extra plekken kopen",
+    buyingSeats: "Kopen...",
+    buySeatsQuantityLabel: "Hoeveel extra plekken",
+    errorBuySeats: "Fout bij het kopen van extra plekken",
   },
   login: {
     sent: "Controleer je e-mail: we hebben je een link gestuurd om in te loggen. Je kunt deze popup sluiten.",
@@ -10108,6 +10172,10 @@ const pl: TranslationTree = {
     remove: "Usuń",
     errorInvite: "Błąd podczas wysyłania zaproszenia",
     errorRemove: "Błąd podczas usuwania",
+    buySeatsCta: "Kup dodatkowe miejsca",
+    buyingSeats: "Kupowanie...",
+    buySeatsQuantityLabel: "Ile dodatkowych miejsc",
+    errorBuySeats: "Błąd podczas kupowania dodatkowych miejsc",
   },
   login: {
     sent: "Sprawdź swój e-mail: wysłaliśmy Ci link do logowania. Możesz zamknąć to okno.",
@@ -10726,6 +10794,10 @@ const sv: TranslationTree = {
     remove: "Ta bort",
     errorInvite: "Fel vid skickande av inbjudan",
     errorRemove: "Fel vid borttagning",
+    buySeatsCta: "Köp extra platser",
+    buyingSeats: "Köper...",
+    buySeatsQuantityLabel: "Hur många extra platser",
+    errorBuySeats: "Fel vid köp av extra platser",
   },
   login: {
     sent: "Kolla din e-post: vi har skickat en länk för att logga in. Du kan stänga denna popup.",
@@ -11344,6 +11416,10 @@ const da: TranslationTree = {
     remove: "Fjern",
     errorInvite: "Fejl ved afsendelse af invitation",
     errorRemove: "Fejl ved fjernelse",
+    buySeatsCta: "Køb ekstra pladser",
+    buyingSeats: "Køber...",
+    buySeatsQuantityLabel: "Hvor mange ekstra pladser",
+    errorBuySeats: "Fejl ved køb af ekstra pladser",
   },
   login: {
     sent: "Tjek din e-mail: vi har sendt dig et link til at logge ind. Du kan lukke denne popup.",
@@ -11962,6 +12038,10 @@ const nb: TranslationTree = {
     remove: "Fjern",
     errorInvite: "Feil ved sending av invitasjon",
     errorRemove: "Feil ved fjerning",
+    buySeatsCta: "Kjøp ekstra plasser",
+    buyingSeats: "Kjøper...",
+    buySeatsQuantityLabel: "Hvor mange ekstra plasser",
+    errorBuySeats: "Feil ved kjøp av ekstra plasser",
   },
   login: {
     sent: "Sjekk e-posten din: vi har sendt deg en lenke for å logge inn. Du kan lukke denne popupen.",
@@ -12580,6 +12660,10 @@ const tr: TranslationTree = {
     remove: "Kaldır",
     errorInvite: "Davet gönderilirken hata",
     errorRemove: "Kaldırılırken hata",
+    buySeatsCta: "Ek koltuk satın al",
+    buyingSeats: "Satın alınıyor...",
+    buySeatsQuantityLabel: "Kaç ek koltuk",
+    errorBuySeats: "Ek koltuk satın alınırken hata",
   },
   login: {
     sent: "E-postanızı kontrol edin: size giriş yapmanız için bir bağlantı gönderdik. Bu açılır pencereyi kapatabilirsiniz.",
@@ -13198,6 +13282,10 @@ const uk: TranslationTree = {
     remove: "Видалити",
     errorInvite: "Помилка надсилання запрошення",
     errorRemove: "Помилка видалення",
+    buySeatsCta: "Купити додаткові місця",
+    buyingSeats: "Купівля...",
+    buySeatsQuantityLabel: "Скільки додаткових місць",
+    errorBuySeats: "Помилка під час купівлі додаткових місць",
   },
   login: {
     sent: "Перевірте свою пошту: ми надіслали вам посилання для входу. Можете закрити це спливаюче вікно.",
@@ -13816,6 +13904,10 @@ const ja: TranslationTree = {
     remove: "削除",
     errorInvite: "招待の送信中にエラーが発生しました",
     errorRemove: "削除中にエラーが発生しました",
+    buySeatsCta: "追加枠を購入",
+    buyingSeats: "購入中...",
+    buySeatsQuantityLabel: "追加枠の数",
+    errorBuySeats: "追加枠の購入中にエラーが発生しました",
   },
   login: {
     sent: "メールを確認してください：ログイン用のリンクを送信しました。このポップアップは閉じて構いません。",
@@ -14434,6 +14526,10 @@ const ko: TranslationTree = {
     remove: "제거",
     errorInvite: "초대 전송 중 오류가 발생했습니다",
     errorRemove: "제거 중 오류가 발생했습니다",
+    buySeatsCta: "추가 좌석 구매",
+    buyingSeats: "구매 중...",
+    buySeatsQuantityLabel: "추가 좌석 수",
+    errorBuySeats: "추가 좌석 구매 중 오류가 발생했습니다",
   },
   login: {
     sent: "이메일을 확인하세요: 로그인 링크를 보내드렸습니다. 이 팝업은 닫으셔도 됩니다.",

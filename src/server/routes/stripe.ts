@@ -4,7 +4,14 @@ import { env } from "../env.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { stripeRequest, StripeNotConfiguredError, StripeApiError, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../stripe/client.js";
-import { priceIdForPlan, priceIdForSentinelAddon, planForPriceId, isSentinelAddonPriceId } from "../stripe/plans.js";
+import {
+  priceIdForPlan,
+  priceIdForSentinelAddon,
+  priceIdForBusinessSeat,
+  planForPriceId,
+  isSentinelAddonPriceId,
+  isBusinessSeatPriceId,
+} from "../stripe/plans.js";
 
 export const stripeRouter = Router();
 
@@ -14,6 +21,14 @@ const checkoutSchema = z.object({
 });
 
 const sentinelAddonCheckoutSchema = z.object({
+  interval: z.enum(["monthly", "annual"]).default("monthly"),
+});
+
+// Tetto generoso ma finito sulla quantità di posti extra acquistabili in un
+// colpo solo — non un limite che ci aspettiamo di raggiungere, solo una
+// protezione contro un numero digitato per errore.
+const businessSeatsCheckoutSchema = z.object({
+  quantity: z.number().int().min(1).max(475),
   interval: z.enum(["monthly", "annual"]).default("monthly"),
 });
 
@@ -28,7 +43,7 @@ interface StripeCheckoutSession {
 interface StripeSubscriptionListItem {
   id: string;
   status: string;
-  items: { data: { id: string; price: { id: string } }[] };
+  items: { data: { id: string; price: { id: string }; quantity?: number }[] };
 }
 
 async function listActiveSubscriptions(customerId: string): Promise<StripeSubscriptionListItem[]> {
@@ -64,6 +79,16 @@ async function findActiveSentinelAddonSubscription(customerId: string): Promise<
   const active = (await listActiveSubscriptions(customerId)).find((s) => {
     const priceId = s.items.data[0]?.price.id;
     return priceId && isSentinelAddonPriceId(priceId);
+  });
+  const itemId = active?.items.data[0]?.id;
+  return active && itemId ? { id: active.id, itemId } : null;
+}
+
+/** Stesso schema di findActiveSubscription, ma per l'abbonamento separato dei posti extra Business. */
+async function findActiveBusinessSeatsSubscription(customerId: string): Promise<{ id: string; itemId: string } | null> {
+  const active = (await listActiveSubscriptions(customerId)).find((s) => {
+    const priceId = s.items.data[0]?.price.id;
+    return priceId && isBusinessSeatPriceId(priceId);
   });
   const itemId = active?.items.data[0]?.id;
   return active && itemId ? { id: active.id, itemId } : null;
@@ -204,6 +229,64 @@ stripeRouter.post("/api/stripe/create-sentinel-addon-checkout-session", requireA
       return;
     }
     console.error("errore nella creazione della sessione di checkout per il Controllo h24 da solo", err);
+    res.status(500).json({ error: "Errore nella creazione del pagamento" });
+  }
+});
+
+/**
+ * Checkout per i posti extra Business, oltre i 25 inclusi — riservato a chi
+ * ha davvero il piano Business (non un cambio di piano, solo un numero di
+ * posti in più sullo stesso account). Un abbonamento a sé, a quantità: il
+ * webhook legge la quantità attiva e aggiorna teams.extra_seats, da cui
+ * dipende anche il trigger a livello di database che fa rispettare il
+ * tetto (migrazione 0019).
+ */
+stripeRouter.post("/api/stripe/create-business-seats-checkout-session", requireAuth, async (req: AuthedRequest, res) => {
+  const { data: ownProfile } = await supabaseAdmin.from("profiles").select("plan").eq("id", req.userId!).single();
+  if (ownProfile?.plan !== "business") {
+    res.status(403).json({ error: "Solo chi ha il piano Business può comprare posti extra" });
+    return;
+  }
+
+  const parsed = businessSeatsCheckoutSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Richiesta non valida" });
+    return;
+  }
+
+  const priceId = priceIdForBusinessSeat(parsed.data.interval);
+  if (!priceId) {
+    res.status(503).json({ error: "Pagamenti non ancora configurati" });
+    return;
+  }
+
+  try {
+    const customerId = await getOrCreateStripeCustomer(req.userId!);
+
+    const existingSubscription = await findActiveBusinessSeatsSubscription(customerId);
+    if (existingSubscription) {
+      await stripeRequest("POST", `/subscriptions/${existingSubscription.id}`, {
+        items: [{ id: existingSubscription.itemId, price: priceId, quantity: parsed.data.quantity }],
+        proration_behavior: "create_prorations",
+      });
+      res.json({ url: `${env.appUrl}/?checkout=success` });
+      return;
+    }
+
+    const session = await stripeRequest<StripeCheckoutSession>("POST", "/checkout/sessions", {
+      customer: customerId,
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: parsed.data.quantity }],
+      success_url: `${env.appUrl}/?checkout=success`,
+      cancel_url: `${env.appUrl}/?checkout=cancel`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    if (err instanceof StripeNotConfiguredError) {
+      res.status(503).json({ error: err.message });
+      return;
+    }
+    console.error("errore nella creazione della sessione di checkout per i posti extra Business", err);
     res.status(500).json({ error: "Errore nella creazione del pagamento" });
   }
 });

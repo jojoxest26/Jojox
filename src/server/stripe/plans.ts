@@ -41,3 +41,16 @@ export function priceIdForSentinelAddon(interval: BillingInterval = "monthly"): 
 export function isSentinelAddonPriceId(priceId: string): boolean {
   return priceId === env.stripePriceIdSentinelSoloBusiness || priceId === env.stripePriceIdSentinelSoloBusinessAnnual;
 }
+
+/**
+ * Posto extra oltre i 25 inclusi nel piano Business (vedi team.ts,
+ * MAX_BUSINESS_SEATS) — venduto come riga a parte, a quantità, non come
+ * un prezzo del piano: per questo vive qui invece che in MONTHLY_PRICE_ID.
+ */
+export function priceIdForBusinessSeat(interval: BillingInterval = "monthly"): string | null {
+  return interval === "annual" ? env.stripePriceIdBusinessSeatAnnual : env.stripePriceIdBusinessSeat;
+}
+
+export function isBusinessSeatPriceId(priceId: string): boolean {
+  return priceId === env.stripePriceIdBusinessSeat || priceId === env.stripePriceIdBusinessSeatAnnual;
+}
