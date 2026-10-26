@@ -78,16 +78,16 @@ async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
     limit: 100,
   });
 
+  // Ordine di importanza se per qualche motivo risultano più abbonamenti
+  // attivi insieme: business > team > pro > free.
+  const PLAN_RANK: Record<Plan, number> = { free: 0, pro: 1, team: 2, business: 3 };
   let highestPlan: Plan = "free";
   for (const subscription of subscriptions.data) {
     if (!STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)) continue;
     const priceId = subscription.items.data[0]?.price.id;
     const plan = priceId ? planForPriceId(priceId) : null;
-    if (plan === "team") {
-      highestPlan = "team";
-      break;
-    }
-    if (plan === "pro" && highestPlan === "free") highestPlan = "pro";
+    if (plan && PLAN_RANK[plan] > PLAN_RANK[highestPlan]) highestPlan = plan;
+    if (highestPlan === "business") break;
   }
 
   await setPlanForCustomer(stripeCustomerId, highestPlan);

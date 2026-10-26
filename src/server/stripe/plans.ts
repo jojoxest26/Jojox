@@ -4,16 +4,25 @@ import type { Plan } from "../plan.js";
 export type PaidPlan = Exclude<Plan, "free">;
 export type BillingInterval = "monthly" | "annual";
 
+const MONTHLY_PRICE_ID: Record<PaidPlan, string | null> = {
+  pro: env.stripePriceIdPro,
+  team: env.stripePriceIdTeam,
+  business: env.stripePriceIdBusiness,
+};
+const ANNUAL_PRICE_ID: Record<PaidPlan, string | null> = {
+  pro: env.stripePriceIdProAnnual,
+  team: env.stripePriceIdTeamAnnual,
+  business: env.stripePriceIdBusinessAnnual,
+};
+
 export function priceIdForPlan(plan: PaidPlan, interval: BillingInterval = "monthly"): string | null {
-  if (interval === "annual") {
-    return plan === "pro" ? env.stripePriceIdProAnnual : env.stripePriceIdTeamAnnual;
-  }
-  return plan === "pro" ? env.stripePriceIdPro : env.stripePriceIdTeam;
+  return interval === "annual" ? ANNUAL_PRICE_ID[plan] : MONTHLY_PRICE_ID[plan];
 }
 
 /** Riconosce il piano da un price id, mensile o annuale che sia — al cliente interessa solo cosa sblocca, non come lo paga. */
 export function planForPriceId(priceId: string): PaidPlan | null {
   if (priceId === env.stripePriceIdPro || priceId === env.stripePriceIdProAnnual) return "pro";
   if (priceId === env.stripePriceIdTeam || priceId === env.stripePriceIdTeamAnnual) return "team";
+  if (priceId === env.stripePriceIdBusiness || priceId === env.stripePriceIdBusinessAnnual) return "business";
   return null;
 }

@@ -61,7 +61,7 @@ githubRouter.post("/api/github/installations/:installationId/claim", requireAuth
   // piano Pro può averne al massimo uno, solo Team può collegarne quanti vuole.
   if (!installation.installed_by) {
     const plan = await getPlanForUser(req.userId!);
-    if (plan !== "team") {
+    if (plan !== "team" && plan !== "business") {
       const { count } = await supabaseAdmin
         .from("github_installations")
         .select("installation_id", { count: "exact", head: true })

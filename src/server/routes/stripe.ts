@@ -9,7 +9,7 @@ import { priceIdForPlan } from "../stripe/plans.js";
 export const stripeRouter = Router();
 
 const checkoutSchema = z.object({
-  plan: z.enum(["pro", "team"]),
+  plan: z.enum(["pro", "team", "business"]),
   interval: z.enum(["monthly", "annual"]).default("monthly"),
 });
 

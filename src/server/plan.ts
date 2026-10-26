@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "./db/supabase.js";
 
-export type Plan = "free" | "pro" | "team";
+export type Plan = "free" | "pro" | "team" | "business";
 
 /**
  * Analisi incluse al mese per piano. Pro/Team erano "illimitate" — ora un
@@ -8,12 +8,15 @@ export type Plan = "free" | "pro" | "team";
  * un'analisi automatica, quindi senza limite i costi (scansione dipendenze
  * incluse) crescono con l'uso senza alcun freno. Per un piano Team il conto
  * è condiviso tra tutti i membri (vedi checkAndConsumeAnalysisQuota), come
- * storico e repository.
+ * storico e repository. Business: numero provvisorio, da rivedere con dati
+ * reali — la condivisione tra i membri del team Business non è ancora
+ * collegata (punto "posti extra oltre i 25" lasciato per un secondo giro).
  */
 export const MONTHLY_ANALYSIS_LIMIT: Record<Plan, number> = {
   free: 5,
   pro: 100,
   team: 500,
+  business: 2000,
 };
 
 /**
@@ -32,6 +35,7 @@ export const DAILY_CHAT_MESSAGE_LIMIT: Record<Plan, number> = {
   free: 15,
   pro: 100,
   team: 200,
+  business: 400,
 };
 
 /**
@@ -45,6 +49,7 @@ export const DAILY_GENERAL_CHAT_LIMIT: Record<Plan, number> = {
   free: 0,
   pro: 15,
   team: 30,
+  business: 60,
 };
 
 /**
@@ -56,6 +61,7 @@ export const DAILY_AI_INSIGHT_LIMIT: Record<Plan, number> = {
   free: 0,
   pro: 5,
   team: 15,
+  business: 30,
 };
 
 /**

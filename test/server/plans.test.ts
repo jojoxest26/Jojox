@@ -9,8 +9,10 @@ describe("stripe plans: priceIdForPlan / planForPriceId", () => {
   beforeEach(() => {
     vi.stubEnv("STRIPE_PRICE_ID_PRO", "price_pro_monthly");
     vi.stubEnv("STRIPE_PRICE_ID_TEAM", "price_team_monthly");
+    vi.stubEnv("STRIPE_PRICE_ID_BUSINESS", "price_business_monthly");
     vi.stubEnv("STRIPE_PRICE_ID_PRO_ANNUAL", "price_pro_annual");
     vi.stubEnv("STRIPE_PRICE_ID_TEAM_ANNUAL", "price_team_annual");
+    vi.stubEnv("STRIPE_PRICE_ID_BUSINESS_ANNUAL", "price_business_annual");
   });
 
   afterEach(() => {
@@ -21,18 +23,21 @@ describe("stripe plans: priceIdForPlan / planForPriceId", () => {
     const { priceIdForPlan } = await loadPlans();
     expect(priceIdForPlan("pro")).toBe("price_pro_monthly");
     expect(priceIdForPlan("team")).toBe("price_team_monthly");
+    expect(priceIdForPlan("business")).toBe("price_business_monthly");
   });
 
   it("returns the monthly price id when explicitly requested", async () => {
     const { priceIdForPlan } = await loadPlans();
     expect(priceIdForPlan("pro", "monthly")).toBe("price_pro_monthly");
     expect(priceIdForPlan("team", "monthly")).toBe("price_team_monthly");
+    expect(priceIdForPlan("business", "monthly")).toBe("price_business_monthly");
   });
 
   it("returns the annual price id when requested", async () => {
     const { priceIdForPlan } = await loadPlans();
     expect(priceIdForPlan("pro", "annual")).toBe("price_pro_annual");
     expect(priceIdForPlan("team", "annual")).toBe("price_team_annual");
+    expect(priceIdForPlan("business", "annual")).toBe("price_business_annual");
   });
 
   it("returns null for the annual price when it isn't configured", async () => {
@@ -47,12 +52,14 @@ describe("stripe plans: priceIdForPlan / planForPriceId", () => {
     const { planForPriceId } = await loadPlans();
     expect(planForPriceId("price_pro_monthly")).toBe("pro");
     expect(planForPriceId("price_team_monthly")).toBe("team");
+    expect(planForPriceId("price_business_monthly")).toBe("business");
   });
 
   it("recognizes a plan from its annual price id", async () => {
     const { planForPriceId } = await loadPlans();
     expect(planForPriceId("price_pro_annual")).toBe("pro");
     expect(planForPriceId("price_team_annual")).toBe("team");
+    expect(planForPriceId("price_business_annual")).toBe("business");
   });
 
   it("returns null for an unrecognized price id", async () => {

@@ -12,7 +12,7 @@ import { DAILY_AI_INSIGHT_LIMIT, DAILY_CHAT_MESSAGE_LIMIT, type Plan } from "../
 // Prezzo mensile per piano mostrato sulla pagina Pricing — va aggiornato a
 // mano se cambia lì, non c'è un'unica fonte condivisa (Stripe tiene solo
 // l'ID prezzo, non l'importo, vedi env.ts).
-const MONTHLY_PRICE_EUR: Record<Exclude<Plan, "free">, number> = { pro: 9.99, team: 24.99 };
+const MONTHLY_PRICE_EUR: Record<Exclude<Plan, "free">, number> = { pro: 19, team: 49, business: 1490 };
 
 function parseDaysArg(): number {
   const arg = process.argv.find((a) => a.startsWith("--days="));
@@ -73,7 +73,7 @@ async function main() {
       for (const [route, cost] of bucket.byRoute) {
         console.log(`    ${route}: $${cost.toFixed(2)}`);
       }
-      if (plan === "pro" || plan === "team") {
+      if (plan === "pro" || plan === "team" || plan === "business") {
         const priceForPeriod = (MONTHLY_PRICE_EUR[plan] * days) / 30;
         const margin = priceForPeriod - avgCostPerUser;
         console.log(
@@ -86,7 +86,7 @@ async function main() {
   }
 
   console.log("Limiti giornalieri attuali (plan.ts), per riferimento:");
-  for (const plan of ["pro", "team"] as const) {
+  for (const plan of ["pro", "team", "business"] as const) {
     console.log(
       `  ${plan}: ${DAILY_CHAT_MESSAGE_LIMIT[plan]} messaggi chat/giorno, ${DAILY_AI_INSIGHT_LIMIT[plan]} revisioni AI/giorno`
     );
