@@ -1725,6 +1725,10 @@ body::after {
   color: var(--text-muted);
   flex: 1;
   display: grid;
+  /* Senza questo, una lista corta (es. Enterprise) riempie comunque tutta
+     l'altezza della card e CSS Grid distribuisce lo spazio in eccesso TRA
+     le righe — voci separate da enormi vuoti invece che compatte in alto. */
+  align-content: start;
   gap: 0.5rem;
 }
 .price-card li .soon {
