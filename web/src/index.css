@@ -1722,7 +1722,10 @@ body::after {
   padding: 0;
   margin: 0 0 1.25rem;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  /* Stesso grigio caldo di price-card-note/.soon qui sotto, non il
+     var(--text-muted) più freddo/bluastro usato altrove nel sito — dentro
+     la stessa card i due testi devono intonarsi, non stonare. */
+  color: #a8a29e;
   flex: 1;
   display: grid;
   /* Senza questo, una lista corta (es. Enterprise) riempie comunque tutta
