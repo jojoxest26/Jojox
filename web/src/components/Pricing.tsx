@@ -134,6 +134,7 @@ export function Pricing({ session }: { session: Session | null }) {
         </button>
       </div>
 
+      <h3 className="pricing-section-label">{t.pricing.devSectionTitle}</h3>
       <div className="pricing-grid">
         <div className="card price-card">
           <h3>{t.pricing.freeTitle}</h3>
@@ -226,61 +227,66 @@ export function Pricing({ session }: { session: Session | null }) {
           )}
           <p className="price-card-note">{t.pricing.teamNote}</p>
         </div>
+      </div>
 
-        <div className="card price-card">
-          <span className="pill pill-amber price-card-badge">{t.pricing.businessBadge}</span>
-          <h3>{t.pricing.businessTitle}</h3>
-          <div className="price-amount">
-            {billingInterval === "annual" ? t.pricing.businessPriceAnnual : "1.490€"}{" "}
-            <span className="per">
-              {billingInterval === "annual" ? t.pricing.businessPerAnnual : t.pricing.businessPer}
-            </span>
-          </div>
-          <ul>
-            {t.pricing.businessList.map((item) => (
-              <li key={item}>✓ {item}</li>
-            ))}
-          </ul>
-          {session && plan === "business" ? (
-            <>
-              <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
+      <div className="pricing-business-panel hard-border">
+        <h3 className="pricing-section-label pricing-section-label-inset">{t.pricing.businessSectionTitle}</h3>
+        <div className="pricing-grid pricing-grid-business">
+          <div className="card price-card">
+            <span className="pill pill-amber price-card-badge">{t.pricing.businessBadge}</span>
+            <h3>{t.pricing.businessTitle}</h3>
+            <div className="price-amount">
+              {billingInterval === "annual" ? t.pricing.businessPriceAnnual : "1.490€"}{" "}
+              <span className="per">
+                {billingInterval === "annual" ? t.pricing.businessPerAnnual : t.pricing.businessPer}
+              </span>
+            </div>
+            <ul>
+              {t.pricing.businessList.map((item) => (
+                <li key={item}>✓ {item}</li>
+              ))}
+            </ul>
+            {session && plan === "business" ? (
+              <>
+                <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
+                <button
+                  type="button"
+                  className="btn btn-secondary hard-border hard-shadow-sm"
+                  onClick={handleManage}
+                  disabled={busy === "portal"}
+                >
+                  {busy === "portal" ? t.pricing.opening : t.pricing.manageSubscription}
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                className="btn btn-secondary hard-border hard-shadow-sm"
-                onClick={handleManage}
-                disabled={busy === "portal"}
+                className="btn btn-primary hard-border hard-shadow-sm"
+                onClick={() => handleActivate("business")}
+                disabled={busy === "business"}
               >
-                {busy === "portal" ? t.pricing.opening : t.pricing.manageSubscription}
+                {busy === "business" ? t.pricing.businessActivating : t.pricing.businessCta}
               </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary hard-border hard-shadow-sm"
-              onClick={() => handleActivate("business")}
-              disabled={busy === "business"}
-            >
-              {busy === "business" ? t.pricing.businessActivating : t.pricing.businessCta}
-            </button>
-          )}
-          <p className="price-card-note">{t.pricing.businessNote}</p>
-        </div>
+            )}
+            <p className="price-card-note">{t.pricing.businessNote}</p>
+          </div>
 
-        <div className="card price-card">
-          <h3>{t.pricing.enterpriseTitle}</h3>
-          <div className="price-amount">{t.pricing.enterprisePrice}</div>
-          <ul>
-            {t.pricing.enterpriseList.map((item) => (
-              <li key={item}>✓ {item}</li>
-            ))}
-          </ul>
-          <a
-            className="btn btn-secondary hard-border hard-shadow-sm"
-            href={`mailto:jojoxest26@gmail.com?subject=${encodeURIComponent("[Enterprise]")}`}
-          >
-            {t.pricing.enterpriseCta}
-          </a>
-          <p className="price-card-note">{t.pricing.enterpriseNote}</p>
+          <div className="card price-card">
+            <h3>{t.pricing.enterpriseTitle}</h3>
+            <div className="price-amount">{t.pricing.enterprisePrice}</div>
+            <ul>
+              {t.pricing.enterpriseList.map((item) => (
+                <li key={item}>✓ {item}</li>
+              ))}
+            </ul>
+            <a
+              className="btn btn-secondary hard-border hard-shadow-sm"
+              href={`mailto:jojoxest26@gmail.com?subject=${encodeURIComponent("[Enterprise]")}`}
+            >
+              {t.pricing.enterpriseCta}
+            </a>
+            <p className="price-card-note">{t.pricing.enterpriseNote}</p>
+          </div>
         </div>
       </div>
 
