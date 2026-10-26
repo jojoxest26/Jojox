@@ -13,6 +13,25 @@ export class StripeNotConfiguredError extends Error {
 }
 
 /**
+ * Errore con il codice che Stripe restituisce (es. "resource_missing"),
+ * non solo il messaggio — serve a chi chiama per distinguere "questo
+ * cliente/prezzo non esiste più in questo account" (es. dopo un cambio di
+ * account Stripe, da test a live o tra due account di test) da un errore
+ * generico, e riprendersi da solo invece di fallire soltanto.
+ */
+export class StripeApiError extends Error {
+  code: string | null;
+  param: string | null;
+
+  constructor(message: string, code: string | null, param: string | null) {
+    super(message);
+    this.name = "StripeApiError";
+    this.code = code;
+    this.param = param;
+  }
+}
+
+/**
  * Un copia-incolla incompleto su Railway (es. un campo non svuotato del
  * tutto prima di incollarci sopra) può lasciare nella variabile un
  * carattere di mascheramento "•" (bullet, non ASCII) invece del testo
@@ -92,8 +111,8 @@ export async function stripeRequest<T>(
 
   const json = await response.json();
   if (!response.ok) {
-    const message = (json as { error?: { message?: string } }).error?.message ?? "Errore Stripe";
-    throw new Error(message);
+    const error = (json as { error?: { message?: string; code?: string; param?: string } }).error;
+    throw new StripeApiError(error?.message ?? "Errore Stripe", error?.code ?? null, error?.param ?? null);
   }
   return json as T;
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { env } from "../env.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { stripeRequest, StripeNotConfiguredError, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../stripe/client.js";
+import { stripeRequest, StripeNotConfiguredError, StripeApiError, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../stripe/client.js";
 import { priceIdForPlan, priceIdForSentinelAddon, planForPriceId, isSentinelAddonPriceId } from "../stripe/plans.js";
 
 export const stripeRouter = Router();
@@ -73,7 +73,14 @@ interface StripePortalSession {
   url: string;
 }
 
-/** Trova il customer Stripe già associato al profilo, o ne crea uno nuovo e lo salva. */
+/**
+ * Trova il customer Stripe già associato al profilo, o ne crea uno nuovo e
+ * lo salva. Un customer_id salvato può appartenere a un account Stripe
+ * diverso da quello attivo adesso (cambio della chiave segreta — tra due
+ * account di test, o più avanti da test a live): verificarlo prima di
+ * riusarlo evita un "No such customer" indecifrabile al momento del
+ * checkout, e lo ricrea da solo invece di restare bloccato.
+ */
 async function getOrCreateStripeCustomer(userId: string): Promise<string> {
   const { data: profile } = await supabaseAdmin
     .from("profiles")
@@ -81,7 +88,16 @@ async function getOrCreateStripeCustomer(userId: string): Promise<string> {
     .eq("id", userId)
     .single();
 
-  if (profile?.stripe_customer_id) return profile.stripe_customer_id as string;
+  if (profile?.stripe_customer_id) {
+    const existingId = profile.stripe_customer_id as string;
+    try {
+      await stripeRequest<StripeCustomer>("GET", `/customers/${existingId}`);
+      return existingId;
+    } catch (err) {
+      if (!(err instanceof StripeApiError) || err.code !== "resource_missing") throw err;
+      // Cliente non valido in questo account Stripe: lo ricreiamo sotto, come se non ci fosse mai stato.
+    }
+  }
 
   const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
   const email = userData.user?.email;
