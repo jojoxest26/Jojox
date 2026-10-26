@@ -42,8 +42,16 @@ export const env = {
   /** Piano Business (aziende) — stesso schema opzionale di Pro/Team. */
   stripePriceIdBusiness: process.env.STRIPE_PRICE_ID_BUSINESS ?? null,
   stripePriceIdBusinessAnnual: process.env.STRIPE_PRICE_ID_BUSINESS_ANNUAL ?? null,
+  /** Posto extra oltre i 25 inclusi nel piano Business — venduto come riga aggiuntiva sullo stesso abbonamento, non un piano a sé. */
+  stripePriceIdBusinessSeat: process.env.STRIPE_PRICE_ID_BUSINESS_SEAT ?? null,
+  stripePriceIdBusinessSeatAnnual: process.env.STRIPE_PRICE_ID_BUSINESS_SEAT_ANNUAL ?? null,
+  /** Monitoraggio continuo h24 venduto da solo alle aziende, senza passare da un piano Business vero e proprio. */
+  stripePriceIdSentinelSoloBusiness: process.env.STRIPE_PRICE_ID_SENTINEL_SOLO_BUSINESS ?? null,
+  stripePriceIdSentinelSoloBusinessAnnual: process.env.STRIPE_PRICE_ID_SENTINEL_SOLO_BUSINESS_ANNUAL ?? null,
   /** Prezzo one-time per il Full Site Audit — pagamento singolo, non abbonamento. */
   stripePriceIdAudit: process.env.STRIPE_PRICE_ID_AUDIT ?? null,
+  /** Prezzo one-time per la versione aziendale del Full Site Audit (report mappato su NIS2/DORA). */
+  stripePriceIdAuditBusiness: process.env.STRIPE_PRICE_ID_AUDIT_BUSINESS ?? null,
   /** Prezzo one-time per un pacchetto di analisi extra (ANALYSIS_PACK_SIZE in plan.ts) — pagamento singolo, non abbonamento. */
   stripePriceIdAnalysisPack: process.env.STRIPE_PRICE_ID_ANALYSIS_PACK ?? null,
   /**

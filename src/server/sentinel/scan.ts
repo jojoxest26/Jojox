@@ -7,7 +7,7 @@ import { listInstallationRepos, openAuditFixPr } from "../github/auditFixPr.js";
 import { fetchRepoFiles } from "../github/repoContent.js";
 import { excludeSelfScanFixtures } from "../util/selfScanFixtures.js";
 import { supabaseAdmin } from "../db/supabase.js";
-import { getPlanForUser } from "../plan.js";
+import { getPlanForUser, type Plan } from "../plan.js";
 import { notifySlack } from "../slack/notify.js";
 import { notifyEmail, buildAlertEmailHtml } from "../email/notify.js";
 
@@ -15,6 +15,12 @@ import { notifyEmail, buildAlertEmailHtml } from "../email/notify.js";
 // repository: un tetto di sicurezza per non far durare uno scan notturno
 // all'infinito, non un limite che ci aspettiamo di raggiungere spesso.
 const MAX_REPOS_PER_INSTALLATION = 200;
+
+// Il piano Free include la Sentinella 24/7 gratis, ma solo su 1 repository —
+// a pagamento (Pro/Team/Business) il tetto è quello generale sopra. Il
+// repository monitorato è il primo restituito da GitHub per l'installazione,
+// niente scelta manuale per ora.
+const MAX_REPOS_PER_FREE_INSTALLATION = 1;
 
 type InstallationOctokit = Awaited<ReturnType<Awaited<ReturnType<typeof getGithubApp>>["getInstallationOctokit"]>>;
 
@@ -42,9 +48,15 @@ interface SentinelInstallation {
   installed_by: string;
   slack_webhook_url: string | null;
   ownerEmail: string | null;
+  plan: Plan;
 }
 
-/** Installazioni collegate a un account su un piano a pagamento (Pro o Team) — il monitoraggio continuo, come quello sulle pull request, non è una funzionalità del piano free. */
+/**
+ * Tutte le installazioni con un proprietario risolto — il piano free è
+ * incluso (ha diritto alla Sentinella gratis su 1 repository), non è più un
+ * filtro di eleggibilità ma solo decide quanti repository della stessa
+ * installazione vengono controllati, in runSentinelScan.
+ */
 async function eligibleInstallations(): Promise<SentinelInstallation[]> {
   const { data } = await supabaseAdmin.from("github_installations").select("installation_id, installed_by, slack_webhook_url");
 
@@ -52,12 +64,11 @@ async function eligibleInstallations(): Promise<SentinelInstallation[]> {
   for (const installation of data ?? []) {
     if (!installation.installed_by) continue;
     const plan = await getPlanForUser(installation.installed_by);
-    if (plan === "free") continue;
     // Risolto una volta per installazione (non per repository): più
     // repository nella stessa installazione condividono lo stesso
     // proprietario, non ha senso richiederlo di nuovo ad ogni scanRepo.
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(installation.installed_by);
-    eligible.push({ ...installation, ownerEmail: userData.user?.email ?? null } as SentinelInstallation);
+    eligible.push({ ...installation, ownerEmail: userData.user?.email ?? null, plan } as SentinelInstallation);
   }
   return eligible;
 }
@@ -156,7 +167,8 @@ export async function runSentinelScan(): Promise<void> {
   for (const installation of installations) {
     try {
       const octokit = await app.getInstallationOctokit(installation.installation_id);
-      const repos = (await listInstallationRepos(octokit)).slice(0, MAX_REPOS_PER_INSTALLATION);
+      const repoCap = installation.plan === "free" ? MAX_REPOS_PER_FREE_INSTALLATION : MAX_REPOS_PER_INSTALLATION;
+      const repos = (await listInstallationRepos(octokit)).slice(0, repoCap);
       for (const repo of repos) {
         try {
           await scanRepo(octokit, installation, repo);
