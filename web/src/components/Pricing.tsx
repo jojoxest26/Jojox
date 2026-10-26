@@ -256,7 +256,7 @@ export function Pricing({ session }: { session: Session | null }) {
         </div>
       </div>
 
-      <div className="pricing-business-panel hard-border">
+      <div className="pricing-business-panel">
         <h3 className="pricing-section-label pricing-section-label-inset">{t.pricing.businessSectionTitle}</h3>
         <div className="pricing-grid pricing-grid-business">
           <div className="card price-card">
