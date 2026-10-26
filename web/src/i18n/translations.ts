@@ -563,6 +563,9 @@ export interface TranslationTree {
     errorPurchaseBusiness: string;
     downloadPdfBusiness: string;
     creditsAvailableBusinessSuffix: string;
+    businessUpsellEyebrow: string;
+    priceLabelBusiness: string;
+    priceNoteBusiness: string;
   };
 }
 
@@ -1194,11 +1197,14 @@ const it: TranslationTree = {
     trialError: "Non siamo riusciti ad attivare la prova gratuita, riprova.",
     businessUpsellTitle: "Serve un report mappato a NIS2/DORA?",
     businessUpsellNote: "Stesso Controllo Completo del Sito, in più una mappatura dei rilievi alla Direttiva NIS2 e al Regolamento DORA — utile per chi deve rispondere a un referente compliance.",
-    ctaBuyBusiness: "Acquista l'Audit Aziendale — 990€",
+    ctaBuyBusiness: "Acquista l'Audit Aziendale",
     buyingBusiness: "Apertura del pagamento...",
     errorPurchaseBusiness: "Errore nell'apertura del pagamento",
     downloadPdfBusiness: "Scarica report Aziendale (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Tra questi, {{count}} con report Aziendale a mappatura NIS2/DORA.",
+    businessUpsellEyebrow: "Novità Aziende",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "pagamento singolo, non un abbonamento",
   },
 };
 
@@ -1830,11 +1836,14 @@ const en: TranslationTree = {
     trialError: "We couldn't activate the free trial, try again.",
     businessUpsellTitle: "Need a report mapped to NIS2/DORA?",
     businessUpsellNote: "Same Full Site Audit, plus a mapping of findings to the NIS2 Directive and the DORA Regulation — useful if you need to answer to a compliance officer.",
-    ctaBuyBusiness: "Buy the Business Audit — €990",
+    ctaBuyBusiness: "Buy the Business Audit",
     buyingBusiness: "Opening payment...",
     errorPurchaseBusiness: "Error opening payment",
     downloadPdfBusiness: "Download Business report (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Of these, {{count}} include a Business report with NIS2/DORA mapping.",
+    businessUpsellEyebrow: "New for businesses",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "one-time payment, not a subscription",
   },
 };
 
@@ -2466,11 +2475,14 @@ const es: TranslationTree = {
     trialError: "No pudimos activar la prueba gratuita, inténtalo de nuevo.",
     businessUpsellTitle: "¿Necesitas un informe mapeado a NIS2/DORA?",
     businessUpsellNote: "La misma Auditoría Completa del Sitio, más un mapeo de los hallazgos a la Directiva NIS2 y al Reglamento DORA — útil si debes responder ante un responsable de cumplimiento.",
-    ctaBuyBusiness: "Compra la Auditoría Empresarial — 990€",
+    ctaBuyBusiness: "Compra la Auditoría Empresarial",
     buyingBusiness: "Abriendo el pago...",
     errorPurchaseBusiness: "Error al abrir el pago",
     downloadPdfBusiness: "Descargar informe Empresarial (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " De estos, {{count}} incluyen un informe Empresarial con mapeo NIS2/DORA.",
+    businessUpsellEyebrow: "Novedad para empresas",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "pago único, no una suscripción",
   },
 };
 
@@ -3102,11 +3114,14 @@ const fr: TranslationTree = {
     trialError: "Nous n'avons pas pu activer l'essai gratuit, réessayez.",
     businessUpsellTitle: "Besoin d'un rapport cartographié NIS2/DORA ?",
     businessUpsellNote: "Le même Audit Complet du Site, avec en plus une cartographie des constats vers la directive NIS2 et le règlement DORA — utile si vous devez répondre à un responsable conformité.",
-    ctaBuyBusiness: "Acheter l'Audit Entreprise — 990€",
+    ctaBuyBusiness: "Acheter l'Audit Entreprise",
     buyingBusiness: "Ouverture du paiement...",
     errorPurchaseBusiness: "Erreur à l'ouverture du paiement",
     downloadPdfBusiness: "Télécharger le rapport Entreprise (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Dont {{count}} avec un rapport Entreprise à cartographie NIS2/DORA.",
+    businessUpsellEyebrow: "Nouveauté entreprises",
+    priceLabelBusiness: "990 €",
+    priceNoteBusiness: "paiement unique, pas un abonnement",
   },
 };
 
@@ -3738,11 +3753,14 @@ const pt: TranslationTree = {
     trialError: "Não conseguimos ativar o período de teste gratuito, tente novamente.",
     businessUpsellTitle: "Precisa de um relatório mapeado para NIS2/DORA?",
     businessUpsellNote: "A mesma Auditoria Completa do Site, com um mapeamento adicional dos achados para a Diretiva NIS2 e o Regulamento DORA — útil para responder a um responsável de compliance.",
-    ctaBuyBusiness: "Comprar a Auditoria Empresarial — 990€",
+    ctaBuyBusiness: "Comprar a Auditoria Empresarial",
     buyingBusiness: "A abrir o pagamento...",
     errorPurchaseBusiness: "Erro ao abrir o pagamento",
     downloadPdfBusiness: "Descarregar relatório Empresarial (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Destes, {{count}} com relatório Empresarial e mapeamento NIS2/DORA.",
+    businessUpsellEyebrow: "Novidade para empresas",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "pagamento único, não uma subscrição",
   },
 };
 
@@ -4370,11 +4388,14 @@ const zh: TranslationTree = {
     trialError: "免费试用激活失败，请重试。",
     businessUpsellTitle: "需要映射到 NIS2/DORA 的报告吗?",
     businessUpsellNote: "与完整网站审计相同,另外增加将问题项映射到 NIS2 指令和 DORA 法规的内容 —— 适用于需要向合规负责人汇报的情况。",
-    ctaBuyBusiness: "购买企业审计 — 990€",
+    ctaBuyBusiness: "购买企业审计",
     buyingBusiness: "正在打开支付...",
     errorPurchaseBusiness: "打开支付时出错",
     downloadPdfBusiness: "下载企业报告(NIS2/DORA)",
     creditsAvailableBusinessSuffix: " 其中 {{count}} 份为含 NIS2/DORA 映射的企业报告。",
+    businessUpsellEyebrow: "企业新品",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "一次性付款，非订阅",
   },
 };
 
@@ -5005,11 +5026,14 @@ const hi: TranslationTree = {
     trialError: "हम मुफ़्त ट्रायल सक्रिय नहीं कर पाए, फिर से कोशिश करें।",
     businessUpsellTitle: "NIS2/DORA से मैप की गई रिपोर्ट चाहिए?",
     businessUpsellNote: "वही पूर्ण साइट ऑडिट, साथ में निष्कर्षों की NIS2 निर्देश और DORA विनियम से मैपिंग — उपयोगी जब किसी कंप्लायंस अधिकारी को जवाब देना हो।",
-    ctaBuyBusiness: "बिज़नेस ऑडिट खरीदें — 990€",
+    ctaBuyBusiness: "बिज़नेस ऑडिट खरीदें",
     buyingBusiness: "पेमेंट खोला जा रहा है...",
     errorPurchaseBusiness: "पेमेंट खोलने में त्रुटि",
     downloadPdfBusiness: "बिज़नेस रिपोर्ट डाउनलोड करें (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " इनमें से {{count}} में NIS2/DORA मैपिंग वाली बिज़नेस रिपोर्ट शामिल है।",
+    businessUpsellEyebrow: "कंपनियों के लिए नया",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "एक बार का भुगतान, सब्सक्रिप्शन नहीं",
   },
 };
 
@@ -5641,11 +5665,14 @@ const ru: TranslationTree = {
     trialError: "Не удалось активировать бесплатный пробный период, попробуйте снова.",
     businessUpsellTitle: "Нужен отчёт с сопоставлением NIS2/DORA?",
     businessUpsellNote: "Тот же полный аудит сайта, плюс сопоставление находок с директивой NIS2 и регламентом DORA — полезно, если нужно отчитаться перед ответственным за соответствие требованиям.",
-    ctaBuyBusiness: "Купить Бизнес-аудит — 990€",
+    ctaBuyBusiness: "Купить Бизнес-аудит",
     buyingBusiness: "Открытие оплаты...",
     errorPurchaseBusiness: "Ошибка при открытии оплаты",
     downloadPdfBusiness: "Скачать Бизнес-отчёт (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Из них {{count}} с Бизнес-отчётом и сопоставлением NIS2/DORA.",
+    businessUpsellEyebrow: "Новинка для компаний",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "разовый платёж, не подписка",
   },
 };
 
@@ -6274,11 +6301,14 @@ const ar: TranslationTree = {
     trialError: "لم نتمكن من تفعيل الفترة التجريبية المجانية، أعد المحاولة.",
     businessUpsellTitle: "هل تحتاج إلى تقرير مرتبط بـ NIS2/DORA؟",
     businessUpsellNote: "نفس تدقيق الموقع الكامل، مع ربط إضافي للنتائج بتوجيه NIS2 ولائحة DORA — مفيد إذا كان عليك الرد على مسؤول الامتثال.",
-    ctaBuyBusiness: "شراء تدقيق الأعمال — 990€",
+    ctaBuyBusiness: "شراء تدقيق الأعمال",
     buyingBusiness: "جارٍ فتح الدفع...",
     errorPurchaseBusiness: "خطأ في فتح الدفع",
     downloadPdfBusiness: "تنزيل تقرير الأعمال (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " من بينها {{count}} بتقرير أعمال مع ربط NIS2/DORA.",
+    businessUpsellEyebrow: "جديد للشركات",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "دفعة واحدة، وليس اشتراكًا",
   },
 };
 
@@ -6909,11 +6939,14 @@ const bn: TranslationTree = {
     trialError: "আমরা বিনামূল্যে ট্রায়াল সক্রিয় করতে পারিনি, আবার চেষ্টা করুন।",
     businessUpsellTitle: "NIS2/DORA ম্যাপ করা রিপোর্ট প্রয়োজন?",
     businessUpsellNote: "একই সম্পূর্ণ সাইট অডিট, সাথে NIS2 নির্দেশিকা এবং DORA বিধিমালার সাথে ফলাফলের ম্যাপিং — কম্প্লায়েন্স কর্মকর্তাকে জবাব দিতে হলে কাজে লাগবে।",
-    ctaBuyBusiness: "বিজনেস অডিট কিনুন — 990€",
+    ctaBuyBusiness: "বিজনেস অডিট কিনুন",
     buyingBusiness: "পেমেন্ট খোলা হচ্ছে...",
     errorPurchaseBusiness: "পেমেন্ট খুলতে ত্রুটি",
     downloadPdfBusiness: "বিজনেস রিপোর্ট ডাউনলোড করুন (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " এর মধ্যে {{count}}টি NIS2/DORA ম্যাপিং সহ বিজনেস রিপোর্ট।",
+    businessUpsellEyebrow: "কোম্পানির জন্য নতুন",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "একবার পেমেন্ট, সাবস্ক্রিপশন নয়",
   },
 };
 
@@ -7543,11 +7576,14 @@ const ur: TranslationTree = {
     trialError: "ہم مفت ٹرائل فعال نہیں کر سکے، دوبارہ کوشش کریں۔",
     businessUpsellTitle: "NIS2/DORA سے میپ شدہ رپورٹ چاہیے؟",
     businessUpsellNote: "وہی مکمل سائٹ آڈٹ، ساتھ میں نتائج کی NIS2 ڈائریکٹیو اور DORA ریگولیشن سے میپنگ — کمپلائنس آفیسر کو جواب دینے کے لیے مفید۔",
-    ctaBuyBusiness: "بزنس آڈٹ خریدیں — 990€",
+    ctaBuyBusiness: "بزنس آڈٹ خریدیں",
     buyingBusiness: "ادائیگی کھولی جا رہی ہے...",
     errorPurchaseBusiness: "ادائیگی کھولنے میں خرابی",
     downloadPdfBusiness: "بزنس رپورٹ ڈاؤن لوڈ کریں (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " ان میں سے {{count}} NIS2/DORA میپنگ کے ساتھ بزنس رپورٹ پر مشتمل ہیں۔",
+    businessUpsellEyebrow: "کمپنیوں کے لیے نیا",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "ایک بار کی ادائیگی، سبسکرپشن نہیں",
   },
 };
 
@@ -8179,11 +8215,14 @@ const id: TranslationTree = {
     trialError: "Kami tidak dapat mengaktifkan uji coba gratis, coba lagi.",
     businessUpsellTitle: "Perlu laporan yang dipetakan ke NIS2/DORA?",
     businessUpsellNote: "Audit Lengkap Situs yang sama, ditambah pemetaan temuan ke Direktif NIS2 dan Regulasi DORA — berguna jika Anda perlu melapor ke petugas kepatuhan.",
-    ctaBuyBusiness: "Beli Audit Bisnis — 990€",
+    ctaBuyBusiness: "Beli Audit Bisnis",
     buyingBusiness: "Membuka pembayaran...",
     errorPurchaseBusiness: "Gagal membuka pembayaran",
     downloadPdfBusiness: "Unduh laporan Bisnis (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Dari jumlah itu, {{count}} termasuk laporan Bisnis dengan pemetaan NIS2/DORA.",
+    businessUpsellEyebrow: "Baru untuk bisnis",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "pembayaran sekali, bukan langganan",
   },
 };
 
@@ -8815,11 +8854,14 @@ const de: TranslationTree = {
     trialError: "Wir konnten die kostenlose Testphase nicht aktivieren, versuch es erneut.",
     businessUpsellTitle: "Benötigen Sie einen auf NIS2/DORA abgebildeten Report?",
     businessUpsellNote: "Derselbe vollständige Site-Audit, zusätzlich mit einer Zuordnung der Befunde zur NIS2-Richtlinie und zur DORA-Verordnung — nützlich, wenn Sie einem Compliance-Verantwortlichen Bericht erstatten müssen.",
-    ctaBuyBusiness: "Business-Audit kaufen — 990€",
+    ctaBuyBusiness: "Business-Audit kaufen",
     buyingBusiness: "Zahlung wird geöffnet...",
     errorPurchaseBusiness: "Fehler beim Öffnen der Zahlung",
     downloadPdfBusiness: "Business-Report herunterladen (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Davon {{count}} mit Business-Report und NIS2/DORA-Zuordnung.",
+    businessUpsellEyebrow: "Neu für Unternehmen",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "einmalige Zahlung, kein Abo",
   },
 };
 
@@ -9451,11 +9493,14 @@ const fi: TranslationTree = {
     trialError: "Emme pystyneet aktivoimaan ilmaista kokeilua, yritä uudelleen.",
     businessUpsellTitle: "Tarvitsetko NIS2/DORA-kartoitetun raportin?",
     businessUpsellNote: "Sama koko sivuston auditti, lisäksi havaintojen kartoitus NIS2-direktiiviin ja DORA-asetukseen — hyödyllinen, jos vastaat compliance-vastuuhenkilölle.",
-    ctaBuyBusiness: "Ostaa Yritysauditti — 990€",
+    ctaBuyBusiness: "Ostaa Yritysauditti",
     buyingBusiness: "Maksua avataan...",
     errorPurchaseBusiness: "Virhe maksun avaamisessa",
     downloadPdfBusiness: "Lataa Yritysraportti (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Näistä {{count}} sisältää Yritysraportin NIS2/DORA-kartoituksella.",
+    businessUpsellEyebrow: "Uutta yrityksille",
+    priceLabelBusiness: "990 €",
+    priceNoteBusiness: "kertamaksu, ei tilaus",
   },
 };
 
@@ -10087,11 +10132,14 @@ const nl: TranslationTree = {
     trialError: "We konden de gratis proefperiode niet activeren, probeer het opnieuw.",
     businessUpsellTitle: "Heeft u een naar NIS2/DORA gemapt rapport nodig?",
     businessUpsellNote: "Dezelfde volledige site-audit, met een extra mapping van de bevindingen naar de NIS2-richtlijn en de DORA-verordening — handig als u verantwoording moet afleggen aan een compliance-verantwoordelijke.",
-    ctaBuyBusiness: "Koop de Zakelijke Audit — 990€",
+    ctaBuyBusiness: "Koop de Zakelijke Audit",
     buyingBusiness: "Betaling wordt geopend...",
     errorPurchaseBusiness: "Fout bij het openen van de betaling",
     downloadPdfBusiness: "Download Zakelijk rapport (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Daarvan {{count}} met een Zakelijk rapport en NIS2/DORA-mapping.",
+    businessUpsellEyebrow: "Nieuw voor bedrijven",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "eenmalige betaling, geen abonnement",
   },
 };
 
@@ -10723,11 +10771,14 @@ const pl: TranslationTree = {
     trialError: "Nie udało nam się aktywować darmowego okresu próbnego, spróbuj ponownie.",
     businessUpsellTitle: "Potrzebujesz raportu zmapowanego do NIS2/DORA?",
     businessUpsellNote: "Ten sam pełny audyt witryny, dodatkowo z mapowaniem ustaleń do dyrektywy NIS2 i rozporządzenia DORA — przydatne, jeśli musisz odpowiadać przed osobą odpowiedzialną za zgodność.",
-    ctaBuyBusiness: "Kup Audyt Biznesowy — 990€",
+    ctaBuyBusiness: "Kup Audyt Biznesowy",
     buyingBusiness: "Otwieranie płatności...",
     errorPurchaseBusiness: "Błąd podczas otwierania płatności",
     downloadPdfBusiness: "Pobierz raport Biznesowy (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " W tym {{count}} z raportem Biznesowym i mapowaniem NIS2/DORA.",
+    businessUpsellEyebrow: "Nowość dla firm",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "jednorazowa płatność, nie subskrypcja",
   },
 };
 
@@ -11359,11 +11410,14 @@ const sv: TranslationTree = {
     trialError: "Vi kunde inte aktivera den gratis provperioden, försök igen.",
     businessUpsellTitle: "Behöver du en rapport kartlagd mot NIS2/DORA?",
     businessUpsellNote: "Samma kompletta sajtgranskning, plus en kartläggning av fynden mot NIS2-direktivet och DORA-förordningen — användbart om du måste svara en compliance-ansvarig.",
-    ctaBuyBusiness: "Köp Företagsgranskningen — 990€",
+    ctaBuyBusiness: "Köp Företagsgranskningen",
     buyingBusiness: "Öppnar betalning...",
     errorPurchaseBusiness: "Fel vid öppning av betalning",
     downloadPdfBusiness: "Ladda ner Företagsrapport (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Av dessa har {{count}} en Företagsrapport med NIS2/DORA-kartläggning.",
+    businessUpsellEyebrow: "Nytt för företag",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "engångsbetalning, inget abonnemang",
   },
 };
 
@@ -11995,11 +12049,14 @@ const da: TranslationTree = {
     trialError: "Vi kunne ikke aktivere den gratis prøveperiode, prøv igen.",
     businessUpsellTitle: "Har du brug for en rapport kortlagt til NIS2/DORA?",
     businessUpsellNote: "Samme komplette sitegennemgang, plus en kortlægning af fundene til NIS2-direktivet og DORA-forordningen — nyttigt hvis du skal svare en compliance-ansvarlig.",
-    ctaBuyBusiness: "Køb Erhvervsrevisionen — 990€",
+    ctaBuyBusiness: "Køb Erhvervsrevisionen",
     buyingBusiness: "Åbner betaling...",
     errorPurchaseBusiness: "Fejl ved åbning af betaling",
     downloadPdfBusiness: "Download Erhvervsrapport (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Heraf har {{count}} en Erhvervsrapport med NIS2/DORA-kortlægning.",
+    businessUpsellEyebrow: "Nyt for virksomheder",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "engangsbetaling, ikke et abonnement",
   },
 };
 
@@ -12631,11 +12688,14 @@ const nb: TranslationTree = {
     trialError: "Vi klarte ikke å aktivere den gratis prøveperioden, prøv igjen.",
     businessUpsellTitle: "Trenger du en rapport kartlagt mot NIS2/DORA?",
     businessUpsellNote: "Samme komplette nettstedrevisjon, pluss en kartlegging av funnene mot NIS2-direktivet og DORA-forordningen — nyttig hvis du må svare en compliance-ansvarlig.",
-    ctaBuyBusiness: "Kjøp Bedriftsrevisjonen — 990€",
+    ctaBuyBusiness: "Kjøp Bedriftsrevisjonen",
     buyingBusiness: "Åpner betaling...",
     errorPurchaseBusiness: "Feil ved åpning av betaling",
     downloadPdfBusiness: "Last ned Bedriftsrapport (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Av disse har {{count}} en Bedriftsrapport med NIS2/DORA-kartlegging.",
+    businessUpsellEyebrow: "Nytt for bedrifter",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "engangsbetaling, ikke et abonnement",
   },
 };
 
@@ -13267,11 +13327,14 @@ const tr: TranslationTree = {
     trialError: "Ücretsiz denemeyi etkinleştiremedik, tekrar deneyin.",
     businessUpsellTitle: "NIS2/DORA ile eşleştirilmiş bir rapora mı ihtiyacınız var?",
     businessUpsellNote: "Aynı Tam Site Denetimi, ayrıca bulguların NIS2 Direktifi ve DORA Düzenlemesi ile eşleştirilmesi — bir uyum sorumlusuna hesap vermeniz gerekiyorsa faydalıdır.",
-    ctaBuyBusiness: "Kurumsal Denetimi Satın Al — 990€",
+    ctaBuyBusiness: "Kurumsal Denetimi Satın Al",
     buyingBusiness: "Ödeme açılıyor...",
     errorPurchaseBusiness: "Ödeme açılırken hata oluştu",
     downloadPdfBusiness: "Kurumsal raporu indir (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " Bunlardan {{count}} tanesi NIS2/DORA eşleştirmeli Kurumsal rapor içerir.",
+    businessUpsellEyebrow: "İşletmeler için yeni",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "tek seferlik ödeme, abonelik değil",
   },
 };
 
@@ -13903,11 +13966,14 @@ const uk: TranslationTree = {
     trialError: "Нам не вдалося активувати безкоштовний пробний період, спробуйте ще раз.",
     businessUpsellTitle: "Потрібен звіт, зіставлений з NIS2/DORA?",
     businessUpsellNote: "Той самий повний аудит сайту, плюс зіставлення знахідок з директивою NIS2 та регламентом DORA — корисно, якщо потрібно звітувати перед відповідальним за відповідність.",
-    ctaBuyBusiness: "Купити Бізнес-аудит — 990€",
+    ctaBuyBusiness: "Купити Бізнес-аудит",
     buyingBusiness: "Відкриття оплати...",
     errorPurchaseBusiness: "Помилка при відкритті оплати",
     downloadPdfBusiness: "Завантажити Бізнес-звіт (NIS2/DORA)",
     creditsAvailableBusinessSuffix: " З них {{count}} з Бізнес-звітом і зіставленням NIS2/DORA.",
+    businessUpsellEyebrow: "Новинка для компаній",
+    priceLabelBusiness: "990€",
+    priceNoteBusiness: "одноразова оплата, не підписка",
   },
 };
 
@@ -14539,11 +14605,14 @@ const ja: TranslationTree = {
     trialError: "無料トライアルを有効化できませんでした。もう一度お試しください。",
     businessUpsellTitle: "NIS2/DORAにマッピングされたレポートが必要ですか?",
     businessUpsellNote: "同じ完全サイトオーディットに加え、検出結果をNIS2指令およびDORA規則にマッピングします — コンプライアンス担当者への報告が必要な場合に便利です。",
-    ctaBuyBusiness: "法人向けオーディットを購入 — 990€",
+    ctaBuyBusiness: "法人向けオーディットを購入",
     buyingBusiness: "決済を開いています...",
     errorPurchaseBusiness: "決済を開く際にエラーが発生しました",
     downloadPdfBusiness: "法人向けレポートをダウンロード(NIS2/DORA)",
     creditsAvailableBusinessSuffix: " そのうち{{count}}件はNIS2/DORAマッピング付きの法人向けレポートです。",
+    businessUpsellEyebrow: "企業向け新機能",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "一回払い、サブスクリプションではありません",
   },
 };
 
@@ -15175,11 +15244,14 @@ const ko: TranslationTree = {
     trialError: "무료 체험판을 활성화할 수 없었습니다. 다시 시도해 주세요.",
     businessUpsellTitle: "NIS2/DORA에 매핑된 보고서가 필요하신가요?",
     businessUpsellNote: "동일한 전체 사이트 감사에 더해 발견 사항을 NIS2 지침 및 DORA 규정에 매핑합니다 — 컴플라이언스 담당자에게 보고해야 할 때 유용합니다.",
-    ctaBuyBusiness: "비즈니스 감사 구매 — 990€",
+    ctaBuyBusiness: "비즈니스 감사 구매",
     buyingBusiness: "결제를 여는 중...",
     errorPurchaseBusiness: "결제를 여는 중 오류가 발생했습니다",
     downloadPdfBusiness: "비즈니스 보고서 다운로드(NIS2/DORA)",
     creditsAvailableBusinessSuffix: " 이 중 {{count}}개는 NIS2/DORA 매핑이 포함된 비즈니스 보고서입니다.",
+    businessUpsellEyebrow: "기업용 신규",
+    priceLabelBusiness: "€990",
+    priceNoteBusiness: "일회성 결제, 구독 아님",
   },
 };
 
