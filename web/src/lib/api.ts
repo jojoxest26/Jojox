@@ -192,7 +192,7 @@ export function joinWaitlist(email: string): Promise<{ joined: boolean }> {
   });
 }
 
-export type Plan = "free" | "pro" | "team";
+export type Plan = "free" | "pro" | "team" | "business";
 
 export async function fetchProfile(accessToken: string): Promise<Plan> {
   const { plan } = await apiFetch<{ plan: Plan }>("/api/profile", { accessToken });
@@ -226,7 +226,7 @@ export function startMonitoringTrial(accessToken: string): Promise<{ planTrialEx
 
 /** Crea una sessione di Stripe Checkout e restituisce l'URL a cui reindirizzare per attivare un piano a pagamento. */
 export function createCheckoutSession(
-  plan: "pro" | "team",
+  plan: "pro" | "team" | "business",
   accessToken: string,
   interval: "monthly" | "annual" = "monthly"
 ): Promise<{ url: string }> {

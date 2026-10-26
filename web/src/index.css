@@ -1708,15 +1708,6 @@ body::after {
   color: #a8a29e;
   margin: 0.5rem 0 0;
 }
-.pricing-enterprise-note {
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin: 1.5rem 0 0;
-}
-.pricing-enterprise-note a {
-  color: var(--accent);
-}
 .pricing-disclaimer {
   text-align: center;
   font-size: 0.78rem;

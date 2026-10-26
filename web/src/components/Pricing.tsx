@@ -16,7 +16,7 @@ function openAnalyzer() {
 export function Pricing({ session }: { session: Session | null }) {
   const { t } = useTranslation();
   const [plan, setPlan] = useState<Plan | null>(null);
-  const [busy, setBusy] = useState<"pro" | "team" | "portal" | null>(null);
+  const [busy, setBusy] = useState<"pro" | "team" | "business" | "portal" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkoutNotice, setCheckoutNotice] = useState<"success" | "cancel" | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
@@ -52,7 +52,7 @@ export function Pricing({ session }: { session: Session | null }) {
     }
   }, [session, checkoutNotice]);
 
-  async function handleActivate(target: "pro" | "team") {
+  async function handleActivate(target: "pro" | "team" | "business") {
     if (!session) {
       openLogin();
       return;
@@ -157,7 +157,7 @@ export function Pricing({ session }: { session: Session | null }) {
           <span className="pill pill-amber price-card-badge">{t.pricing.proBadge}</span>
           <h3>{t.pricing.proTitle}</h3>
           <div className="price-amount">
-            {billingInterval === "annual" ? t.pricing.proPriceAnnual : "9,99€"}{" "}
+            {billingInterval === "annual" ? t.pricing.proPriceAnnual : "19€"}{" "}
             <span className="per">{billingInterval === "annual" ? t.pricing.proPerAnnual : t.pricing.proPer}</span>
           </div>
           <ul>
@@ -194,7 +194,7 @@ export function Pricing({ session }: { session: Session | null }) {
           <span className="pill pill-mint price-card-badge">{t.pricing.teamBadge}</span>
           <h3>{t.pricing.teamTitle}</h3>
           <div className="price-amount">
-            {billingInterval === "annual" ? t.pricing.teamPriceAnnual : "24,99€"}{" "}
+            {billingInterval === "annual" ? t.pricing.teamPriceAnnual : "49€"}{" "}
             <span className="per">{billingInterval === "annual" ? t.pricing.teamPerAnnual : t.pricing.teamPer}</span>
           </div>
           <ul>
@@ -226,14 +226,63 @@ export function Pricing({ session }: { session: Session | null }) {
           )}
           <p className="price-card-note">{t.pricing.teamNote}</p>
         </div>
-      </div>
 
-      <p className="pricing-enterprise-note">
-        {t.pricing.enterpriseContactQuestion}{" "}
-        <a href={`mailto:jojoxest26@gmail.com?subject=${encodeURIComponent("[Enterprise]")}`}>
-          {t.pricing.enterpriseContactLink}
-        </a>
-      </p>
+        <div className="card price-card">
+          <span className="pill pill-amber price-card-badge">{t.pricing.businessBadge}</span>
+          <h3>{t.pricing.businessTitle}</h3>
+          <div className="price-amount">
+            {billingInterval === "annual" ? t.pricing.businessPriceAnnual : "1.490€"}{" "}
+            <span className="per">
+              {billingInterval === "annual" ? t.pricing.businessPerAnnual : t.pricing.businessPer}
+            </span>
+          </div>
+          <ul>
+            {t.pricing.businessList.map((item) => (
+              <li key={item}>✓ {item}</li>
+            ))}
+          </ul>
+          {session && plan === "business" ? (
+            <>
+              <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
+              <button
+                type="button"
+                className="btn btn-secondary hard-border hard-shadow-sm"
+                onClick={handleManage}
+                disabled={busy === "portal"}
+              >
+                {busy === "portal" ? t.pricing.opening : t.pricing.manageSubscription}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary hard-border hard-shadow-sm"
+              onClick={() => handleActivate("business")}
+              disabled={busy === "business"}
+            >
+              {busy === "business" ? t.pricing.businessActivating : t.pricing.businessCta}
+            </button>
+          )}
+          <p className="price-card-note">{t.pricing.businessNote}</p>
+        </div>
+
+        <div className="card price-card">
+          <h3>{t.pricing.enterpriseTitle}</h3>
+          <div className="price-amount">{t.pricing.enterprisePrice}</div>
+          <ul>
+            {t.pricing.enterpriseList.map((item) => (
+              <li key={item}>✓ {item}</li>
+            ))}
+          </ul>
+          <a
+            className="btn btn-secondary hard-border hard-shadow-sm"
+            href={`mailto:jojoxest26@gmail.com?subject=${encodeURIComponent("[Enterprise]")}`}
+          >
+            {t.pricing.enterpriseCta}
+          </a>
+          <p className="price-card-note">{t.pricing.enterpriseNote}</p>
+        </div>
+      </div>
 
       {error && <p className="pricing-error">{error}</p>}
 
