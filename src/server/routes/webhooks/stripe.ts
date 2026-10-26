@@ -1,7 +1,7 @@
 import { Router, raw } from "express";
 import { env } from "../../env.js";
 import { verifyStripeSignature } from "../../stripe/verifySignature.js";
-import { planForPriceId } from "../../stripe/plans.js";
+import { planForPriceId, isSentinelAddonPriceId } from "../../stripe/plans.js";
 import { stripeRequest, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../../stripe/client.js";
 import { supabaseAdmin } from "../../db/supabase.js";
 import { reportError } from "../../sentry.js";
@@ -64,12 +64,14 @@ stripeWebhookRouter.post("/webhooks/stripe", raw({ type: "application/json" }), 
 });
 
 /**
- * Ricalcola il piano di un cliente guardando TUTTI i suoi abbonamenti Stripe
- * attivi, non solo quello coinvolto nell'evento appena arrivato — un cliente
- * può finire con più abbonamenti attivi insieme (es. passa da Pro a Team
- * senza cancellare il vecchio), e il piano giusto è sempre il più alto tra
- * quelli davvero attivi, mai semplicemente "l'ultimo evento ricevuto".
- * Tiene anche al riparo da eventi Stripe che arrivano fuori ordine.
+ * Ricalcola il piano di un cliente E lo stato del Controllo h24 da solo,
+ * guardando TUTTI i suoi abbonamenti Stripe attivi, non solo quello
+ * coinvolto nell'evento appena arrivato — un cliente può finire con più
+ * abbonamenti attivi insieme (es. passa da Pro a Team senza cancellare il
+ * vecchio, oppure ha sia un piano che il Controllo h24 da solo come
+ * abbonamento separato), e il piano giusto è sempre il più alto tra quelli
+ * davvero attivi, mai semplicemente "l'ultimo evento ricevuto". Tiene anche
+ * al riparo da eventi Stripe che arrivano fuori ordine.
  */
 async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
   const subscriptions = await stripeRequest<StripeSubscriptionList>("GET", "/subscriptions", {
@@ -82,19 +84,20 @@ async function resyncPlanForCustomer(stripeCustomerId: string): Promise<void> {
   // attivi insieme: business > team > pro > free.
   const PLAN_RANK: Record<Plan, number> = { free: 0, pro: 1, team: 2, business: 3 };
   let highestPlan: Plan = "free";
+  let sentinelAddonActive = false;
   for (const subscription of subscriptions.data) {
     if (!STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)) continue;
     const priceId = subscription.items.data[0]?.price.id;
-    const plan = priceId ? planForPriceId(priceId) : null;
+    if (!priceId) continue;
+    const plan = planForPriceId(priceId);
     if (plan && PLAN_RANK[plan] > PLAN_RANK[highestPlan]) highestPlan = plan;
-    if (highestPlan === "business") break;
+    if (isSentinelAddonPriceId(priceId)) sentinelAddonActive = true;
   }
 
-  await setPlanForCustomer(stripeCustomerId, highestPlan);
-}
-
-async function setPlanForCustomer(stripeCustomerId: string, plan: Plan): Promise<void> {
-  await supabaseAdmin.from("profiles").update({ plan }).eq("stripe_customer_id", stripeCustomerId);
+  await supabaseAdmin
+    .from("profiles")
+    .update({ plan: highestPlan, sentinel_addon_active: sentinelAddonActive })
+    .eq("stripe_customer_id", stripeCustomerId);
 }
 
 /**

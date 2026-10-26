@@ -26,3 +26,18 @@ export function planForPriceId(priceId: string): PaidPlan | null {
   if (priceId === env.stripePriceIdBusiness || priceId === env.stripePriceIdBusinessAnnual) return "business";
   return null;
 }
+
+/**
+ * "Controllo h24 da solo" (aziende): abbonamento a sé, non un piano — alza
+ * solo il tetto di repository monitorati dalla Sentinella 24/7 (vedi
+ * sentinel/scan.ts), non sblocca nient'altro (analisi extra, chat, ecc.).
+ * Per questo vive a parte da priceIdForPlan/planForPriceId invece di
+ * diventare un quarto valore di Plan.
+ */
+export function priceIdForSentinelAddon(interval: BillingInterval = "monthly"): string | null {
+  return interval === "annual" ? env.stripePriceIdSentinelSoloBusinessAnnual : env.stripePriceIdSentinelSoloBusiness;
+}
+
+export function isSentinelAddonPriceId(priceId: string): boolean {
+  return priceId === env.stripePriceIdSentinelSoloBusiness || priceId === env.stripePriceIdSentinelSoloBusinessAnnual;
+}

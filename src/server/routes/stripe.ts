@@ -4,12 +4,16 @@ import { env } from "../env.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { stripeRequest, StripeNotConfiguredError, STRIPE_ACTIVE_SUBSCRIPTION_STATUSES } from "../stripe/client.js";
-import { priceIdForPlan } from "../stripe/plans.js";
+import { priceIdForPlan, priceIdForSentinelAddon, planForPriceId, isSentinelAddonPriceId } from "../stripe/plans.js";
 
 export const stripeRouter = Router();
 
 const checkoutSchema = z.object({
   plan: z.enum(["pro", "team", "business"]),
+  interval: z.enum(["monthly", "annual"]).default("monthly"),
+});
+
+const sentinelAddonCheckoutSchema = z.object({
   interval: z.enum(["monthly", "annual"]).default("monthly"),
 });
 
@@ -27,21 +31,40 @@ interface StripeSubscriptionListItem {
   items: { data: { id: string; price: { id: string } }[] };
 }
 
-/**
- * L'abbonamento già attivo del cliente (Pro o Team), se esiste. Usata prima
- * di creare un nuovo checkout per capire se si tratta di un cambio di piano
- * (da aggiornare sull'abbonamento esistente) invece di un abbonamento nuovo —
- * senza questo controllo un cliente che passa da Pro a Team si ritroverebbe
- * con due abbonamenti attivi insieme, pagati entrambi ogni mese.
- */
-async function findActiveSubscription(customerId: string): Promise<{ id: string; itemId: string } | null> {
+async function listActiveSubscriptions(customerId: string): Promise<StripeSubscriptionListItem[]> {
   const subscriptions = await stripeRequest<{ data: StripeSubscriptionListItem[] }>("GET", "/subscriptions", {
     customer: customerId,
     status: "all",
     limit: 100,
   });
+  return subscriptions.data.filter((s) => STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(s.status));
+}
 
-  const active = subscriptions.data.find((s) => STRIPE_ACTIVE_SUBSCRIPTION_STATUSES.has(s.status));
+/**
+ * L'abbonamento al piano (Pro/Team/Business) già attivo del cliente, se
+ * esiste. Usata prima di creare un nuovo checkout per capire se si tratta di
+ * un cambio di piano (da aggiornare sull'abbonamento esistente) invece di un
+ * abbonamento nuovo — senza questo controllo un cliente che passa da Pro a
+ * Team si ritroverebbe con due abbonamenti attivi insieme, pagati entrambi
+ * ogni mese. Filtra specificamente sul prezzo del piano (non un prezzo
+ * qualsiasi): un cliente può avere ANCHE un abbonamento separato per il
+ * Controllo h24 da solo, che non va mai scambiato per quello del piano.
+ */
+async function findActiveSubscription(customerId: string): Promise<{ id: string; itemId: string } | null> {
+  const active = (await listActiveSubscriptions(customerId)).find((s) => {
+    const priceId = s.items.data[0]?.price.id;
+    return priceId && planForPriceId(priceId) !== null;
+  });
+  const itemId = active?.items.data[0]?.id;
+  return active && itemId ? { id: active.id, itemId } : null;
+}
+
+/** Stesso schema di findActiveSubscription, ma per l'abbonamento separato del Controllo h24 da solo. */
+async function findActiveSentinelAddonSubscription(customerId: string): Promise<{ id: string; itemId: string } | null> {
+  const active = (await listActiveSubscriptions(customerId)).find((s) => {
+    const priceId = s.items.data[0]?.price.id;
+    return priceId && isSentinelAddonPriceId(priceId);
+  });
   const itemId = active?.items.data[0]?.id;
   return active && itemId ? { id: active.id, itemId } : null;
 }
@@ -115,6 +138,56 @@ stripeRouter.post("/api/stripe/create-checkout-session", requireAuth, async (req
       return;
     }
     console.error("errore nella creazione della sessione di checkout Stripe", err);
+    res.status(500).json({ error: "Errore nella creazione del pagamento" });
+  }
+});
+
+/**
+ * Checkout per il Controllo h24 da solo (aziende) — un abbonamento a sé,
+ * acquistabile indipendentemente dal piano dell'account (anche restando sul
+ * piano Free): non cambia `profiles.plan`, alza solo il tetto di repository
+ * monitorati dalla Sentinella 24/7 (vedi sentinel/scan.ts e il webhook).
+ */
+stripeRouter.post("/api/stripe/create-sentinel-addon-checkout-session", requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = sentinelAddonCheckoutSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Richiesta non valida" });
+    return;
+  }
+
+  const priceId = priceIdForSentinelAddon(parsed.data.interval);
+  if (!priceId) {
+    res.status(503).json({ error: "Pagamenti non ancora configurati" });
+    return;
+  }
+
+  try {
+    const customerId = await getOrCreateStripeCustomer(req.userId!);
+
+    const existingSubscription = await findActiveSentinelAddonSubscription(customerId);
+    if (existingSubscription) {
+      await stripeRequest("POST", `/subscriptions/${existingSubscription.id}`, {
+        items: [{ id: existingSubscription.itemId, price: priceId }],
+        proration_behavior: "create_prorations",
+      });
+      res.json({ url: `${env.appUrl}/?checkout=success` });
+      return;
+    }
+
+    const session = await stripeRequest<StripeCheckoutSession>("POST", "/checkout/sessions", {
+      customer: customerId,
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${env.appUrl}/?checkout=success`,
+      cancel_url: `${env.appUrl}/?checkout=cancel`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    if (err instanceof StripeNotConfiguredError) {
+      res.status(503).json({ error: err.message });
+      return;
+    }
+    console.error("errore nella creazione della sessione di checkout per il Controllo h24 da solo", err);
     res.status(500).json({ error: "Errore nella creazione del pagamento" });
   }
 });

@@ -210,6 +210,8 @@ export interface ProfileDetails {
   planTrialUsed: boolean;
   /** Data di scadenza della prova, solo se ancora attiva — altrimenti null. */
   planTrialExpiresAt: string | null;
+  /** Controllo h24 da solo (aziende): abbonamento a sé, indipendente dal piano. */
+  sentinelAddonActive: boolean;
 }
 
 export function fetchProfileDetails(accessToken: string): Promise<ProfileDetails> {
@@ -233,6 +235,23 @@ export function createCheckoutSession(
   return apiFetch<{ url: string }>("/api/stripe/create-checkout-session", {
     method: "POST",
     body: JSON.stringify({ plan, interval }),
+    accessToken,
+  });
+}
+
+/**
+ * Crea una sessione di Stripe Checkout per il Controllo h24 da solo
+ * (aziende) — un abbonamento a sé, acquistabile anche restando sul piano
+ * Free: non cambia il piano dell'account, alza solo il tetto di repository
+ * monitorati dalla Sentinella 24/7.
+ */
+export function createSentinelAddonCheckoutSession(
+  accessToken: string,
+  interval: "monthly" | "annual" = "monthly"
+): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-sentinel-addon-checkout-session", {
+    method: "POST",
+    body: JSON.stringify({ interval }),
     accessToken,
   });
 }

@@ -22,6 +22,11 @@ const MAX_REPOS_PER_INSTALLATION = 200;
 // niente scelta manuale per ora.
 const MAX_REPOS_PER_FREE_INSTALLATION = 1;
 
+// Il Controllo h24 da solo (aziende, abbonamento a sé — vedi
+// stripe/plans.ts) alza il tetto di un account altrimenti free fino a 25
+// repository, senza sbloccare nient'altro del piano Business vero.
+const MAX_REPOS_WITH_SENTINEL_ADDON = 25;
+
 type InstallationOctokit = Awaited<ReturnType<Awaited<ReturnType<typeof getGithubApp>>["getInstallationOctokit"]>>;
 
 /** Identifica in modo stabile un singolo finding, per confrontare uno scan con il precedente. */
@@ -49,13 +54,15 @@ interface SentinelInstallation {
   slack_webhook_url: string | null;
   ownerEmail: string | null;
   plan: Plan;
+  sentinelAddonActive: boolean;
 }
 
 /**
  * Tutte le installazioni con un proprietario risolto — il piano free è
  * incluso (ha diritto alla Sentinella gratis su 1 repository), non è più un
- * filtro di eleggibilità ma solo decide quanti repository della stessa
- * installazione vengono controllati, in runSentinelScan.
+ * filtro di eleggibilità ma solo decide (insieme al Controllo h24 da solo)
+ * quanti repository della stessa installazione vengono controllati, in
+ * runSentinelScan.
  */
 async function eligibleInstallations(): Promise<SentinelInstallation[]> {
   const { data } = await supabaseAdmin.from("github_installations").select("installation_id, installed_by, slack_webhook_url");
@@ -68,7 +75,17 @@ async function eligibleInstallations(): Promise<SentinelInstallation[]> {
     // repository nella stessa installazione condividono lo stesso
     // proprietario, non ha senso richiederlo di nuovo ad ogni scanRepo.
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(installation.installed_by);
-    eligible.push({ ...installation, ownerEmail: userData.user?.email ?? null, plan } as SentinelInstallation);
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("sentinel_addon_active")
+      .eq("id", installation.installed_by)
+      .single();
+    eligible.push({
+      ...installation,
+      ownerEmail: userData.user?.email ?? null,
+      plan,
+      sentinelAddonActive: profile?.sentinel_addon_active ?? false,
+    } as SentinelInstallation);
   }
   return eligible;
 }
@@ -167,7 +184,12 @@ export async function runSentinelScan(): Promise<void> {
   for (const installation of installations) {
     try {
       const octokit = await app.getInstallationOctokit(installation.installation_id);
-      const repoCap = installation.plan === "free" ? MAX_REPOS_PER_FREE_INSTALLATION : MAX_REPOS_PER_INSTALLATION;
+      const repoCap =
+        installation.plan !== "free"
+          ? MAX_REPOS_PER_INSTALLATION
+          : installation.sentinelAddonActive
+            ? MAX_REPOS_WITH_SENTINEL_ADDON
+            : MAX_REPOS_PER_FREE_INSTALLATION;
       const repos = (await listInstallationRepos(octokit)).slice(0, repoCap);
       for (const repo of repos) {
         try {

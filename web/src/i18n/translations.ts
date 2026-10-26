@@ -228,6 +228,11 @@ export interface TranslationTree {
     businessCta: string;
     businessActivating: string;
     businessNote: string;
+    sentinelAddonTitle: string;
+    sentinelAddonPriceAnnual: string;
+    sentinelAddonList: string[];
+    sentinelAddonCta: string;
+    sentinelAddonNote: string;
     enterpriseTitle: string;
     enterprisePrice: string;
     enterpriseList: string[];
@@ -787,6 +792,15 @@ const it: TranslationTree = {
     businessCta: "Attiva Business",
     businessActivating: "Attivazione...",
     businessNote: "Per aziende con un team più grande e esigenze di conformità",
+    sentinelAddonTitle: "Controllo h24 da solo",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Monitoraggio continuo h24 fino a 25 repository",
+      "Nessun impegno su analisi, chat o altre funzioni — solo monitoraggio",
+      "Ideale dopo un Full Site Audit, prima di passare a Business",
+    ],
+    sentinelAddonCta: "Attiva il monitoraggio",
+    sentinelAddonNote: "Per chi non è ancora pronto per Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "da 2.500€/mese",
     enterpriseList: [
@@ -1396,6 +1410,15 @@ const en: TranslationTree = {
     businessCta: "Activate Business",
     businessActivating: "Activating...",
     businessNote: "For companies with a larger team and compliance needs",
+    sentinelAddonTitle: "Monitoring only",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "Continuous 24/7 monitoring on up to 25 repositories",
+      "No commitment to analyses, chat or other features — monitoring only",
+      "Ideal after a Full Site Audit, before moving to Business",
+    ],
+    sentinelAddonCta: "Activate monitoring",
+    sentinelAddonNote: "For companies not ready for Business yet",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "from €2,500/month",
     enterpriseList: [
@@ -2005,6 +2028,15 @@ const es: TranslationTree = {
     businessCta: "Activar Empresa",
     businessActivating: "Activando...",
     businessNote: "Para empresas con un equipo más grande y necesidades de cumplimiento",
+    sentinelAddonTitle: "Solo monitoreo",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Monitoreo continuo 24/7 en hasta 25 repositorios",
+      "Sin compromiso en análisis, chat u otras funciones — solo monitoreo",
+      "Ideal después de un Full Site Audit, antes de pasar a Business",
+    ],
+    sentinelAddonCta: "Activar el monitoreo",
+    sentinelAddonNote: "Para quien aún no está listo para Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "desde 2.500€/mes",
     enterpriseList: [
@@ -2614,6 +2646,15 @@ const fr: TranslationTree = {
     businessCta: "Activer Entreprise",
     businessActivating: "Activation...",
     businessNote: "Pour les entreprises avec une équipe plus grande et des besoins de conformité",
+    sentinelAddonTitle: "Surveillance seule",
+    sentinelAddonPriceAnnual: "5 900 €",
+    sentinelAddonList: [
+      "Surveillance continue 24/7 sur jusqu'à 25 dépôts",
+      "Aucun engagement sur les analyses, le chat ou les autres fonctions — surveillance uniquement",
+      "Idéal après un Full Site Audit, avant de passer à Business",
+    ],
+    sentinelAddonCta: "Activer la surveillance",
+    sentinelAddonNote: "Pour qui n'est pas encore prêt pour Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "à partir de 2 500 €/mois",
     enterpriseList: [
@@ -3223,6 +3264,15 @@ const pt: TranslationTree = {
     businessCta: "Ativar Empresa",
     businessActivating: "A ativar...",
     businessNote: "Para empresas com uma equipa maior e necessidades de conformidade",
+    sentinelAddonTitle: "Só monitorização",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Monitorização contínua 24/7 em até 25 repositórios",
+      "Sem compromisso com análises, chat ou outras funções — só monitorização",
+      "Ideal depois de um Full Site Audit, antes de passar a Business",
+    ],
+    sentinelAddonCta: "Ativar a monitorização",
+    sentinelAddonNote: "Para quem ainda não está pronto para o Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "a partir de 2.500€/mês",
     enterpriseList: [
@@ -3828,6 +3878,15 @@ const zh: TranslationTree = {
     businessCta: "开通企业版",
     businessActivating: "正在开通...",
     businessNote: "适合团队规模更大、有合规需求的企业",
+    sentinelAddonTitle: "仅监控",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "对最多 25 个仓库进行 24/7 持续监控",
+      "不包含分析、聊天等其他功能 — 仅监控",
+      "适合在购买 Full Site Audit 之后、升级到 Business 之前使用",
+    ],
+    sentinelAddonCta: "开通监控",
+    sentinelAddonNote: "适合还没准备好升级到 Business 的企业",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "€2,500 起/ 月",
     enterpriseList: [
@@ -4436,6 +4495,15 @@ const hi: TranslationTree = {
     businessCta: "बिज़नेस सक्रिय करें",
     businessActivating: "सक्रिय हो रहा है...",
     businessNote: "बड़ी टीम और कंप्लायंस जरूरतों वाले बिज़नेस के लिए",
+    sentinelAddonTitle: "सिर्फ़ मॉनिटरिंग",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "25 रिपॉज़िटरी तक निरंतर 24/7 निगरानी",
+      "एनालिसिस, चैट या अन्य फीचर्स का कोई कमिटमेंट नहीं — सिर्फ़ मॉनिटरिंग",
+      "Full Site Audit के बाद, Business पर जाने से पहले आदर्श",
+    ],
+    sentinelAddonCta: "मॉनिटरिंग सक्रिय करें",
+    sentinelAddonNote: "जो अभी Business के लिए तैयार नहीं हैं, उनके लिए",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "€2,500 से/माह",
     enterpriseList: [
@@ -5045,6 +5113,15 @@ const ru: TranslationTree = {
     businessCta: "Активировать Бизнес",
     businessActivating: "Активация...",
     businessNote: "Для компаний с большой командой и требованиями по комплаенсу",
+    sentinelAddonTitle: "Только мониторинг",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Непрерывный мониторинг 24/7 для до 25 репозиториев",
+      "Никаких обязательств по анализам, чату и другим функциям — только мониторинг",
+      "Идеально после Full Site Audit, перед переходом на Business",
+    ],
+    sentinelAddonCta: "Активировать мониторинг",
+    sentinelAddonNote: "Для тех, кто ещё не готов к Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "от 2.500€/мес.",
     enterpriseList: [
@@ -5651,6 +5728,15 @@ const ar: TranslationTree = {
     businessCta: "تفعيل باقة الأعمال",
     businessActivating: "جارٍ التفعيل...",
     businessNote: "للشركات ذات الفريق الأكبر ومتطلبات الامتثال",
+    sentinelAddonTitle: "مراقبة فقط",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "مراقبة مستمرة على مدار الساعة لما يصل إلى 25 مستودعًا",
+      "بدون التزام بالتحليلات أو الدردشة أو ميزات أخرى — مراقبة فقط",
+      "مثالي بعد شراء Full Site Audit، قبل الانتقال إلى Business",
+    ],
+    sentinelAddonCta: "تفعيل المراقبة",
+    sentinelAddonNote: "لمن لم يكن مستعدًا بعد لباقة Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "من 2.500€ شهريًا",
     enterpriseList: [
@@ -6259,6 +6345,15 @@ const bn: TranslationTree = {
     businessCta: "বিজনেস সক্রিয় করুন",
     businessActivating: "সক্রিয় করা হচ্ছে...",
     businessNote: "বড় টিম ও কমপ্লায়েন্স প্রয়োজন আছে এমন বিজনেসের জন্য",
+    sentinelAddonTitle: "শুধু মনিটরিং",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "সর্বোচ্চ 25টি রিপোজিটরিতে ক্রমাগত ২৪/৭ মনিটরিং",
+      "অ্যানালাইসিস, চ্যাট বা অন্য ফিচারে কোনো কমিটমেন্ট নেই — শুধু মনিটরিং",
+      "Full Site Audit-এর পর, Business-এ যাওয়ার আগে আদর্শ",
+    ],
+    sentinelAddonCta: "মনিটরিং চালু করুন",
+    sentinelAddonNote: "যারা এখনও Business-এর জন্য প্রস্তুত নন তাদের জন্য",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "€2,500 থেকে/মাস",
     enterpriseList: [
@@ -6866,6 +6961,15 @@ const ur: TranslationTree = {
     businessCta: "بزنس فعال کریں",
     businessActivating: "فعال کیا جا رہا ہے...",
     businessNote: "بڑی ٹیم اور کمپلائنس ضروریات رکھنے والے کاروبار کے لیے",
+    sentinelAddonTitle: "صرف نگرانی",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "25 تک ریپوزیٹریز پر مستقل 24/7 نگرانی",
+      "تجزیے، چیٹ یا دیگر خصوصیات کا کوئی عزم نہیں — صرف نگرانی",
+      "Full Site Audit کے بعد، Business پر جانے سے پہلے مثالی",
+    ],
+    sentinelAddonCta: "نگرانی فعال کریں",
+    sentinelAddonNote: "جو ابھی Business کے لیے تیار نہیں ان کے لیے",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "€2,500 سے/ماہ",
     enterpriseList: [
@@ -7475,6 +7579,15 @@ const id: TranslationTree = {
     businessCta: "Aktifkan Bisnis",
     businessActivating: "Mengaktifkan...",
     businessNote: "Untuk bisnis dengan tim lebih besar dan kebutuhan kepatuhan",
+    sentinelAddonTitle: "Hanya pemantauan",
+    sentinelAddonPriceAnnual: "€5.900",
+    sentinelAddonList: [
+      "Pemantauan berkelanjutan 24/7 hingga 25 repository",
+      "Tanpa komitmen pada analisis, chat, atau fitur lain — hanya pemantauan",
+      "Ideal setelah Full Site Audit, sebelum beralih ke Business",
+    ],
+    sentinelAddonCta: "Aktifkan pemantauan",
+    sentinelAddonNote: "Untuk yang belum siap untuk Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "mulai dari €2.500/bulan",
     enterpriseList: [
@@ -8084,6 +8197,15 @@ const de: TranslationTree = {
     businessCta: "Business aktivieren",
     businessActivating: "Wird aktiviert...",
     businessNote: "Für Unternehmen mit größerem Team und Compliance-Anforderungen",
+    sentinelAddonTitle: "Nur Monitoring",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Durchgehendes 24/7-Monitoring für bis zu 25 Repositories",
+      "Keine Verpflichtung zu Analysen, Chat oder anderen Funktionen — nur Monitoring",
+      "Ideal nach einem Full Site Audit, bevor man zu Business wechselt",
+    ],
+    sentinelAddonCta: "Monitoring aktivieren",
+    sentinelAddonNote: "Für alle, die noch nicht bereit für Business sind",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "ab 2.500€/Monat",
     enterpriseList: [
@@ -8693,6 +8815,15 @@ const fi: TranslationTree = {
     businessCta: "Aktivoi Yritys",
     businessActivating: "Aktivoidaan...",
     businessNote: "Yrityksille, joilla on isompi tiimi ja vaatimustenmukaisuustarpeita",
+    sentinelAddonTitle: "Vain valvonta",
+    sentinelAddonPriceAnnual: "5 900 €",
+    sentinelAddonList: [
+      "Jatkuva 24/7-valvonta jopa 25 repolle",
+      "Ei sitoutumista analyyseihin, chatiin tai muihin ominaisuuksiin — vain valvonta",
+      "Ihanteellinen Full Site Auditin jälkeen, ennen siirtymistä Businessiin",
+    ],
+    sentinelAddonCta: "Aktivoi valvonta",
+    sentinelAddonNote: "Niille, jotka eivät ole vielä valmiita Businessiin",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "alkaen 2 500 €/kk",
     enterpriseList: [
@@ -9302,6 +9433,15 @@ const nl: TranslationTree = {
     businessCta: "Business activeren",
     businessActivating: "Activeren...",
     businessNote: "Voor bedrijven met een groter team en compliancebehoeften",
+    sentinelAddonTitle: "Alleen monitoring",
+    sentinelAddonPriceAnnual: "€5.900",
+    sentinelAddonList: [
+      "Continue 24/7-monitoring op tot 25 repositories",
+      "Geen verplichting voor analyses, chat of andere functies — alleen monitoring",
+      "Ideaal na een Full Site Audit, voordat je overstapt naar Business",
+    ],
+    sentinelAddonCta: "Monitoring activeren",
+    sentinelAddonNote: "Voor wie nog niet klaar is voor Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "vanaf €2.500/maand",
     enterpriseList: [
@@ -9911,6 +10051,15 @@ const pl: TranslationTree = {
     businessCta: "Aktywuj Biznes",
     businessActivating: "Aktywowanie...",
     businessNote: "Dla firm z większym zespołem i potrzebami w zakresie zgodności",
+    sentinelAddonTitle: "Tylko monitorowanie",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Nieprzerwane monitorowanie 24/7 dla maksymalnie 25 repozytoriów",
+      "Bez zobowiązań co do analiz, czatu czy innych funkcji — tylko monitorowanie",
+      "Idealne po Full Site Audit, przed przejściem na Business",
+    ],
+    sentinelAddonCta: "Aktywuj monitorowanie",
+    sentinelAddonNote: "Dla firm jeszcze nie gotowych na Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "od 2.500€/miesiąc",
     enterpriseList: [
@@ -10520,6 +10669,15 @@ const sv: TranslationTree = {
     businessCta: "Aktivera Business",
     businessActivating: "Aktiverar...",
     businessNote: "För företag med ett större team och efterlevnadsbehov",
+    sentinelAddonTitle: "Endast övervakning",
+    sentinelAddonPriceAnnual: "5 900€",
+    sentinelAddonList: [
+      "Kontinuerlig övervakning dygnet runt för upp till 25 repon",
+      "Inget åtagande för analyser, chatt eller andra funktioner — bara övervakning",
+      "Perfekt efter en Full Site Audit, innan du går vidare till Business",
+    ],
+    sentinelAddonCta: "Aktivera övervakning",
+    sentinelAddonNote: "För dig som inte är redo för Business än",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "från 2 500€/mån",
     enterpriseList: [
@@ -11129,6 +11287,15 @@ const da: TranslationTree = {
     businessCta: "Aktivér Business",
     businessActivating: "Aktiverer...",
     businessNote: "Til virksomheder med et større team og compliance-behov",
+    sentinelAddonTitle: "Kun overvågning",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Kontinuerlig 24/7-overvågning af op til 25 repositories",
+      "Ingen forpligtelse til analyser, chat eller andre funktioner — kun overvågning",
+      "Ideel efter en Full Site Audit, før skiftet til Business",
+    ],
+    sentinelAddonCta: "Aktivér overvågning",
+    sentinelAddonNote: "Til dem der endnu ikke er klar til Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "fra 2.500€/md.",
     enterpriseList: [
@@ -11738,6 +11905,15 @@ const nb: TranslationTree = {
     businessCta: "Aktivér Business",
     businessActivating: "Aktiverer...",
     businessNote: "For bedrifter med et større team og compliance-behov",
+    sentinelAddonTitle: "Kun overvåking",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Kontinuerlig overvåking 24/7 av opptil 25 repoer",
+      "Ingen forpliktelse til analyser, chat eller andre funksjoner — bare overvåking",
+      "Ideelt etter en Full Site Audit, før overgang til Business",
+    ],
+    sentinelAddonCta: "Aktivér overvåking",
+    sentinelAddonNote: "For dem som ikke er klare for Business ennå",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "fra 2.500€/mnd",
     enterpriseList: [
@@ -12347,6 +12523,15 @@ const tr: TranslationTree = {
     businessCta: "İşletme'yi etkinleştir",
     businessActivating: "Etkinleştiriliyor...",
     businessNote: "Daha büyük ekibi ve uyumluluk ihtiyaçları olan işletmeler için",
+    sentinelAddonTitle: "Sadece izleme",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "25 depoya kadar sürekli 7/24 izleme",
+      "Analiz, sohbet veya diğer özelliklere taahhüt yok — sadece izleme",
+      "Full Site Audit'ten sonra, Business'a geçmeden önce ideal",
+    ],
+    sentinelAddonCta: "İzlemeyi etkinleştir",
+    sentinelAddonNote: "Henüz Business için hazır olmayanlar için",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "2.500€'den itibaren/ay",
     enterpriseList: [
@@ -12956,6 +13141,15 @@ const uk: TranslationTree = {
     businessCta: "Активувати Бізнес",
     businessActivating: "Активація...",
     businessNote: "Для компаній із більшою командою та вимогами відповідності",
+    sentinelAddonTitle: "Лише моніторинг",
+    sentinelAddonPriceAnnual: "5.900€",
+    sentinelAddonList: [
+      "Безперервний моніторинг 24/7 для до 25 репозиторіїв",
+      "Без зобов'язань щодо аналізів, чату чи інших функцій — лише моніторинг",
+      "Ідеально після Full Site Audit, перед переходом на Business",
+    ],
+    sentinelAddonCta: "Активувати моніторинг",
+    sentinelAddonNote: "Для тих, хто ще не готовий до Business",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "від 2.500€/міс.",
     enterpriseList: [
@@ -13565,6 +13759,15 @@ const ja: TranslationTree = {
     businessCta: "ビジネスを有効化",
     businessActivating: "有効化中...",
     businessNote: "大きなチームとコンプライアンス要件を持つ企業向け",
+    sentinelAddonTitle: "モニタリングのみ",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "最大25リポジトリまで24時間365日継続監視",
+      "分析やチャットなど他機能への契約なし — モニタリングのみ",
+      "Full Site Auditの後、Businessへ移行する前に最適",
+    ],
+    sentinelAddonCta: "モニタリングを有効化",
+    sentinelAddonNote: "まだBusinessの準備ができていない企業向け",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "€2,500〜/月",
     enterpriseList: [
@@ -14174,6 +14377,15 @@ const ko: TranslationTree = {
     businessCta: "비즈니스 활성화",
     businessActivating: "활성화 중...",
     businessNote: "더 큰 팀과 컴플라이언스 요구사항이 있는 기업용",
+    sentinelAddonTitle: "모니터링만",
+    sentinelAddonPriceAnnual: "€5,900",
+    sentinelAddonList: [
+      "최대 25개 저장소에 대한 24/7 지속 모니터링",
+      "분석, 채팅 등 다른 기능에 대한 약정 없음 — 모니터링만",
+      "Full Site Audit 이후, Business로 전환하기 전에 적합",
+    ],
+    sentinelAddonCta: "모니터링 활성화",
+    sentinelAddonNote: "아직 Business를 쓸 준비가 안 된 기업을 위해",
     enterpriseTitle: "Enterprise",
     enterprisePrice: "€2,500부터/월",
     enterpriseList: [

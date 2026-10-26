@@ -21,7 +21,7 @@ profileRouter.post("/api/claim-invite", requireAuth, async (req: AuthedRequest, 
 profileRouter.get("/api/profile", requireAuth, async (req: AuthedRequest, res) => {
   const [plan, { data: profile }] = await Promise.all([
     getPlanForUser(req.userId!),
-    supabaseAdmin.from("profiles").select("plan_trial_expires_at").eq("id", req.userId).single(),
+    supabaseAdmin.from("profiles").select("plan_trial_expires_at, sentinel_addon_active").eq("id", req.userId).single(),
   ]);
 
   const trialExpiresAt = profile?.plan_trial_expires_at ?? null;
@@ -31,5 +31,7 @@ profileRouter.get("/api/profile", requireAuth, async (req: AuthedRequest, res) =
     // gratuita è già stata usata e non è più offribile.
     planTrialUsed: trialExpiresAt !== null,
     planTrialExpiresAt: trialExpiresAt && new Date(trialExpiresAt) > new Date() ? trialExpiresAt : null,
+    // Controllo h24 da solo (aziende): abbonamento a sé, indipendente dal piano.
+    sentinelAddonActive: profile?.sentinel_addon_active ?? false,
   });
 });

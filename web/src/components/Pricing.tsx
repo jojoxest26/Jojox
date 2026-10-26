@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { createCheckoutSession, createPortalSession, fetchProfile, type Plan } from "../lib/api.js";
+import {
+  createCheckoutSession,
+  createPortalSession,
+  createSentinelAddonCheckoutSession,
+  fetchProfileDetails,
+  type Plan,
+} from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { Icon } from "./Icon.js";
 
@@ -16,7 +22,8 @@ function openAnalyzer() {
 export function Pricing({ session }: { session: Session | null }) {
   const { t } = useTranslation();
   const [plan, setPlan] = useState<Plan | null>(null);
-  const [busy, setBusy] = useState<"pro" | "team" | "business" | "portal" | null>(null);
+  const [sentinelAddonActive, setSentinelAddonActive] = useState(false);
+  const [busy, setBusy] = useState<"pro" | "team" | "business" | "sentinelAddon" | "portal" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkoutNotice, setCheckoutNotice] = useState<"success" | "cancel" | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
@@ -33,21 +40,25 @@ export function Pricing({ session }: { session: Session | null }) {
   useEffect(() => {
     if (!session) {
       setPlan(null);
+      setSentinelAddonActive(false);
       return;
     }
-    fetchProfile(session.access_token)
-      .then(setPlan)
-      .catch(() => setPlan(null));
+    function loadProfile() {
+      if (!session) return;
+      fetchProfileDetails(session.access_token)
+        .then((details) => {
+          setPlan(details.plan);
+          setSentinelAddonActive(details.sentinelAddonActive);
+        })
+        .catch(() => setPlan(null));
+    }
+    loadProfile();
 
     // Il piano si aggiorna via webhook Stripe dopo il redirect di ritorno: un
     // secondo giro dopo qualche secondo evita di mostrare ancora "Gratis"
     // appena tornati dal checkout, mentre il webhook sta ancora arrivando.
     if (checkoutNotice === "success") {
-      const timeout = setTimeout(() => {
-        fetchProfile(session.access_token)
-          .then(setPlan)
-          .catch(() => {});
-      }, 2500);
+      const timeout = setTimeout(loadProfile, 2500);
       return () => clearTimeout(timeout);
     }
   }, [session, checkoutNotice]);
@@ -61,6 +72,22 @@ export function Pricing({ session }: { session: Session | null }) {
     setBusy(target);
     try {
       const { url } = await createCheckoutSession(target, session.access_token, billingInterval);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.pricing.errorActivation);
+      setBusy(null);
+    }
+  }
+
+  async function handleActivateSentinelAddon() {
+    if (!session) {
+      openLogin();
+      return;
+    }
+    setError(null);
+    setBusy("sentinelAddon");
+    try {
+      const { url } = await createSentinelAddonCheckoutSession(session.access_token, billingInterval);
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : t.pricing.errorActivation);
@@ -269,6 +296,44 @@ export function Pricing({ session }: { session: Session | null }) {
               </button>
             )}
             <p className="price-card-note">{t.pricing.businessNote}</p>
+          </div>
+
+          <div className="card price-card">
+            <h3>{t.pricing.sentinelAddonTitle}</h3>
+            <div className="price-amount">
+              {billingInterval === "annual" ? t.pricing.sentinelAddonPriceAnnual : "590€"}{" "}
+              <span className="per">
+                {billingInterval === "annual" ? t.pricing.businessPerAnnual : t.pricing.businessPer}
+              </span>
+            </div>
+            <ul>
+              {t.pricing.sentinelAddonList.map((item) => (
+                <li key={item}>✓ {item}</li>
+              ))}
+            </ul>
+            {session && sentinelAddonActive ? (
+              <>
+                <span className="pill pill-plain price-card-active">{t.pricing.activePlan}</span>
+                <button
+                  type="button"
+                  className="btn btn-secondary hard-border hard-shadow-sm"
+                  onClick={handleManage}
+                  disabled={busy === "portal"}
+                >
+                  {busy === "portal" ? t.pricing.opening : t.pricing.manageSubscription}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary hard-border hard-shadow-sm"
+                onClick={handleActivateSentinelAddon}
+                disabled={busy === "sentinelAddon"}
+              >
+                {busy === "sentinelAddon" ? t.pricing.businessActivating : t.pricing.sentinelAddonCta}
+              </button>
+            )}
+            <p className="price-card-note">{t.pricing.sentinelAddonNote}</p>
           </div>
 
           <div className="card price-card">
