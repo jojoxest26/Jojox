@@ -18,6 +18,7 @@ import {
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
+import { useBfcacheReset } from "../lib/useBfcacheReset.js";
 import { FindingsList } from "./FindingsList.js";
 import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -73,6 +74,11 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
     }
   }, []);
+
+  useBfcacheReset(() => {
+    setBuying(false);
+    setBuyingBusiness(false);
+  });
 
   useEffect(() => {
     if (!session) {

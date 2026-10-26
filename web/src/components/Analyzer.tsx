@@ -13,6 +13,7 @@ import {
 import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
+import { useBfcacheReset } from "../lib/useBfcacheReset.js";
 import { FindingsList } from "./FindingsList.js";
 import { AiInsightsSection } from "./AiInsightsSection.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -69,15 +70,10 @@ export function Analyzer({
   // dalla bfcache — senza questo, il pulsante resterebbe bloccato su
   // "Apertura del pagamento..." per sempre, e il contatore non vedrebbe un
   // eventuale acquisto nel frattempo.
-  useEffect(() => {
-    function handlePageShow(e: PageTransitionEvent) {
-      if (!e.persisted) return;
-      setBuyingPack(false);
-      refreshUsage();
-    }
-    window.addEventListener("pageshow", handlePageShow);
-    return () => window.removeEventListener("pageshow", handlePageShow);
-  }, [refreshUsage]);
+  useBfcacheReset(() => {
+    setBuyingPack(false);
+    refreshUsage();
+  });
 
   const loadFiles = useCallback(async (fileList: FileList) => {
     const entries = Array.from(fileList)

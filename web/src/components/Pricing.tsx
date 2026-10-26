@@ -8,6 +8,7 @@ import {
   type Plan,
 } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
+import { useBfcacheReset } from "../lib/useBfcacheReset.js";
 import { Icon } from "./Icon.js";
 
 function openLogin() {
@@ -36,6 +37,8 @@ export function Pricing({ session }: { session: Session | null }) {
       window.history.replaceState({}, "", window.location.pathname + window.location.hash);
     }
   }, []);
+
+  useBfcacheReset(() => setBusy(null));
 
   useEffect(() => {
     if (!session) {

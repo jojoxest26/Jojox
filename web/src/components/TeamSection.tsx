@@ -11,6 +11,7 @@ import {
 } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { interpolate } from "../i18n/richText.js";
+import { useBfcacheReset } from "../lib/useBfcacheReset.js";
 
 export function TeamSection({ session }: { session: Session | null }) {
   const { t } = useTranslation();
@@ -44,6 +45,11 @@ export function TeamSection({ session }: { session: Session | null }) {
     const tm = await fetchTeam(session.access_token).catch(() => null);
     setTeam(tm);
   }
+
+  useBfcacheReset(() => {
+    setBuyingSeats(false);
+    refreshTeam();
+  });
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
