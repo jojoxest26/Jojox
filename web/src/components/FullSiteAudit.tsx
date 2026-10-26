@@ -507,21 +507,19 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       )}
 
       {!result && (credits == null || credits === 0) && (
-        <div className="card hard-border hard-shadow full-site-audit-business-upsell">
-          <div className="full-site-audit-business-row">
-            <div className="full-site-audit-business-copy">
-              <p className="section-eyebrow">{t.fullSiteAudit.businessUpsellEyebrow}</p>
-              <h3>{t.fullSiteAudit.businessUpsellTitle}</h3>
-              <p className="dropzone-hint">{t.fullSiteAudit.businessUpsellNote}</p>
-            </div>
-            <div className="full-site-audit-business-badge" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="card hard-border hard-shadow full-site-audit-card full-site-audit-business-upsell">
+          <div className="full-site-audit-business-copy">
+            <p className="section-eyebrow full-site-audit-business-eyebrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 2 4 5v6c0 5 3.4 9 8 11 4.6-2 8-6 8-11V5l-8-3Z" />
                 <path d="m9 12 2 2 4-4" />
               </svg>
-            </div>
+              {t.fullSiteAudit.businessUpsellEyebrow}
+            </p>
+            <h3>{t.fullSiteAudit.businessUpsellTitle}</h3>
+            <p className="dropzone-hint">{t.fullSiteAudit.businessUpsellNote}</p>
           </div>
-          <div className="full-site-audit-business-cta">
+          <div className="full-site-audit-cta full-site-audit-business-cta">
             <div className="price-amount">{t.fullSiteAudit.priceLabelBusiness}</div>
             <p className="price-card-note">{t.fullSiteAudit.priceNoteBusiness}</p>
             <button
