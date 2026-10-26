@@ -69,7 +69,7 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
 
   const { data: credit, error: creditError } = await supabaseAdmin
     .from("audit_credits")
-    .select("id")
+    .select("id, tier")
     .eq("user_id", req.userId)
     .eq("status", "unused")
     .order("created_at", { ascending: true })
@@ -175,5 +175,5 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     }
   }
 
-  res.json({ ...result, prUrl, prSkipped });
+  res.json({ ...result, prUrl, prSkipped, tier: credit.tier as "standard" | "business" });
 });

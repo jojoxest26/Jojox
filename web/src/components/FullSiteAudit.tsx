@@ -5,6 +5,7 @@ import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/a
 import {
   analyzeAuditViaApi,
   createAuditCheckoutSession,
+  createAuditBusinessCheckoutSession,
   fetchAuditCredits,
   fetchGithubInstallations,
   fetchGithubRepos,
@@ -35,11 +36,15 @@ function openLogin() {
 export function FullSiteAudit({ session }: { session: Session | null }) {
   const { t, lang } = useTranslation();
   const [credits, setCredits] = useState<number | null>(null);
+  const [creditsBusiness, setCreditsBusiness] = useState(0);
   const [buying, setBuying] = useState(false);
+  const [buyingBusiness, setBuyingBusiness] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [purchaseErrorBusiness, setPurchaseErrorBusiness] = useState<string | null>(null);
 
   const [files, setFiles] = useState<SourceFile[]>([]);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [resultTier, setResultTier] = useState<"standard" | "business">("standard");
   const [autofix, setAutofix] = useState<AutofixResult | null>(null);
   const [afterFixScore, setAfterFixScore] = useState<number | null>(null);
   const [afterFixFindingsCount, setAfterFixFindingsCount] = useState<number | null>(null);
@@ -72,10 +77,14 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   useEffect(() => {
     if (!session) {
       setCredits(null);
+      setCreditsBusiness(0);
       return;
     }
     fetchAuditCredits(session.access_token)
-      .then(setCredits)
+      .then(({ available, availableBusiness }) => {
+        setCredits(available);
+        setCreditsBusiness(availableBusiness);
+      })
       .catch(() => setCredits(0));
 
     fetchGithubInstallations(session.access_token)
@@ -97,7 +106,10 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     // disponibili" appena tornati dal pagamento, mentre il webhook arriva.
     const timeout = setTimeout(() => {
       fetchAuditCredits(session.access_token)
-        .then(setCredits)
+        .then(({ available, availableBusiness }) => {
+          setCredits(available);
+          setCreditsBusiness(availableBusiness);
+        })
         .catch(() => {});
     }, 2500);
     return () => clearTimeout(timeout);
@@ -127,6 +139,22 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     } catch (err) {
       setPurchaseError(err instanceof Error ? err.message : t.fullSiteAudit.errorPurchase);
       setBuying(false);
+    }
+  }
+
+  async function buyAuditBusiness() {
+    if (!session) {
+      openLogin();
+      return;
+    }
+    setPurchaseErrorBusiness(null);
+    setBuyingBusiness(true);
+    try {
+      const { url } = await createAuditBusinessCheckoutSession(session.access_token);
+      window.location.href = url;
+    } catch (err) {
+      setPurchaseErrorBusiness(err instanceof Error ? err.message : t.fullSiteAudit.errorPurchaseBusiness);
+      setBuyingBusiness(false);
     }
   }
 
@@ -184,6 +212,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
           : undefined;
       const analysisResult = await analyzeAuditViaApi(files, session.access_token, githubTarget);
       setResult(analysisResult);
+      setResultTier(analysisResult.tier);
       setPrUrl(analysisResult.prUrl);
       setPrSkipped(analysisResult.prSkipped);
       const autofixResult = applyAutofixes(files);
@@ -204,6 +233,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
         setAfterFixFindingsCount(null);
       }
       setCredits((c) => (c != null ? Math.max(0, c - 1) : c));
+      if (analysisResult.tier === "business") setCreditsBusiness((c) => Math.max(0, c - 1));
     } catch (err) {
       setError(err instanceof Error ? err.message : t.fullSiteAudit.errorGeneric);
     } finally {
@@ -248,6 +278,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
           {!result && (
             <p className="dropzone-hint" style={{ textAlign: "center" }}>
               {interpolate(t.fullSiteAudit.creditsAvailable, { count: String(credits) })}
+              {creditsBusiness > 0 && interpolate(t.fullSiteAudit.creditsAvailableBusinessSuffix, { count: String(creditsBusiness) })}
             </p>
           )}
 
@@ -430,9 +461,9 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
               <button
                 type="button"
                 className="btn btn-secondary hard-border hard-shadow-sm"
-                onClick={() => openReportWindow(result, files, autofix, lang)}
+                onClick={() => openReportWindow(result, files, autofix, lang, resultTier === "business")}
               >
-                {t.fullSiteAudit.downloadPdf}
+                {resultTier === "business" ? t.fullSiteAudit.downloadPdfBusiness : t.fullSiteAudit.downloadPdf}
               </button>
               <button type="button" className="btn btn-secondary hard-border hard-shadow-sm" onClick={startNewAudit}>
                 {t.fullSiteAudit.newAudit}
@@ -472,6 +503,22 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
             </button>
             {purchaseError && <p style={{ color: "var(--critical)", marginTop: "0.75rem" }}>{purchaseError}</p>}
           </div>
+        </div>
+      )}
+
+      {!result && (credits == null || credits === 0) && (
+        <div className="card full-site-audit-business-upsell">
+          <strong>{t.fullSiteAudit.businessUpsellTitle}</strong>
+          <p className="dropzone-hint">{t.fullSiteAudit.businessUpsellNote}</p>
+          <button
+            type="button"
+            className="btn btn-secondary hard-border hard-shadow-sm"
+            disabled={buyingBusiness}
+            onClick={buyAuditBusiness}
+          >
+            {buyingBusiness ? t.fullSiteAudit.buyingBusiness : t.fullSiteAudit.ctaBuyBusiness}
+          </button>
+          {purchaseErrorBusiness && <p style={{ color: "var(--critical)", marginTop: "0.75rem" }}>{purchaseErrorBusiness}</p>}
         </div>
       )}
     </section>

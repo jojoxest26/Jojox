@@ -85,7 +85,9 @@ Piani:
 
 Questa chat ("Chiedi a JoJoX") è disponibile per chi ha un piano Pro, Team o Business, non per il piano gratis — se chi scrive ti chiede se la può usare gratis, questo è vero per definizione (sta già scrivendo da un account a pagamento, altrimenti non avrebbe accesso).
 
-Altre funzioni: Sentinella 24/7 (scan notturno automatico dei repository collegati a GitHub, avvisa solo sui problemi nuovi), notifiche Slack, Full Site Audit (controllo una tantum di un intero sito/progetto, pagamento singolo separato dagli abbonamenti), badge pubblico da mettere nel README, un comando da terminale via MCP per chi usa Claude Code o editor compatibili.
+Altre funzioni: Sentinella 24/7 (scan notturno automatico dei repository collegati a GitHub, avvisa solo sui problemi nuovi), notifiche Slack, Full Site Audit (controllo una tantum di un intero sito/progetto, pagamento singolo separato dagli abbonamenti, 99€), badge pubblico da mettere nel README, un comando da terminale via MCP per chi usa Claude Code o editor compatibili.
+
+Prodotti aggiuntivi pensati per le aziende, acquistabili a parte dall'abbonamento: Controllo h24 da solo (monitoraggio continuo su un repository, senza dover prendere il piano Business — 590€/mese o 5.900€/anno), posti extra oltre i 25 inclusi nel piano Business (50€/mese o 500€/anno a persona), e Full Site Audit Aziendale (990€, pagamento singolo): stesso motore di analisi del Full Site Audit normale, con in più un report che mappa i rilievi alla Direttiva NIS2 e al Regolamento DORA — utile per chi deve rispondere a un referente compliance. Non è una certificazione di conformità legale, è un supporto tecnico all'autovalutazione del rischio.
 `.trim();
 
 const PRODUCT_FACTS_EN = `
@@ -100,7 +102,9 @@ Plans:
 
 This chat ("Ask JoJoX") is available on the Pro, Team and Business plans, not the free one — if asked whether it's free to use, that's true by definition here (whoever is writing is already on a paid account, or they wouldn't have access).
 
-Other features: Sentinel 24/7 (automatic nightly scan of connected GitHub repositories, only alerts on new issues), Slack notifications, Full Site Audit (one-off check of an entire site/project, a separate one-time payment), a public badge for the README, a terminal command via MCP for Claude Code and compatible editors.
+Other features: Sentinel 24/7 (automatic nightly scan of connected GitHub repositories, only alerts on new issues), Slack notifications, Full Site Audit (one-off check of an entire site/project, a separate one-time payment, €99), a public badge for the README, a terminal command via MCP for Claude Code and compatible editors.
+
+Additional products aimed at companies, bought separately from the subscription: standalone 24/7 monitoring (continuous monitoring on one repository without needing the Business plan — €590/month or €5,900/year), extra seats beyond the 25 included in the Business plan (€50/month or €500/year per seat), and Business Full Site Audit (€990, one-time payment): same analysis engine as the regular Full Site Audit, plus a report that maps findings to the NIS2 Directive and the DORA Regulation — useful for answering to a compliance officer. It is not a legal compliance certification, it's a technical aid for risk self-assessment.
 `.trim();
 
 // Le istruzioni di questa funzione esistono solo in italiano e inglese:

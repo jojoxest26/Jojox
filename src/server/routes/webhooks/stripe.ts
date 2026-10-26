@@ -127,16 +127,19 @@ async function handleCheckoutCompleted(session: CheckoutSessionEventObject): Pro
   if (!userId) return;
 
   if (session.metadata?.product === "audit") {
-    await grantAuditCredit(userId, session.id);
+    await grantAuditCredit(userId, session.id, "standard");
+  } else if (session.metadata?.product === "audit_business") {
+    await grantAuditCredit(userId, session.id, "business");
   } else if (session.metadata?.product === "analysis_pack") {
     await grantAnalysisPack(userId, session.id);
   }
 }
 
-async function grantAuditCredit(userId: string, sessionId: string): Promise<void> {
+async function grantAuditCredit(userId: string, sessionId: string, tier: "standard" | "business"): Promise<void> {
   const { error } = await supabaseAdmin.from("audit_credits").insert({
     user_id: userId,
     stripe_checkout_session_id: sessionId,
+    tier,
   });
 
   // Stripe dichiara esplicitamente che lo stesso evento webhook può arrivare

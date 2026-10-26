@@ -272,10 +272,24 @@ export function createAuditCheckoutSession(accessToken: string): Promise<{ url: 
   });
 }
 
+export interface AuditCredits {
+  /** Totale crediti non ancora usati, standard + business. */
+  available: number;
+  /** Di cui acquistati al prezzo Aziendale (report con mappatura NIS2/DORA). */
+  availableBusiness: number;
+}
+
 /** Quanti Full Site Audit pagati e non ancora usati ha l'utente. */
-export async function fetchAuditCredits(accessToken: string): Promise<number> {
-  const { available } = await apiFetch<{ available: number }>("/api/audit-credits", { accessToken });
-  return available;
+export function fetchAuditCredits(accessToken: string): Promise<AuditCredits> {
+  return apiFetch<AuditCredits>("/api/audit-credits", { accessToken });
+}
+
+/** Crea una sessione di Stripe Checkout a pagamento singolo per un Full Site Audit Aziendale — report con mappatura NIS2/DORA. */
+export function createAuditBusinessCheckoutSession(accessToken: string): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/api/stripe/create-audit-business-checkout-session", {
+    method: "POST",
+    accessToken,
+  });
 }
 
 /** Crea una sessione di Stripe Checkout a pagamento singolo per un pacchetto di analisi extra — non un abbonamento. */
@@ -310,6 +324,8 @@ export interface AuditResult extends AnalysisResult {
   prUrl: string | null;
   /** "mismatch": i file caricati non sembravano corrispondere al repository scelto, PR non aperta per sicurezza. */
   prSkipped: "mismatch" | null;
+  /** Quale credito è stato consumato: "business" fa scaricare il report con la mappatura NIS2/DORA. */
+  tier: "standard" | "business";
 }
 
 /** Esegue un Full Site Audit — consuma un credito acquistato, limite file più alto dell'analisi normale. */

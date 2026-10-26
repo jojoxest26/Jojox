@@ -5,9 +5,9 @@ import { supabaseAdmin } from "../db/supabase.js";
 export const auditCreditsRouter = Router();
 
 auditCreditsRouter.get("/api/audit-credits", requireAuth, async (req: AuthedRequest, res) => {
-  const { count, error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("audit_credits")
-    .select("id", { count: "exact", head: true })
+    .select("tier")
     .eq("user_id", req.userId)
     .eq("status", "unused");
 
@@ -16,5 +16,6 @@ auditCreditsRouter.get("/api/audit-credits", requireAuth, async (req: AuthedRequ
     return;
   }
 
-  res.json({ available: count ?? 0 });
+  const availableBusiness = data.filter((row) => row.tier === "business").length;
+  res.json({ available: data.length, availableBusiness });
 });

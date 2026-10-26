@@ -6,6 +6,7 @@ import type { AutofixResult } from "../../../src/analyze.js";
 import { translations, RTL_LANGS, type Lang } from "../i18n/translations.js";
 import { interpolate } from "../i18n/richText.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
+import { complianceDomainForCheckId, type ComplianceDomain } from "./nis2DoraMapping.js";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
 const SEVERITY_COLOR: Record<Severity, string> = {
@@ -81,11 +82,51 @@ function findingHtml(
     </div>`;
 }
 
+function complianceSectionHtml(result: AnalysisResult, t: (typeof translations)["it"]): string {
+  const byDomain = new Map<string, { domain: ComplianceDomain; count: number }>();
+  for (const finding of result.findings) {
+    const domain = complianceDomainForCheckId(finding.checkId);
+    const entry = byDomain.get(domain.id);
+    if (entry) entry.count++;
+    else byDomain.set(domain.id, { domain, count: 1 });
+  }
+
+  const rows = [...byDomain.values()]
+    .sort((a, b) => b.count - a.count)
+    .map(
+      ({ domain, count }) => `
+      <tr>
+        <td>${escapeHtml(domain.label)}</td>
+        <td class="compliance-ref">${escapeHtml(domain.nis2)}<br />${escapeHtml(domain.dora)}</td>
+        <td class="compliance-count">${count}</td>
+      </tr>`
+    )
+    .join("");
+
+  return `
+    <div class="compliance-section">
+      <p class="section-label">${t.report.complianceTitle}</p>
+      <p class="compliance-intro">${t.report.complianceIntro}</p>
+      <table class="compliance-table">
+        <thead>
+          <tr>
+            <th>${t.report.complianceDomainCol}</th>
+            <th>${t.report.complianceRefCol}</th>
+            <th>${t.report.complianceFindingsCol}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="compliance-disclaimer">${t.report.complianceDisclaimer}</p>
+    </div>`;
+}
+
 export function buildReportHtml(
   result: AnalysisResult,
   files: SourceFile[],
   autofix: AutofixResult | null,
-  lang: Lang = "it"
+  lang: Lang = "it",
+  isBusinessTier = false
 ): string {
   const t = translations[lang];
   const projectName = escapeHtml(guessProjectName(files, t.report.projectFallback));
@@ -359,6 +400,50 @@ export function buildReportHtml(
 
   .empty-state { font-size: 0.85rem; color: #57534e; }
 
+  .compliance-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #171717;
+    background: #f59e0b;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    margin-bottom: 0.3rem;
+  }
+
+  .compliance-section { margin-bottom: 1.5rem; }
+  .compliance-intro { font-size: 0.8rem; color: #57534e; margin: 0 0 0.85rem; line-height: 1.5; }
+
+  .compliance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .compliance-table th {
+    text-align: left;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #57534e;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 2px solid #e7e2d6;
+  }
+
+  .compliance-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid #e7e2d6;
+    vertical-align: top;
+  }
+
+  .compliance-ref { font-size: 0.7rem; color: #57534e; }
+  .compliance-count { font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 700; text-align: right; }
+
+  .compliance-disclaimer { font-size: 0.68rem; color: #78716c; font-style: italic; margin: 0; line-height: 1.5; }
+
   .footer {
     border-top: 1px solid #e7e2d6;
     padding: 1rem 2.5rem;
@@ -403,6 +488,7 @@ export function buildReportHtml(
         </div>
       </div>
       <div class="header-meta">
+        ${isBusinessTier ? `<div class="compliance-badge">${t.report.complianceBadge}</div>` : ""}
         <div class="report-id">${t.report.reportLabel} #${reportId}</div>
         <div>${interpolate(t.report.generatedOn, { date: escapeHtml(timestamp) })}</div>
         <div>${t.report.controlsNoLLM}</div>
@@ -431,6 +517,8 @@ export function buildReportHtml(
 
       ${autofixNote}
 
+      ${isBusinessTier ? complianceSectionHtml(result, t) : ""}
+
       <p class="section-label">${t.report.resultsLabel}</p>
       <div class="findings">${findingsHtml}</div>
     </div>
@@ -448,9 +536,10 @@ export function openReportWindow(
   result: AnalysisResult,
   files: SourceFile[],
   autofix: AutofixResult | null,
-  lang: Lang = "it"
+  lang: Lang = "it",
+  isBusinessTier = false
 ): void {
-  const html = buildReportHtml(result, files, autofix, lang);
+  const html = buildReportHtml(result, files, autofix, lang, isBusinessTier);
   const win = window.open("", "_blank");
   if (!win) {
     window.alert(translations[lang].report.popupBlocked);

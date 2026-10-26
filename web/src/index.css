@@ -1708,6 +1708,17 @@ body::after {
 .full-site-audit-cta .price-card-note {
   margin-bottom: 0.9rem;
 }
+.full-site-audit-business-upsell {
+  max-width: 980px;
+  margin: 1.25rem auto 0;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  background: var(--surface-muted);
+}
+.full-site-audit-business-upsell .dropzone-hint {
+  max-width: 640px;
+  margin: 0.4rem auto 1rem;
+}
 .price-amount .per {
   font-size: 0.85rem;
   font-weight: 500;

@@ -320,6 +320,36 @@ stripeRouter.post("/api/stripe/create-audit-checkout-session", requireAuth, asyn
   }
 });
 
+stripeRouter.post("/api/stripe/create-audit-business-checkout-session", requireAuth, async (req: AuthedRequest, res) => {
+  if (!env.stripePriceIdAuditBusiness) {
+    res.status(503).json({ error: "Pagamenti non ancora configurati" });
+    return;
+  }
+
+  try {
+    const customerId = await getOrCreateStripeCustomer(req.userId!);
+    const session = await stripeRequest<StripeCheckoutSession>("POST", "/checkout/sessions", {
+      customer: customerId,
+      mode: "payment",
+      line_items: [{ price: env.stripePriceIdAuditBusiness, quantity: 1 }],
+      // "audit_business", non "audit": il webhook accredita lo stesso tipo di
+      // credito ma con tier "business", che fa generare il report con la
+      // mappatura NIS2/DORA invece di quello standard.
+      metadata: { supabase_user_id: req.userId!, product: "audit_business" },
+      success_url: `${env.appUrl}/?audit=success`,
+      cancel_url: `${env.appUrl}/?audit=cancel`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    if (err instanceof StripeNotConfiguredError) {
+      res.status(503).json({ error: err.message });
+      return;
+    }
+    console.error("errore nella creazione della sessione di checkout per il Full Site Audit Aziendale", err);
+    res.status(500).json({ error: "Errore nella creazione del pagamento" });
+  }
+});
+
 stripeRouter.post("/api/stripe/create-analysis-pack-checkout-session", requireAuth, async (req: AuthedRequest, res) => {
   if (!env.stripePriceIdAnalysisPack) {
     res.status(503).json({ error: "Pagamenti non ancora configurati" });

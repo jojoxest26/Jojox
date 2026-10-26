@@ -494,6 +494,13 @@ export interface TranslationTree {
     printBtn: string;
     printHint: string;
     popupBlocked: string;
+    complianceBadge: string;
+    complianceTitle: string;
+    complianceIntro: string;
+    complianceDisclaimer: string;
+    complianceDomainCol: string;
+    complianceRefCol: string;
+    complianceFindingsCol: string;
   };
   publicScore: {
     loading: string;
@@ -549,6 +556,13 @@ export interface TranslationTree {
     trialActivating: string;
     trialActivated: string;
     trialError: string;
+    businessUpsellTitle: string;
+    businessUpsellNote: string;
+    ctaBuyBusiness: string;
+    buyingBusiness: string;
+    errorPurchaseBusiness: string;
+    downloadPdfBusiness: string;
+    creditsAvailableBusinessSuffix: string;
   };
 }
 
@@ -1111,6 +1125,13 @@ const it: TranslationTree = {
     printBtn: "Stampa / Salva come PDF",
     printHint: "Se la finestra di stampa non si apre da sola, usa Ctrl+P (Cmd+P su Mac).",
     popupBlocked: "Il browser ha bloccato l'apertura della finestra. Consenti i popup per questo sito e riprova.",
+    complianceBadge: "Audit Aziendale — Mappatura NIS2/DORA",
+    complianceTitle: "Mappatura normativa NIS2 / DORA",
+    complianceIntro: "I rilievi sono raggruppati per area di controllo, con il riferimento più pertinente alla Direttiva NIS2 e al Regolamento DORA.",
+    complianceDisclaimer: "Mappatura di supporto tecnico all'autovalutazione del rischio: non costituisce una valutazione di conformità legale né una certificazione.",
+    complianceDomainCol: "Area di controllo",
+    complianceRefCol: "Riferimento normativo",
+    complianceFindingsCol: "Rilievi",
   },
   publicScore: {
     loading: "Caricamento del punteggio...",
@@ -1171,6 +1192,13 @@ const it: TranslationTree = {
     trialActivating: "Attivazione...",
     trialActivated: "✓ Prova attivata — hai il piano Pro per i prossimi 30 giorni.",
     trialError: "Non siamo riusciti ad attivare la prova gratuita, riprova.",
+    businessUpsellTitle: "Serve un report mappato a NIS2/DORA?",
+    businessUpsellNote: "Stesso Controllo Completo del Sito, in più una mappatura dei rilievi alla Direttiva NIS2 e al Regolamento DORA — utile per chi deve rispondere a un referente compliance.",
+    ctaBuyBusiness: "Acquista l'Audit Aziendale — 990€",
+    buyingBusiness: "Apertura del pagamento...",
+    errorPurchaseBusiness: "Errore nell'apertura del pagamento",
+    downloadPdfBusiness: "Scarica report Aziendale (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Tra questi, {{count}} con report Aziendale a mappatura NIS2/DORA.",
   },
 };
 
@@ -1733,6 +1761,13 @@ const en: TranslationTree = {
     printBtn: "Print / Save as PDF",
     printHint: "If the print window doesn't open by itself, use Ctrl+P (Cmd+P on Mac).",
     popupBlocked: "Your browser blocked the popup window. Allow popups for this site and try again.",
+    complianceBadge: "Business Audit — NIS2/DORA Mapping",
+    complianceTitle: "NIS2 / DORA Regulatory Mapping",
+    complianceIntro: "Findings are grouped by control area, with the most relevant reference to the NIS2 Directive and the DORA Regulation.",
+    complianceDisclaimer: "A technical aid for risk self-assessment: this is not a legal compliance assessment or certification.",
+    complianceDomainCol: "Control area",
+    complianceRefCol: "Regulatory reference",
+    complianceFindingsCol: "Findings",
   },
   publicScore: {
     loading: "Loading score...",
@@ -1793,6 +1828,13 @@ const en: TranslationTree = {
     trialActivating: "Activating...",
     trialActivated: "✓ Trial activated — you have the Pro plan for the next 30 days.",
     trialError: "We couldn't activate the free trial, try again.",
+    businessUpsellTitle: "Need a report mapped to NIS2/DORA?",
+    businessUpsellNote: "Same Full Site Audit, plus a mapping of findings to the NIS2 Directive and the DORA Regulation — useful if you need to answer to a compliance officer.",
+    ctaBuyBusiness: "Buy the Business Audit — €990",
+    buyingBusiness: "Opening payment...",
+    errorPurchaseBusiness: "Error opening payment",
+    downloadPdfBusiness: "Download Business report (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Of these, {{count}} include a Business report with NIS2/DORA mapping.",
   },
 };
 
@@ -2355,6 +2397,13 @@ const es: TranslationTree = {
     printBtn: "Imprimir / Guardar como PDF",
     printHint: "Si la ventana de impresión no se abre sola, usa Ctrl+P (Cmd+P en Mac).",
     popupBlocked: "Tu navegador bloqueó la ventana emergente. Permite las ventanas emergentes para este sitio y vuelve a intentarlo.",
+    complianceBadge: "Auditoría Empresarial — Mapeo NIS2/DORA",
+    complianceTitle: "Mapeo normativo NIS2 / DORA",
+    complianceIntro: "Los hallazgos se agrupan por área de control, con la referencia más pertinente a la Directiva NIS2 y al Reglamento DORA.",
+    complianceDisclaimer: "Mapeo de apoyo técnico a la autoevaluación del riesgo: no constituye una evaluación de cumplimiento legal ni una certificación.",
+    complianceDomainCol: "Área de control",
+    complianceRefCol: "Referencia normativa",
+    complianceFindingsCol: "Hallazgos",
   },
   publicScore: {
     loading: "Cargando puntuación...",
@@ -2415,6 +2464,13 @@ const es: TranslationTree = {
     trialActivating: "Activando...",
     trialActivated: "✓ Prueba activada — tienes el plan Pro durante los próximos 30 días.",
     trialError: "No pudimos activar la prueba gratuita, inténtalo de nuevo.",
+    businessUpsellTitle: "¿Necesitas un informe mapeado a NIS2/DORA?",
+    businessUpsellNote: "La misma Auditoría Completa del Sitio, más un mapeo de los hallazgos a la Directiva NIS2 y al Reglamento DORA — útil si debes responder ante un responsable de cumplimiento.",
+    ctaBuyBusiness: "Compra la Auditoría Empresarial — 990€",
+    buyingBusiness: "Abriendo el pago...",
+    errorPurchaseBusiness: "Error al abrir el pago",
+    downloadPdfBusiness: "Descargar informe Empresarial (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " De estos, {{count}} incluyen un informe Empresarial con mapeo NIS2/DORA.",
   },
 };
 
@@ -2977,6 +3033,13 @@ const fr: TranslationTree = {
     printBtn: "Imprimer / Enregistrer en PDF",
     printHint: "Si la fenêtre d'impression ne s'ouvre pas toute seule, utilisez Ctrl+P (Cmd+P sur Mac).",
     popupBlocked: "Votre navigateur a bloqué la fenêtre pop-up. Autorisez les pop-up pour ce site et réessayez.",
+    complianceBadge: "Audit Entreprise — Cartographie NIS2/DORA",
+    complianceTitle: "Cartographie réglementaire NIS2 / DORA",
+    complianceIntro: "Les constats sont regroupés par domaine de contrôle, avec la référence la plus pertinente à la directive NIS2 et au règlement DORA.",
+    complianceDisclaimer: "Cartographie d'aide technique à l'auto-évaluation du risque : elle ne constitue pas une évaluation de conformité juridique ni une certification.",
+    complianceDomainCol: "Domaine de contrôle",
+    complianceRefCol: "Référence réglementaire",
+    complianceFindingsCol: "Constats",
   },
   publicScore: {
     loading: "Chargement du score...",
@@ -3037,6 +3100,13 @@ const fr: TranslationTree = {
     trialActivating: "Activation...",
     trialActivated: "✓ Essai activé — vous avez le plan Pro pour les 30 prochains jours.",
     trialError: "Nous n'avons pas pu activer l'essai gratuit, réessayez.",
+    businessUpsellTitle: "Besoin d'un rapport cartographié NIS2/DORA ?",
+    businessUpsellNote: "Le même Audit Complet du Site, avec en plus une cartographie des constats vers la directive NIS2 et le règlement DORA — utile si vous devez répondre à un responsable conformité.",
+    ctaBuyBusiness: "Acheter l'Audit Entreprise — 990€",
+    buyingBusiness: "Ouverture du paiement...",
+    errorPurchaseBusiness: "Erreur à l'ouverture du paiement",
+    downloadPdfBusiness: "Télécharger le rapport Entreprise (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Dont {{count}} avec un rapport Entreprise à cartographie NIS2/DORA.",
   },
 };
 
@@ -3599,6 +3669,13 @@ const pt: TranslationTree = {
     printBtn: "Imprimir / Guardar como PDF",
     printHint: "Se a janela de impressão não se abrir sozinha, use Ctrl+P (Cmd+P no Mac).",
     popupBlocked: "O seu navegador bloqueou a janela pop-up. Permita pop-ups para este site e tente novamente.",
+    complianceBadge: "Auditoria Empresarial — Mapeamento NIS2/DORA",
+    complianceTitle: "Mapeamento regulatório NIS2 / DORA",
+    complianceIntro: "Os achados são agrupados por área de controlo, com a referência mais relevante à Diretiva NIS2 e ao Regulamento DORA.",
+    complianceDisclaimer: "Mapeamento de apoio técnico à autoavaliação de risco: não constitui uma avaliação de conformidade legal nem uma certificação.",
+    complianceDomainCol: "Área de controlo",
+    complianceRefCol: "Referência regulatória",
+    complianceFindingsCol: "Achados",
   },
   publicScore: {
     loading: "A carregar a pontuação...",
@@ -3659,6 +3736,13 @@ const pt: TranslationTree = {
     trialActivating: "A ativar...",
     trialActivated: "✓ Período de teste ativado — tem o plano Pro pelos próximos 30 dias.",
     trialError: "Não conseguimos ativar o período de teste gratuito, tente novamente.",
+    businessUpsellTitle: "Precisa de um relatório mapeado para NIS2/DORA?",
+    businessUpsellNote: "A mesma Auditoria Completa do Site, com um mapeamento adicional dos achados para a Diretiva NIS2 e o Regulamento DORA — útil para responder a um responsável de compliance.",
+    ctaBuyBusiness: "Comprar a Auditoria Empresarial — 990€",
+    buyingBusiness: "A abrir o pagamento...",
+    errorPurchaseBusiness: "Erro ao abrir o pagamento",
+    downloadPdfBusiness: "Descarregar relatório Empresarial (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Destes, {{count}} com relatório Empresarial e mapeamento NIS2/DORA.",
   },
 };
 
@@ -4217,6 +4301,13 @@ const zh: TranslationTree = {
     printBtn: "打印 / 另存为 PDF",
     printHint: "如果打印窗口没有自动打开，请使用 Ctrl+P(Mac 上为 Cmd+P)。",
     popupBlocked: "你的浏览器拦截了弹出窗口。请为本站允许弹出窗口，然后重试。",
+    complianceBadge: "企业审计 — NIS2/DORA 映射",
+    complianceTitle: "NIS2 / DORA 法规映射",
+    complianceIntro: "问题项按控制领域分组,并标注与 NIS2 指令和 DORA 法规最相关的条款。",
+    complianceDisclaimer: "本映射是风险自评的技术辅助工具,不构成法律合规评估或认证。",
+    complianceDomainCol: "控制领域",
+    complianceRefCol: "法规依据",
+    complianceFindingsCol: "问题项",
   },
   publicScore: {
     loading: "正在加载评分...",
@@ -4277,6 +4368,13 @@ const zh: TranslationTree = {
     trialActivating: "正在激活...",
     trialActivated: "✓ 试用已激活 — 接下来 30 天你将拥有 Pro 套餐权限。",
     trialError: "免费试用激活失败，请重试。",
+    businessUpsellTitle: "需要映射到 NIS2/DORA 的报告吗?",
+    businessUpsellNote: "与完整网站审计相同,另外增加将问题项映射到 NIS2 指令和 DORA 法规的内容 —— 适用于需要向合规负责人汇报的情况。",
+    ctaBuyBusiness: "购买企业审计 — 990€",
+    buyingBusiness: "正在打开支付...",
+    errorPurchaseBusiness: "打开支付时出错",
+    downloadPdfBusiness: "下载企业报告(NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " 其中 {{count}} 份为含 NIS2/DORA 映射的企业报告。",
   },
 };
 
@@ -4838,6 +4936,13 @@ const hi: TranslationTree = {
     printBtn: "प्रिंट करें / PDF के रूप में सहेजें",
     printHint: "अगर प्रिंट विंडो अपने आप नहीं खुलती, तो Ctrl+P (Mac पर Cmd+P) इस्तेमाल करें।",
     popupBlocked: "आपके ब्राउज़र ने पॉपअप विंडो को ब्लॉक कर दिया। इस साइट के लिए पॉपअप की अनुमति दें और फिर से कोशिश करें।",
+    complianceBadge: "बिज़नेस ऑडिट — NIS2/DORA मैपिंग",
+    complianceTitle: "NIS2 / DORA नियामक मैपिंग",
+    complianceIntro: "निष्कर्षों को नियंत्रण क्षेत्र के अनुसार समूहित किया गया है, साथ में NIS2 निर्देश और DORA विनियम का सबसे उपयुक्त संदर्भ।",
+    complianceDisclaimer: "यह मैपिंग जोखिम स्व-मूल्यांकन के लिए एक तकनीकी सहायता है: यह कोई कानूनी अनुपालन मूल्यांकन या प्रमाणन नहीं है।",
+    complianceDomainCol: "नियंत्रण क्षेत्र",
+    complianceRefCol: "नियामक संदर्भ",
+    complianceFindingsCol: "निष्कर्ष",
   },
   publicScore: {
     loading: "स्कोर लोड हो रहा है...",
@@ -4898,6 +5003,13 @@ const hi: TranslationTree = {
     trialActivating: "सक्रिय हो रहा है...",
     trialActivated: "✓ ट्रायल सक्रिय — अगले 30 दिनों के लिए आपके पास Pro प्लान है।",
     trialError: "हम मुफ़्त ट्रायल सक्रिय नहीं कर पाए, फिर से कोशिश करें।",
+    businessUpsellTitle: "NIS2/DORA से मैप की गई रिपोर्ट चाहिए?",
+    businessUpsellNote: "वही पूर्ण साइट ऑडिट, साथ में निष्कर्षों की NIS2 निर्देश और DORA विनियम से मैपिंग — उपयोगी जब किसी कंप्लायंस अधिकारी को जवाब देना हो।",
+    ctaBuyBusiness: "बिज़नेस ऑडिट खरीदें — 990€",
+    buyingBusiness: "पेमेंट खोला जा रहा है...",
+    errorPurchaseBusiness: "पेमेंट खोलने में त्रुटि",
+    downloadPdfBusiness: "बिज़नेस रिपोर्ट डाउनलोड करें (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " इनमें से {{count}} में NIS2/DORA मैपिंग वाली बिज़नेस रिपोर्ट शामिल है।",
   },
 };
 
@@ -5460,6 +5572,13 @@ const ru: TranslationTree = {
     printBtn: "Печать / Сохранить как PDF",
     printHint: "Если окно печати не открылось само, используйте Ctrl+P (Cmd+P на Mac).",
     popupBlocked: "Браузер заблокировал всплывающее окно. Разрешите всплывающие окна для этого сайта и попробуйте снова.",
+    complianceBadge: "Бизнес-аудит — сопоставление с NIS2/DORA",
+    complianceTitle: "Нормативное сопоставление NIS2 / DORA",
+    complianceIntro: "Находки сгруппированы по областям контроля, с указанием наиболее релевантной статьи директивы NIS2 и регламента DORA.",
+    complianceDisclaimer: "Это сопоставление — техническая поддержка для самооценки риска, а не юридическая оценка соответствия или сертификация.",
+    complianceDomainCol: "Область контроля",
+    complianceRefCol: "Нормативная ссылка",
+    complianceFindingsCol: "Находки",
   },
   publicScore: {
     loading: "Загрузка оценки...",
@@ -5520,6 +5639,13 @@ const ru: TranslationTree = {
     trialActivating: "Активация...",
     trialActivated: "✓ Пробный период активирован — у вас план Pro на следующие 30 дней.",
     trialError: "Не удалось активировать бесплатный пробный период, попробуйте снова.",
+    businessUpsellTitle: "Нужен отчёт с сопоставлением NIS2/DORA?",
+    businessUpsellNote: "Тот же полный аудит сайта, плюс сопоставление находок с директивой NIS2 и регламентом DORA — полезно, если нужно отчитаться перед ответственным за соответствие требованиям.",
+    ctaBuyBusiness: "Купить Бизнес-аудит — 990€",
+    buyingBusiness: "Открытие оплаты...",
+    errorPurchaseBusiness: "Ошибка при открытии оплаты",
+    downloadPdfBusiness: "Скачать Бизнес-отчёт (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Из них {{count}} с Бизнес-отчётом и сопоставлением NIS2/DORA.",
   },
 };
 
@@ -6079,6 +6205,13 @@ const ar: TranslationTree = {
     printBtn: "طباعة / حفظ كملف PDF",
     printHint: "إذا لم تُفتح نافذة الطباعة تلقائيًا، استخدم Ctrl+P (أو Cmd+P على Mac).",
     popupBlocked: "قام متصفحك بحجب النافذة المنبثقة. اسمح بالنوافذ المنبثقة لهذا الموقع وأعد المحاولة.",
+    complianceBadge: "تدقيق الأعمال — ربط NIS2/DORA",
+    complianceTitle: "الربط التنظيمي NIS2 / DORA",
+    complianceIntro: "يتم تجميع النتائج حسب مجال التحكم، مع أكثر إشارة ملاءمة لتوجيه NIS2 ولائحة DORA.",
+    complianceDisclaimer: "هذا الربط أداة دعم تقني للتقييم الذاتي للمخاطر: لا يمثل تقييم امتثال قانوني ولا شهادة.",
+    complianceDomainCol: "مجال التحكم",
+    complianceRefCol: "المرجع التنظيمي",
+    complianceFindingsCol: "النتائج",
   },
   publicScore: {
     loading: "جارٍ تحميل الدرجة...",
@@ -6139,6 +6272,13 @@ const ar: TranslationTree = {
     trialActivating: "جارٍ التفعيل...",
     trialActivated: "✓ تم تفعيل الفترة التجريبية — لديك باقة Pro للثلاثين يومًا القادمة.",
     trialError: "لم نتمكن من تفعيل الفترة التجريبية المجانية، أعد المحاولة.",
+    businessUpsellTitle: "هل تحتاج إلى تقرير مرتبط بـ NIS2/DORA؟",
+    businessUpsellNote: "نفس تدقيق الموقع الكامل، مع ربط إضافي للنتائج بتوجيه NIS2 ولائحة DORA — مفيد إذا كان عليك الرد على مسؤول الامتثال.",
+    ctaBuyBusiness: "شراء تدقيق الأعمال — 990€",
+    buyingBusiness: "جارٍ فتح الدفع...",
+    errorPurchaseBusiness: "خطأ في فتح الدفع",
+    downloadPdfBusiness: "تنزيل تقرير الأعمال (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " من بينها {{count}} بتقرير أعمال مع ربط NIS2/DORA.",
   },
 };
 
@@ -6700,6 +6840,13 @@ const bn: TranslationTree = {
     printBtn: "প্রিন্ট করুন / PDF হিসেবে সংরক্ষণ করুন",
     printHint: "যদি প্রিন্ট উইন্ডো নিজে থেকে না খোলে, Ctrl+P (Mac-এ Cmd+P) ব্যবহার করুন।",
     popupBlocked: "আপনার ব্রাউজার পপআপ উইন্ডো ব্লক করেছে। এই সাইটের জন্য পপআপের অনুমতি দিন এবং আবার চেষ্টা করুন।",
+    complianceBadge: "বিজনেস অডিট — NIS2/DORA ম্যাপিং",
+    complianceTitle: "NIS2 / DORA নিয়ন্ত্রক ম্যাপিং",
+    complianceIntro: "ফলাফলগুলো নিয়ন্ত্রণ ক্ষেত্র অনুযায়ী গোষ্ঠীভুক্ত করা হয়েছে, NIS2 নির্দেশিকা এবং DORA বিধিমালার সবচেয়ে প্রাসঙ্গিক রেফারেন্স সহ।",
+    complianceDisclaimer: "এই ম্যাপিং ঝুঁকি স্ব-মূল্যায়নের একটি প্রযুক্তিগত সহায়ক মাত্র: এটি কোনো আইনি সম্মতি মূল্যায়ন বা সার্টিফিকেশন নয়।",
+    complianceDomainCol: "নিয়ন্ত্রণ ক্ষেত্র",
+    complianceRefCol: "নিয়ন্ত্রক রেফারেন্স",
+    complianceFindingsCol: "ফলাফল",
   },
   publicScore: {
     loading: "স্কোর লোড হচ্ছে...",
@@ -6760,6 +6907,13 @@ const bn: TranslationTree = {
     trialActivating: "সক্রিয় করা হচ্ছে...",
     trialActivated: "✓ ট্রায়াল সক্রিয় হয়েছে — পরবর্তী 30 দিনের জন্য আপনার কাছে Pro প্ল্যান আছে।",
     trialError: "আমরা বিনামূল্যে ট্রায়াল সক্রিয় করতে পারিনি, আবার চেষ্টা করুন।",
+    businessUpsellTitle: "NIS2/DORA ম্যাপ করা রিপোর্ট প্রয়োজন?",
+    businessUpsellNote: "একই সম্পূর্ণ সাইট অডিট, সাথে NIS2 নির্দেশিকা এবং DORA বিধিমালার সাথে ফলাফলের ম্যাপিং — কম্প্লায়েন্স কর্মকর্তাকে জবাব দিতে হলে কাজে লাগবে।",
+    ctaBuyBusiness: "বিজনেস অডিট কিনুন — 990€",
+    buyingBusiness: "পেমেন্ট খোলা হচ্ছে...",
+    errorPurchaseBusiness: "পেমেন্ট খুলতে ত্রুটি",
+    downloadPdfBusiness: "বিজনেস রিপোর্ট ডাউনলোড করুন (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " এর মধ্যে {{count}}টি NIS2/DORA ম্যাপিং সহ বিজনেস রিপোর্ট।",
   },
 };
 
@@ -7320,6 +7474,13 @@ const ur: TranslationTree = {
     printBtn: "پرنٹ کریں / PDF کے طور پر محفوظ کریں",
     printHint: "اگر پرنٹ ونڈو خود بخود نہیں کھلتی، تو Ctrl+P (Mac پر Cmd+P) استعمال کریں۔",
     popupBlocked: "آپ کے براؤزر نے پاپ اپ ونڈو کو بلاک کر دیا۔ اس سائٹ کے لیے پاپ اپس کی اجازت دیں اور دوبارہ کوشش کریں۔",
+    complianceBadge: "بزنس آڈٹ — NIS2/DORA میپنگ",
+    complianceTitle: "NIS2 / DORA ریگولیٹری میپنگ",
+    complianceIntro: "نتائج کو کنٹرول ایریا کے لحاظ سے گروپ کیا گیا ہے، NIS2 ڈائریکٹیو اور DORA ریگولیشن کے سب سے موزوں حوالے کے ساتھ۔",
+    complianceDisclaimer: "یہ میپنگ رسک سیلف اسیسمنٹ کے لیے ایک تکنیکی معاونت ہے: یہ کوئی قانونی تعمیل جائزہ یا سرٹیفیکیشن نہیں ہے۔",
+    complianceDomainCol: "کنٹرول ایریا",
+    complianceRefCol: "ریگولیٹری حوالہ",
+    complianceFindingsCol: "نتائج",
   },
   publicScore: {
     loading: "اسکور لوڈ ہو رہا ہے...",
@@ -7380,6 +7541,13 @@ const ur: TranslationTree = {
     trialActivating: "فعال کیا جا رہا ہے...",
     trialActivated: "✓ ٹرائل فعال ہو گیا — اگلے 30 دنوں کے لیے آپ کے پاس Pro پلان ہے۔",
     trialError: "ہم مفت ٹرائل فعال نہیں کر سکے، دوبارہ کوشش کریں۔",
+    businessUpsellTitle: "NIS2/DORA سے میپ شدہ رپورٹ چاہیے؟",
+    businessUpsellNote: "وہی مکمل سائٹ آڈٹ، ساتھ میں نتائج کی NIS2 ڈائریکٹیو اور DORA ریگولیشن سے میپنگ — کمپلائنس آفیسر کو جواب دینے کے لیے مفید۔",
+    ctaBuyBusiness: "بزنس آڈٹ خریدیں — 990€",
+    buyingBusiness: "ادائیگی کھولی جا رہی ہے...",
+    errorPurchaseBusiness: "ادائیگی کھولنے میں خرابی",
+    downloadPdfBusiness: "بزنس رپورٹ ڈاؤن لوڈ کریں (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " ان میں سے {{count}} NIS2/DORA میپنگ کے ساتھ بزنس رپورٹ پر مشتمل ہیں۔",
   },
 };
 
@@ -7942,6 +8110,13 @@ const id: TranslationTree = {
     printBtn: "Cetak / Simpan sebagai PDF",
     printHint: "Jika jendela cetak tidak terbuka sendiri, gunakan Ctrl+P (Cmd+P di Mac).",
     popupBlocked: "Browser Anda memblokir jendela popup. Izinkan popup untuk situs ini dan coba lagi.",
+    complianceBadge: "Audit Bisnis — Pemetaan NIS2/DORA",
+    complianceTitle: "Pemetaan Regulasi NIS2 / DORA",
+    complianceIntro: "Temuan dikelompokkan berdasarkan area kontrol, dengan referensi yang paling relevan ke Direktif NIS2 dan Regulasi DORA.",
+    complianceDisclaimer: "Pemetaan ini merupakan bantuan teknis untuk penilaian risiko mandiri: bukan penilaian kepatuhan hukum atau sertifikasi.",
+    complianceDomainCol: "Area kontrol",
+    complianceRefCol: "Referensi regulasi",
+    complianceFindingsCol: "Temuan",
   },
   publicScore: {
     loading: "Memuat skor...",
@@ -8002,6 +8177,13 @@ const id: TranslationTree = {
     trialActivating: "Mengaktifkan...",
     trialActivated: "✓ Uji coba diaktifkan — Anda memiliki paket Pro selama 30 hari ke depan.",
     trialError: "Kami tidak dapat mengaktifkan uji coba gratis, coba lagi.",
+    businessUpsellTitle: "Perlu laporan yang dipetakan ke NIS2/DORA?",
+    businessUpsellNote: "Audit Lengkap Situs yang sama, ditambah pemetaan temuan ke Direktif NIS2 dan Regulasi DORA — berguna jika Anda perlu melapor ke petugas kepatuhan.",
+    ctaBuyBusiness: "Beli Audit Bisnis — 990€",
+    buyingBusiness: "Membuka pembayaran...",
+    errorPurchaseBusiness: "Gagal membuka pembayaran",
+    downloadPdfBusiness: "Unduh laporan Bisnis (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Dari jumlah itu, {{count}} termasuk laporan Bisnis dengan pemetaan NIS2/DORA.",
   },
 };
 
@@ -8564,6 +8746,13 @@ const de: TranslationTree = {
     printBtn: "Drucken / Als PDF speichern",
     printHint: "Wenn sich das Druckfenster nicht von selbst öffnet, nutze Strg+P (Cmd+P auf dem Mac).",
     popupBlocked: "Dein Browser hat das Popup-Fenster blockiert. Erlaube Popups für diese Website und versuch es erneut.",
+    complianceBadge: "Business-Audit — NIS2/DORA-Zuordnung",
+    complianceTitle: "NIS2 / DORA Regulatorische Zuordnung",
+    complianceIntro: "Die Befunde sind nach Kontrollbereich gruppiert, mit dem jeweils relevantesten Verweis auf die NIS2-Richtlinie und die DORA-Verordnung.",
+    complianceDisclaimer: "Diese Zuordnung ist eine technische Unterstützung zur Risiko-Selbstbewertung: Sie stellt keine rechtliche Konformitätsbewertung und keine Zertifizierung dar.",
+    complianceDomainCol: "Kontrollbereich",
+    complianceRefCol: "Regulatorischer Verweis",
+    complianceFindingsCol: "Befunde",
   },
   publicScore: {
     loading: "Score wird geladen...",
@@ -8624,6 +8813,13 @@ const de: TranslationTree = {
     trialActivating: "Wird aktiviert...",
     trialActivated: "✓ Testphase aktiviert — du hast den Pro-Plan für die nächsten 30 Tage.",
     trialError: "Wir konnten die kostenlose Testphase nicht aktivieren, versuch es erneut.",
+    businessUpsellTitle: "Benötigen Sie einen auf NIS2/DORA abgebildeten Report?",
+    businessUpsellNote: "Derselbe vollständige Site-Audit, zusätzlich mit einer Zuordnung der Befunde zur NIS2-Richtlinie und zur DORA-Verordnung — nützlich, wenn Sie einem Compliance-Verantwortlichen Bericht erstatten müssen.",
+    ctaBuyBusiness: "Business-Audit kaufen — 990€",
+    buyingBusiness: "Zahlung wird geöffnet...",
+    errorPurchaseBusiness: "Fehler beim Öffnen der Zahlung",
+    downloadPdfBusiness: "Business-Report herunterladen (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Davon {{count}} mit Business-Report und NIS2/DORA-Zuordnung.",
   },
 };
 
@@ -9186,6 +9382,13 @@ const fi: TranslationTree = {
     printBtn: "Tulosta / Tallenna PDF:nä",
     printHint: "Jos tulostusikkuna ei avaudu itsestään, käytä Ctrl+P (Cmd+P Macissa).",
     popupBlocked: "Selaimesi esti ponnahdusikkunan. Salli ponnahdusikkunat tälle sivustolle ja yritä uudelleen.",
+    complianceBadge: "Yritysauditti — NIS2/DORA-kartoitus",
+    complianceTitle: "NIS2 / DORA -säädöskartoitus",
+    complianceIntro: "Havainnot on ryhmitelty valvonta-alueittain, ja mukana on osuvin viittaus NIS2-direktiiviin ja DORA-asetukseen.",
+    complianceDisclaimer: "Tämä kartoitus on tekninen apu riskin itsearviointiin: se ei ole lakisääteinen vaatimustenmukaisuusarviointi eikä sertifiointi.",
+    complianceDomainCol: "Valvonta-alue",
+    complianceRefCol: "Säädösviittaus",
+    complianceFindingsCol: "Havainnot",
   },
   publicScore: {
     loading: "Ladataan pisteitä...",
@@ -9246,6 +9449,13 @@ const fi: TranslationTree = {
     trialActivating: "Aktivoidaan...",
     trialActivated: "✓ Kokeilu aktivoitu — sinulla on Pro-suunnitelma seuraavat 30 päivää.",
     trialError: "Emme pystyneet aktivoimaan ilmaista kokeilua, yritä uudelleen.",
+    businessUpsellTitle: "Tarvitsetko NIS2/DORA-kartoitetun raportin?",
+    businessUpsellNote: "Sama koko sivuston auditti, lisäksi havaintojen kartoitus NIS2-direktiiviin ja DORA-asetukseen — hyödyllinen, jos vastaat compliance-vastuuhenkilölle.",
+    ctaBuyBusiness: "Ostaa Yritysauditti — 990€",
+    buyingBusiness: "Maksua avataan...",
+    errorPurchaseBusiness: "Virhe maksun avaamisessa",
+    downloadPdfBusiness: "Lataa Yritysraportti (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Näistä {{count}} sisältää Yritysraportin NIS2/DORA-kartoituksella.",
   },
 };
 
@@ -9808,6 +10018,13 @@ const nl: TranslationTree = {
     printBtn: "Afdrukken / Opslaan als PDF",
     printHint: "Als het afdrukvenster niet vanzelf opent, gebruik dan Ctrl+P (Cmd+P op Mac).",
     popupBlocked: "Je browser heeft het pop-upvenster geblokkeerd. Sta pop-ups toe voor deze site en probeer het opnieuw.",
+    complianceBadge: "Zakelijke Audit — NIS2/DORA-mapping",
+    complianceTitle: "NIS2 / DORA regelgevende mapping",
+    complianceIntro: "Bevindingen zijn gegroepeerd per controlegebied, met de meest relevante verwijzing naar de NIS2-richtlijn en de DORA-verordening.",
+    complianceDisclaimer: "Deze mapping is technische ondersteuning bij risico-zelfevaluatie: het is geen juridische conformiteitsbeoordeling of certificering.",
+    complianceDomainCol: "Controlegebied",
+    complianceRefCol: "Regelgevende referentie",
+    complianceFindingsCol: "Bevindingen",
   },
   publicScore: {
     loading: "Score laden...",
@@ -9868,6 +10085,13 @@ const nl: TranslationTree = {
     trialActivating: "Activeren...",
     trialActivated: "✓ Proefperiode geactiveerd — je hebt het Pro-abonnement voor de komende 30 dagen.",
     trialError: "We konden de gratis proefperiode niet activeren, probeer het opnieuw.",
+    businessUpsellTitle: "Heeft u een naar NIS2/DORA gemapt rapport nodig?",
+    businessUpsellNote: "Dezelfde volledige site-audit, met een extra mapping van de bevindingen naar de NIS2-richtlijn en de DORA-verordening — handig als u verantwoording moet afleggen aan een compliance-verantwoordelijke.",
+    ctaBuyBusiness: "Koop de Zakelijke Audit — 990€",
+    buyingBusiness: "Betaling wordt geopend...",
+    errorPurchaseBusiness: "Fout bij het openen van de betaling",
+    downloadPdfBusiness: "Download Zakelijk rapport (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Daarvan {{count}} met een Zakelijk rapport en NIS2/DORA-mapping.",
   },
 };
 
@@ -10430,6 +10654,13 @@ const pl: TranslationTree = {
     printBtn: "Drukuj / Zapisz jako PDF",
     printHint: "Jeśli okno drukowania nie otworzy się samo, użyj Ctrl+P (Cmd+P na Mac).",
     popupBlocked: "Twoja przeglądarka zablokowała okno pop-up. Zezwól na pop-upy dla tej strony i spróbuj ponownie.",
+    complianceBadge: "Audyt Biznesowy — mapowanie NIS2/DORA",
+    complianceTitle: "Mapowanie regulacyjne NIS2 / DORA",
+    complianceIntro: "Ustalenia są pogrupowane według obszaru kontroli, z najistotniejszym odniesieniem do dyrektywy NIS2 i rozporządzenia DORA.",
+    complianceDisclaimer: "To mapowanie to techniczne wsparcie samooceny ryzyka: nie stanowi oceny zgodności prawnej ani certyfikacji.",
+    complianceDomainCol: "Obszar kontroli",
+    complianceRefCol: "Odniesienie regulacyjne",
+    complianceFindingsCol: "Ustalenia",
   },
   publicScore: {
     loading: "Ładowanie wyniku...",
@@ -10490,6 +10721,13 @@ const pl: TranslationTree = {
     trialActivating: "Aktywowanie...",
     trialActivated: "✓ Okres próbny aktywowany — masz plan Pro na kolejne 30 dni.",
     trialError: "Nie udało nam się aktywować darmowego okresu próbnego, spróbuj ponownie.",
+    businessUpsellTitle: "Potrzebujesz raportu zmapowanego do NIS2/DORA?",
+    businessUpsellNote: "Ten sam pełny audyt witryny, dodatkowo z mapowaniem ustaleń do dyrektywy NIS2 i rozporządzenia DORA — przydatne, jeśli musisz odpowiadać przed osobą odpowiedzialną za zgodność.",
+    ctaBuyBusiness: "Kup Audyt Biznesowy — 990€",
+    buyingBusiness: "Otwieranie płatności...",
+    errorPurchaseBusiness: "Błąd podczas otwierania płatności",
+    downloadPdfBusiness: "Pobierz raport Biznesowy (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " W tym {{count}} z raportem Biznesowym i mapowaniem NIS2/DORA.",
   },
 };
 
@@ -11052,6 +11290,13 @@ const sv: TranslationTree = {
     printBtn: "Skriv ut / Spara som PDF",
     printHint: "Om utskriftsfönstret inte öppnas av sig självt, använd Ctrl+P (Cmd+P på Mac).",
     popupBlocked: "Din webbläsare blockerade popup-fönstret. Tillåt popup-fönster för denna webbplats och försök igen.",
+    complianceBadge: "Företagsgranskning — NIS2/DORA-kartläggning",
+    complianceTitle: "NIS2 / DORA regelkartläggning",
+    complianceIntro: "Fynden är grupperade per kontrollområde, med den mest relevanta referensen till NIS2-direktivet och DORA-förordningen.",
+    complianceDisclaimer: "Denna kartläggning är ett tekniskt stöd för riskens självutvärdering: den utgör ingen juridisk efterlevnadsbedömning eller certifiering.",
+    complianceDomainCol: "Kontrollområde",
+    complianceRefCol: "Regelreferens",
+    complianceFindingsCol: "Fynd",
   },
   publicScore: {
     loading: "Laddar poäng...",
@@ -11112,6 +11357,13 @@ const sv: TranslationTree = {
     trialActivating: "Aktiverar...",
     trialActivated: "✓ Provperiod aktiverad — du har Pro-abonnemanget i de kommande 30 dagarna.",
     trialError: "Vi kunde inte aktivera den gratis provperioden, försök igen.",
+    businessUpsellTitle: "Behöver du en rapport kartlagd mot NIS2/DORA?",
+    businessUpsellNote: "Samma kompletta sajtgranskning, plus en kartläggning av fynden mot NIS2-direktivet och DORA-förordningen — användbart om du måste svara en compliance-ansvarig.",
+    ctaBuyBusiness: "Köp Företagsgranskningen — 990€",
+    buyingBusiness: "Öppnar betalning...",
+    errorPurchaseBusiness: "Fel vid öppning av betalning",
+    downloadPdfBusiness: "Ladda ner Företagsrapport (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Av dessa har {{count}} en Företagsrapport med NIS2/DORA-kartläggning.",
   },
 };
 
@@ -11674,6 +11926,13 @@ const da: TranslationTree = {
     printBtn: "Udskriv / Gem som PDF",
     printHint: "Hvis udskriftsvinduet ikke åbner af sig selv, så brug Ctrl+P (Cmd+P på Mac).",
     popupBlocked: "Din browser blokerede popup-vinduet. Tillad popups for denne side, og prøv igen.",
+    complianceBadge: "Erhvervsrevision — NIS2/DORA-kortlægning",
+    complianceTitle: "NIS2 / DORA regulatorisk kortlægning",
+    complianceIntro: "Fundene er grupperet efter kontrolområde, med den mest relevante henvisning til NIS2-direktivet og DORA-forordningen.",
+    complianceDisclaimer: "Denne kortlægning er teknisk støtte til risikoens selvevaluering: den udgør ikke en juridisk overholdelsesvurdering eller certificering.",
+    complianceDomainCol: "Kontrolområde",
+    complianceRefCol: "Regulatorisk henvisning",
+    complianceFindingsCol: "Fund",
   },
   publicScore: {
     loading: "Indlæser score...",
@@ -11734,6 +11993,13 @@ const da: TranslationTree = {
     trialActivating: "Aktiverer...",
     trialActivated: "✓ Prøveperiode aktiveret — du har Pro-planen i de næste 30 dage.",
     trialError: "Vi kunne ikke aktivere den gratis prøveperiode, prøv igen.",
+    businessUpsellTitle: "Har du brug for en rapport kortlagt til NIS2/DORA?",
+    businessUpsellNote: "Samme komplette sitegennemgang, plus en kortlægning af fundene til NIS2-direktivet og DORA-forordningen — nyttigt hvis du skal svare en compliance-ansvarlig.",
+    ctaBuyBusiness: "Køb Erhvervsrevisionen — 990€",
+    buyingBusiness: "Åbner betaling...",
+    errorPurchaseBusiness: "Fejl ved åbning af betaling",
+    downloadPdfBusiness: "Download Erhvervsrapport (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Heraf har {{count}} en Erhvervsrapport med NIS2/DORA-kortlægning.",
   },
 };
 
@@ -12296,6 +12562,13 @@ const nb: TranslationTree = {
     printBtn: "Skriv ut / Lagre som PDF",
     printHint: "Hvis utskriftsvinduet ikke åpner seg selv, bruk Ctrl+P (Cmd+P på Mac).",
     popupBlocked: "Nettleseren din blokkerte popup-vinduet. Tillat popup-vinduer for dette nettstedet og prøv igjen.",
+    complianceBadge: "Bedriftsrevisjon — NIS2/DORA-kartlegging",
+    complianceTitle: "NIS2 / DORA regulatorisk kartlegging",
+    complianceIntro: "Funnene er gruppert etter kontrollområde, med den mest relevante referansen til NIS2-direktivet og DORA-forordningen.",
+    complianceDisclaimer: "Denne kartleggingen er teknisk støtte til risiko-egenvurdering: den utgjør ikke en juridisk samsvarsvurdering eller sertifisering.",
+    complianceDomainCol: "Kontrollområde",
+    complianceRefCol: "Regulatorisk referanse",
+    complianceFindingsCol: "Funn",
   },
   publicScore: {
     loading: "Laster poengsum...",
@@ -12356,6 +12629,13 @@ const nb: TranslationTree = {
     trialActivating: "Aktiverer...",
     trialActivated: "✓ Prøveperiode aktivert — du har Pro-planen de neste 30 dagene.",
     trialError: "Vi klarte ikke å aktivere den gratis prøveperioden, prøv igjen.",
+    businessUpsellTitle: "Trenger du en rapport kartlagt mot NIS2/DORA?",
+    businessUpsellNote: "Samme komplette nettstedrevisjon, pluss en kartlegging av funnene mot NIS2-direktivet og DORA-forordningen — nyttig hvis du må svare en compliance-ansvarlig.",
+    ctaBuyBusiness: "Kjøp Bedriftsrevisjonen — 990€",
+    buyingBusiness: "Åpner betaling...",
+    errorPurchaseBusiness: "Feil ved åpning av betaling",
+    downloadPdfBusiness: "Last ned Bedriftsrapport (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Av disse har {{count}} en Bedriftsrapport med NIS2/DORA-kartlegging.",
   },
 };
 
@@ -12918,6 +13198,13 @@ const tr: TranslationTree = {
     printBtn: "Yazdır / PDF olarak kaydet",
     printHint: "Yazdırma penceresi kendiliğinden açılmazsa, Ctrl+P (Mac'te Cmd+P) kullanın.",
     popupBlocked: "Tarayıcınız açılır pencereyi engelledi. Bu site için açılır pencerelere izin verin ve tekrar deneyin.",
+    complianceBadge: "Kurumsal Denetim — NIS2/DORA Eşleştirmesi",
+    complianceTitle: "NIS2 / DORA Düzenleyici Eşleştirmesi",
+    complianceIntro: "Bulgular kontrol alanına göre gruplandırılmıştır; en ilgili NIS2 Direktifi ve DORA Düzenlemesi referansı ile birlikte.",
+    complianceDisclaimer: "Bu eşleştirme, risk öz değerlendirmesine yönelik teknik bir destektir: yasal uyumluluk değerlendirmesi veya sertifikasyon anlamına gelmez.",
+    complianceDomainCol: "Kontrol alanı",
+    complianceRefCol: "Düzenleyici referans",
+    complianceFindingsCol: "Bulgular",
   },
   publicScore: {
     loading: "Puan yükleniyor...",
@@ -12978,6 +13265,13 @@ const tr: TranslationTree = {
     trialActivating: "Etkinleştiriliyor...",
     trialActivated: "✓ Deneme etkinleştirildi — önümüzdeki 30 gün boyunca Pro plana sahipsiniz.",
     trialError: "Ücretsiz denemeyi etkinleştiremedik, tekrar deneyin.",
+    businessUpsellTitle: "NIS2/DORA ile eşleştirilmiş bir rapora mı ihtiyacınız var?",
+    businessUpsellNote: "Aynı Tam Site Denetimi, ayrıca bulguların NIS2 Direktifi ve DORA Düzenlemesi ile eşleştirilmesi — bir uyum sorumlusuna hesap vermeniz gerekiyorsa faydalıdır.",
+    ctaBuyBusiness: "Kurumsal Denetimi Satın Al — 990€",
+    buyingBusiness: "Ödeme açılıyor...",
+    errorPurchaseBusiness: "Ödeme açılırken hata oluştu",
+    downloadPdfBusiness: "Kurumsal raporu indir (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " Bunlardan {{count}} tanesi NIS2/DORA eşleştirmeli Kurumsal rapor içerir.",
   },
 };
 
@@ -13540,6 +13834,13 @@ const uk: TranslationTree = {
     printBtn: "Друк / Зберегти як PDF",
     printHint: "Якщо вікно друку не відкривається саме, використайте Ctrl+P (Cmd+P на Mac).",
     popupBlocked: "Ваш браузер заблокував спливаюче вікно. Дозвольте спливаючі вікна для цього сайту і спробуйте ще раз.",
+    complianceBadge: "Бізнес-аудит — зіставлення з NIS2/DORA",
+    complianceTitle: "Нормативне зіставлення NIS2 / DORA",
+    complianceIntro: "Знахідки згруповано за областями контролю, з найбільш релевантним посиланням на директиву NIS2 та регламент DORA.",
+    complianceDisclaimer: "Це зіставлення — технічна підтримка для самооцінки ризику: воно не є юридичною оцінкою відповідності чи сертифікацією.",
+    complianceDomainCol: "Область контролю",
+    complianceRefCol: "Нормативне посилання",
+    complianceFindingsCol: "Знахідки",
   },
   publicScore: {
     loading: "Завантаження оцінки...",
@@ -13600,6 +13901,13 @@ const uk: TranslationTree = {
     trialActivating: "Активація...",
     trialActivated: "✓ Пробний період активовано — у вас є план Pro на наступні 30 днів.",
     trialError: "Нам не вдалося активувати безкоштовний пробний період, спробуйте ще раз.",
+    businessUpsellTitle: "Потрібен звіт, зіставлений з NIS2/DORA?",
+    businessUpsellNote: "Той самий повний аудит сайту, плюс зіставлення знахідок з директивою NIS2 та регламентом DORA — корисно, якщо потрібно звітувати перед відповідальним за відповідність.",
+    ctaBuyBusiness: "Купити Бізнес-аудит — 990€",
+    buyingBusiness: "Відкриття оплати...",
+    errorPurchaseBusiness: "Помилка при відкритті оплати",
+    downloadPdfBusiness: "Завантажити Бізнес-звіт (NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " З них {{count}} з Бізнес-звітом і зіставленням NIS2/DORA.",
   },
 };
 
@@ -14162,6 +14470,13 @@ const ja: TranslationTree = {
     printBtn: "印刷 / PDFとして保存",
     printHint: "印刷ウィンドウが自動的に開かない場合は、Ctrl+P（MacではCmd+P）を使用してください。",
     popupBlocked: "ブラウザがポップアップウィンドウをブロックしました。このサイトのポップアップを許可してもう一度お試しください。",
+    complianceBadge: "法人向けオーディット — NIS2/DORA マッピング",
+    complianceTitle: "NIS2 / DORA 規制マッピング",
+    complianceIntro: "検出結果は管理領域別にグループ化され、NIS2指令およびDORA規則への最も関連性の高い参照が付記されます。",
+    complianceDisclaimer: "このマッピングはリスク自己評価のための技術的な補助であり、法的なコンプライアンス評価や認証を構成するものではありません。",
+    complianceDomainCol: "管理領域",
+    complianceRefCol: "規制上の参照",
+    complianceFindingsCol: "検出結果",
   },
   publicScore: {
     loading: "スコアを読み込み中...",
@@ -14222,6 +14537,13 @@ const ja: TranslationTree = {
     trialActivating: "有効化中...",
     trialActivated: "✓ トライアルが有効化されました — 今後30日間はProプランをご利用いただけます。",
     trialError: "無料トライアルを有効化できませんでした。もう一度お試しください。",
+    businessUpsellTitle: "NIS2/DORAにマッピングされたレポートが必要ですか?",
+    businessUpsellNote: "同じ完全サイトオーディットに加え、検出結果をNIS2指令およびDORA規則にマッピングします — コンプライアンス担当者への報告が必要な場合に便利です。",
+    ctaBuyBusiness: "法人向けオーディットを購入 — 990€",
+    buyingBusiness: "決済を開いています...",
+    errorPurchaseBusiness: "決済を開く際にエラーが発生しました",
+    downloadPdfBusiness: "法人向けレポートをダウンロード(NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " そのうち{{count}}件はNIS2/DORAマッピング付きの法人向けレポートです。",
   },
 };
 
@@ -14784,6 +15106,13 @@ const ko: TranslationTree = {
     printBtn: "인쇄 / PDF로 저장",
     printHint: "인쇄 창이 자동으로 열리지 않으면 Ctrl+P(Mac에서는 Cmd+P)를 사용하세요.",
     popupBlocked: "브라우저가 팝업 창을 차단했습니다. 이 사이트에 대한 팝업을 허용하고 다시 시도해 주세요.",
+    complianceBadge: "비즈니스 감사 — NIS2/DORA 매핑",
+    complianceTitle: "NIS2 / DORA 규제 매핑",
+    complianceIntro: "발견 사항은 통제 영역별로 그룹화되며, NIS2 지침 및 DORA 규정에서 가장 관련성 높은 조항이 함께 표시됩니다.",
+    complianceDisclaimer: "이 매핑은 위험 자가평가를 위한 기술적 보조 자료이며, 법적 준수 평가나 인증에 해당하지 않습니다.",
+    complianceDomainCol: "통제 영역",
+    complianceRefCol: "규제 참조",
+    complianceFindingsCol: "발견 사항",
   },
   publicScore: {
     loading: "점수를 불러오는 중...",
@@ -14844,6 +15173,13 @@ const ko: TranslationTree = {
     trialActivating: "활성화 중...",
     trialActivated: "✓ 체험판이 활성화되었습니다 — 앞으로 30일 동안 Pro 플랜을 이용하실 수 있습니다.",
     trialError: "무료 체험판을 활성화할 수 없었습니다. 다시 시도해 주세요.",
+    businessUpsellTitle: "NIS2/DORA에 매핑된 보고서가 필요하신가요?",
+    businessUpsellNote: "동일한 전체 사이트 감사에 더해 발견 사항을 NIS2 지침 및 DORA 규정에 매핑합니다 — 컴플라이언스 담당자에게 보고해야 할 때 유용합니다.",
+    ctaBuyBusiness: "비즈니스 감사 구매 — 990€",
+    buyingBusiness: "결제를 여는 중...",
+    errorPurchaseBusiness: "결제를 여는 중 오류가 발생했습니다",
+    downloadPdfBusiness: "비즈니스 보고서 다운로드(NIS2/DORA)",
+    creditsAvailableBusinessSuffix: " 이 중 {{count}}개는 NIS2/DORA 매핑이 포함된 비즈니스 보고서입니다.",
   },
 };
 
