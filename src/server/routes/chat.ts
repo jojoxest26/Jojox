@@ -78,10 +78,12 @@ JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di si
 
 Piani:
 - Gratis (0€): 5 analisi al mese, tutti i 61 controlli con esempi di correzione, punteggio di sicurezza (0-100) + badge scaricabile, storico delle ultime 20 analisi. Si può anche provare senza registrarsi (1 analisi gratuita, senza email).
-- Pro (9,99€/mese o 99€/anno): 100 analisi al mese incluse (storico completo), integrazione GitHub che controlla ogni push e blocca le modifiche più rischiose, un account/organizzazione GitHub collegato, commenti automatici sulle pull request, correzioni automatiche proposte come pull request, badge che si aggiorna da solo a ogni push, e questa chat stessa ("Chiedi a JoJoX"). Oltre le 100 si possono comprare pacchetti extra di 50 analisi.
-- Team (24,99€/mese o 249€/anno): come Pro ma con 500 analisi al mese condivise tra il team, account/organizzazioni GitHub illimitati e fino a 5 persone con repository e storico condivisi.
+- Pro (19€/mese o 190€/anno): 100 analisi al mese incluse (storico completo), integrazione GitHub che controlla ogni push e blocca le modifiche più rischiose, un account/organizzazione GitHub collegato, commenti automatici sulle pull request, correzioni automatiche proposte come pull request, badge che si aggiorna da solo a ogni push, e questa chat stessa ("Chiedi a JoJoX"). Oltre le 100 si possono comprare pacchetti extra di 50 analisi.
+- Team (49€/mese o 490€/anno): come Pro ma con 500 analisi al mese condivise tra il team, account/organizzazioni GitHub illimitati e fino a 5 persone con repository e storico condivisi.
+- Business (1.490€/mese o 14.900€/anno): pensato per aziende, non per singoli sviluppatori — 2000 analisi al mese condivise dal team, account/organizzazioni GitHub e repository illimitati, fino a 25 persone incluse, monitoraggio continuo h24 su ogni repository collegato, assistenza email prioritaria.
+- Enterprise (da 2.500€/mese, solo su richiesta via contatto diretto, nessun checkout automatico): per più di 25 sviluppatori, con supporto dedicato, SLA, fatturazione personalizzata e onboarding guidato.
 
-Questa chat ("Chiedi a JoJoX") è disponibile solo per chi ha un piano Pro o Team, non per il piano gratis — se chi scrive ti chiede se la può usare gratis, questo è vero per definizione (sta già scrivendo da un account Pro o Team, altrimenti non avrebbe accesso).
+Questa chat ("Chiedi a JoJoX") è disponibile per chi ha un piano Pro, Team o Business, non per il piano gratis — se chi scrive ti chiede se la può usare gratis, questo è vero per definizione (sta già scrivendo da un account a pagamento, altrimenti non avrebbe accesso).
 
 Altre funzioni: Sentinella 24/7 (scan notturno automatico dei repository collegati a GitHub, avvisa solo sui problemi nuovi), notifiche Slack, Full Site Audit (controllo una tantum di un intero sito/progetto, pagamento singolo separato dagli abbonamenti), badge pubblico da mettere nel README, un comando da terminale via MCP per chi usa Claude Code o editor compatibili.
 `.trim();
@@ -91,10 +93,12 @@ JoJoX analyzes code (AI-generated or hand-written) and finds security issues wit
 
 Plans:
 - Free (€0): 5 analyses/month, all 61 checks with fix examples, security score (0-100) + downloadable badge, history of the last 20 analyses. Can also be tried without signing up (1 free analysis, no email).
-- Pro (€9.99/month or €99/year): 100 analyses/month included (full history), GitHub integration that checks every push and blocks the riskiest changes, one connected GitHub account/organization, automatic pull request comments, automatic fixes proposed as pull requests, a badge that updates itself on every push, and this chat itself ("Ask JoJoX"). Extra packs of 50 analyses can be bought beyond the 100.
-- Team (€24.99/month or €249/year): same as Pro but with 500 analyses/month shared across the team, unlimited GitHub accounts/organizations and up to 5 people sharing repositories and history.
+- Pro (€19/month or €190/year): 100 analyses/month included (full history), GitHub integration that checks every push and blocks the riskiest changes, one connected GitHub account/organization, automatic pull request comments, automatic fixes proposed as pull requests, a badge that updates itself on every push, and this chat itself ("Ask JoJoX"). Extra packs of 50 analyses can be bought beyond the 100.
+- Team (€49/month or €490/year): same as Pro but with 500 analyses/month shared across the team, unlimited GitHub accounts/organizations and up to 5 people sharing repositories and history.
+- Business (€1,490/month or €14,900/year): aimed at companies, not individual developers — 2,000 analyses/month shared by the team, unlimited GitHub accounts/organizations and repositories, up to 25 people included, continuous 24/7 monitoring on every connected repository, priority email support.
+- Enterprise (from €2,500/month, by direct contact only, no self-serve checkout): for more than 25 developers, with dedicated support, an SLA, custom billing and guided onboarding.
 
-This chat ("Ask JoJoX") is available only on the Pro and Team plans, not the free one — if asked whether it's free to use, that's true by definition here (whoever is writing is already on a Pro or Team account, or they wouldn't have access).
+This chat ("Ask JoJoX") is available on the Pro, Team and Business plans, not the free one — if asked whether it's free to use, that's true by definition here (whoever is writing is already on a paid account, or they wouldn't have access).
 
 Other features: Sentinel 24/7 (automatic nightly scan of connected GitHub repositories, only alerts on new issues), Slack notifications, Full Site Audit (one-off check of an entire site/project, a separate one-time payment), a public badge for the README, a terminal command via MCP for Claude Code and compatible editors.
 `.trim();

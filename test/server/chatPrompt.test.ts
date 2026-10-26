@@ -19,9 +19,11 @@ describe("buildSystemPrompt across all 23 chat languages", () => {
     expect(prompt.length).toBeGreaterThan(50);
     expect(prompt).toContain("JoJoX");
     // Le cifre dei fatti di prodotto non vanno mai perse in traduzione.
+    // (Niente separatore delle migliaia qui: IT usa "1.490", EN "1,490".)
     expect(prompt).toContain("61");
-    expect(prompt).toContain("99");
-    expect(prompt).toContain("249");
+    expect(prompt).toContain("190");
+    expect(prompt).toContain("490");
+    expect(prompt).toContain("500");
   });
 
   it.each(SUPPORTED_CHAT_LANGS)("builds a non-empty, well-formed prompt in findings mode for '%s'", (lang: ChatLang) => {
