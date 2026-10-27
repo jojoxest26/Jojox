@@ -74,4 +74,32 @@ describe("selectFilesForReview", () => {
     const totalChars = selected.reduce((sum, f) => sum + f.content.length, 0);
     expect(totalChars).toBeLessThanOrEqual(120_000);
   });
+
+  it("segnala in modo esplicito un file troncato, invece di lasciarlo sembrare completo", () => {
+    const huge = "x".repeat(10_000);
+    const [selected] = selectFilesForReview([{ path: "big.ts", content: huge }]);
+    expect(selected.content).toContain("troncato");
+  });
+
+  it("manda prima i file di route/auth quando il progetto supera il limite di 40 file", () => {
+    const noise = Array.from({ length: 45 }, (_, i) => ({ path: `src/utils/helper${i}.ts`, content: "x" }));
+    const relevant = { path: "src/server/routes/team.ts", content: "x" };
+    const selected = selectFilesForReview([...noise, relevant]);
+    expect(selected.map((f) => f.path)).toContain("src/server/routes/team.ts");
+  });
+
+  it("non cambia l'ordine tra file della stessa priorità", () => {
+    const files = [
+      { path: "src/server/routes/a.ts", content: "a" },
+      { path: "src/server/routes/b.ts", content: "b" },
+      { path: "src/utils/c.ts", content: "c" },
+      { path: "src/utils/d.ts", content: "d" },
+    ];
+    expect(selectFilesForReview(files).map((f) => f.path)).toEqual([
+      "src/server/routes/a.ts",
+      "src/server/routes/b.ts",
+      "src/utils/c.ts",
+      "src/utils/d.ts",
+    ]);
+  });
 });

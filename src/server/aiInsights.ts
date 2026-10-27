@@ -64,13 +64,36 @@ export function parseAiInsightsResponse(text: string): AiInsight[] {
   return parsed.filter(isValidInsight).slice(0, MAX_INSIGHTS);
 }
 
+// I bug di race-condition e authorization-logic vivono quasi sempre in
+// route, controller e middleware di autenticazione — mai in config, test o
+// asset statici. Su un progetto che supera i tetti sopra, mandiamo prima
+// questi file invece di prendere semplicemente i primi nell'ordine in cui
+// arrivano: altrimenti un progetto grande può scartare proprio i file dove
+// questi bug si nascondono, mantenendo invece file irrilevanti.
+const RELEVANT_PATH_PATTERN = /route|controller|middleware|auth|permission|admin|webhook|api/i;
+
+function reviewPriority(path: string): number {
+  return RELEVANT_PATH_PATTERN.test(path) ? 0 : 1;
+}
+
 /** Seleziona i file da mandare in revisione, rispettando i tetti di costo sopra. */
 export function selectFilesForReview(files: readonly SourceFile[]): SourceFile[] {
+  // Sort stabile: tra due file della stessa priorità, resta l'ordine originale.
+  const ordered = [...files].sort((a, b) => reviewPriority(a.path) - reviewPriority(b.path));
+
   let totalChars = 0;
   const selected: SourceFile[] = [];
-  for (const f of files) {
+  for (const f of ordered) {
     if (selected.length >= MAX_FILES_FOR_REVIEW) break;
-    const content = f.content.length > MAX_CHARS_PER_FILE ? f.content.slice(0, MAX_CHARS_PER_FILE) : f.content;
+    // Un file troncato a metà di una funzione può sembrare al modello un
+    // blocco completo, e fargli dedurre un comportamento che il codice
+    // vero non ha — il marcatore gli dice esplicitamente che manca del
+    // contesto, così la regola "segnala solo se sei sicuro" si applica
+    // anche qui.
+    const content =
+      f.content.length > MAX_CHARS_PER_FILE
+        ? f.content.slice(0, MAX_CHARS_PER_FILE) + "\n/* ... troncato, resto del file non incluso ... */"
+        : f.content;
     if (totalChars + content.length > MAX_TOTAL_CHARS) continue;
     totalChars += content.length;
     selected.push({ path: f.path, content });
