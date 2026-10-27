@@ -1,4 +1,5 @@
 import { env } from "../env.js";
+import { assertHeaderSafe } from "../util/assertHeaderSafe.js";
 
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 
@@ -28,26 +29,6 @@ export class StripeApiError extends Error {
     this.name = "StripeApiError";
     this.code = code;
     this.param = param;
-  }
-}
-
-/**
- * Un copia-incolla incompleto su Railway (es. un campo non svuotato del
- * tutto prima di incollarci sopra) può lasciare nella variabile un
- * carattere di mascheramento "•" (bullet, non ASCII) invece del testo
- * vero. Da lì in poi ogni chiamata fallisce con un TypeError criptico di
- * fetch/undici sulla conversione della intestazione Authorization — un
- * messaggio che non dice nulla su dove cercare. Controllarlo qui, una
- * volta sola, trasforma quell'errore in uno che dice esattamente cosa
- * controllare.
- */
-function assertHeaderSafe(value: string, fieldName: string): void {
-  for (let i = 0; i < value.length; i++) {
-    if (value.charCodeAt(i) > 255) {
-      throw new Error(
-        `${fieldName} contiene un carattere non valido (probabilmente un "•" di mascheramento rimasto da un copia-incolla incompleto) — svuota del tutto il campo su Railway prima di incollare di nuovo il valore.`
-      );
-    }
   }
 }
 

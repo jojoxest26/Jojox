@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { anthropic, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
+import { anthropic, assertAnthropicKeySafe, CHAT_MODEL, CODE_MODEL } from "../anthropic.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, DAILY_GENERAL_CHAT_LIMIT, startOfTodayUtc } from "../plan.js";
@@ -328,6 +328,7 @@ chatRouter.post("/api/chat", requireAuth, async (req: AuthedRequest, res) => {
   }
 
   try {
+    assertAnthropicKeySafe();
     const response = await anthropic.messages.create({
       model: isGeneralMode ? CODE_MODEL : CHAT_MODEL,
       max_tokens: isGeneralMode ? 16000 : 700,

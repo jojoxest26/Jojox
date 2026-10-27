@@ -1,8 +1,23 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { env } from "./env.js";
+import { assertHeaderSafe } from "./util/assertHeaderSafe.js";
 
-/** null finché ANTHROPIC_API_KEY non è impostata su Railway — la rotta chat lo controlla e risponde 503. */
+/** null finché ANTHROPIC_API_KEY non è impostata su Railway — le rotte che la usano lo controllano e rispondono 503. */
 export const anthropic = env.anthropicApiKey ? new Anthropic({ apiKey: env.anthropicApiKey }) : null;
+
+/**
+ * Se la chiave è impostata ma contiene un carattere di mascheramento da un
+ * copia-incolla incompleto (stesso problema già risolto per Stripe), ogni
+ * chiamata fallirebbe con un TypeError criptico di fetch/undici che non
+ * dice dove guardare. Non lo controlliamo al caricamento del modulo — farlo
+ * crasherebbe l'intero server all'avvio invece di far fallire solo le
+ * richieste che usano l'AI — ma chiamando questa funzione subito prima di
+ * ogni uso reale, così l'errore che finisce su Sentry dice esattamente cosa
+ * controllare.
+ */
+export function assertAnthropicKeySafe(): void {
+  if (env.anthropicApiKey) assertHeaderSafe(env.anthropicApiKey, "ANTHROPIC_API_KEY");
+}
 
 /**
  * Modello più economico e veloce della famiglia: usato quando la chat si

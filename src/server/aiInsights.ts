@@ -1,4 +1,4 @@
-import { anthropic, CODE_MODEL } from "./anthropic.js";
+import { anthropic, assertAnthropicKeySafe, CODE_MODEL } from "./anthropic.js";
 import type { AiInsight, AiInsightCategory, SourceFile } from "../types.js";
 
 // Contiene il costo e il tempo di risposta: questi due tipi di bug
@@ -113,6 +113,7 @@ export async function findAiInsights(files: readonly SourceFile[]): Promise<AiIn
   const selected = selectFilesForReview(files);
   if (selected.length === 0) return { insights: [], usage: null };
 
+  assertAnthropicKeySafe();
   const filesText = selected.map((f) => `--- ${f.path} ---\n${f.content}`).join("\n\n");
 
   const response = await anthropic.messages.create({
