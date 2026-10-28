@@ -73,7 +73,7 @@ const chatRequestSchema = z.object({
     path: ["history"],
   });
 
-const PRODUCT_FACTS_IT = `
+export const PRODUCT_FACTS_IT = `
 JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di sicurezza con un motore deterministico a pattern — 61 controlli pubblici, nessuna AI nel rilevamento stesso. Copre JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel); su altri linguaggi alcuni controlli generici possono comunque aiutare.
 
 Piani:

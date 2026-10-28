@@ -66,6 +66,7 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 - `src/server/routes/webhooks/stripe.ts` — riceve gli eventi di abbonamento da Stripe e aggiorna il piano dell'utente
 - `src/server/github/` — autenticazione della GitHub App, verifica firma webhook, formattazione del commento/check run
 - `src/server/stripe/` — chiamate dirette all'API REST di Stripe (nessun SDK esterno) e verifica della firma dei webhook
+- `src/server/routes/contentChat.ts` — `POST /api/content-chat`, studio contenuti interno (`/content`, solo per le email in `CONTENT_ADMIN_EMAILS`): scrive reel verticali su JoJoX nel formato di `src/reel.ts`, che il sito anima ed esporta in video (`web/src/lib/reelRenderer.ts`)
 - `src/server/slack/notify.ts` — invia un messaggio a un Incoming Webhook Slack (nessun SDK, solo un POST JSON); non lancia mai un errore verso chi la chiama
 - `src/server/auth/middleware.ts` — verifica del token Supabase
 - `supabase/migrations/` — schema del database (profili, storico, installazioni GitHub, waitlist, analisi ospite), RLS attiva su ogni tabella

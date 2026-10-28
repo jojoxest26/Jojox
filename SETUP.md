@@ -245,6 +245,27 @@ prodotti/prezzi/webhook vanno ricreati, sono separati da quelli di test), e
 aggiorna le 4 variabili su Railway con i valori "live".
 
 
+
+---
+
+## Studio contenuti (reel per i social)
+
+Pagina interna `/content`, non linkata dal sito: scrivi l'idea di un reel,
+l'AI lo scrive partendo da quello che dice il sito di JoJoX, la pagina lo
+anima in verticale (9:16) e lo scarica come video `.mp4` (o `.webm` sui
+browser che non sanno registrare mp4). La voce fuori campo la registri tu
+sopra, con il testo che la pagina ti dà già pronto.
+
+Per attivarla, su **Railway** → il progetto del backend → **Variables**:
+- `CONTENT_ADMIN_EMAILS` — le email che possono usarla, separate da virgola
+  (es. `tuo@email.com`). Finché è vuota, la pagina resta chiusa a tutti.
+- Serve anche `ANTHROPIC_API_KEY`, la stessa già usata da "Chiedi a JoJoX".
+
+Poi apri `https://jojox.it/content` e accedi con quella email. Ogni
+messaggio usa il modello più capace (lo stesso della chat che scrive codice)
+e conta in `ai_usage_log` come `content_chat`, con un tetto di 80 messaggi al
+giorno.
+
 ---
 
 ## Come verifichiamo che funziona tutto

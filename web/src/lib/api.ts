@@ -1,4 +1,5 @@
 import type { AiInsight, AnalysisResult, Finding, SourceFile, Severity } from "../../../src/types.js";
+import type { Reel } from "../../../src/reel.js";
 import type { Lang } from "../i18n/translations.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -445,5 +446,23 @@ export function removeTeamMember(email: string, accessToken: string): Promise<{ 
   return apiFetch<{ ok: true }>(`/api/team/members/${encodeURIComponent(email)}`, {
     method: "DELETE",
     accessToken,
+  });
+}
+/** Chat interna dei contenuti (/content): solo per le email in CONTENT_ADMIN_EMAILS sul server. */
+export async function fetchContentChatAccess(accessToken: string): Promise<boolean> {
+  const { allowed } = await apiFetch<{ allowed: boolean }>("/api/content-chat/access", { accessToken });
+  return allowed;
+}
+
+export function sendContentChatMessage(
+  message: string,
+  history: ChatMessage[],
+  currentReel: Reel | null,
+  accessToken: string
+): Promise<{ reply: string; reel: Reel | null }> {
+  return apiFetch<{ reply: string; reel: Reel | null }>("/api/content-chat", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({ message, history, currentReel }),
   });
 }

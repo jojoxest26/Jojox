@@ -8,7 +8,7 @@ import { supabaseAdmin } from "./db/supabase.js";
  */
 export async function logAiUsage(params: {
   userId: string;
-  route: "chat_general" | "chat_findings" | "ai_insight";
+  route: "chat_general" | "chat_findings" | "ai_insight" | "content_chat";
   model: string;
   inputTokens: number;
   outputTokens: number;

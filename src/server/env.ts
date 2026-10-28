@@ -6,6 +6,13 @@ function required(name: string): string {
   return value;
 }
 
+export function parseEmailList(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export const env = {
   port: Number(process.env.PORT ?? 3000),
   supabaseUrl: required("SUPABASE_URL"),
@@ -72,6 +79,12 @@ export const env = {
    * rotta chat risponde 503 invece di far crashare l'intero server.
    */
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? null,
+  /**
+   * Email (separate da virgola) di chi può usare la chat dei contenuti
+   * interna (/content, reel per i social di JoJoX). Se vuota, la chat
+   * resta chiusa a tutti: non è una funzione per i clienti.
+   */
+  contentAdminEmails: parseEmailList(process.env.CONTENT_ADMIN_EMAILS),
   /**
    * Chiave API di Resend per le email di avviso brandizzate di JoJoX
    * (Sentinella 24/7, pull request bloccate/corrette) — opzionale come le
