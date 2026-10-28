@@ -132,6 +132,16 @@ Tre servizi, tutti con piano gratuito sufficiente per iniziare:
 
 Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md`.
 
+### Studio contenuti (reel per i social)
+
+Pagina interna `/content`, non linkata dal sito: scrivi l'idea di un reel, l'AI lo scrive partendo da quello che dice il sito di JoJoX, la pagina lo anima in verticale (9:16) e lo scarica come video `.mp4` (o `.webm` sui browser che non sanno registrare mp4). La voce fuori campo la registri tu sopra, con il testo già pronto nella pagina.
+
+Per attivarla, su Railway → backend → **Variables**:
+- `CONTENT_ADMIN_EMAILS` — le email che possono usarla, separate da virgola. Finché è vuota, la pagina resta chiusa a tutti.
+- `ANTHROPIC_API_KEY` — la stessa già usata da "Chiedi a JoJoX".
+
+Ogni messaggio usa il modello più capace (lo stesso della chat che scrive codice), conta in `ai_usage_log` come `content_chat` e ha un tetto di 80 messaggi al giorno.
+
 ## Prossimi passi
 
 - **Controlli per altri linguaggi** — oggi JoJoX copre JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel) su tutti i controlli applicabili al codice applicativo (fatto, un linguaggio alla volta, testato su codice reale per ognuno); più Dockerfile, Kubernetes e Terraform per l'infrastruttura, indipendenti dal linguaggio del progetto. Altri linguaggi (es. Rust, Ruby, C#) restano da aggiungere se diventa priorità, stessa logica: giorni di lavoro dedicato per linguaggio, non ore
