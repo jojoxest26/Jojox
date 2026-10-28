@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import "@fontsource/playfair-display/700-italic.css";
+// Il sito carica JetBrains Mono solo fino al 600: il logo nei reel usa il 700.
+import "@fontsource/jetbrains-mono/700.css";
 import type { Reel, ReelScene } from "../../../src/reel.js";
 import { reelDuration } from "../../../src/reel.js";
 import { fetchContentChatAccess, sendContentChatMessage, type ChatMessage } from "../lib/api.js";
@@ -77,6 +79,12 @@ function sceneLabel(scene: ReelScene): string {
       return `${scene.value}${scene.suffix ?? ""} ${scene.caption}`;
     case "cta":
       return scene.text;
+    case "mascot":
+      return `Sentinella${scene.text ? `: ${scene.text}` : ""}`;
+    case "score":
+      return `Punteggio ${scene.from} → ${scene.to}`;
+    case "finding":
+      return `Problema: ${scene.title}`;
   }
 }
 

@@ -36,6 +36,12 @@ export type ReelScene =
     }
   /** Numero grande che conta fino al valore, con una didascalia sotto. */
   | { type: "stat"; value: number; suffix?: string; caption: string; bg: ReelBackground; accent: ReelAccent; duration: number }
+  /** La Sentinella, la mascotte di JoJoX, che entra in scena e scansiona con il suo raggio. Testo facoltativo sotto. */
+  | { type: "mascot"; text?: string; bg: ReelBackground; duration: number }
+  /** Il punteggio di sicurezza 0-100 come sul sito: un cerchio che si riempie mentre il numero sale. */
+  | { type: "score"; from: number; to: number; caption: string; bg: ReelBackground; duration: number }
+  /** Un problema trovato come lo mostra JoJoX: riga evidenziata con l'etichetta CRITICO, poi la correzione prima/dopo. */
+  | { type: "finding"; title: string; file: string; before: string; after: string; bg: ReelBackground; duration: number }
   /** Chiusura con il marchio JoJoX e un invito all'azione. */
   | { type: "cta"; text: string; sub?: string; bg: ReelBackground; accent: ReelAccent; duration: number };
 

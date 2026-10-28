@@ -1,5 +1,6 @@
 import type { Reel, ReelAccent, ReelBackground, ReelScene } from "../../../src/reel.js";
 import { reelDuration } from "../../../src/reel.js";
+import { SENTINEL_SVG } from "./sentinelSvg.js";
 
 /**
  * Disegna un reel (src/reel.ts) su un canvas 1080x1920, fotogramma per
@@ -50,11 +51,28 @@ function palette(bg: ReelBackground, accent: ReelAccent = "amber"): Palette {
 }
 
 /** Font da caricare prima di disegnare: senza, il primo fotogramma esce con un font di ripiego. */
-export const REEL_FONTS = [`800 100px ${SANS}`, `600 100px ${SANS}`, `italic 700 100px ${SERIF}`, `700 100px ${MONO}`];
+export const REEL_FONTS = [`800 100px ${SANS}`, `600 100px ${SANS}`, `italic 700 100px ${SERIF}`, `700 100px ${MONO}`, `500 100px ${MONO}`];
 
+let sentinelImage: HTMLImageElement | null = null;
+
+function loadSentinel(): Promise<void> {
+  if (sentinelImage) return Promise.resolve();
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      sentinelImage = img;
+      resolve();
+    };
+    // Senza mascotte la scena mostra solo il testo: meglio che bloccare l'anteprima.
+    img.onerror = () => resolve();
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(SENTINEL_SVG)}`;
+  });
+}
+
+/** Font e mascotte da caricare prima di disegnare: senza, il primo fotogramma uscirebbe incompleto. */
 export async function loadReelFonts(): Promise<void> {
   try {
-    await Promise.all(REEL_FONTS.map((f) => document.fonts.load(f)));
+    await Promise.all([...REEL_FONTS.map((f) => document.fonts.load(f)), loadSentinel()]);
   } catch {
     // Se un font non si carica si usa quello di ripiego: meglio che bloccare l'anteprima.
   }
@@ -170,6 +188,32 @@ const CHIP_SLOTS: [number, number][] = [
   [0.5, 0.18],
   [0.5, 0.79],
 ];
+
+const MINT = "#34d399";
+const CRITICAL = "#ff6b6b";
+
+/** Taglia il testo con "…" finché non sta nella larghezza data, al font già impostato. */
+function ellipsize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(`${t}…`).width > maxWidth) t = t.slice(0, -1);
+  return `${t}…`;
+}
+
+/** L'icona del sito (web/public/favicon.svg): riquadro scuro con bordo ambra e "JX". */
+function drawJxBadge(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  roundRect(ctx, cx - size / 2, cy - size / 2, size, size, size * 0.22);
+  ctx.fillStyle = "#171717";
+  ctx.fill();
+  ctx.lineWidth = size * 0.05;
+  ctx.strokeStyle = "#f5a623";
+  ctx.stroke();
+  ctx.font = `700 ${size * 0.42}px ${MONO}`;
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("JX", cx, cy + size * 0.03);
+}
 
 function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: number) {
   const theme = palette(scene.bg, "accent" in scene ? scene.accent : "amber");
@@ -332,13 +376,196 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       break;
     }
 
+    case "mascot": {
+      const img = sentinelImage;
+      const drawW = 600;
+      const drawH = drawW * (350 / 260);
+      const drop = easeOutBack(local / 0.55);
+      const bob = Math.sin(local * 2.4) * 10;
+      const x = W / 2 - drawW / 2;
+      const y = H / 2 - drawH / 2 - 160 + (1 - drop) * -500 + bob;
+      const k = drawW / 260;
+      // Il raggio dello scanner, che spazza verso destra come sul sito.
+      const beamP = clamp01((local - 0.45) / 0.3);
+      if (beamP > 0) {
+        const ex = x + 244 * k;
+        const ey = y + 181 * k;
+        const sweep = Math.sin(local * 2.2) * 0.18;
+        const grad = ctx.createLinearGradient(ex, ey, W, ey);
+        grad.addColorStop(0, "rgba(245,166,35,0.75)");
+        grad.addColorStop(1, "rgba(245,166,35,0)");
+        ctx.save();
+        ctx.globalAlpha = beamP;
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(ex, ey);
+        ctx.lineTo(W + 40, ey + (sweep - 0.32) * 700);
+        ctx.lineTo(W + 40, ey + (sweep + 0.32) * 700);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      // Bagliore dell'occhio che pulsa.
+      const glow = 0.35 + 0.25 * Math.sin(local * 4);
+      const eg = ctx.createRadialGradient(x + 130 * k, y + 112 * k, 10, x + 130 * k, y + 112 * k, 70 * k);
+      eg.addColorStop(0, `rgba(245,166,35,${glow})`);
+      eg.addColorStop(1, "rgba(245,166,35,0)");
+      ctx.fillStyle = eg;
+      ctx.fillRect(x, y, drawW, drawW);
+      if (img) ctx.drawImage(img, x, y, drawW, drawH);
+      if (scene.text) {
+        const tp = easeOutCubic((local - 0.35) / 0.35);
+        ctx.globalAlpha = tp;
+        const size = fitFont(ctx, scene.text, (sz) => `800 ${sz}px ${SANS}`, W * 0.86, 96, 44);
+        ctx.font = `800 ${size}px ${SANS}`;
+        ctx.fillStyle = theme.fg;
+        ctx.textAlign = "center";
+        ctx.fillText(scene.text, W / 2, H / 2 + drawH / 2 - 60 + (1 - tp) * 30);
+        ctx.globalAlpha = 1;
+      }
+      break;
+    }
+
+    case "score": {
+      const p = easeOutCubic((local - 0.15) / Math.max(0.4, scene.duration * 0.6));
+      const value = Math.round(scene.from + (scene.to - scene.from) * p);
+      const cx = W / 2;
+      const cy = H / 2 - 120;
+      const r = 300;
+      ctx.lineWidth = 46;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = scene.bg === "dark" ? "#262b33" : "rgba(10,12,15,0.12)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = scene.bg === "amber" ? "#171310" : "#f5a623";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.max(0.001, value)) / 100);
+      ctx.stroke();
+      ctx.lineCap = "butt";
+      ctx.textAlign = "center";
+      ctx.font = `800 230px ${SANS}`;
+      ctx.fillStyle = theme.fg;
+      ctx.fillText(String(value), cx, cy - 10);
+      ctx.font = `600 56px ${SANS}`;
+      ctx.globalAlpha = 0.6;
+      ctx.fillText("/ 100", cx, cy + 140);
+      ctx.globalAlpha = easeOutCubic((local - 0.3) / 0.35);
+      const size = fitFont(ctx, scene.caption, (sz) => `700 ${sz}px ${SANS}`, W * 0.86, 76, 40);
+      ctx.font = `700 ${size}px ${SANS}`;
+      ctx.fillText(scene.caption, cx, cy + r + 150);
+      ctx.globalAlpha = 1;
+      break;
+    }
+
+    case "finding": {
+      const left = 70;
+      const right = W - 70;
+      const top = 700;
+      const cardH = 400;
+      const fixed = local > scene.duration * 0.5;
+      // Titolo sopra la scheda.
+      const tp = easeOutCubic(local / 0.3);
+      ctx.globalAlpha = tp;
+      const ts = fitFont(ctx, scene.title, (sz) => `800 ${sz}px ${SANS}`, W * 0.86, 80, 40);
+      ctx.font = `800 ${ts}px ${SANS}`;
+      ctx.fillStyle = theme.fg;
+      ctx.textAlign = "center";
+      ctx.fillText(scene.title, W / 2, top - 130);
+      ctx.globalAlpha = 1;
+
+      // La scheda è sempre scura, come il pannello di codice del sito.
+      const cardIn = easeOutBack(local / 0.4);
+      ctx.save();
+      ctx.translate(W / 2, top + cardH / 2);
+      ctx.scale(0.9 + 0.1 * cardIn, 0.9 + 0.1 * cardIn);
+      ctx.translate(-W / 2, -(top + cardH / 2));
+      roundRect(ctx, left, top, right - left, cardH, 32);
+      ctx.fillStyle = "#14171c";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#262b33";
+      ctx.stroke();
+
+      ctx.textAlign = "left";
+      ctx.font = `500 34px ${MONO}`;
+      ctx.fillStyle = "#939ca8";
+      ctx.fillText(ellipsize(ctx, scene.file, 520), left + 44, top + 70);
+
+      const tagP = easeOutBack((local - 0.35) / 0.3);
+      if (tagP > 0) {
+        const label = fixed ? "CORRETTO" : "CRITICO";
+        const color = fixed ? MINT : CRITICAL;
+        ctx.save();
+        ctx.translate(right - 150, top + 70);
+        ctx.scale(tagP, tagP);
+        ctx.font = `700 32px ${MONO}`;
+        const tw = ctx.measureText(label).width + 44;
+        roundRect(ctx, -tw / 2, -30, tw, 60, 30);
+        ctx.fillStyle = fixed ? "rgba(52,211,153,0.14)" : "rgba(255,107,107,0.14)";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.textAlign = "center";
+        ctx.fillText(label, 0, 2);
+        ctx.restore();
+      }
+
+      const codeLeft = left + 44;
+      const codeW = right - left - 88;
+      const lines: { sign: string; text: string; color: string; band: string | null; alpha: number }[] = [
+        { sign: "−", text: scene.before, color: "#eef1f4", band: "rgba(255,107,107,0.16)", alpha: fixed ? 0.45 : 1 },
+      ];
+      const afterP = easeOutCubic((local - scene.duration * 0.5) / 0.35);
+      if (fixed) lines.push({ sign: "+", text: scene.after, color: "#eef1f4", band: "rgba(52,211,153,0.16)", alpha: afterP });
+      const codeSize = Math.min(
+        ...[scene.before, scene.after].map((t) => fitFont(ctx, `− ${t}`, (sz) => `500 ${sz}px ${MONO}`, codeW - 20, 40, 24))
+      );
+      lines.forEach((line, i) => {
+        const ly = top + 200 + i * 150;
+        ctx.globalAlpha = line.alpha;
+        if (line.band) {
+          ctx.fillStyle = line.band;
+          ctx.fillRect(left + 3, ly - 52, right - left - 6, 104);
+        }
+        ctx.font = `500 ${codeSize}px ${MONO}`;
+        ctx.textAlign = "left";
+        ctx.fillStyle = line.sign === "+" ? MINT : CRITICAL;
+        ctx.fillText(line.sign, codeLeft, ly);
+        ctx.fillStyle = line.color;
+        ctx.fillText(ellipsize(ctx, line.text, codeW - 60), codeLeft + 50, ly);
+        ctx.globalAlpha = 1;
+      });
+
+      // Linea di scansione ambra che passa sulla scheda all'inizio, come il raggio della Sentinella.
+      const scanP = clamp01((local - 0.15) / 0.5);
+      if (scanP > 0 && scanP < 1) {
+        const sy = top + 20 + scanP * (cardH - 40);
+        const sg = ctx.createLinearGradient(0, sy - 40, 0, sy + 4);
+        sg.addColorStop(0, "rgba(245,166,35,0)");
+        sg.addColorStop(1, "rgba(245,166,35,0.55)");
+        ctx.fillStyle = sg;
+        ctx.fillRect(left + 3, sy - 40, right - left - 6, 44);
+      }
+      ctx.restore();
+      ctx.textAlign = "center";
+      break;
+    }
+
     case "cta": {
       const accent = theme.accent;
       const logoP = easeOutBack(local / 0.35);
       ctx.save();
-      ctx.translate(W / 2, H / 2 - 200);
+      ctx.translate(W / 2, H / 2 - 360);
       ctx.scale(logoP, logoP);
-      ctx.font = `700 170px ${MONO}`;
+      drawJxBadge(ctx, 0, 0, 230);
+      ctx.restore();
+      ctx.save();
+      ctx.translate(W / 2, H / 2 - 150);
+      ctx.scale(logoP, logoP);
+      ctx.font = `700 130px ${MONO}`;
       const jojoW = ctx.measureText("JoJo").width;
       const xW = ctx.measureText("X").width;
       ctx.textAlign = "left";
