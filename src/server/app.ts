@@ -24,6 +24,7 @@ import { analyzeAuditRouter } from "./routes/analyzeAudit.js";
 import { planTrialRouter } from "./routes/planTrial.js";
 import { teamRouter } from "./routes/team.js";
 import { sentinelRouter } from "./routes/sentinel.js";
+import { internalChecksRouter } from "./routes/internalChecks.js";
 import { chatRouter } from "./routes/chat.js";
 import { aiInsightsRouter } from "./routes/aiInsights.js";
 import { sarifImportRouter } from "./routes/sarifImport.js";
@@ -78,6 +79,7 @@ export function createApp(): Express {
   app.use(planTrialRouter);
   app.use(teamRouter);
   app.use(sentinelRouter);
+  app.use(internalChecksRouter);
   app.use(chatRouter);
   app.use(aiInsightsRouter);
   app.use(sarifImportRouter);

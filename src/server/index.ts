@@ -1,6 +1,7 @@
 import { env } from "./env.js";
 import { createApp } from "./app.js";
 import { startSentinelCron } from "./sentinel/cron.js";
+import { startSyntheticCheckCron } from "./syntheticCheckCron.js";
 import { initSentry } from "./sentry.js";
 
 // Prima di costruire l'app e avviare il cron: cattura gli errori delle
@@ -18,3 +19,4 @@ app.listen(env.port, () => {
 });
 
 startSentinelCron();
+startSyntheticCheckCron();
