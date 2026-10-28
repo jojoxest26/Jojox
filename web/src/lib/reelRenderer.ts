@@ -275,7 +275,9 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
         { text: l2, color: accent, delay: 0.14 },
       ].forEach(({ text, color, delay }, i) => {
         const p = easeOutCubic((local - delay) / 0.35);
-        ctx.globalAlpha = p;
+        // Entra quasi di colpo (3 fotogrammi) e poi scivola al suo posto: una dissolvenza lenta,
+        // su fondo ambra, lasciava per mezzo secondo un testo marrone su arancione quasi invisibile.
+        ctx.globalAlpha = clamp01(p * 4);
         ctx.fillStyle = color;
         ctx.fillText(text, 0, (i - 0.5) * size * 1.02 + (1 - p) * 50);
       });
