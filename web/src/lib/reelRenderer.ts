@@ -15,11 +15,39 @@ const SANS = '"Inter", -apple-system, "Segoe UI", Roboto, sans-serif';
 const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
 
-const BG: Record<ReelBackground, { bg: string; fg: string; muted: string; chipFill: string }> = {
-  dark: { bg: "#000000", fg: "#ffffff", muted: "rgba(255,255,255,0.14)", chipFill: "rgba(20,4,4,0.9)" },
-  light: { bg: "#ffffff", fg: "#0b0b0b", muted: "rgba(0,0,0,0.1)", chipFill: "#ffffff" },
+/**
+ * Colori del sito (web/src/index.css): fondo #0a0c0f, testo #eef1f4,
+ * ambra #f5a623 come accento principale, rosso #ff6b6b e azzurro #6ea8fe
+ * dei livelli di gravità. Ogni sfondo ha la sua variante dell'accento, per
+ * restare leggibile: l'ambra pura su bianco o su ambra non si vedrebbe.
+ */
+interface Palette {
+  bg: string;
+  fg: string;
+  chipFill: string;
+  accent: string;
+  /** Testo sopra una pillola piena del colore d'accento. */
+  onAccent: string;
+  strike: string;
+  grid: string;
+}
+
+const ACCENTS_BY_BG: Record<ReelBackground, Record<ReelAccent, string>> = {
+  dark: { amber: "#f5a623", red: "#ff6b6b", blue: "#6ea8fe" },
+  light: { amber: "#b86e00", red: "#d93636", blue: "#2a64d6" },
+  amber: { amber: "#ffffff", red: "#ffffff", blue: "#ffffff" },
 };
-const ACCENT: Record<ReelAccent, string> = { red: "#e50914", blue: "#2f5bff" };
+
+function palette(bg: ReelBackground, accent: ReelAccent = "amber"): Palette {
+  const a = ACCENTS_BY_BG[bg][accent];
+  if (bg === "dark") {
+    return { bg: "#0a0c0f", fg: "#eef1f4", chipFill: "#14171c", accent: a, onAccent: accent === "amber" ? "#171310" : "#0a0c0f", strike: "#ff6b6b", grid: "rgba(245,166,35,0.22)" };
+  }
+  if (bg === "light") {
+    return { bg: "#eef1f4", fg: "#0a0c0f", chipFill: "#ffffff", accent: a, onAccent: "#ffffff", strike: "#d93636", grid: "rgba(10,12,15,0.12)" };
+  }
+  return { bg: "#f5a623", fg: "#171310", chipFill: "#171310", accent: a, onAccent: "#171310", strike: "#171310", grid: "rgba(23,19,16,0.18)" };
+}
 
 /** Font da caricare prima di disegnare: senza, il primo fotogramma esce con un font di ripiego. */
 export const REEL_FONTS = [`800 100px ${SANS}`, `600 100px ${SANS}`, `italic 700 100px ${SERIF}`, `700 100px ${MONO}`];
@@ -144,7 +172,7 @@ const CHIP_SLOTS: [number, number][] = [
 ];
 
 function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: number) {
-  const theme = BG[scene.bg];
+  const theme = palette(scene.bg, "accent" in scene ? scene.accent : "amber");
   const W = REEL_WIDTH;
   const H = REEL_HEIGHT;
   ctx.fillStyle = theme.bg;
@@ -175,7 +203,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
     }
 
     case "headline": {
-      const accent = ACCENT[scene.accent];
+      const accent = theme.accent;
       (scene.chips ?? []).slice(0, CHIP_SLOTS.length).forEach((chip, i) => {
         const appear = easeOutBack((local - 0.08 * i) / 0.35);
         if (appear <= 0) return;
@@ -185,7 +213,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
         ctx.globalAlpha = clamp01(appear);
         ctx.translate(fx * W, fy * H + float);
         ctx.scale(appear, appear);
-        drawPill(ctx, chip, 0, 0, { size: 44, fill: theme.chipFill, stroke: accent, color: theme.fg });
+        drawPill(ctx, chip, 0, 0, { size: 44, fill: theme.chipFill, stroke: accent, color: scene.bg === "amber" ? "#ffffff" : theme.fg });
         ctx.restore();
       });
 
@@ -212,7 +240,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
     }
 
     case "strike": {
-      if (scene.bg === "dark") drawDotGrid(ctx, "rgba(255,255,255,0.18)");
+      if (scene.bg !== "light") drawDotGrid(ctx, theme.grid);
       const n = scene.words.length;
       const step = (scene.duration * 0.75) / n;
       const font = (s: number) => `italic 700 ${s}px ${SERIF}`;
@@ -237,7 +265,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
         ctx.save();
         ctx.translate(W / 2, y);
         ctx.rotate(0.06);
-        ctx.fillStyle = ACCENT.red;
+        ctx.fillStyle = theme.strike;
         ctx.fillRect(-half, -9, half * 2 * strikeP, 18);
         ctx.restore();
       });
@@ -245,7 +273,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
     }
 
     case "bars": {
-      const accent = ACCENT[scene.accent];
+      const accent = theme.accent;
       const left = 140;
       const right = W - 120;
       const top = 620;
@@ -271,15 +299,16 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
         const p = easeOutCubic((local - 0.1 - i * 0.12) / 0.6);
         const cx = left + slot * (i + 0.5);
         const h = (bar.value / max) * (bottom - top) * p;
-        ctx.fillStyle = accent;
+        // Le superfici piene restano nel colore pieno del sito anche su fondo chiaro: la variante scura serve solo ai testi.
+        ctx.fillStyle = scene.bg === "light" ? ACCENTS_BY_BG.dark[scene.accent] : accent;
         ctx.fillRect(cx - barW / 2, bottom - h, barW, h);
-        drawPill(ctx, bar.label, cx, bottom + 70, { size: Math.min(34, 260 / n), fill: accent, stroke: accent, color: "#ffffff" });
+        drawPill(ctx, bar.label, cx, bottom + 70, { size: Math.min(34, 260 / n), fill: ctx.fillStyle as string, stroke: ctx.fillStyle as string, color: scene.bg === "light" ? "#171310" : theme.onAccent });
       });
       break;
     }
 
     case "stat": {
-      const accent = ACCENT[scene.accent];
+      const accent = theme.accent;
       const p = easeOutCubic(local / Math.max(0.3, scene.duration * 0.55));
       const shown = Math.round(scene.value * p);
       const text = `${shown.toLocaleString("it-IT")}${scene.suffix ?? ""}`;
@@ -304,7 +333,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
     }
 
     case "cta": {
-      const accent = ACCENT[scene.accent];
+      const accent = theme.accent;
       const logoP = easeOutBack(local / 0.35);
       ctx.save();
       ctx.translate(W / 2, H / 2 - 200);
@@ -328,7 +357,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       ctx.fillText(scene.text, W / 2, H / 2 + 40 + (1 - tp) * 30);
       if (scene.sub) {
         const pulse = 1 + 0.03 * Math.sin(local * 5);
-        drawPill(ctx, scene.sub, W / 2, H / 2 + 220, { size: 56 * pulse, fill: accent, stroke: accent, color: "#ffffff" });
+        drawPill(ctx, scene.sub, W / 2, H / 2 + 220, { size: 56 * pulse, fill: accent, stroke: accent, color: theme.onAccent });
       }
       ctx.globalAlpha = 1;
       break;
@@ -341,7 +370,7 @@ export function drawReelFrame(ctx: CanvasRenderingContext2D, reel: Reel, t: numb
   ctx.save();
   if (at) drawScene(ctx, at.scene, at.local);
   else {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = palette("dark").bg;
     ctx.fillRect(0, 0, REEL_WIDTH, REEL_HEIGHT);
   }
   ctx.restore();

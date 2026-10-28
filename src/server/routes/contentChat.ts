@@ -28,8 +28,8 @@ export function isContentAdmin(email: string | undefined, adminEmails: string[])
 const duration = z
   .number()
   .transform((n) => Math.min(REEL_MAX_SCENE_SECONDS, Math.max(REEL_MIN_SCENE_SECONDS, n)));
-const bg = z.enum(["dark", "light"]).catch("dark");
-const accent = z.enum(["red", "blue"]).catch("red");
+const bg = z.enum(["dark", "light", "amber"]).catch("dark");
+const accent = z.enum(["amber", "red", "blue"]).catch("amber");
 const shortText = z.string().max(80);
 
 const sceneSchema = z.discriminatedUnion("type", [
@@ -117,14 +117,15 @@ export function buildContentSystemPrompt(currentReel: Reel | null): string {
       "Formato della risposta: prima 1-3 frasi in chat (l'idea del reel o cosa hai cambiato), poi il reel come JSON in un blocco ```reel ... ```. Se la persona fa solo una domanda o vuole idee senza un reel, rispondi senza blocco.",
       "Schema del JSON:",
       '{ "title": string, "voiceover": string (il testo parlato completo, che dura quanto il video), "caption": string (didascalia del post + 3-6 hashtag), "scenes": Scene[] }',
-      "Tipi di Scene (ogni scena ha duration in secondi, da 0.4 a 5; bg \"dark\" o \"light\"; accent \"red\" o \"blue\" dove previsto):",
+      "Tipi di Scene (ogni scena ha duration in secondi, da 0.4 a 5; bg \"dark\", \"light\" o \"amber\"; accent \"amber\", \"red\" o \"blue\" dove previsto):",
       '- { "type": "word", "text": "tutte", "bg": "dark", "duration": 0.6 } — una o due parole, la scena più usata, ritmo veloce (0.4-0.9 s).',
-      '- { "type": "headline", "line1": "MENTRE GLI ALTRI", "line2": "BUTTANO TEMPO", "chips": ["🐞 Bug", "🔑 Chiavi esposte"], "bg": "dark", "accent": "red", "duration": 2.2 } — titolo maiuscolo su due righe, line2 colorata; chips facoltative (max 6, emoji + 1-2 parole) che fluttuano intorno.',
+      '- { "type": "headline", "line1": "MENTRE GLI ALTRI", "line2": "BUTTANO TEMPO", "chips": ["🐞 Bug", "🔑 Chiavi esposte"], "bg": "dark", "accent": "amber", "duration": 2.2 } — titolo maiuscolo su due righe, line2 colorata; chips facoltative (max 6, emoji + 1-2 parole) che fluttuano intorno.',
       '- { "type": "strike", "words": ["Revisione a mano", "Ore perse", "61 controlli"], "bg": "dark", "duration": 2.5 } — tutte barrate tranne l\'ultima, che è la risposta.',
       '- { "type": "bars", "title": "Tempo", "bars": [{ "label": "A mano", "value": 90 }, { "label": "JoJoX", "value": 8 }], "bg": "light", "accent": "blue", "duration": 2.5 }',
-      '- { "type": "stat", "value": 61, "suffix": "", "caption": "controlli pubblici", "bg": "dark", "accent": "red", "duration": 2 }',
-      '- { "type": "cta", "text": "Provalo gratis", "sub": "jojox.it", "bg": "dark", "accent": "red", "duration": 2.5 } — sempre l\'ultima scena.',
-      "Linee guida: 15-35 secondi in totale, 12-30 scene; alterna dark e light per dare ritmo; le scene \"word\" seguono le parole chiave della voce fuori campo; testi brevissimi (lo schermo è un telefono).",
+      '- { "type": "stat", "value": 61, "suffix": "", "caption": "controlli pubblici", "bg": "dark", "accent": "amber", "duration": 2 }',
+      '- { "type": "cta", "text": "Provalo gratis", "sub": "jojox.it", "bg": "dark", "accent": "amber", "duration": 2.5 } — sempre l\'ultima scena.',
+      "Colori: sono quelli del sito di JoJoX. dark è il fondo principale, amber (il giallo JoJoX) è l'accento principale; light e lo sfondo amber servono per i cambi di ritmo, red e blue solo quando servono davvero (es. rosso per un problema, blu per un dato).",
+      "Linee guida: 15-35 secondi in totale, 12-30 scene; alterna dark, light e qualche amber per dare ritmo; le scene \"word\" seguono le parole chiave della voce fuori campo; testi brevissimi (lo schermo è un telefono).",
     ].join("\n"),
     currentReel
       ? `Il reel aperto ora in anteprima (se ti chiedono modifiche, parti da questo e rimanda il reel completo aggiornato):\n${JSON.stringify(currentReel)}`

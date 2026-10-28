@@ -5,8 +5,10 @@
  * condivisi da backend e frontend come src/types.ts.
  */
 
-export type ReelBackground = "dark" | "light";
-export type ReelAccent = "red" | "blue";
+/** Colori del sito: dark = fondo #0a0c0f, light = bianco caldo #eef1f4, amber = giallo JoJoX #f5a623. */
+export type ReelBackground = "dark" | "light" | "amber";
+/** amber = colore principale di JoJoX; red e blue = i colori di gravità del sito (critico, basso). */
+export type ReelAccent = "amber" | "red" | "blue";
 
 export type ReelScene =
   /** Una o due parole grandi al centro, che entrano con uno scatto. */
