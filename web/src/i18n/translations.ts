@@ -1007,6 +1007,16 @@ const it: TranslationTree = {
     toggleHide: "▲ Nascondi le novità",
     roadmap: [
       {
+        icon: "developer",
+        title: "Copertura estesa a 4 nuovi linguaggi",
+        text: "Gli stessi controlli di sicurezza funzionano ora anche su Python (Flask, Django), Go, Java (Spring) e PHP (Laravel) — non solo JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Piano Business e Audit con report NIS2/DORA",
+        text: "Un piano pensato per le aziende, fino a 25 persone e monitoraggio su tutto il codice, più un Full Site Audit che mappa i rilievi alla Direttiva NIS2 e al Regolamento DORA.",
+      },
+      {
         icon: "brain",
         title: "Revisione AI per bug di logica",
         text: "Un livello AI a parte, separato dai 61 controlli — cerca race condition ed errori nei controlli di autorizzazione che un pattern non può trovare da solo. Sempre un pulsante a parte, mai nel punteggio, mai una correzione automatica.",
@@ -1645,6 +1655,16 @@ const en: TranslationTree = {
     toggleShow: "▼ See what's new",
     toggleHide: "▲ Hide what's new",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Coverage extended to 4 more languages",
+        text: "The same security checks now also work on Python (Flask, Django), Go, Java (Spring) and PHP (Laravel) — not just JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Business plan and NIS2/DORA audit report",
+        text: "A plan built for companies, up to 25 people and monitoring across your whole codebase, plus a Full Site Audit that maps findings to the NIS2 Directive and the DORA Regulation.",
+      },
       {
         icon: "brain",
         title: "AI review for logic bugs",
@@ -2285,6 +2305,16 @@ const es: TranslationTree = {
     toggleHide: "▲ Ocultar las novedades",
     roadmap: [
       {
+        icon: "developer",
+        title: "Cobertura ampliada a 4 lenguajes más",
+        text: "Los mismos controles de seguridad ahora también funcionan en Python (Flask, Django), Go, Java (Spring) y PHP (Laravel) — no solo JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Plan Business y auditoría con informe NIS2/DORA",
+        text: "Un plan pensado para empresas, hasta 25 personas y monitoreo de todo el código, más una Auditoría Completa del Sitio que mapea los hallazgos a la Directiva NIS2 y al Reglamento DORA.",
+      },
+      {
         icon: "brain",
         title: "Revisión AI para bugs de lógica",
         text: "Un nivel de IA aparte, separado de los 61 controles — busca race conditions y errores en los controles de autorización que un patrón no puede encontrar por sí solo. Siempre un botón aparte, nunca en la puntuación, nunca una corrección automática.",
@@ -2923,6 +2953,16 @@ const fr: TranslationTree = {
     toggleShow: "▼ Voir les nouveautés",
     toggleHide: "▲ Masquer les nouveautés",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Couverture étendue à 4 nouveaux langages",
+        text: "Les mêmes contrôles de sécurité fonctionnent désormais aussi sur Python (Flask, Django), Go, Java (Spring) et PHP (Laravel) — pas seulement JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Plan Business et audit avec rapport NIS2/DORA",
+        text: "Un plan pensé pour les entreprises, jusqu'à 25 personnes et une surveillance sur tout le code, plus un Audit Complet du Site qui cartographie les constats vers la directive NIS2 et le règlement DORA.",
+      },
       {
         icon: "brain",
         title: "Revue IA pour les bugs logiques",
@@ -3563,6 +3603,16 @@ const pt: TranslationTree = {
     toggleHide: "▲ Ocultar as novidades",
     roadmap: [
       {
+        icon: "developer",
+        title: "Cobertura ampliada para mais 4 linguagens",
+        text: "Os mesmos controlos de segurança agora funcionam também em Python (Flask, Django), Go, Java (Spring) e PHP (Laravel) — não só JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Plano Business e auditoria com relatório NIS2/DORA",
+        text: "Um plano pensado para empresas, até 25 pessoas e monitorização de todo o código, mais uma Auditoria Completa do Site que mapeia os achados para a Diretiva NIS2 e o Regulamento DORA.",
+      },
+      {
         icon: "brain",
         title: "Revisão AI para bugs de lógica",
         text: "Um nível de IA à parte, separado das 61 verificações — procura race conditions e erros nos controlos de autorização que um padrão não consegue encontrar sozinho. Sempre um botão à parte, nunca na pontuação, nunca uma correção automática.",
@@ -4197,6 +4247,16 @@ const zh: TranslationTree = {
     toggleShow: "▼ 查看最新动态",
     toggleHide: "▲ 隐藏最新动态",
     roadmap: [
+      {
+        icon: "developer",
+        title: "新增支持 4 种编程语言",
+        text: "相同的安全检查现已支持 Python(Flask、Django)、Go、Java(Spring)和 PHP(Laravel)——不仅限于 JavaScript/TypeScript。",
+      },
+      {
+        icon: "office",
+        title: "企业版计划及 NIS2/DORA 合规报告审计",
+        text: "专为企业打造的计划,最多支持 25 人,监控全部代码,另有将问题映射到 NIS2 指令和 DORA 法规的完整站点审计。",
+      },
       {
         icon: "brain",
         title: "针对逻辑漏洞的 AI 审查",
@@ -4835,6 +4895,16 @@ const hi: TranslationTree = {
     toggleShow: "▼ नई चीज़ें देखें",
     toggleHide: "▲ नई चीज़ें छिपाएं",
     roadmap: [
+      {
+        icon: "developer",
+        title: "4 और भाषाओं तक कवरेज बढ़ाई गई",
+        text: "वही सुरक्षा जांच अब Python (Flask, Django), Go, Java (Spring) और PHP (Laravel) पर भी काम करती है — सिर्फ JavaScript/TypeScript नहीं।",
+      },
+      {
+        icon: "office",
+        title: "Business प्लान और NIS2/DORA रिपोर्ट वाला ऑडिट",
+        text: "कंपनियों के लिए बनाया गया प्लान, 25 लोगों तक और पूरे कोड पर निगरानी, साथ ही एक Full Site Audit जो निष्कर्षों को NIS2 निर्देश और DORA विनियम से मैप करता है।",
+      },
       {
         icon: "brain",
         title: "लॉजिक बग के लिए AI समीक्षा",
@@ -5475,6 +5545,16 @@ const ru: TranslationTree = {
     toggleHide: "▲ Скрыть обновления",
     roadmap: [
       {
+        icon: "developer",
+        title: "Поддержка расширена ещё на 4 языка",
+        text: "Те же проверки безопасности теперь работают и на Python (Flask, Django), Go, Java (Spring) и PHP (Laravel) — не только на JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "План Business и аудит с отчётом NIS2/DORA",
+        text: "План для компаний, до 25 человек и мониторинг всего кода, плюс полный аудит сайта, сопоставляющий находки с директивой NIS2 и регламентом DORA.",
+      },
+      {
         icon: "brain",
         title: "Проверка ИИ для логических багов",
         text: "Отдельный слой ИИ, отдельно от 61 проверок — ищет race condition и ошибки в логике авторизации, которые шаблон не может найти сам. Всегда своя кнопка, никогда не в оценке, никогда автоматическое исправление.",
@@ -6110,6 +6190,16 @@ const ar: TranslationTree = {
     toggleShow: "▼ عرض آخر التحديثات",
     toggleHide: "▲ إخفاء آخر التحديثات",
     roadmap: [
+      {
+        icon: "developer",
+        title: "تغطية موسّعة لـ 4 لغات إضافية",
+        text: "نفس فحوصات الأمان تعمل الآن أيضًا على Python (Flask، Django) وGo وJava (Spring) وPHP (Laravel) — وليس فقط JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "خطة Business وتدقيق بتقرير NIS2/DORA",
+        text: "خطة مصممة للشركات، حتى 25 شخصًا ومراقبة لكل الكود، بالإضافة إلى تدقيق كامل للموقع يربط النتائج بتوجيه NIS2 ولائحة DORA.",
+      },
       {
         icon: "brain",
         title: "مراجعة بالذكاء الاصطناعي لأخطاء المنطق",
@@ -6749,6 +6839,16 @@ const bn: TranslationTree = {
     toggleHide: "▲ নতুন তথ্য লুকান",
     roadmap: [
       {
+        icon: "developer",
+        title: "আরও ৪টি ভাষায় কভারেজ বাড়ানো হয়েছে",
+        text: "একই নিরাপত্তা চেকগুলো এখন Python (Flask, Django), Go, Java (Spring) এবং PHP (Laravel)-এও কাজ করে — শুধু JavaScript/TypeScript নয়।",
+      },
+      {
+        icon: "office",
+        title: "Business প্ল্যান এবং NIS2/DORA রিপোর্ট সহ অডিট",
+        text: "কোম্পানিগুলোর জন্য তৈরি একটি প্ল্যান, ২৫ জন পর্যন্ত এবং পুরো কোডে মনিটরিং, সাথে একটি সম্পূর্ণ সাইট অডিট যা ফলাফলগুলো NIS2 নির্দেশিকা এবং DORA বিধিমালার সাথে ম্যাপ করে।",
+      },
+      {
         icon: "brain",
         title: "লজিক বাগের জন্য AI পর্যালোচনা",
         text: "61টি পরীক্ষা থেকে আলাদা একটি AI লেয়ার — রেস কন্ডিশন এবং অথরাইজেশন লজিকের এমন ভুল খোঁজে যা কোনো প্যাটার্ন একা খুঁজে পায় না। সবসময় আলাদা বাটন, কখনো স্কোরে নয়, কখনো স্বয়ংক্রিয় সংশোধন নয়।",
@@ -7385,6 +7485,16 @@ const ur: TranslationTree = {
     toggleShow: "▼ نئی باتیں دیکھیں",
     toggleHide: "▲ نئی باتیں چھپائیں",
     roadmap: [
+      {
+        icon: "developer",
+        title: "مزید 4 زبانوں تک کوریج بڑھا دی گئی",
+        text: "وہی سیکیورٹی چیکس اب Python (Flask, Django)، Go، Java (Spring) اور PHP (Laravel) پر بھی کام کرتے ہیں — صرف JavaScript/TypeScript نہیں۔",
+      },
+      {
+        icon: "office",
+        title: "Business پلان اور NIS2/DORA رپورٹ کے ساتھ آڈٹ",
+        text: "کمپنیوں کے لیے بنایا گیا پلان، 25 افراد تک اور پورے کوڈ کی نگرانی، ساتھ ہی ایک مکمل سائٹ آڈٹ جو نتائج کو NIS2 ڈائریکٹیو اور DORA ریگولیشن سے میپ کرتا ہے۔",
+      },
       {
         icon: "brain",
         title: "لاجک بگز کے لیے AI جائزہ",
@@ -8025,6 +8135,16 @@ const id: TranslationTree = {
     toggleHide: "▲ Sembunyikan pembaruan",
     roadmap: [
       {
+        icon: "developer",
+        title: "Cakupan diperluas ke 4 bahasa baru",
+        text: "Pemeriksaan keamanan yang sama kini juga bekerja di Python (Flask, Django), Go, Java (Spring), dan PHP (Laravel) — tidak hanya JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Paket Business dan audit dengan laporan NIS2/DORA",
+        text: "Paket yang dirancang untuk perusahaan, hingga 25 orang dan pemantauan di seluruh kode, plus Audit Lengkap Situs yang memetakan temuan ke Direktif NIS2 dan Regulasi DORA.",
+      },
+      {
         icon: "brain",
         title: "Tinjauan AI untuk bug logika",
         text: "Lapisan AI terpisah dari 61 pemeriksaan — mencari race condition dan kesalahan logika otorisasi yang tidak bisa ditemukan oleh pola saja. Selalu tombol terpisah, tidak pernah masuk skor, tidak pernah perbaikan otomatis.",
@@ -8663,6 +8783,16 @@ const de: TranslationTree = {
     toggleShow: "▼ Neuigkeiten ansehen",
     toggleHide: "▲ Neuigkeiten ausblenden",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Abdeckung um 4 weitere Sprachen erweitert",
+        text: "Dieselben Sicherheitsprüfungen funktionieren jetzt auch für Python (Flask, Django), Go, Java (Spring) und PHP (Laravel) — nicht nur JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Business-Plan und Audit mit NIS2/DORA-Bericht",
+        text: "Ein Plan für Unternehmen, bis zu 25 Personen und Überwachung des gesamten Codes, plus ein vollständiger Site-Audit, der Befunde der NIS2-Richtlinie und der DORA-Verordnung zuordnet.",
+      },
       {
         icon: "brain",
         title: "KI-Prüfung für Logikfehler",
@@ -9303,6 +9433,16 @@ const fi: TranslationTree = {
     toggleHide: "▲ Piilota uutiset",
     roadmap: [
       {
+        icon: "developer",
+        title: "Kattavuus laajeni 4 uuteen kieleen",
+        text: "Samat tietoturvatarkistukset toimivat nyt myös Pythonilla (Flask, Django), Golla, Javalla (Spring) ja PHP:llä (Laravel) — ei vain JavaScript/TypeScriptillä.",
+      },
+      {
+        icon: "office",
+        title: "Yrityssuunnitelma ja NIS2/DORA-raportoitu auditointi",
+        text: "Yrityksille suunniteltu suunnitelma, jopa 25 henkilöä ja koko koodin valvonta, sekä koko sivuston auditointi, joka kartoittaa havainnot NIS2-direktiiviin ja DORA-asetukseen.",
+      },
+      {
         icon: "brain",
         title: "Tekoälytarkistus logiikkavirheille",
         text: "Erillinen tekoälykerros, erillään 61 tarkistuksesta — etsii race conditioneja ja valtuutuslogiikan virheitä, joita kaava ei pysty löytämään yksin. Aina oma painike, ei koskaan pisteisiin, ei koskaan automaattinen korjaus.",
@@ -9941,6 +10081,16 @@ const nl: TranslationTree = {
     toggleShow: "▼ Bekijk het nieuws",
     toggleHide: "▲ Verberg het nieuws",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Dekking uitgebreid naar 4 extra talen",
+        text: "Dezelfde beveiligingscontroles werken nu ook voor Python (Flask, Django), Go, Java (Spring) en PHP (Laravel) — niet alleen JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Zakelijk abonnement en audit met NIS2/DORA-rapport",
+        text: "Een abonnement voor bedrijven, tot 25 personen en bewaking van alle code, plus een volledige site-audit die bevindingen koppelt aan de NIS2-richtlijn en de DORA-verordening.",
+      },
       {
         icon: "brain",
         title: "AI-controle voor logicafouten",
@@ -10581,6 +10731,16 @@ const pl: TranslationTree = {
     toggleHide: "▲ Ukryj nowości",
     roadmap: [
       {
+        icon: "developer",
+        title: "Obsługa rozszerzona o 4 kolejne języki",
+        text: "Te same kontrole bezpieczeństwa działają teraz także dla Pythona (Flask, Django), Go, Javy (Spring) i PHP (Laravel) — nie tylko JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Plan Business i audyt z raportem NIS2/DORA",
+        text: "Plan stworzony dla firm, do 25 osób i monitorowanie całego kodu, a także pełny audyt witryny mapujący ustalenia do dyrektywy NIS2 i rozporządzenia DORA.",
+      },
+      {
         icon: "brain",
         title: "Kontrola AI dla błędów logicznych",
         text: "Osobna warstwa AI, oddzielona od 61 kontroli — szuka race conditions i błędów w logice autoryzacji, których żaden wzorzec nie znajdzie samodzielnie. Zawsze osobny przycisk, nigdy w wyniku, nigdy automatyczna poprawka.",
@@ -11219,6 +11379,16 @@ const sv: TranslationTree = {
     toggleShow: "▼ Se nyheterna",
     toggleHide: "▲ Dölj nyheterna",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Täckning utökad till 4 nya språk",
+        text: "Samma säkerhetskontroller fungerar nu även för Python (Flask, Django), Go, Java (Spring) och PHP (Laravel) — inte bara JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Företagsplan och granskning med NIS2/DORA-rapport",
+        text: "En plan byggd för företag, upp till 25 personer och övervakning av all kod, plus en komplett sajtgranskning som kartlägger fynd mot NIS2-direktivet och DORA-förordningen.",
+      },
       {
         icon: "brain",
         title: "AI-granskning för logikfel",
@@ -11859,6 +12029,16 @@ const da: TranslationTree = {
     toggleHide: "▲ Skjul nyhederne",
     roadmap: [
       {
+        icon: "developer",
+        title: "Dækning udvidet til 4 flere sprog",
+        text: "De samme sikkerhedstjek virker nu også på Python (Flask, Django), Go, Java (Spring) og PHP (Laravel) — ikke kun JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Erhvervsplan og revision med NIS2/DORA-rapport",
+        text: "En plan bygget til virksomheder, op til 25 personer og overvågning af al kode, plus en komplet sitegennemgang, der kortlægger fund til NIS2-direktivet og DORA-forordningen.",
+      },
+      {
         icon: "brain",
         title: "AI-gennemgang for logikfejl",
         text: "Et separat AI-lag, adskilt fra de 61 tjek — leder efter race conditions og fejl i autorisationslogikken, som et mønster ikke kan finde alene. Altid en separat knap, aldrig i scoren, aldrig en automatisk rettelse.",
@@ -12497,6 +12677,16 @@ const nb: TranslationTree = {
     toggleShow: "▼ Se det nyeste",
     toggleHide: "▲ Skjul det nyeste",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Dekning utvidet til 4 flere språk",
+        text: "De samme sikkerhetssjekkene fungerer nå også for Python (Flask, Django), Go, Java (Spring) og PHP (Laravel) — ikke bare JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "Bedriftsplan og revisjon med NIS2/DORA-rapport",
+        text: "En plan laget for bedrifter, opptil 25 personer og overvåking av all kode, pluss en komplett nettstedrevisjon som kartlegger funn mot NIS2-direktivet og DORA-forordningen.",
+      },
       {
         icon: "brain",
         title: "AI-gjennomgang for logikkfeil",
@@ -13137,6 +13327,16 @@ const tr: TranslationTree = {
     toggleHide: "▲ Güncellemeleri gizle",
     roadmap: [
       {
+        icon: "developer",
+        title: "Kapsam 4 yeni dile genişletildi",
+        text: "Aynı güvenlik kontrolleri artık Python (Flask, Django), Go, Java (Spring) ve PHP (Laravel) için de çalışıyor — sadece JavaScript/TypeScript değil.",
+      },
+      {
+        icon: "office",
+        title: "Business planı ve NIS2/DORA raporlu denetim",
+        text: "Şirketler için tasarlanmış bir plan, 25 kişiye kadar ve tüm kodun izlenmesi, ayrıca bulguları NIS2 Direktifi ve DORA Düzenlemesi ile eşleştiren Tam Site Denetimi.",
+      },
+      {
         icon: "brain",
         title: "Mantık hataları için AI incelemesi",
         text: "61 kontrolden ayrı bir AI katmanı — bir desenin tek başına bulamayacağı race condition'ları ve yetkilendirme mantığı hatalarını arar. Her zaman ayrı bir buton, asla puana dahil değil, asla otomatik düzeltme değil.",
@@ -13775,6 +13975,16 @@ const uk: TranslationTree = {
     toggleShow: "▼ Переглянути новини",
     toggleHide: "▲ Сховати новини",
     roadmap: [
+      {
+        icon: "developer",
+        title: "Підтримку розширено ще на 4 мови",
+        text: "Ті самі перевірки безпеки тепер працюють і для Python (Flask, Django), Go, Java (Spring) та PHP (Laravel) — не лише для JavaScript/TypeScript.",
+      },
+      {
+        icon: "office",
+        title: "План Business і аудит зі звітом NIS2/DORA",
+        text: "План для компаній, до 25 осіб і моніторинг усього коду, а також повний аудит сайту, що зіставляє знахідки з директивою NIS2 та регламентом DORA.",
+      },
       {
         icon: "brain",
         title: "Перевірка ШІ для логічних помилок",
@@ -14415,6 +14625,16 @@ const ja: TranslationTree = {
     toggleHide: "▲ アップデートを隠す",
     roadmap: [
       {
+        icon: "developer",
+        title: "対応言語が4つ追加されました",
+        text: "同じセキュリティチェックが、Python(Flask、Django)、Go、Java(Spring)、PHP(Laravel)でも利用可能になりました — JavaScript/TypeScriptだけではありません。",
+      },
+      {
+        icon: "office",
+        title: "Businessプランと NIS2/DORA レポート付き監査",
+        text: "企業向けに設計されたプラン、最大25名まで、コード全体を監視。さらにNIS2指令とDORA規則に検出結果をマッピングする完全サイト監査も。",
+      },
+      {
         icon: "brain",
         title: "ロジックバグのためのAIレビュー",
         text: "61のチェックとは別の、独立したAIレイヤーです。パターンだけでは見つけられない競合状態（race condition）や認可ロジックの誤りを探します。常に専用のボタンで、スコアに加算されることはなく、自動修正されることもありません。",
@@ -15053,6 +15273,16 @@ const ko: TranslationTree = {
     toggleShow: "▼ 업데이트 보기",
     toggleHide: "▲ 업데이트 숨기기",
     roadmap: [
+      {
+        icon: "developer",
+        title: "4개 언어로 지원 범위 확장",
+        text: "동일한 보안 검사가 이제 Python(Flask, Django), Go, Java(Spring), PHP(Laravel)에서도 작동합니다 — JavaScript/TypeScript뿐만 아니라요.",
+      },
+      {
+        icon: "office",
+        title: "Business 플랜 및 NIS2/DORA 보고서 감사",
+        text: "기업을 위해 설계된 플랜으로 최대 25명까지, 전체 코드 모니터링, 그리고 결과를 NIS2 지침 및 DORA 규정에 매핑하는 전체 사이트 감사까지 제공합니다.",
+      },
       {
         icon: "brain",
         title: "논리 버그를 위한 AI 검토",
