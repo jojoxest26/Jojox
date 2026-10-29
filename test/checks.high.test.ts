@@ -706,4 +706,36 @@ describe("high checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — Jenkins", () => {
+    it("jenkins-docker-socket-mount: flags the docker socket mounted via -v in an args string", () => {
+      const check = checkById("jenkins-docker-socket-mount");
+      const vulnerable = file(
+        "Jenkinsfile",
+        "agent {\n  docker {\n    image 'node:20'\n    args '-v /var/run/docker.sock:/var/run/docker.sock'\n  }\n}\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-docker-socket-mount: flags the long --volume form too", () => {
+      const check = checkById("jenkins-docker-socket-mount");
+      const vulnerable = file(
+        "Jenkinsfile",
+        "docker.image('node').inside('--volume /var/run/docker.sock:/var/run/docker.sock') {\n  sh 'docker ps'\n}\n"
+      );
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-docker-socket-mount: does not flag an unrelated volume mount", () => {
+      const check = checkById("jenkins-docker-socket-mount");
+      const clean = file("Jenkinsfile", "agent {\n  docker {\n    args '-v /workspace:/workspace'\n  }\n}\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("jenkins-docker-socket-mount: does not flag anything outside a Jenkinsfile", () => {
+      const check = checkById("jenkins-docker-socket-mount");
+      const clean = file("notes.txt", "-v /var/run/docker.sock:/var/run/docker.sock\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });
