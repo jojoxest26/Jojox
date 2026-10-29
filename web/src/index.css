@@ -845,10 +845,12 @@ body::after {
    sopra, scelti per leggersi bene su sfondo chiaro. Ma per bordo/barra
    laterale — puro elemento decorativo, nessun vincolo di leggibilità — nel
    chiaro usiamo invece i toni "-border", resi vivaci apposta (vedi
-   :root[data-theme="light"] in cima al file), così critico/alto/medio/basso
-   si riconoscono a colpo d'occhio invece di sembrare scoloriti. Nel tema
-   scuro --critical-border ecc. restano i toni smorzati originali, quindi qui
-   non li tocchiamo: barra e bordo pillola restano quelli già vivaci di loro. */
+   :root[data-theme="light"] in cima al file), così critico/alto/medio si
+   riconoscono a colpo d'occhio invece di sembrare scoloriti. Il blu (basso)
+   era già ben visibile di suo: lasciato con il colore originale, non con
+   "-border", per non cambiarlo senza motivo. Nel tema scuro --critical-border
+   ecc. restano i toni smorzati originali, quindi qui non li tocchiamo: barra
+   e bordo pillola restano quelli già vivaci di loro. */
 :root[data-theme="light"] .pill-critical {
   border-color: var(--critical-border);
 }
@@ -857,9 +859,6 @@ body::after {
 }
 :root[data-theme="light"] .pill-medium {
   border-color: var(--medium-border);
-}
-:root[data-theme="light"] .pill-low {
-  border-color: var(--low-border);
 }
 :root[data-theme="light"] .check-group[data-sev="critical"],
 :root[data-theme="light"] .finding-critical {
@@ -872,10 +871,6 @@ body::after {
 :root[data-theme="light"] .check-group[data-sev="medium"],
 :root[data-theme="light"] .finding-medium {
   border-left-color: var(--medium-border);
-}
-:root[data-theme="light"] .check-group[data-sev="low"],
-:root[data-theme="light"] .finding-low {
-  border-left-color: var(--low-border);
 }
 /* ---------- how it works ---------- */
 .how-it-works-section {
