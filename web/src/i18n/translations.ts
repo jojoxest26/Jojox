@@ -10353,7 +10353,7 @@ const pl: TranslationTree = {
   hero: {
     titleLine1: "Twój agent AI pisze kod każdego dnia, czy piszesz go Ty sam?",
     titleLine2Suffix: "czuwa nad nim.",
-    body: "To nie jednorazowa kontrola. {{monitoring}}. 64 publicznych kontroli problemów bezpieczeństwa w kodzie, jasny {{score}} i poprawki gotowe do skopiowania.",
+    body: "To nie jednorazowa kontrola. {{monitoring}}. 64 publiczne kontrole problemów bezpieczeństwa w kodzie, jasny {{score}} i poprawki gotowe do skopiowania.",
     bodyMonitoring: "Ciągłe monitorowanie",
     bodyScore: "wynik bezpieczeństwa",
     sub: "Kontrole, które normalnie zajmują godziny, teraz zautomatyzowane i zawsze aktywne.",
@@ -10364,7 +10364,7 @@ const pl: TranslationTree = {
     cta: "Przeanalizuj swój kod — za darmo",
     guestNote: "1 darmowa analiza bez e-maila. Potem wystarczy e-mail — 5 darmowych analiz/miesiąc.",
     scanTag: "KRYTYCZNY",
-    statChecksLabel: "publicznych kontroli",
+    statChecksLabel: "publiczne kontrole",
     statScoreLabel: "wynik",
     statFreeLabel: "darmowych analiz / miesiąc",
   },
@@ -10374,7 +10374,7 @@ const pl: TranslationTree = {
     step1Title: "Analizuj",
     step1Text: "Wgraj kod lub połącz swoje repozytorium GitHub.",
     step2Title: "Wykryj",
-    step2Text: "JoJoX uruchamia 64 kontroli i znajduje problemy bezpieczeństwa.",
+    step2Text: "JoJoX uruchamia 64 kontrole i znajduje problemy bezpieczeństwa.",
     step3Title: "Popraw",
     step3Text: "Otrzymaj wyjaśnienie, poziom istotności i gotową do skopiowania poprawkę.",
   },
@@ -10408,7 +10408,7 @@ const pl: TranslationTree = {
     question: "Mój agent AI już pisze kod. Czy nie może go też sprawdzić?",
     readMore: "Przeczytaj pełną odpowiedź",
     point1: "Możesz go o to poprosić. Ale w praktyce prawie nikt nie robi tego za każdym razem, w każdym pliku, po każdej zmianie — a wystarczy raz zapomnieć, by zostawić otwartą lukę. JoJoX nie czeka, aż sobie przypomnisz: sprawdza samodzielnie, przy każdym push.",
-    point2: "Pytanie modelu \"czy to bezpieczne?\" to jak pytanie o opinię: odpowiedź zmienia się za każdym razem i nie zostawia dowodu. JoJoX zawsze uruchamia te same 64 publicznych kontroli, identyczne dla wszystkich, weryfikowalne linia po linii w kodzie — werdykt, nie opinia.",
+    point2: "Pytanie modelu \"czy to bezpieczne?\" to jak pytanie o opinię: odpowiedź zmienia się za każdym razem i nie zostawia dowodu. JoJoX zawsze uruchamia te same 64 publiczne kontrole, identyczne dla wszystkich, weryfikowalne linia po linii w kodzie — werdykt, nie opinia.",
     point3: "Silnik, który decyduje, czy istnieje podatność, to zawsze czyste dopasowywanie wzorców, nigdy model AI: żadnych halucynacji, żadnych kosztów rosnących wraz z użyciem, natychmiastowe, zbudowane, by działać na każdym pull requeście tak często, jak potrzeba.",
     point4: "Oferujemy też osobne narzędzia AI — czat, który wyjaśnia wyniki, oraz opcjonalną warstwę, która szuka subtelniejszych błędów logicznych — ale żadne z nich nigdy nie decyduje, czy coś jest podatnością: ta decyzja zawsze należy do 64 kontroli, a każda sugestia AI jest zawsze wyraźnie oznaczona jako coś do sprawdzenia, nigdy nie jest dodawana do wyniku.",
     closingLead: "JoJoX nie zgaduje, czy Twój kod jest podatny na ataki.",
@@ -10471,7 +10471,7 @@ const pl: TranslationTree = {
   cloudChecks: {
     title: "Opcjonalne kontrole konfiguracji chmury i zależności.",
     subtitle:
-      "Polecenia tylko do odczytu, które uruchamiasz sam — JoJoX nigdy nie prosi o Twoje dane uwierzytelniające. Wgraj wynik razem z resztą kodu, a zostanie automatycznie dodany do pozostałych 64 kontroli (64 automatycznych + te 4 opcjonalne = 68 łącznie).",
+      "Polecenia tylko do odczytu, które uruchamiasz sam — JoJoX nigdy nie prosi o Twoje dane uwierzytelniające. Wgraj wynik razem z resztą kodu, a zostanie automatycznie dodany do pozostałych 64 kontroli (64 automatyczne + te 4 opcjonalne = 68 łącznie).",
   },
   pricing: {
     title: "Płacisz za ciągłe monitorowanie, nie za pojedyncze analizy",
@@ -10481,7 +10481,7 @@ const pl: TranslationTree = {
     guestTitle: "Tryb gościa",
     guestList: [
       "1 darmowa analiza, bez e-maila",
-      "Wszystkie 64 kontroli z przykładami poprawek",
+      "Wszystkie 64 kontrole z przykładami poprawek",
       "Wynik bezpieczeństwa",
       "Jedna próba na odwiedzającego, wymuszana przez nasz serwer",
     ],
@@ -10493,7 +10493,7 @@ const pl: TranslationTree = {
     freeList: [
       "5 analiz miesięcznie",
       "Nieprzerwane monitorowanie 24/7 dla 1 podłączonego repozytorium",
-      "Wszystkie 64 kontroli, z przykładami poprawek",
+      "Wszystkie 64 kontrole, z przykładami poprawek",
       "Wynik bezpieczeństwa + odznaka do pobrania (.svg)",
       "Historia ostatnich 20 analiz",
     ],
@@ -10639,7 +10639,7 @@ const pl: TranslationTree = {
     dropzoneHintLoggedIn: "Jesteś zalogowany: analiza zostaje zapisana w Twojej historii.",
     dropzoneHintGuest: "Tryb gościa: 1 darmowa analiza, bez e-maila. Potem wystarczy e-mail, by kontynuować (5 miesięcznie, za darmo).",
     dropzoneHintAny: "Działa z każdym kodem — nawet napisanym w całości ręcznie, nie tylko wygenerowanym przez AI.",
-    dropzoneHintLanguages: "64 kontroli obejmuje JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) i PHP (Laravel). W innych językach niektóre ogólne kontrole mogą nadal pomóc, ale pokrycie nie jest jeszcze kompletne.",
+    dropzoneHintLanguages: "64 kontrole obejmują JavaScript/TypeScript, SQL/Supabase, Python (Flask, Django), Go (Gin, net/http), Java (Spring) i PHP (Laravel). W innych językach niektóre ogólne kontrole mogą nadal pomóc, ale pokrycie nie jest jeszcze kompletne.",
     sectionEyebrow: "Analizator",
     sectionTitle: "Wgraj kod, zobacz co znajdzie.",
     moreFiles: "+{{count}} więcej",
@@ -10816,7 +10816,7 @@ const pl: TranslationTree = {
     shownNote: "Pokazujemy pierwsze {{shown}} — liczba według istotności powyżej obejmuje wszystkie {{total}}.",
     emptyState: "Brak problemów we wgranym pliku.",
     ctaTitle: "Chcesz zobaczyć, co JoJoX znajdzie w tym samym projekcie?",
-    ctaBody: "64 kontroli JoJoX jest deterministycznych i bezpłatnych do wypróbowania — wgraj ten sam kod do analizatora i porównaj wyniki.",
+    ctaBody: "64 kontrole JoJoX są deterministyczne i bezpłatne do wypróbowania — wgraj ten sam kod do analizatora i porównaj wyniki.",
     ctaButton: "Wypróbuj darmowy analizator",
   },
   aiInsights: {
@@ -10864,7 +10864,7 @@ const pl: TranslationTree = {
     brandSub: "Raport bezpieczeństwa kodu",
     reportLabel: "Raport",
     generatedOn: "Wygenerowano {{date}}",
-    controlsNoLLM: "64 kontroli · bez LLM",
+    controlsNoLLM: "64 kontrole · bez LLM",
     filesScannedOne: "1 plik przeskanowany",
     filesScannedMany: "{{count}} plików przeskanowanych",
     projectFallback: "Analiza kodu",
@@ -10898,7 +10898,7 @@ const pl: TranslationTree = {
     ctaText: "Przeanalizuj swój kod — za darmo",
     copyLink: "Kopiuj link",
     linkCopied: "✓ Link skopiowany",
-    poweredBy: "Wygenerowane przez JoJoX — 64 publicznych kontroli, bez LLM",
+    poweredBy: "Wygenerowane przez JoJoX — 64 publiczne kontrole, bez LLM",
   },
   fullSiteAudit: {
     eyebrow: "Nowość",
@@ -10908,7 +10908,7 @@ const pl: TranslationTree = {
     priceNote: "jednorazowa płatność, nie subskrypcja",
     features: [
       "Analizuje cały projekt — frontend i backend razem, nie tylko kilka zmian",
-      "Te same 64 publicznych kontroli, na tym samym silniku używanym do ciągłego monitorowania",
+      "Te same 64 publiczne kontrole, na tym samym silniku używanym do ciągłego monitorowania",
       "Automatyczne poprawki tam, gdzie to możliwe, jasne instrukcje dla reszty",
       "Raport PDF do pobrania, gotowy zaraz po płatności",
     ],
