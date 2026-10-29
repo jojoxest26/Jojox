@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { AnalysisHistoryEntry } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
-import { interpolate } from "../i18n/richText.js";
+import { interpolateCount } from "../i18n/richText.js";
 
 const WIDTH = 600;
 const HEIGHT = 100;
@@ -15,7 +15,7 @@ function formatShortDate(iso: string, dateLocale: string): string {
 }
 
 export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[] }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
@@ -59,8 +59,7 @@ export function ScoreHistoryChart({ history }: { history: AnalysisHistoryEntry[]
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="score-chart-svg"
         role="img"
-        aria-label={interpolate(t.scoreChart.ariaLabel, {
-          count: String(points.length),
+        aria-label={interpolateCount(t.scoreChart.ariaLabel, lang, points.length, {
           from: String(points[0].score),
           to: String(lastPoint.score),
         })}

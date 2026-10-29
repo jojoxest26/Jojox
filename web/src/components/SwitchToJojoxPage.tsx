@@ -2,7 +2,7 @@ import { useState, type DragEvent, type MouseEvent } from "react";
 import type { Severity } from "../../../src/types.js";
 import { importSarifFile, type SarifImportResult } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
-import { interpolate } from "../i18n/richText.js";
+import { interpolate, interpolateCount } from "../i18n/richText.js";
 import { LanguageSwitcher } from "./Header.js";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
@@ -22,7 +22,7 @@ function openAnalyzer(e: MouseEvent) {
 }
 
 export function SwitchToJojoxPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +135,7 @@ export function SwitchToJojoxPage() {
                     </span>
                   ))}
                 </div>
-                <p className="dropzone-hint">{interpolate(t.switchPage.totalFound, { count: String(total) })}</p>
+                <p className="dropzone-hint">{interpolateCount(t.switchPage.totalFound, lang, total)}</p>
                 {result.returnedFindings < result.totalFindings && (
                   <p className="dropzone-hint">
                     {interpolate(t.switchPage.shownNote, {

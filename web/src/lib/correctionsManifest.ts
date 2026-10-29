@@ -1,7 +1,7 @@
 import type { Finding, SourceFile } from "../../../src/types.js";
 import type { AutofixResult } from "../../../src/analyze.js";
-import type { TranslationTree } from "../i18n/translations.js";
-import { interpolate } from "../i18n/richText.js";
+import type { Lang, TranslationTree } from "../i18n/translations.js";
+import { interpolate, interpolateCount } from "../i18n/richText.js";
 
 /**
  * Testo del file CORREZIONI.txt incluso nello zip scaricabile: elenca quali
@@ -10,7 +10,12 @@ import { interpolate } from "../i18n/richText.js";
  * da un'analisi rifatta sui file già corretti, non dal risultato originale,
  * altrimenti conterebbe anche le occorrenze che l'autofix ha già risolto.
  */
-export function buildCorrectionsManifest(afterFindings: readonly Finding[], autofix: AutofixResult, t: TranslationTree): string {
+export function buildCorrectionsManifest(
+  afterFindings: readonly Finding[],
+  autofix: AutofixResult,
+  t: TranslationTree,
+  lang: Lang
+): string {
   const m = t.common.correctionsManifest;
   const lines: string[] = [m.title, "", m.filesIntro, "", interpolate(m.filesHeader, { count: String(autofix.changedFiles.length) })];
 
@@ -29,9 +34,9 @@ export function buildCorrectionsManifest(afterFindings: readonly Finding[], auto
   if (remainingByCheck.size === 0) {
     lines.push(m.manualNone);
   } else {
-    lines.push(interpolate(m.manualHeader, { count: String(remainingByCheck.size) }));
+    lines.push(interpolateCount(m.manualHeader, lang, remainingByCheck.size));
     for (const { title, count } of remainingByCheck.values()) {
-      lines.push(`- ${title} (${interpolate(m.occurrences, { count: String(count) })})`);
+      lines.push(`- ${title} (${interpolateCount(m.occurrences, lang, count)})`);
     }
   }
 
@@ -39,9 +44,14 @@ export function buildCorrectionsManifest(afterFindings: readonly Finding[], auto
 }
 
 /** I file da mettere nello zip scaricabile: solo quelli corretti, più il manifesto (CORREZIONI.txt o CORRECTIONS.txt a seconda della lingua). */
-export function buildCorrectionsZipEntries(afterFindings: readonly Finding[], autofix: AutofixResult, t: TranslationTree): SourceFile[] {
+export function buildCorrectionsZipEntries(
+  afterFindings: readonly Finding[],
+  autofix: AutofixResult,
+  t: TranslationTree,
+  lang: Lang
+): SourceFile[] {
   return [
     ...autofix.changedFiles,
-    { path: t.common.correctionsManifest.fileName, content: buildCorrectionsManifest(afterFindings, autofix, t) },
+    { path: t.common.correctionsManifest.fileName, content: buildCorrectionsManifest(afterFindings, autofix, t, lang) },
   ];
 }

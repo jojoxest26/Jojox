@@ -2,6 +2,7 @@ import { ALL_CHECKS } from "../../../src/checks/index.js";
 import type { Severity } from "../../../src/types.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
+import { resolvePlural } from "../i18n/plural.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low"];
@@ -20,7 +21,9 @@ export function ChecksList() {
       <h2>{t.checksList.title}</h2>
       <p>{t.checksList.body}</p>
       <p className="checks-sub">
-        {renderWithTokens(t.checksList.subLabel, { count: String(ALL_CHECKS.length) })}
+        {renderWithTokens(resolvePlural(t.checksList.subLabel, lang, ALL_CHECKS.length), {
+          count: String(ALL_CHECKS.length),
+        })}
       </p>
       {SEVERITY_ORDER.map((sev) => (
         <details key={sev} className="check-group" data-sev={sev}>

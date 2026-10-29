@@ -22,7 +22,7 @@ import { useBfcacheReset } from "../lib/useBfcacheReset.js";
 import { FindingsList } from "./FindingsList.js";
 import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
-import { interpolate } from "../i18n/richText.js";
+import { interpolate, interpolateCount } from "../i18n/richText.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 const MAX_FILES = 2000;
@@ -283,8 +283,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
         <>
           {!result && (
             <p className="dropzone-hint" style={{ textAlign: "center" }}>
-              {interpolate(t.fullSiteAudit.creditsAvailable, { count: String(credits) })}
-              {creditsBusiness > 0 && interpolate(t.fullSiteAudit.creditsAvailableBusinessSuffix, { count: String(creditsBusiness) })}
+              {interpolateCount(t.fullSiteAudit.creditsAvailable, lang, credits ?? 0)}
+              {creditsBusiness > 0 && interpolateCount(t.fullSiteAudit.creditsAvailableBusinessSuffix, lang, creditsBusiness)}
             </p>
           )}
 
@@ -382,7 +382,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   {analyzing
                     ? t.fullSiteAudit.analyzing
                     : files.length > 0
-                      ? interpolate(t.fullSiteAudit.analyzeButtonCount, { count: String(files.length) })
+                      ? interpolateCount(t.fullSiteAudit.analyzeButtonCount, lang, files.length)
                       : t.fullSiteAudit.analyzeButton}
                 </button>
                 {files.length > 0 && !analyzing && (
@@ -404,7 +404,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   { files: String(autofix.filesChanged), types: String(autofix.fixedCheckIds.size) }
                 )}
                 {autofix.manualCheckIds.size > 0 &&
-                  interpolate(t.analyzer.autofixManualSuffix, { count: String(autofix.manualCheckIds.size) })}
+                  interpolateCount(t.analyzer.autofixManualSuffix, lang, autofix.manualCheckIds.size)}
               </p>
               {afterFixScore != null && (
                 <>
@@ -440,7 +440,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                   className="btn btn-primary hard-border hard-shadow-sm"
                   onClick={() => {
                     const afterFindings = analyzeFiles(autofix.files).findings;
-                    downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t), t.common.correctionsManifest.zipFileName);
+                    downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t, lang), t.common.correctionsManifest.zipFileName);
                   }}
                 >
                   {t.fullSiteAudit.downloadZip}
