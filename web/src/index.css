@@ -75,25 +75,32 @@
   --muted-warm: #78716c;
 }
 
-/* ---------- scrollbar del sito, sullo stile scuro + ambra invece del grigio di default del browser ---------- */
+/* ---------- scrollbar del sito, ambra minimale su binario trasparente ----------
+   Il binario era colorato con --surface: nel tema scuro si confondeva col
+   resto (sembrava apposta), ma nel tema chiaro --surface è quasi bianco come
+   lo sfondo, quindi il binario spariva e restava solo il pallino arancione
+   "staccato" dal resto della pagina. Trasparente in entrambi i temi risolve
+   alla radice, invece di inseguire un colore diverso per ogni tema. */
 html {
   scrollbar-width: thin;
-  scrollbar-color: var(--accent) var(--surface);
+  scrollbar-color: var(--accent) transparent;
 }
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--surface);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: color-mix(in srgb, var(--accent) 75%, transparent);
   border-radius: 999px;
-  border: 2px solid var(--surface);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-hover);
+  background-clip: padding-box;
 }
 
 .font-logo {
