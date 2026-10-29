@@ -363,7 +363,7 @@ body::after {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(10, 12, 15, 0.88);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--border);
 }
