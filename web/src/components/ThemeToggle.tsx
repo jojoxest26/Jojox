@@ -16,11 +16,7 @@ export function ThemeToggle() {
       title={t.header.themeToggle}
       onClick={toggleTheme}
     >
-      <span className="theme-toggle-track">
-        <span className="theme-toggle-thumb">
-          <Icon name={theme === "dark" ? "moon" : "sun"} className="theme-toggle-icon" />
-        </span>
-      </span>
+      <Icon name={theme === "dark" ? "moon" : "sun"} className="theme-toggle-icon" />
     </button>
   );
 }

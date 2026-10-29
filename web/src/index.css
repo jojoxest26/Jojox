@@ -2476,43 +2476,25 @@ body::after {
 .theme-toggle {
   display: flex;
   align-items: center;
-  border: none;
-  background: none;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
   padding: 0;
   cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
-.theme-toggle-track {
-  display: flex;
-  align-items: center;
-  width: 2.6rem;
-  height: 1.5rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 2px;
-  transition: border-color 0.2s ease;
-}
-.theme-toggle:hover .theme-toggle-track {
+.theme-toggle:hover {
   border-color: var(--accent-soft);
-}
-.theme-toggle-thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.15rem;
-  height: 1.15rem;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-ink);
-  transform: translateX(0);
-  transition: transform 0.25s ease;
-}
-.theme-toggle[aria-checked="true"] .theme-toggle-thumb {
-  transform: translateX(1.1rem);
+  color: var(--accent);
 }
 .theme-toggle-icon {
-  width: 0.8rem;
-  height: 0.8rem;
+  width: 1.05rem;
+  height: 1.05rem;
 }
 .lang-chevron {
   width: 12px;
