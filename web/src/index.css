@@ -56,13 +56,13 @@
   --accent-ink: #171310;
   --accent-soft: #a66f14;
 
-  --critical-border: #e79f9f;
+  --critical-border: #e02424;
   --critical: #c92a2a;
   --critical-ink: #ffffff;
-  --high-border: #dfb68c;
+  --high-border: #f2730a;
   --high: #b85c00;
-  --medium-border: #cac096;
-  --medium: #8a7415;
+  --medium-border: var(--accent);
+  --medium: #9c6f08;
   --low-border: #a9c3ee;
   --low: #2159c9;
 
@@ -840,6 +840,42 @@ body::after {
   border-color: var(--low);
   border-width: 1px;
   box-shadow: none;
+}
+/* Tema chiaro: sul testo (pillole, badge) i colori di gravità restano quelli
+   sopra, scelti per leggersi bene su sfondo chiaro. Ma per bordo/barra
+   laterale — puro elemento decorativo, nessun vincolo di leggibilità — nel
+   chiaro usiamo invece i toni "-border", resi vivaci apposta (vedi
+   :root[data-theme="light"] in cima al file), così critico/alto/medio/basso
+   si riconoscono a colpo d'occhio invece di sembrare scoloriti. Nel tema
+   scuro --critical-border ecc. restano i toni smorzati originali, quindi qui
+   non li tocchiamo: barra e bordo pillola restano quelli già vivaci di loro. */
+:root[data-theme="light"] .pill-critical {
+  border-color: var(--critical-border);
+}
+:root[data-theme="light"] .pill-high {
+  border-color: var(--high-border);
+}
+:root[data-theme="light"] .pill-medium {
+  border-color: var(--medium-border);
+}
+:root[data-theme="light"] .pill-low {
+  border-color: var(--low-border);
+}
+:root[data-theme="light"] .check-group[data-sev="critical"],
+:root[data-theme="light"] .finding-critical {
+  border-left-color: var(--critical-border);
+}
+:root[data-theme="light"] .check-group[data-sev="high"],
+:root[data-theme="light"] .finding-high {
+  border-left-color: var(--high-border);
+}
+:root[data-theme="light"] .check-group[data-sev="medium"],
+:root[data-theme="light"] .finding-medium {
+  border-left-color: var(--medium-border);
+}
+:root[data-theme="light"] .check-group[data-sev="low"],
+:root[data-theme="light"] .finding-low {
+  border-left-color: var(--low-border);
 }
 /* ---------- how it works ---------- */
 .how-it-works-section {
