@@ -5401,7 +5401,7 @@ const ru: TranslationTree = {
   checksList: {
     title: "Все проверки, без секретов",
     body: "JoJoX не скрывает, как он работает: ниже полный список всех 64 проверок, их критичность и то, насколько мы уверены в каждой — «подтверждено», когда проблема точно есть, «требует проверки», когда в коде не хватает сигнала, но проблема может обрабатываться в другом месте (проверка всё равно выполняется всегда).",
-    subLabel: "{{count}} проверок, 4 уровня критичности",
+    subLabel: "{{count}} проверки, 4 уровня критичности",
   },
   team: {
     title: "Ваша команда",
@@ -10595,7 +10595,7 @@ const pl: TranslationTree = {
   checksList: {
     title: "Wszystkie kontrole, bez tajemnic",
     body: "JoJoX nie ukrywa, jak działa: poniżej znajduje się pełna lista wszystkich 64 kontroli, jak poważne są i jak bardzo jesteśmy pewni każdej z nich — „potwierdzony”, gdy problem jest pewny, „do weryfikacji”, gdy w kodzie brakuje sygnału, ale może być obsłużony gdzie indziej (kontrola i tak zawsze się wykonuje).",
-    subLabel: "{{count}} kontroli, w 4 poziomach istotności",
+    subLabel: "{{count}} kontrole, w 4 poziomach istotności",
   },
   team: {
     title: "Twój zespół",
@@ -13845,7 +13845,7 @@ const uk: TranslationTree = {
   checksList: {
     title: "Усі перевірки, жодних секретів",
     body: "JoJoX не приховує, як він працює: нижче наведено повний список усіх 64 перевірок, наскільки вони серйозні та наскільки ми впевнені в кожній — «підтверджено», коли проблема точна, «потребує перевірки», коли в коді бракує сигналу, але це може бути оброблено деінде (перевірка все одно завжди виконується).",
-    subLabel: "{{count}} перевірок, на 4 рівнях серйозності",
+    subLabel: "{{count}} перевірки, на 4 рівнях серйозності",
   },
   team: {
     title: "Ваша команда",
