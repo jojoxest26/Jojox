@@ -6,6 +6,7 @@ import type { GithubInstallation } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { LANG_NAMES, type Lang } from "../i18n/translations.js";
 import { Icon } from "./Icon.js";
+import { ThemeToggle } from "./ThemeToggle.js";
 
 const GITHUB_APP_SLUG = import.meta.env.VITE_GITHUB_APP_SLUG;
 
@@ -130,6 +131,7 @@ export function Header({ session, installations }: { session: Session | null; in
           <span className="logo font-logo">JoJoX</span>
         </a>
         <div className="header-actions">
+          <ThemeToggle />
           <LanguageSwitcher />
           <a
             className="btn btn-secondary hard-border hard-shadow-sm"

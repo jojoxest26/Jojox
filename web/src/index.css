@@ -14,6 +14,7 @@
 
   --critical-border: #7a2e2e;
   --critical: #ff6b6b;
+  --critical-ink: #1a0d0d;
   --high-border: #7a4a1e;
   --high: #ff9f45;
   --medium-border: #6b5c1a;
@@ -21,7 +22,57 @@
   --low-border: #24406e;
   --low: #6ea8fe;
 
+  /* Colori semantici usati fuori dalle 4 severità (stato "riuscito", avviso,
+     informativo) — prima erano esadecimali fissi sparsi nel file, mai
+     cambiati dal tema perché il sito era sempre scuro. Ora servono anche
+     per il tema chiaro, quindi diventano token come gli altri. */
+  --success: #34d399;
+  --success-hover: #4ee0ac;
+  --success-ink: #062017;
+  --success-soft: #6bcf9e;
+  --warning: #fbbf24;
+  --info: #7fb0e0;
+  --muted-warm: #a8a29e;
+
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Tema chiaro: scelta esplicita dello switch nell'header (mai automatica da
+   prefers-color-scheme — JoJoX nasce scuro, il chiaro è un'opzione, vedi
+   ThemeContext.tsx), applicata via [data-theme="light"] sull'<html>. Stessi
+   nomi di token, valori invertiti — ogni componente che usa già var(--x) si
+   adatta da solo, senza bisogno di toccare il resto del CSS. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf9f7;
+  --surface: #ffffff;
+  --surface-muted: #f1efec;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --border: #e4e1db;
+  --ink: #1a1a1a;
+  --accent: #f5a623;
+  --accent-hover: #dc930f;
+  --accent-ink: #171310;
+  --accent-soft: #a66f14;
+
+  --critical-border: #f3c6c6;
+  --critical: #c92a2a;
+  --critical-ink: #ffffff;
+  --high-border: #f5d9b8;
+  --high: #b85c00;
+  --medium-border: #f0e4b0;
+  --medium: #8a7415;
+  --low-border: #c5d9f5;
+  --low: #2159c9;
+
+  --success: #0f9d64;
+  --success-hover: #0c7a4e;
+  --success-ink: #ffffff;
+  --success-soft: #1a8f5c;
+  --warning: #d97706;
+  --info: #2b6cb0;
+  --muted-warm: #78716c;
 }
 
 /* ---------- scrollbar del sito, sullo stile scuro + ambra invece del grigio di default del browser ---------- */
@@ -145,8 +196,8 @@ body::after {
 /* ---------- inline highlights ---------- */
 .blue-highlight {
   display: inline-block;
-  background: rgba(110, 168, 254, 0.14);
-  color: #8fc0ff;
+  background: color-mix(in srgb, var(--info) 14%, transparent);
+  color: var(--info);
   padding: 0.15em 0.45em;
   border-radius: 0.4em;
   line-height: 1.3;
@@ -284,13 +335,15 @@ body::after {
 }
 
 .btn-mint {
-  background: #34d399;
-  color: #062017;
+  background: var(--success);
+  color: var(--success-ink);
   border-color: transparent;
-  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35), 0 10px 26px -10px rgba(52, 211, 153, 0.55);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--success) 35%, transparent),
+    0 10px 26px -10px color-mix(in srgb, var(--success) 55%, transparent);
 }
 .btn-mint:hover {
-  background: #4ee0ac;
+  background: var(--success-hover);
 }
 .btn-mint:disabled {
   opacity: 0.5;
@@ -597,10 +650,15 @@ body::after {
   flex: 0 1 640px;
 }
 .scanpanel {
+  /* Resta scuro fisso in entrambi i temi (come un vero pannello di
+     terminale/editor) — i colori della "finta riga di codice" dentro
+     (.scanpanel-code) sono pensati per uno sfondo scuro e non cambiano col
+     tema del sito, lo stesso compromesso che fanno molti editor/terminali
+     mostrati su pagine a tema chiaro. */
   position: relative;
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #14171c;
+  border: 1px solid #262b33;
   border-radius: 14px;
   overflow: hidden;
   padding: 22px 0;
@@ -622,7 +680,7 @@ body::after {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--border);
+  background: #262b33;
 }
 .scanpanel-code {
   position: relative;
@@ -654,11 +712,11 @@ body::after {
   color: #6b93c9;
 }
 .scanpanel-code .ln.found {
-  color: var(--text);
+  color: #eef1f4;
   position: relative;
 }
 .scanpanel-code .ln.found .num {
-  color: var(--critical);
+  color: #ff6b6b;
 }
 .scanpanel-found-mark {
   position: absolute;
@@ -678,7 +736,7 @@ body::after {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.65rem;
   font-weight: 600;
-  background: var(--critical);
+  background: #ff6b6b;
   color: #1a0d0d;
   padding: 3px 8px;
   border-radius: 4px;
@@ -736,41 +794,41 @@ body::after {
   background: var(--surface-muted);
 }
 .pill-mint {
-  background: #34d399;
-  color: #062017;
+  background: var(--success);
+  color: var(--success-ink);
   border-color: transparent;
 }
 .pill-amber {
-  background: #fbbf24;
-  color: #171310;
+  background: var(--warning);
+  color: var(--accent-ink);
   border-color: transparent;
 }
 .pill-plain {
   background: var(--surface);
 }
 .pill-critical {
-  background: rgba(255, 107, 107, 0.12);
+  background: color-mix(in srgb, var(--critical) 12%, transparent);
   color: var(--critical);
   border-color: var(--critical);
   border-width: 1px;
   box-shadow: none;
 }
 .pill-high {
-  background: rgba(255, 159, 69, 0.12);
+  background: color-mix(in srgb, var(--high) 12%, transparent);
   color: var(--high);
   border-color: var(--high);
   border-width: 1px;
   box-shadow: none;
 }
 .pill-medium {
-  background: rgba(240, 210, 100, 0.12);
+  background: color-mix(in srgb, var(--medium) 12%, transparent);
   color: var(--medium);
   border-color: var(--medium);
   border-width: 1px;
   box-shadow: none;
 }
 .pill-low {
-  background: rgba(110, 168, 254, 0.12);
+  background: color-mix(in srgb, var(--low) 12%, transparent);
   color: var(--low);
   border-color: var(--low);
   border-width: 1px;
@@ -915,9 +973,9 @@ body::after {
   height: 21px;
 }
 .feature-card-blue .feature-icon {
-  background: rgba(127, 176, 224, 0.16);
-  border: 1px solid rgba(127, 176, 224, 0.4);
-  color: #7fb0e0;
+  background: color-mix(in srgb, var(--info) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--info) 40%, transparent);
+  color: var(--info);
 }
 .feature-card-amber .feature-icon {
   background: rgba(245, 166, 35, 0.16);
@@ -925,9 +983,9 @@ body::after {
   color: var(--accent);
 }
 .feature-card-mint .feature-icon {
-  background: rgba(107, 207, 158, 0.16);
-  border: 1px solid rgba(107, 207, 158, 0.4);
-  color: #6bcf9e;
+  background: color-mix(in srgb, var(--success-soft) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-soft) 40%, transparent);
+  color: var(--success-soft);
 }
 .feature-card h3 {
   margin: 0;
@@ -1270,7 +1328,7 @@ body::after {
 }
 .finding-autofixed {
   font-weight: 700;
-  color: #4caf7d;
+  color: var(--success-soft);
 }
 .finding-desc {
   font-size: 0.88rem;
@@ -1306,10 +1364,10 @@ body::after {
   word-break: break-word;
 }
 .fix-before {
-  background: rgba(255, 107, 107, 0.08);
+  background: color-mix(in srgb, var(--critical) 8%, transparent);
 }
 .fix-after {
-  background: rgba(52, 211, 153, 0.1);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
 }
 .fix-label {
   font-size: 0.68rem;
@@ -1566,9 +1624,9 @@ body::after {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(127, 176, 224, 0.16);
-  border: 1px solid rgba(127, 176, 224, 0.4);
-  color: #7fb0e0;
+  background: color-mix(in srgb, var(--info) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--info) 40%, transparent);
+  color: var(--info);
 }
 .guest-title-icon svg {
   width: 18px;
@@ -1661,8 +1719,8 @@ body::after {
 }
 .price-card-badge.pill-mint {
   background: var(--bg);
-  color: #6bcf9e;
-  border: 1px solid #6bcf9e;
+  color: var(--success-soft);
+  border: 1px solid var(--success-soft);
 }
 .price-card h3 {
   margin: 0 0 0.2rem;
@@ -1763,7 +1821,7 @@ body::after {
   /* Stesso grigio caldo di price-card-note/.soon qui sotto, non il
      var(--text-muted) più freddo/bluastro usato altrove nel sito — dentro
      la stessa card i due testi devono intonarsi, non stonare. */
-  color: #a8a29e;
+  color: var(--muted-warm);
   flex: 1;
   display: grid;
   /* Senza questo, una lista corta (es. Enterprise) riempie comunque tutta
@@ -1775,7 +1833,7 @@ body::after {
 .price-card li .soon {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #a8a29e;
+  color: var(--muted-warm);
   margin-right: 0.3rem;
 }
 .price-card .btn {
@@ -1784,7 +1842,7 @@ body::after {
 .price-card-note {
   text-align: center;
   font-size: 0.72rem;
-  color: #a8a29e;
+  color: var(--muted-warm);
   margin: 0.5rem 0 0;
 }
 .pricing-disclaimer {
@@ -1814,8 +1872,8 @@ body::after {
   max-width: 560px;
 }
 .pricing-notice-success {
-  color: #34d399;
-  background: rgba(52, 211, 153, 0.12);
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
 }
 .pricing-error {
   text-align: center;
@@ -1983,9 +2041,9 @@ body::after {
   align-items: center;
   justify-content: center;
   margin-bottom: 0.9rem;
-  background: rgba(107, 207, 158, 0.12);
-  border: 1px solid rgba(107, 207, 158, 0.35);
-  color: #6bcf9e;
+  background: color-mix(in srgb, var(--success-soft) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-soft) 35%, transparent);
+  color: var(--success-soft);
 }
 .cloud-check-icon svg {
   width: 20px;
@@ -2413,6 +2471,48 @@ body::after {
 .lang-flag {
   font-size: 1rem;
   line-height: 1;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.theme-toggle-track {
+  display: flex;
+  align-items: center;
+  width: 2.6rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 2px;
+  transition: border-color 0.2s ease;
+}
+.theme-toggle:hover .theme-toggle-track {
+  border-color: var(--accent-soft);
+}
+.theme-toggle-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  transform: translateX(0);
+  transition: transform 0.25s ease;
+}
+.theme-toggle[aria-checked="true"] .theme-toggle-thumb {
+  transform: translateX(1.1rem);
+}
+.theme-toggle-icon {
+  width: 0.8rem;
+  height: 0.8rem;
 }
 .lang-chevron {
   width: 12px;

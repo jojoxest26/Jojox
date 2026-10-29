@@ -101,6 +101,7 @@ export interface TranslationTree {
     connected: string;
     logout: string;
     login: string;
+    themeToggle: string;
   };
   hero: {
     titleLine1: string;
@@ -608,6 +609,7 @@ const it: TranslationTree = {
     connected: "✓ GitHub collegato",
     logout: "Esci",
     login: "Accedi",
+    themeToggle: "Cambia tema",
   },
   hero: {
     titleLine1: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu?",
@@ -1257,6 +1259,7 @@ const en: TranslationTree = {
     connected: "✓ GitHub connected",
     logout: "Log out",
     login: "Log in",
+    themeToggle: "Toggle theme",
   },
   hero: {
     titleLine1: "Your AI agent writes code every day, or do you write it yourself?",
@@ -1906,6 +1909,7 @@ const es: TranslationTree = {
     connected: "✓ GitHub conectado",
     logout: "Cerrar sesión",
     login: "Iniciar sesión",
+    themeToggle: "Cambiar tema",
   },
   hero: {
     titleLine1: "Tu agente de IA escribe código todos los días, ¿o lo escribes tú?",
@@ -2555,6 +2559,7 @@ const fr: TranslationTree = {
     connected: "✓ GitHub connecté",
     logout: "Déconnexion",
     login: "Connexion",
+    themeToggle: "Changer de thème",
   },
   hero: {
     titleLine1: "Votre agent IA écrit du code tous les jours, ou l'écrivez-vous vous-même ?",
@@ -3204,6 +3209,7 @@ const pt: TranslationTree = {
     connected: "✓ GitHub ligado",
     logout: "Sair",
     login: "Entrar",
+    themeToggle: "Alternar tema",
   },
   hero: {
     titleLine1: "O seu agente de IA escreve código todos os dias, ou é você quem o escreve?",
@@ -3850,6 +3856,7 @@ const zh: TranslationTree = {
     connected: "✓ GitHub 已连接",
     logout: "退出登录",
     login: "登录",
+    themeToggle: "切换主题",
   },
   hero: {
     titleLine1: "你的 AI 智能体每天都在写代码，还是你自己写？",
@@ -4498,6 +4505,7 @@ const hi: TranslationTree = {
     connected: "✓ GitHub कनेक्ट है",
     logout: "लॉग आउट",
     login: "लॉग इन",
+    themeToggle: "थीम बदलें",
   },
   hero: {
     titleLine1: "आपका AI एजेंट रोज़ कोड लिखता है, या आप खुद लिखते हैं?",
@@ -5146,6 +5154,7 @@ const ru: TranslationTree = {
     connected: "✓ GitHub подключён",
     logout: "Выйти",
     login: "Войти",
+    themeToggle: "Сменить тему",
   },
   hero: {
     titleLine1: "Ваш ИИ-агент пишет код каждый день, или вы пишете его сами?",
@@ -5793,6 +5802,7 @@ const ar: TranslationTree = {
     connected: "✓ تم ربط GitHub",
     logout: "تسجيل الخروج",
     login: "تسجيل الدخول",
+    themeToggle: "تبديل المظهر",
   },
   hero: {
     titleLine1: "وكيل الذكاء الاصطناعي الخاص بك يكتب الكود كل يوم، أم أنك من يكتبه؟",
@@ -6441,6 +6451,7 @@ const bn: TranslationTree = {
     connected: "✓ GitHub সংযুক্ত",
     logout: "লগ আউট",
     login: "লগ ইন",
+    themeToggle: "থিম পরিবর্তন করুন",
   },
   hero: {
     titleLine1: "আপনার AI এজেন্ট প্রতিদিন কোড লেখে, নাকি আপনি নিজে লেখেন?",
@@ -7088,6 +7099,7 @@ const ur: TranslationTree = {
     connected: "✓ GitHub مربوط ہے",
     logout: "لاگ آؤٹ",
     login: "لاگ ان",
+    themeToggle: "تھیم تبدیل کریں",
   },
   hero: {
     titleLine1: "کیا آپ کا AI ایجنٹ روزانہ کوڈ لکھتا ہے، یا آپ خود لکھتے ہیں؟",
@@ -7736,6 +7748,7 @@ const id: TranslationTree = {
     connected: "✓ GitHub terhubung",
     logout: "Keluar",
     login: "Masuk",
+    themeToggle: "Ganti tema",
   },
   hero: {
     titleLine1: "Agen AI Anda menulis kode setiap hari, atau Anda yang menulisnya sendiri?",
@@ -8385,6 +8398,7 @@ const de: TranslationTree = {
     connected: "✓ GitHub verbunden",
     logout: "Abmelden",
     login: "Anmelden",
+    themeToggle: "Design wechseln",
   },
   hero: {
     titleLine1: "Dein KI-Agent schreibt jeden Tag Code — oder schreibst du ihn selbst?",
@@ -9034,6 +9048,7 @@ const fi: TranslationTree = {
     connected: "✓ GitHub yhdistetty",
     logout: "Kirjaudu ulos",
     login: "Kirjaudu sisään",
+    themeToggle: "Vaihda teema",
   },
   hero: {
     titleLine1: "Kirjoittaako tekoälyagenttisi koodia joka päivä, vai kirjoitatko sen itse?",
@@ -9683,6 +9698,7 @@ const nl: TranslationTree = {
     connected: "✓ GitHub gekoppeld",
     logout: "Uitloggen",
     login: "Inloggen",
+    themeToggle: "Thema wisselen",
   },
   hero: {
     titleLine1: "Schrijft jouw AI-agent elke dag code, of schrijf jij het zelf?",
@@ -10332,6 +10348,7 @@ const pl: TranslationTree = {
     connected: "✓ GitHub połączony",
     logout: "Wyloguj",
     login: "Zaloguj się",
+    themeToggle: "Zmień motyw",
   },
   hero: {
     titleLine1: "Twój agent AI pisze kod każdego dnia, czy piszesz go Ty sam?",
@@ -10981,6 +10998,7 @@ const sv: TranslationTree = {
     connected: "✓ GitHub anslutet",
     logout: "Logga ut",
     login: "Logga in",
+    themeToggle: "Byt tema",
   },
   hero: {
     titleLine1: "Skriver din AI-agent kod varje dag, eller skriver du den själv?",
@@ -11630,6 +11648,7 @@ const da: TranslationTree = {
     connected: "✓ GitHub forbundet",
     logout: "Log ud",
     login: "Log ind",
+    themeToggle: "Skift tema",
   },
   hero: {
     titleLine1: "Skriver din AI-agent kode hver dag, eller skriver du den selv?",
@@ -12279,6 +12298,7 @@ const nb: TranslationTree = {
     connected: "✓ GitHub tilkoblet",
     logout: "Logg ut",
     login: "Logg inn",
+    themeToggle: "Bytt tema",
   },
   hero: {
     titleLine1: "Skriver AI-agenten din kode hver dag, eller skriver du den selv?",
@@ -12928,6 +12948,7 @@ const tr: TranslationTree = {
     connected: "✓ GitHub bağlı",
     logout: "Çıkış yap",
     login: "Giriş yap",
+    themeToggle: "Temayı değiştir",
   },
   hero: {
     titleLine1: "Yapay zeka ajanınız her gün kod mu yazıyor, yoksa siz mi yazıyorsunuz?",
@@ -13577,6 +13598,7 @@ const uk: TranslationTree = {
     connected: "✓ GitHub під'єднано",
     logout: "Вийти",
     login: "Увійти",
+    themeToggle: "Змінити тему",
   },
   hero: {
     titleLine1: "Ваш ШІ-агент щодня пише код, чи пишете його ви самі?",
@@ -14226,6 +14248,7 @@ const ja: TranslationTree = {
     connected: "✓ GitHub接続済み",
     logout: "ログアウト",
     login: "ログイン",
+    themeToggle: "テーマを切り替え",
   },
   hero: {
     titleLine1: "あなたのAIエージェントは毎日コードを書いていますか、それともあなた自身が書いていますか？",
@@ -14875,6 +14898,7 @@ const ko: TranslationTree = {
     connected: "✓ GitHub 연결됨",
     logout: "로그아웃",
     login: "로그인",
+    themeToggle: "테마 전환",
   },
   hero: {
     titleLine1: "당신의 AI 에이전트가 매일 코드를 작성하나요, 아니면 직접 작성하나요?",

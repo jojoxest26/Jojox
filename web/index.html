@@ -9,10 +9,23 @@
     <meta name="google" content="notranslate" />
     <meta
       name="description"
-      content="JoJoX controlla il tuo codice — scritto a mano o generato dall'AI — con 61 controlli di sicurezza pubblici, un punteggio 0-100 e correzioni pronte da copiare."
+      content="JoJoX controlla il tuo codice — scritto a mano o generato dall'AI — con 64 controlli di sicurezza pubblici, un punteggio 0-100 e correzioni pronte da copiare."
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>JoJoX — Sicurezza per il tuo codice</title>
+    <script>
+      // Imposta il tema PRIMA che React monti, leggendo la stessa chiave che
+      // usa ThemeContext — altrimenti la pagina lampeggerebbe un istante nel
+      // tema sbagliato (scuro di default) prima di passare a quello salvato.
+      (function () {
+        try {
+          var saved = localStorage.getItem("jojox_theme");
+          if (saved === "light" || saved === "dark") {
+            document.documentElement.setAttribute("data-theme", saved);
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
