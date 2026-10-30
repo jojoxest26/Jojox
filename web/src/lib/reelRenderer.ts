@@ -215,6 +215,54 @@ function drawJxBadge(ctx: CanvasRenderingContext2D, cx: number, cy: number, size
   ctx.fillText("JX", cx, cy + size * 0.03);
 }
 
+/**
+ * Orologio stilizzato dietro una parola (es. "24/7"): solo contorno e lancette, in ambra
+ * semitrasparente, così il testo davanti resta leggibile. La lancetta lunga fa un giro al
+ * secondo e accende le tacche delle ore al suo passaggio: il tempo che scorre, giorno e notte.
+ */
+function drawClock(ctx: CanvasRenderingContext2D, local: number, bg: ReelBackground) {
+  const cx = REEL_WIDTH / 2;
+  const cy = REEL_HEIGHT / 2;
+  const appear = easeOutBack(local / 0.35);
+  if (appear <= 0) return;
+  const r = 400 * appear;
+  const base = bg === "amber" ? "23,19,16" : "245,166,35";
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = `rgba(${base},0.35)`;
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  const turn = (local % 1) * Math.PI * 2;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const lit = a <= turn;
+    ctx.strokeStyle = `rgba(${base},${lit ? 0.95 : 0.25})`;
+    ctx.lineWidth = i % 3 === 0 ? 14 : 8;
+    const inner = r * (i % 3 === 0 ? 0.82 : 0.88);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.sin(a) * inner, cy - Math.cos(a) * inner);
+    ctx.lineTo(cx + Math.sin(a) * r * 0.96, cy - Math.cos(a) * r * 0.96);
+    ctx.stroke();
+  }
+  const hand = (angle: number, length: number, width: number, alpha: number) => {
+    ctx.strokeStyle = `rgba(${base},${alpha})`;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.sin(angle) * length, cy - Math.cos(angle) * length);
+    ctx.stroke();
+  };
+  hand((local * Math.PI * 2) / 12, r * 0.5, 16, 0.5);
+  hand(turn, r * 0.78, 9, 0.6);
+  ctx.fillStyle = `rgba(${base},0.7)`;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: number) {
   const theme = palette(scene.bg, "accent" in scene ? scene.accent : "amber");
   const W = REEL_WIDTH;
@@ -226,6 +274,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
 
   switch (scene.type) {
     case "word": {
+      if (scene.clock) drawClock(ctx, local, scene.bg);
       const font = (s: number) => `800 ${s}px ${SANS}`;
       let lines = [scene.text];
       let size = fitFont(ctx, scene.text, font, W * 0.84, 170, 90);

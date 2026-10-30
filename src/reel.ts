@@ -11,8 +11,8 @@ export type ReelBackground = "dark" | "light" | "amber";
 export type ReelAccent = "amber" | "red" | "blue";
 
 export type ReelScene =
-  /** Una o due parole grandi al centro, che entrano con uno scatto. */
-  | { type: "word"; text: string; bg: ReelBackground; duration: number }
+  /** Una o due parole grandi al centro, che entrano con uno scatto. Con clock, dietro gira un orologio (es. per "24/7"). */
+  | { type: "word"; text: string; clock?: boolean; bg: ReelBackground; duration: number }
   /** Titolo in corsivo su due righe: la seconda nel colore d'accento. Etichette opzionali che fluttuano intorno. */
   | {
       type: "headline";

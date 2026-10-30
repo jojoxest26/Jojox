@@ -36,7 +36,7 @@ const accent = z.enum(["amber", "red", "blue"]).catch("amber");
 const shortText = z.string().max(80);
 
 const sceneSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("word"), text: shortText, bg, duration }),
+  z.object({ type: z.literal("word"), text: shortText, clock: z.boolean().optional(), bg, duration }),
   z.object({
     type: z.literal("headline"),
     line1: shortText,
@@ -139,7 +139,7 @@ export function buildContentSystemPrompt(currentReel: Reel | null): string {
       "Schema del JSON:",
       '{ "title": string, "voiceover": string (il testo parlato completo, che dura quanto il video), "caption": string (didascalia del post + 3-6 hashtag), "scenes": Scene[] }',
       "Tipi di Scene (ogni scena ha duration in secondi, da 0.4 a 5; bg \"dark\", \"light\" o \"amber\"; accent \"amber\", \"red\" o \"blue\" dove previsto):",
-      '- { "type": "word", "text": "tutte", "bg": "dark", "duration": 0.6 } — una o due parole, la scena più usata, ritmo veloce (0.4-0.9 s).',
+      '- { "type": "word", "text": "tutte", "bg": "dark", "duration": 0.6 } — una o due parole, la scena più usata, ritmo veloce (0.4-0.9 s). Con "clock": true dietro la parola gira un orologio stilizzato: usalo solo per parlare di tempo o di controllo continuo (es. "24/7", "anche di notte").',
       '- { "type": "headline", "line1": "MENTRE GLI ALTRI", "line2": "BUTTANO TEMPO", "chips": ["🐞 Bug", "🔑 Chiavi esposte"], "bg": "dark", "accent": "amber", "duration": 2.2 } — titolo maiuscolo su due righe, line2 colorata; chips facoltative (max 6, emoji + 1-2 parole) che fluttuano intorno.',
       `- { "type": "strike", "words": ["Revisione a mano", "Ore perse", "${CHECK_COUNT} controlli"], "bg": "dark", "duration": 2.5 } — tutte barrate tranne l'ultima, che è la risposta.`,
       '- { "type": "bars", "title": "Tempo", "bars": [{ "label": "A mano", "value": 90 }, { "label": "JoJoX", "value": 8 }], "bg": "light", "accent": "blue", "duration": 2.5 }',
