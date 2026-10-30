@@ -342,7 +342,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
     case "strike": {
       if (scene.bg !== "light") drawDotGrid(ctx, theme.grid);
       const n = scene.words.length;
-      const step = (scene.duration * 0.75) / n;
+      const step = scene.step ?? (scene.duration * 0.75) / n;
       const font = (s: number) => `italic 700 ${s}px ${SERIF}`;
       const size = Math.min(...scene.words.map((w) => fitFont(ctx, w, font, W * 0.8, 110, 50)));
       const gap = size * 1.5;

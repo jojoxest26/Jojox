@@ -23,8 +23,8 @@ export type ReelScene =
       accent: ReelAccent;
       duration: number;
     }
-  /** Parole in colonna: tutte barrate in rosso tranne l'ultima. */
-  | { type: "strike"; words: string[]; bg: ReelBackground; duration: number }
+  /** Parole in colonna: tutte barrate in rosso tranne l'ultima. step = secondi tra una parola e l'altra (per andare a tempo con la voce). */
+  | { type: "strike"; words: string[]; step?: number; bg: ReelBackground; duration: number }
   /** Grafico a barre che cresce. I valori sono altezze relative, mai mostrati come numeri. */
   | {
       type: "bars";

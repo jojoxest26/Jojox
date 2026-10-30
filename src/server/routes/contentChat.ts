@@ -46,7 +46,13 @@ const sceneSchema = z.discriminatedUnion("type", [
     accent,
     duration,
   }),
-  z.object({ type: z.literal("strike"), words: z.array(z.string().max(40)).min(2).max(5), bg, duration }),
+  z.object({
+    type: z.literal("strike"),
+    words: z.array(z.string().max(40)).min(2).max(5),
+    step: z.number().min(0.2).max(3).optional(),
+    bg,
+    duration,
+  }),
   z.object({
     type: z.literal("bars"),
     title: shortText,
