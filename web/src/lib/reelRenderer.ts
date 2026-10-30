@@ -523,7 +523,11 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       const right = W - 70;
       const top = 700;
       const cardH = 400;
-      const fixed = local > scene.duration * 0.5;
+      // tagAt/fixAt: quando compaiono l'etichetta del problema e la correzione, per andare a tempo
+      // con la voce. Senza, l'etichetta arriva subito e la correzione a metà scena.
+      const fixAt = scene.fixAt ?? scene.duration * 0.5;
+      const tagAt = scene.tagAt ?? 0.35;
+      const fixed = local > fixAt;
       // Titolo sopra la scheda.
       const tp = easeOutCubic(local / 0.3);
       ctx.globalAlpha = tp;
@@ -552,9 +556,9 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       ctx.fillStyle = "#939ca8";
       ctx.fillText(ellipsize(ctx, scene.file, 520), left + 44, top + 70);
 
-      const tagP = easeOutBack((local - 0.35) / 0.3);
+      const tagP = easeOutBack((local - tagAt) / 0.3);
       if (tagP > 0) {
-        const label = fixed ? "CORRETTO" : "CRITICO";
+        const label = fixed ? (scene.fixedLabel ?? "CORRETTO") : (scene.foundLabel ?? "CRITICO");
         const color = fixed ? MINT : CRITICAL;
         ctx.save();
         ctx.translate(right - 150, top + 70);
@@ -576,9 +580,16 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       const codeLeft = left + 44;
       const codeW = right - left - 88;
       const lines: { sign: string; text: string; color: string; band: string | null; alpha: number }[] = [
-        { sign: "−", text: scene.before, color: "#eef1f4", band: "rgba(255,107,107,0.16)", alpha: fixed ? 0.45 : 1 },
+        // Finché JoJoX non l'ha segnalata, la riga sembra normale: niente rosso né "−".
+        {
+          sign: local >= tagAt ? "−" : " ",
+          text: scene.before,
+          color: "#eef1f4",
+          band: local >= tagAt ? "rgba(255,107,107,0.16)" : null,
+          alpha: fixed ? 0.45 : 1,
+        },
       ];
-      const afterP = easeOutCubic((local - scene.duration * 0.5) / 0.35);
+      const afterP = easeOutCubic((local - fixAt) / 0.35);
       if (fixed) lines.push({ sign: "+", text: scene.after, color: "#eef1f4", band: "rgba(52,211,153,0.16)", alpha: afterP });
       const codeSize = Math.min(
         ...[scene.before, scene.after].map((t) => fitFont(ctx, `− ${t}`, (sz) => `500 ${sz}px ${MONO}`, codeW - 20, 40, 24))
@@ -600,7 +611,7 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       });
 
       // Linea di scansione ambra che passa sulla scheda all'inizio, come il raggio della Sentinella.
-      const scanP = clamp01((local - 0.15) / 0.5);
+      const scanP = clamp01((local - Math.max(0.15, tagAt - 0.5)) / 0.5);
       if (scanP > 0 && scanP < 1) {
         const sy = top + 20 + scanP * (cardH - 40);
         const sg = ctx.createLinearGradient(0, sy - 40, 0, sy + 4);

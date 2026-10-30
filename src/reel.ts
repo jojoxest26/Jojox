@@ -41,7 +41,21 @@ export type ReelScene =
   /** Il punteggio di sicurezza 0-100 come sul sito: un cerchio che si riempie mentre il numero sale. */
   | { type: "score"; from: number; to: number; caption: string; bg: ReelBackground; duration: number }
   /** Un problema trovato come lo mostra JoJoX: riga evidenziata con l'etichetta CRITICO, poi la correzione prima/dopo. */
-  | { type: "finding"; title: string; file: string; before: string; after: string; bg: ReelBackground; duration: number }
+  | {
+      type: "finding";
+      title: string;
+      file: string;
+      before: string;
+      after: string;
+      /** Secondi dall'inizio della scena in cui compaiono l'etichetta del problema e la correzione. */
+      tagAt?: number;
+      fixAt?: number;
+      /** Etichette della scheda, per i reel non in italiano (es. "CRITICAL", "THE FIX"). */
+      foundLabel?: string;
+      fixedLabel?: string;
+      bg: ReelBackground;
+      duration: number;
+    }
   /** Chiusura con il marchio JoJoX e un invito all'azione. */
   | { type: "cta"; text: string; sub?: string; bg: ReelBackground; accent: ReelAccent; duration: number };
 
