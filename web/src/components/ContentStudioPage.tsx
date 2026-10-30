@@ -29,7 +29,7 @@ const MAX_HISTORY_SENT = 20;
 
 const STARTERS = [
   "Reel: perché non basta chiedere all'AI se il codice è sicuro",
-  "Reel: i 61 controlli di JoJoX in 20 secondi",
+  "Reel: tutti i controlli di JoJoX in 20 secondi",
   "Reel: la Sentinella 24/7 che ricontrolla il codice ogni notte",
   "Reel: prova JoJoX gratis, senza nemmeno l'email",
 ];

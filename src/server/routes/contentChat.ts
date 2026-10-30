@@ -8,6 +8,9 @@ import { startOfTodayUtc } from "../plan.js";
 import { reportError } from "../sentry.js";
 import { logAiUsage } from "../aiUsageLog.js";
 import { PRODUCT_FACTS_IT } from "./chat.js";
+import { ALL_CHECKS } from "../../checks/index.js";
+
+const CHECK_COUNT = ALL_CHECKS.length;
 import { REEL_MAX_SCENE_SECONDS, REEL_MAX_SCENES, REEL_MIN_SCENE_SECONDS, type Reel } from "../../reel.js";
 
 /**
@@ -108,9 +111,9 @@ const contentChatRequestSchema = z
 /** Quello che il sito racconta di JoJoX, oltre ai fatti di prodotto: messaggi, tono, argomenti. */
 const SITE_MESSAGES_IT = `
 Messaggi del sito (usali come base dei contenuti, con parole tue):
-- Titolo principale: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu? JoJoX lo sorveglia." Non un controllo una tantum: monitoraggio continuo, 61 controlli pubblici, un punteggio di sicurezza chiaro e correzioni pronte da copiare. Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.
-- Come funziona: 1) Analizza — carica il codice o collega il repository GitHub. 2) Rileva — JoJoX esegue i 61 controlli. 3) Correggi — spiegazione, gravità e una correzione pronta da copiare (prima/dopo).
-- Perché non basta chiedere all'AI "è sicuro?": quasi nessuno lo chiede ogni volta, su ogni file, dopo ogni modifica — basta dimenticarsene una volta. Un modello dà un parere che cambia ogni volta e non lascia una prova; JoJoX esegue sempre gli stessi 61 controlli pubblici, verificabili riga per riga. Il motore è pattern matching puro, mai un LLM: nessuna allucinazione, istantaneo, gira su ogni pull request. Frase chiave: "JoJoX non indovina se il tuo codice è vulnerabile. Lo dimostra."
+- Titolo principale: "Il tuo agente AI scrive codice ogni giorno, o lo scrivi tu? JoJoX lo sorveglia." Non un controllo una tantum: monitoraggio continuo, ${CHECK_COUNT} controlli pubblici, un punteggio di sicurezza chiaro e correzioni pronte da copiare. Le verifiche che normalmente richiedono ore, automatizzate e sempre attive.
+- Come funziona: 1) Analizza — carica il codice o collega il repository GitHub. 2) Rileva — JoJoX esegue i ${CHECK_COUNT} controlli. 3) Correggi — spiegazione, gravità e una correzione pronta da copiare (prima/dopo).
+- Perché non basta chiedere all'AI "è sicuro?": quasi nessuno lo chiede ogni volta, su ogni file, dopo ogni modifica — basta dimenticarsene una volta. Un modello dà un parere che cambia ogni volta e non lascia una prova; JoJoX esegue sempre gli stessi ${CHECK_COUNT} controlli pubblici, verificabili riga per riga. Il motore è pattern matching puro, mai un LLM: nessuna allucinazione, istantaneo, gira su ogni pull request. Frase chiave: "JoJoX non indovina se il tuo codice è vulnerabile. Lo dimostra."
 - Copre ogni fase, non solo la pull request: mentre scrivi (estensione VS Code, e un agente AI come Claude Code o Cursor può controllarsi da solo via MCP), prima del commit (hook che blocca i problemi critici), a ogni pull request (blocca o propone la correzione), prima del rilascio (Full Site Audit), e per sempre dopo (Sentinella 24/7 che ricontrolla ogni notte, anche il codice non toccato).
 - Privacy: il testo dei file analizzati non viene mai conservato, solo i risultati; le correzioni automatiche restano sempre e solo nel browser.
 - Per chi è: developer, startup che sviluppano veloce, team con più repository, e chi sviluppa con agenti AI come Claude Code.
@@ -127,7 +130,7 @@ export function buildContentSystemPrompt(currentReel: Reel | null): string {
       "Regole sui contenuti:",
       "- Usa solo i fatti sopra. Mai inventare numeri, statistiche di mercato, clienti, recensioni, testimonianze, risultati ottenuti o premi. Se un'idea ha bisogno di un dato che non hai, riformulala senza quel dato.",
       "- Nelle scene \"bars\" i valori sono solo altezze relative (0-100), non vengono mostrati: usale per confronti qualitativi onesti (es. tempo di una revisione manuale contro un controllo automatico), mai per spacciare dati misurati.",
-      "- Nelle scene \"stat\" usa solo numeri presenti nei fatti (61 controlli, 5 analisi gratis al mese, punteggio 0-100, prezzi...).",
+      `- Nelle scene "stat" usa solo numeri presenti nei fatti (${CHECK_COUNT} controlli, 5 analisi gratis al mese, punteggio 0-100, prezzi...).`,
       "- Niente promesse assolute (\"100% sicuro\", \"zero vulnerabilità\"): JoJoX trova i problemi che i suoi controlli conoscono.",
       "- Scrivi in italiano, salvo che ti chiedano un'altra lingua.",
     ].join("\n"),
@@ -138,9 +141,9 @@ export function buildContentSystemPrompt(currentReel: Reel | null): string {
       "Tipi di Scene (ogni scena ha duration in secondi, da 0.4 a 5; bg \"dark\", \"light\" o \"amber\"; accent \"amber\", \"red\" o \"blue\" dove previsto):",
       '- { "type": "word", "text": "tutte", "bg": "dark", "duration": 0.6 } — una o due parole, la scena più usata, ritmo veloce (0.4-0.9 s).',
       '- { "type": "headline", "line1": "MENTRE GLI ALTRI", "line2": "BUTTANO TEMPO", "chips": ["🐞 Bug", "🔑 Chiavi esposte"], "bg": "dark", "accent": "amber", "duration": 2.2 } — titolo maiuscolo su due righe, line2 colorata; chips facoltative (max 6, emoji + 1-2 parole) che fluttuano intorno.',
-      '- { "type": "strike", "words": ["Revisione a mano", "Ore perse", "61 controlli"], "bg": "dark", "duration": 2.5 } — tutte barrate tranne l\'ultima, che è la risposta.',
+      `- { "type": "strike", "words": ["Revisione a mano", "Ore perse", "${CHECK_COUNT} controlli"], "bg": "dark", "duration": 2.5 } — tutte barrate tranne l'ultima, che è la risposta.`,
       '- { "type": "bars", "title": "Tempo", "bars": [{ "label": "A mano", "value": 90 }, { "label": "JoJoX", "value": 8 }], "bg": "light", "accent": "blue", "duration": 2.5 }',
-      '- { "type": "stat", "value": 61, "suffix": "", "caption": "controlli pubblici", "bg": "dark", "accent": "amber", "duration": 2 }',
+      `- { "type": "stat", "value": ${CHECK_COUNT}, "suffix": "", "caption": "controlli pubblici", "bg": "dark", "accent": "amber", "duration": 2 }`,
       '- { "type": "mascot", "text": "Ti presento la Sentinella", "bg": "dark", "duration": 2.5 } — la mascotte di JoJoX (un robottino guardiano con un occhio ambra e uno scanner) che entra e scansiona; text facoltativo. Usala una volta, quando entra in scena JoJoX.',
       '- { "type": "score", "from": 38, "to": 97, "caption": "punteggio di sicurezza", "bg": "dark", "duration": 2.5 } — il cerchio del punteggio 0-100 come sul sito. È una dimostrazione di come appare, non un risultato reale: non presentarlo mai come il punteggio di un cliente o di un progetto vero.',
       '- { "type": "finding", "title": "Chiave segreta nel codice", "file": "src/pagamenti.ts", "before": "const key = \\"sk_live_…\\"", "after": "const key = process.env.STRIPE_KEY", "bg": "dark", "duration": 3.5 } — un problema come lo mostra JoJoX: riga con etichetta CRITICO, poi la correzione. Usa un problema che i controlli di JoJoX trovano davvero (chiavi o password nel codice, chiave di servizio Supabase nel browser, CORS aperto a tutti, query SQL costruite concatenando testo…); codice cortissimo.',

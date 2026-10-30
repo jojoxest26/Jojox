@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildContentSystemPrompt, extractReel, isContentAdmin } from "../../src/server/routes/contentChat.js";
 import { parseEmailList } from "../../src/server/env.js";
+import { ALL_CHECKS } from "../../src/checks/index.js";
 
 const VALID_REEL = {
   title: "Prova",
@@ -59,7 +60,9 @@ describe("extractReel", () => {
 describe("buildContentSystemPrompt", () => {
   it("is grounded on the site facts and forbids invented data", () => {
     const prompt = buildContentSystemPrompt(null);
-    expect(prompt).toContain("61");
+    expect(prompt).toContain(`${ALL_CHECKS.length} controlli`);
+    // Il numero viene dal motore: nessun conteggio vecchio scritto a mano nel prompt.
+    expect(prompt).not.toMatch(new RegExp(`\\b(?!${ALL_CHECKS.length}\\b)\\d{2} controlli`));
     expect(prompt).toContain("jojox.it");
     expect(prompt).toContain("Mai inventare");
   });
