@@ -290,7 +290,9 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       }
       const scale = 0.82 + 0.18 * easeOutBack(local / 0.2);
       ctx.save();
-      ctx.globalAlpha = clamp01(local / 0.06);
+      // Visibile già dal primo fotogramma (l'entrata è solo lo scatto di scala): Instagram, TikTok
+      // e X usano il fotogramma 0 come anteprima, e con una dissolvenza veniva nero.
+      ctx.globalAlpha = 1;
       ctx.translate(W / 2, H / 2);
       ctx.scale(scale, scale);
       ctx.font = font(size);
