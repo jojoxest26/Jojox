@@ -1350,4 +1350,42 @@ describe("critical checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — Jenkins", () => {
+    it("jenkins-pipeline-script-injection: flags a double-quoted sh step interpolating env.CHANGE_TITLE", () => {
+      const check = checkById("jenkins-pipeline-script-injection");
+      const vulnerable = file("Jenkinsfile", 'sh "deploy.sh ${env.CHANGE_TITLE}"\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-pipeline-script-injection: flags ghprbPullTitle from the GitHub Pull Request Builder plugin", () => {
+      const check = checkById("jenkins-pipeline-script-injection");
+      const vulnerable = file("Jenkinsfile", 'bat "echo ${ghprbPullTitle}"\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-pipeline-script-injection: flags the dangerous var inside a triple-quoted multiline sh block", () => {
+      const check = checkById("jenkins-pipeline-script-injection");
+      const vulnerable = file("Jenkinsfile", 'sh """\n  echo start\n  deploy.sh ${env.CHANGE_TITLE}\n"""\n');
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-pipeline-script-injection: does not flag the same text inside single-quoted Groovy (no interpolation)", () => {
+      const check = checkById("jenkins-pipeline-script-injection");
+      const clean = file("Jenkinsfile", "sh 'deploy.sh ${env.CHANGE_TITLE}'\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("jenkins-pipeline-script-injection: does not flag a trusted build-internal variable", () => {
+      const check = checkById("jenkins-pipeline-script-injection");
+      const clean = file("Jenkinsfile", 'sh "echo ${env.BUILD_NUMBER}"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("jenkins-pipeline-script-injection: does not flag anything outside a Jenkinsfile", () => {
+      const check = checkById("jenkins-pipeline-script-injection");
+      const clean = file("deploy.sh", 'sh "deploy.sh ${env.CHANGE_TITLE}"\n');
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

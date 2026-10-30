@@ -788,4 +788,36 @@ describe("medium checks", () => {
       expect(detect(check, clean)).toHaveLength(0);
     });
   });
+
+  describe("Nuovo blocco — Jenkins", () => {
+    it("jenkins-unpinned-image: flags an image with no tag", () => {
+      const check = checkById("jenkins-unpinned-image");
+      const vulnerable = file("Jenkinsfile", "agent {\n  docker { image 'node' }\n}\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-unpinned-image: flags an image explicitly pinned to :latest", () => {
+      const check = checkById("jenkins-unpinned-image");
+      const vulnerable = file("Jenkinsfile", "agent {\n  docker { image 'node:latest' }\n}\n");
+      expect(detect(check, vulnerable)).toHaveLength(1);
+    });
+
+    it("jenkins-unpinned-image: does not flag an image pinned to a specific tag", () => {
+      const check = checkById("jenkins-unpinned-image");
+      const clean = file("Jenkinsfile", "agent {\n  docker { image 'node:20.11.1' }\n}\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("jenkins-unpinned-image: does not flag an image pinned to a digest", () => {
+      const check = checkById("jenkins-unpinned-image");
+      const clean = file("Jenkinsfile", "agent {\n  docker { image 'node@sha256:abcdef1234567890' }\n}\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+
+    it("jenkins-unpinned-image: does not flag anything outside a Jenkinsfile", () => {
+      const check = checkById("jenkins-unpinned-image");
+      const clean = file("docker-compose.yml", "services:\n  app:\n    - image: node:latest\n");
+      expect(detect(check, clean)).toHaveLength(0);
+    });
+  });
 });

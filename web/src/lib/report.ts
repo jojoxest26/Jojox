@@ -4,7 +4,7 @@
 import type { AnalysisResult, Finding, Severity, SourceFile } from "../../../src/types.js";
 import type { AutofixResult } from "../../../src/analyze.js";
 import { translations, RTL_LANGS, type Lang } from "../i18n/translations.js";
-import { interpolate } from "../i18n/richText.js";
+import { interpolate, interpolateCount } from "../i18n/richText.js";
 import { translateCheckText } from "../i18n/checkTranslations.js";
 import { complianceDomainForCheckId, type ComplianceDomain } from "./nis2DoraMapping.js";
 
@@ -161,8 +161,7 @@ export function buildReportHtml(
       ? `<p class="autofix-note">${
           fixableCount === 1
             ? interpolate(t.report.autofixNoteOne, { total: String(result.findings.length) })
-            : interpolate(t.report.autofixNoteMany, {
-                count: String(fixableCount),
+            : interpolateCount(t.report.autofixNoteMany, lang, fixableCount, {
                 total: String(result.findings.length),
               })
         }${t.report.autofixNoteSuffix}</p>`
@@ -173,7 +172,7 @@ export function buildReportHtml(
       ? t.report.noProblems
       : result.findings.length === 1
         ? t.report.oneProblem
-        : interpolate(t.report.manyProblems, { count: String(result.findings.length) });
+        : interpolateCount(t.report.manyProblems, lang, result.findings.length);
 
   return `<!doctype html>
 <html lang="${lang}" dir="${RTL_LANGS.has(lang) ? "rtl" : "ltr"}">
@@ -501,7 +500,7 @@ export function buildReportHtml(
         <span class="files-scanned">${
           files.length === 1
             ? t.report.filesScannedOne
-            : interpolate(t.report.filesScannedMany, { count: String(files.length) })
+            : interpolateCount(t.report.filesScannedMany, lang, files.length)
         }</span>
       </div>
 

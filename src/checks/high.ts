@@ -12,6 +12,7 @@ import {
   isTerraformFile,
   isGitlabCiFile,
   isCircleCiFile,
+  isJenkinsFile,
   nearbyMatches,
   fileMatch,
 } from "../util/scan.js";
@@ -685,5 +686,24 @@ export const highChecks: Check[] = [
       return matches;
     },
     // Nessun autofix: l'impronta della chiave giusta da restringere non è deducibile dal codice.
+  },
+
+  {
+    id: "jenkins-docker-socket-mount",
+    severity: "high",
+    confidence: "confirmed",
+    title: "Il Jenkinsfile monta il socket Docker dell'host dentro il container dell'agent",
+    description:
+      "Un agent Docker del Jenkinsfile (\"args\"/\"inside\" con \"-v /var/run/docker.sock:/var/run/docker.sock\", o l'equivalente \"--volume\") dà al container accesso diretto al demone Docker dell'host. Chi controlla quel container controlla di fatto l'host: può avviare un nuovo container privilegiato che monta l'intero filesystem della macchina, un passo comune per uscire dall'isolamento del container (\"container breakout\") — concettualmente lo stesso rischio già coperto per un Pod Kubernetes con hostPath sul socket Docker.",
+    fix: {
+      before: `agent {\n  docker {\n    image 'node:20'\n    args '-v /var/run/docker.sock:/var/run/docker.sock'\n  }\n}`,
+      after: `// evita di montare il socket Docker dell'host — usa invece Docker-in-Docker isolato,\n// Kaniko, o un agent con i permessi Docker già pensati per la CI (es. kubernetes-plugin con un sidecar dind)`,
+    },
+    detect(file) {
+      if (!isJenkinsFile(file)) return [];
+      return scanLines(file, /(?:-v|--volume)\s+[^\s:]*\/var\/run\/docker\.sock:[^\s:]*\/var\/run\/docker\.sock/);
+    },
+    // Nessun autofix: la via alternativa giusta (dind isolato, Kaniko, un
+    // agent diverso) dipende da come il job usa davvero Docker.
   },
 ];

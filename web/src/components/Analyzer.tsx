@@ -17,7 +17,7 @@ import { useBfcacheReset } from "../lib/useBfcacheReset.js";
 import { FindingsList } from "./FindingsList.js";
 import { AiInsightsSection } from "./AiInsightsSection.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
-import { interpolate } from "../i18n/richText.js";
+import { interpolate, interpolateCount } from "../i18n/richText.js";
 
 const MAX_FILES = 300;
 const SKIP_PATH = /(^|\/)(node_modules|\.git|dist|build|\.next|coverage)\//;
@@ -236,7 +236,7 @@ export function Analyzer({
               {analyzing
                 ? t.analyzer.analyzing
                 : files.length > 0
-                  ? interpolate(t.analyzer.analyzeButtonCount, { count: String(files.length) })
+                  ? interpolateCount(t.analyzer.analyzeButtonCount, lang, files.length)
                   : t.analyzer.analyzeButton}
             </button>
           </div>
@@ -262,14 +262,14 @@ export function Analyzer({
                   { files: String(autofix.filesChanged), types: String(autofix.fixedCheckIds.size) }
                 )}
                 {autofix.manualCheckIds.size > 0 &&
-                  interpolate(t.analyzer.autofixManualSuffix, { count: String(autofix.manualCheckIds.size) })}
+                  interpolateCount(t.analyzer.autofixManualSuffix, lang, autofix.manualCheckIds.size)}
               </p>
               <button
                 type="button"
                 className="btn btn-primary hard-border hard-shadow-sm"
                 onClick={() => {
                   const afterFindings = analyzeFiles(autofix.files).findings;
-                  downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t), t.common.correctionsManifest.zipFileName);
+                  downloadZip(buildCorrectionsZipEntries(afterFindings, autofix, t, lang), t.common.correctionsManifest.zipFileName);
                 }}
               >
                 {t.analyzer.downloadZip}

@@ -9,6 +9,7 @@ import {
   isGithubActionsWorkflow,
   isGitlabCiFile,
   isCircleCiFile,
+  isJenkinsFile,
 } from "../util/scan.js";
 
 /**
@@ -608,6 +609,42 @@ export const mediumChecks: Check[] = [
         if (!m) return;
         const ref = m[1];
         if (ref.startsWith("$") || ref.startsWith("<<")) return; // variabile/parametro: non valutabile staticamente
+        if (ref.includes("@sha256:")) return; // già fissata per digest
+        const tag = dockerImageTag(ref);
+        if (tag === null || tag === "latest") {
+          matches.push({ line: idx + 1, snippet: redactLine(lineText, 0, lineText.length) });
+        }
+      });
+
+      return matches;
+    },
+    // Nessun autofix: non possiamo sapere quale sia la versione giusta a cui fissarla.
+  },
+
+  {
+    id: "jenkins-unpinned-image",
+    severity: "medium",
+    confidence: "heuristic",
+    title: "L'immagine Docker dell'agent Jenkins non è fissata a una versione precisa",
+    description:
+      "Un \"image\" dell'agent Docker del Jenkinsfile punta a un'immagine senza tag (equivale a \":latest\") o esplicitamente a \":latest\". Chi mantiene quell'immagine può sostituirne il contenuto in qualsiasi momento senza che il Jenkinsfile cambi — la stessa pipeline può iniziare a usare codice diverso da un giorno all'altro, un rischio di supply chain identico a quello già coperto per GitHub Actions, GitLab CI e CircleCI.",
+    fix: {
+      before: `agent {\n  docker { image 'node:latest' }\n}`,
+      after: `agent {\n  docker { image 'node:20.11.1' }  // tag specifico (o un digest "node@sha256:...") invece di "latest"\n}`,
+    },
+    detect(file) {
+      if (!isJenkinsFile(file)) return [];
+      const matches: CheckMatch[] = [];
+      const lines = file.content.split("\n");
+
+      lines.forEach((lineText, idx) => {
+        // A differenza di GitLab/CircleCI (YAML, "image:" sempre da sola sulla
+        // riga), in Groovy "image 'node'" sta spesso dentro "docker { ... }"
+        // tutto su una riga — niente ancoraggio di fine riga qui.
+        const m = /\bimage\s*\(?\s*["']([^"']+)["']/.exec(lineText);
+        if (!m) return;
+        const ref = m[1];
+        if (ref.startsWith("$")) return; // riferimento a una variabile: non valutabile staticamente
         if (ref.includes("@sha256:")) return; // già fissata per digest
         const tag = dockerImageTag(ref);
         if (tag === null || tag === "latest") {

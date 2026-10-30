@@ -56,6 +56,17 @@ export function isCircleCiFile(file: SourceFile): boolean {
   return /(^|\/)\.circleci\/config\.ya?ml$/i.test(file.path);
 }
 
+/**
+ * True per un Jenkinsfile (pipeline dichiarativa o scripted) — il nome
+ * convenzionale "Jenkinsfile" in una cartella qualunque, con o senza
+ * un'estensione dopo (es. "Jenkinsfile.groovy", "ci/Jenkinsfile"). Usato dai
+ * controlli sulla sicurezza della CI Jenkins.
+ */
+export function isJenkinsFile(file: SourceFile): boolean {
+  const basename = file.path.split("/").pop() ?? "";
+  return /^Jenkinsfile(\..+)?$/i.test(basename);
+}
+
 const K8S_WORKLOAD_KIND = /^kind:\s*["']?(Pod|Deployment|StatefulSet|DaemonSet|ReplicaSet|Job|CronJob)["']?\s*$/im;
 
 /**
