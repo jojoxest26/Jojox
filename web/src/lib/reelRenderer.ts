@@ -279,7 +279,12 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
       let lines = [scene.text];
       let size = fitFont(ctx, scene.text, font, W * 0.84, 170, 90);
       ctx.font = font(size);
-      if (ctx.measureText(scene.text).width > W * 0.84) {
+      if (scene.text.includes("\n")) {
+        // A capo scelto da chi scrive il reel: la frase va su più righe grandi invece di
+        // rimpicciolirsi per stare su una.
+        lines = scene.text.split("\n");
+        size = Math.min(...lines.map((l) => fitFont(ctx, l, font, W * 0.84, 150, 60)));
+      } else if (ctx.measureText(scene.text).width > W * 0.84) {
         lines = splitInTwo(scene.text);
         size = Math.min(...lines.map((l) => fitFont(ctx, l, font, W * 0.84, 150, 60)));
       }
