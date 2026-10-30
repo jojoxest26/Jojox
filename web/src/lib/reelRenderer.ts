@@ -355,9 +355,9 @@ function drawScene(ctx: CanvasRenderingContext2D, scene: ReelScene, local: numbe
 
     case "stat": {
       const accent = theme.accent;
-      // Il numero arriva al valore vero entro 0,8 secondi e poi resta fermo: un fotogramma preso a
+      // Il numero arriva al valore vero entro 0,4 secondi e poi resta fermo: un fotogramma preso a
       // metà conteggio (es. "60" invece di "61") sembrerebbe un errore nel numero.
-      const p = easeOutCubic(local / Math.min(0.8, Math.max(0.3, scene.duration * 0.55)));
+      const p = easeOutCubic(local / Math.min(0.4, Math.max(0.3, scene.duration * 0.55)));
       const shown = Math.round(scene.value * p);
       const text = `${shown.toLocaleString("it-IT")}${scene.suffix ?? ""}`;
       const final = `${scene.value.toLocaleString("it-IT")}${scene.suffix ?? ""}`;
