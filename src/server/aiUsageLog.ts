@@ -21,6 +21,6 @@ export async function logAiUsage(params: {
     output_tokens: params.outputTokens,
   });
   if (error) {
-    console.error("Errore nel log del consumo token AI", error);
+    // console.error("Errore nel log del consumo token AI", error);  // rimossa da JoJoX: registrava dati sensibili nei log
   }
 }
