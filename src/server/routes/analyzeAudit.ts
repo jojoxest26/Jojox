@@ -175,5 +175,5 @@ analyzeAuditRouter.post("/api/analyze-audit", requireAuth, async (req: AuthedReq
     }
   }
 
-  res.json({ ...result, prUrl, prSkipped, tier: credit.tier as "standard" | "business" });
+  res.json({ ...result, prUrl, prSkipped, tier: credit.tier as "standard" | "business", auditCreditId: credit.id });
 });

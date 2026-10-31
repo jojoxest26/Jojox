@@ -13,7 +13,16 @@ type Status = "idle" | "loading" | "done" | "error";
  * solo). Sempre dietro un clic esplicito — mai lanciata insieme all'analisi
  * normale — così resta chiaro che è un livello a parte, non un 56° controllo.
  */
-export function AiInsightsSection({ files, session }: { files: SourceFile[]; session: Session }) {
+export function AiInsightsSection({
+  files,
+  session,
+  auditCreditId,
+}: {
+  files: SourceFile[];
+  session: Session;
+  /** Id del credito Full Site Audit appena consumato: sblocca una revisione gratuita per quell'audit, anche sul piano Free. */
+  auditCreditId?: string;
+}) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<Status>("idle");
   const [insights, setInsights] = useState<AiInsight[] | null>(null);
@@ -25,7 +34,7 @@ export function AiInsightsSection({ files, session }: { files: SourceFile[]; ses
     setErrorMsg(null);
     setGated(false);
     try {
-      const { insights: result } = await fetchAiInsights(files, session.access_token);
+      const { insights: result } = await fetchAiInsights(files, session.access_token, auditCreditId);
       setInsights(result);
       setStatus("done");
     } catch (err) {

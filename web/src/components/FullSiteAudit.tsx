@@ -27,6 +27,7 @@ import {
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
 import { useBfcacheReset } from "../lib/useBfcacheReset.js";
+import { AiInsightsSection } from "./AiInsightsSection.js";
 import { FindingsList } from "./FindingsList.js";
 import { ScoreRing } from "./ScoreRing.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
@@ -68,6 +69,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   const [selectedRepoFullName, setSelectedRepoFullName] = useState<string | null>(null);
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [prSkipped, setPrSkipped] = useState<"mismatch" | null>(null);
+  const [auditCreditId, setAuditCreditId] = useState<string | null>(null);
+  const [filesForInsights, setFilesForInsights] = useState<SourceFile[]>([]);
 
   const [profile, setProfile] = useState<ProfileDetails | null>(null);
   const [activatingTrial, setActivatingTrial] = useState(false);
@@ -192,6 +195,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAfterFixScore(null);
     setPrUrl(null);
     setPrSkipped(null);
+    setAuditCreditId(null);
+    setFilesForInsights([]);
     setError(null);
   }
 
@@ -208,6 +213,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAfterFixScore(null);
     setPrUrl(null);
     setPrSkipped(null);
+    setAuditCreditId(null);
+    setFilesForInsights([]);
     setError(null);
   }
 
@@ -219,6 +226,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAfterFixFindingsCount(null);
     setPrUrl(null);
     setPrSkipped(null);
+    setAuditCreditId(null);
+    setFilesForInsights([]);
     setError(null);
   }
 
@@ -240,12 +249,15 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       setResultTier(analysisResult.tier);
       setPrUrl(analysisResult.prUrl);
       setPrSkipped(analysisResult.prSkipped);
+      setAuditCreditId(analysisResult.auditCreditId);
       // Stessa esclusione applicata lato server prima di calcolare `result`:
       // senza questa riga l'autofix e il punteggio prima/dopo mostrati qui
       // giravano sui 218 file grezzi invece che su quelli davvero analizzati,
       // mostrando un riepilogo (es. "19 problemi da correggere a mano") che
-      // non corrispondeva alla Pull Request realmente aperta.
+      // non corrispondeva alla Pull Request realmente aperta. Riusata anche
+      // per la Revisione AI, per lo stesso motivo.
       const filesForAutofix = githubTarget ? excludeSelfScanFixtures(files, githubTarget.owner, githubTarget.repo) : files;
+      setFilesForInsights(filesForAutofix);
       const autofixResult = applyAutofixes(filesForAutofix);
       setAutofix(autofixResult);
       // Ricalcoliamo il punteggio (e il numero di problemi) sui file corretti
@@ -280,6 +292,8 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     setAfterFixFindingsCount(null);
     setPrUrl(null);
     setPrSkipped(null);
+    setAuditCreditId(null);
+    setFilesForInsights([]);
     setError(null);
   }
 
@@ -518,6 +532,10 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
           )}
 
           {result && <FindingsList result={result} autofix={autofix} />}
+
+          {result && session && (
+            <AiInsightsSection files={filesForInsights} session={session} auditCreditId={auditCreditId ?? undefined} />
+          )}
         </>
       ) : (
         <div className="card full-site-audit-card">

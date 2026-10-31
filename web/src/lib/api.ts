@@ -177,10 +177,14 @@ export async function importSarifFile(sarifContent: string): Promise<SarifImport
  * — cerca solo race condition ed errori nei controlli di autorizzazione, mai
  * in automatico (un pulsante a parte), mai contribuisce al punteggio.
  */
-export function fetchAiInsights(files: SourceFile[], accessToken: string): Promise<{ insights: AiInsight[] }> {
+export function fetchAiInsights(
+  files: SourceFile[],
+  accessToken: string,
+  auditCreditId?: string
+): Promise<{ insights: AiInsight[] }> {
   return apiFetch<{ insights: AiInsight[] }>("/api/ai-insights", {
     method: "POST",
-    body: JSON.stringify({ files }),
+    body: JSON.stringify({ files, auditCreditId }),
     accessToken,
   });
 }
@@ -326,6 +330,8 @@ export interface AuditResult extends AnalysisResult {
   prSkipped: "mismatch" | null;
   /** Quale credito è stato consumato: "business" fa scaricare il report con la mappatura NIS2/DORA. */
   tier: "standard" | "business";
+  /** Id del credito consumato: sblocca una Revisione AI gratuita per questo audit, vedi AiInsightsSection. */
+  auditCreditId: string;
 }
 
 /** Esegue un Full Site Audit — consuma un credito acquistato, limite file più alto dell'analisi normale. */
