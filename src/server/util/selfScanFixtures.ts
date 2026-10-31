@@ -5,7 +5,7 @@
  * i loro test, e le loro descrizioni tradotte in 23 lingue
  * (web/src/i18n/checkTranslations.ts) contengono però, come parte necessaria
  * della loro stessa definizione, esempi letterali del pattern che ciascun
- * controllo cerca (es. "md5(password)", "createHash(\"md5\")",
+ * controllo cerca (es. "await bcrypt.hash(password, 12) /* JoJoX: serve il pacchetto bcrypt — npm install bcrypt */", "createHash(\"md5\")",
  * "redirect(\"/\")" nei commenti che spiegano un'altra sintassi equivalente,
  * o lo stesso esempio di fix ripetuto in ogni lingua). Il motore è un
  * confronto testuale, non un'analisi semantica: non distingue "questo è un
