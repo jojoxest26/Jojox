@@ -105,16 +105,32 @@ aiInsightsRouter.post("/api/ai-insights", requireAuth, async (req: AuthedRequest
     }
   }
 
+  // Riserviamo subito il posto, prima della chiamata al modello (che può
+  // durare diversi secondi) invece che dopo: leggere il conteggio e scrivere
+  // solo a chiamata finita lasciava una finestra lunga in cui più richieste
+  // parallele vedevano tutte lo stesso conteggio sotto il limite e
+  // partivano insieme, superandolo. Non elimina la finestra (resta tra la
+  // lettura del conteggio sopra e questo insert), ma la riduce da "l'intera
+  // chiamata al modello" a un singolo giro verso il database.
+  let reservedRunId: string | null = null;
+  if (!usingAuditCredit) {
+    const { data: reserved, error: reserveError } = await supabaseAdmin
+      .from("ai_insight_runs")
+      .insert({ user_id: req.userId! })
+      .select("id")
+      .single();
+
+    if (reserveError || !reserved) {
+      console.error("Errore nella riserva della revisione AI", reserveError);
+      reportError(reserveError);
+      res.status(500).json({ error: "Errore nel controllo del limite, riprova" });
+      return;
+    }
+    reservedRunId = reserved.id as string;
+  }
+
   try {
     const { insights, usage } = await findAiInsights(parsed.data.files);
-    // Contata solo un'esecuzione riuscita: un tentativo fallito (errore di
-    // rete verso Anthropic, timeout) non deve consumare un posto nel
-    // limite giornaliero dell'utente. Per chi usa un credito Full Site
-    // Audit invece del piano, il credito è già stato segnato sopra — qui non
-    // serve altro, l'uso è comunque uno solo per credito.
-    if (!usingAuditCredit) {
-      await supabaseAdmin.from("ai_insight_runs").insert({ user_id: req.userId! });
-    }
     res.json({ insights });
 
     if (usage) {
@@ -127,6 +143,11 @@ aiInsightsRouter.post("/api/ai-insights", requireAuth, async (req: AuthedRequest
       });
     }
   } catch (err) {
+    // Un tentativo fallito (errore di rete verso Anthropic, timeout) non
+    // deve consumare un posto nel limite giornaliero: togliamo la riserva.
+    if (reservedRunId) {
+      await supabaseAdmin.from("ai_insight_runs").delete().eq("id", reservedRunId);
+    }
     console.error("Errore nella revisione AI aggiuntiva", err);
     reportError(err);
     res.status(500).json({ error: "Errore nella revisione AI, riprova" });

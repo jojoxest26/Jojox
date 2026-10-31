@@ -87,14 +87,20 @@ function App() {
     if (!session) return;
     const params = new URLSearchParams(window.location.search);
     const installationId = params.get("installation_id");
-    if (!installationId) return;
+    // GitHub restituisce qui, intatto, lo stesso "state" generato quando
+    // l'utente ha cliccato "Connetti GitHub" (vedi openGithubInstallUrl) —
+    // senza, /claim rifiuta il collegamento invece di fidarsi di un
+    // installation_id indovinabile nell'URL.
+    const state = params.get("state");
+    if (!installationId || !state) return;
 
-    claimGithubInstallation(Number(installationId), session.access_token)
+    claimGithubInstallation(Number(installationId), state, session.access_token)
       .then(() => fetchGithubInstallations(session.access_token).then(setInstallations))
       .catch((err) => setGithubClaimError(err instanceof Error ? err.message : null))
       .finally(() => {
         params.delete("installation_id");
         params.delete("setup_action");
+        params.delete("state");
         const query = params.toString();
         window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
       });

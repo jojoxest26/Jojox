@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { fetchProfile, saveSlackWebhook, type GithubInstallation, type Plan } from "../lib/api.js";
+import { fetchProfile, openGithubInstallUrl, saveSlackWebhook, type GithubInstallation, type Plan } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { renderWithTokens } from "../i18n/richText.js";
 import { Icon } from "./Icon.js";
@@ -147,14 +147,17 @@ export function GithubSection({
           </p>
         )}
         {plan === "team" && <p className="github-note">{t.github.teamShareNotice}</p>}
-        <a
+        <button
+          type="button"
           className="btn btn-primary"
-          href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
-          target="_blank"
-          rel="noreferrer"
+          onClick={() =>
+            session
+              ? openGithubInstallUrl(GITHUB_APP_SLUG, session.access_token)
+              : window.dispatchEvent(new Event("jojox-open-login"))
+          }
         >
           {connected ? t.header.connectAnother : t.header.connect}
-        </a>
+        </button>
 
         <button
           type="button"

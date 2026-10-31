@@ -11,6 +11,7 @@ import {
   fetchGithubInstallations,
   fetchGithubRepos,
   fetchProfileDetails,
+  openGithubInstallUrl,
   startMonitoringTrial,
   type GithubInstallation,
   type GithubRepo,
@@ -367,17 +368,16 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
                 )}
               </div>
 
-              {installations.length === 0 && installationsLoaded && (
+              {installations.length === 0 && installationsLoaded && session && (
                 <div className="github-connect-suggestion">
                   <p>{t.fullSiteAudit.connectGithubSuggestion}</p>
-                  <a
+                  <button
+                    type="button"
                     className="btn btn-secondary hard-border hard-shadow-sm"
-                    href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={() => openGithubInstallUrl(GITHUB_APP_SLUG, session.access_token)}
                   >
                     {t.header.connect}
-                  </a>
+                  </button>
                 </div>
               )}
 

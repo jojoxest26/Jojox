@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { supabaseAdmin } from "../db/supabase.js";
 import { getGithubApp } from "../github/app.js";
@@ -32,12 +33,64 @@ githubRouter.get("/api/github/installations", requireAuth, async (req: AuthedReq
   res.json({ installations: data });
 });
 
+// Genera un token "state" monouso, valido 30 minuti, da passare a GitHub
+// nell'URL di installazione — GitHub lo restituisce intatto nel redirect
+// finale, e /claim lo richiede per verificare che chi completa il
+// collegamento sia davvero chi ha cliccato "Connetti GitHub" qui, non
+// chiunque altro riesca a indovinare l'installation_id (un intero piccolo).
+githubRouter.post("/api/github/install-state", requireAuth, async (req: AuthedRequest, res) => {
+  const { data, error } = await supabaseAdmin
+    .from("github_install_states")
+    .insert({ user_id: req.userId! })
+    .select("state")
+    .single();
+
+  if (error || !data) {
+    res.status(500).json({ error: "Errore nella generazione del collegamento" });
+    return;
+  }
+
+  res.json({ state: data.state as string });
+});
+
+const STATE_MAX_AGE_MS = 30 * 60 * 1000;
+
 // Collega un'installazione della GitHub App all'utente loggato. GitHub reindirizza
 // qui (via "Setup URL" nelle impostazioni della App) subito dopo l'installazione,
 // passando l'installation_id nell'URL — senza questo passaggio, il webhook che
 // registra l'installazione non saprebbe a quale utente JoJoX appartiene.
+const claimSchema = z.object({ state: z.string().uuid() });
+
 githubRouter.post("/api/github/installations/:installationId/claim", requireAuth, async (req: AuthedRequest, res) => {
   const installationId = Number(req.params.installationId);
+
+  const parsed = claimSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Collegamento non valido, riprova dal pulsante Connetti GitHub" });
+    return;
+  }
+
+  // Consuma il token "state": una volta sola, solo se appartiene a questo
+  // stesso utente ed è stato generato negli ultimi 30 minuti. Senza questo
+  // controllo chiunque fosse loggato poteva rivendicare l'installazione di
+  // un altro semplicemente indovinando l'installation_id nell'URL.
+  const { data: consumedState, error: stateError } = await supabaseAdmin
+    .from("github_install_states")
+    .delete()
+    .eq("state", parsed.data.state)
+    .eq("user_id", req.userId!)
+    .gte("created_at", new Date(Date.now() - STATE_MAX_AGE_MS).toISOString())
+    .select("state");
+
+  if (stateError) {
+    res.status(500).json({ error: "Errore nel controllo del collegamento" });
+    return;
+  }
+
+  if (!consumedState || consumedState.length === 0) {
+    res.status(403).json({ error: "Collegamento scaduto o non valido, riprova dal pulsante Connetti GitHub" });
+    return;
+  }
 
   const { data: installation } = await supabaseAdmin
     .from("github_installations")

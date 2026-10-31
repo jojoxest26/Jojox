@@ -371,10 +371,30 @@ export async function fetchGithubRepos(installationId: number, accessToken: stri
   return repos;
 }
 
+/**
+ * Genera un token "state" monouso da passare a GitHub nell'URL di
+ * installazione — vedi buildGithubInstallUrl. Richiesto da /claim per
+ * verificare che chi completa il collegamento sia davvero chi ha cliccato
+ * "Connetti GitHub", non chiunque indovini un installation_id nell'URL.
+ */
+export function fetchGithubInstallState(accessToken: string): Promise<{ state: string }> {
+  return apiFetch<{ state: string }>("/api/github/install-state", {
+    method: "POST",
+    accessToken,
+  });
+}
+
+/** Apre l'URL di installazione della GitHub App con un token "state" fresco legato all'utente loggato. */
+export async function openGithubInstallUrl(appSlug: string, accessToken: string): Promise<void> {
+  const { state } = await fetchGithubInstallState(accessToken);
+  window.open(`https://github.com/apps/${appSlug}/installations/new?state=${encodeURIComponent(state)}`, "_blank", "noreferrer");
+}
+
 /** Collega un'installazione GitHub appena creata all'utente loggato (vedi App.tsx, callback dopo l'installazione). */
-export function claimGithubInstallation(installationId: number, accessToken: string): Promise<{ ok: true }> {
+export function claimGithubInstallation(installationId: number, state: string, accessToken: string): Promise<{ ok: true }> {
   return apiFetch<{ ok: true }>(`/api/github/installations/${installationId}/claim`, {
     method: "POST",
+    body: JSON.stringify({ state }),
     accessToken,
   });
 }

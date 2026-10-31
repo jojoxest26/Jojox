@@ -1,0 +1,15 @@
+-- JoJoX — corregge una seconda vulnerabilità reale trovata dalla Revisione
+-- AI: /api/guest-analyze leggeva "esiste già una riga per questo IP?" e
+-- scriveva la riga solo DOPO aver calcolato l'intera analisi (che include
+-- una chiamata di rete a OSV.dev per le dipendenze) — più richieste
+-- contemporanee dallo stesso IP passavano tutte il controllo prima che una
+-- sola scrivesse, aggirando il limite di un'analisi gratuita per visitatore
+-- senza account.
+--
+-- Un indice unico rende l'inserimento stesso la verifica atomica: la
+-- seconda richiesta concorrente fallisce sul vincolo invece di leggere uno
+-- stato ormai superato. IF NOT EXISTS perché la tabella guest_analyses non
+-- risulta creata da nessuna migrazione tracciata (probabilmente creata a
+-- mano in passato) — non sappiamo con certezza se un indice equivalente
+-- esista già.
+create unique index if not exists guest_analyses_ip_hash_key on public.guest_analyses (ip_hash);

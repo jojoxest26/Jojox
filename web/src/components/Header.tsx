@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient.js";
 import { LoginPanel } from "./LoginPanel.js";
-import type { GithubInstallation } from "../lib/api.js";
+import { openGithubInstallUrl, type GithubInstallation } from "../lib/api.js";
 import { useTranslation } from "../i18n/LanguageContext.js";
 import { LANG_NAMES, type Lang } from "../i18n/translations.js";
 import { Icon } from "./Icon.js";
@@ -133,14 +133,13 @@ export function Header({ session, installations }: { session: Session | null; in
         <div className="header-actions">
           <ThemeToggle />
           <LanguageSwitcher />
-          <a
+          <button
+            type="button"
             className="btn btn-secondary hard-border hard-shadow-sm"
-            href={`https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`}
-            target="_blank"
-            rel="noreferrer"
+            onClick={() => (session ? openGithubInstallUrl(GITHUB_APP_SLUG, session.access_token) : setLoginOpen(true))}
           >
             {connected ? t.header.connected : t.header.connect}
-          </a>
+          </button>
           {session ? (
             <>
               <span className="user-email">{session.user.email}</span>
