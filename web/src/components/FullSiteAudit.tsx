@@ -516,6 +516,10 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
             </div>
           )}
 
+          {result && session && (
+            <AiInsightsSection files={filesForInsights} session={session} auditCreditId={auditCreditId ?? undefined} />
+          )}
+
           {result && profile && !profile.planTrialUsed && (
             <div className="card trial-offer">
               <strong>{t.fullSiteAudit.trialOfferTitle}</strong>
@@ -532,10 +536,6 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
           )}
 
           {result && <FindingsList result={result} autofix={autofix} />}
-
-          {result && session && (
-            <AiInsightsSection files={filesForInsights} session={session} auditCreditId={auditCreditId ?? undefined} />
-          )}
         </>
       ) : (
         <div className="card full-site-audit-card">
