@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildSystemPrompt, SUPPORTED_CHAT_LANGS, LANGUAGE_NAMES, type ChatLang } from "../../src/server/routes/chat.js";
+import { ALL_CHECKS } from "../../src/checks/index.js";
 
 const SAMPLE_FINDING = {
   checkId: "hardcoded-secret",
@@ -20,7 +21,7 @@ describe("buildSystemPrompt across all 23 chat languages", () => {
     expect(prompt).toContain("JoJoX");
     // Le cifre dei fatti di prodotto non vanno mai perse in traduzione.
     // (Niente separatore delle migliaia qui: IT usa "1.490", EN "1,490".)
-    expect(prompt).toContain("61");
+    expect(prompt).toContain(String(ALL_CHECKS.length));
     expect(prompt).toContain("190");
     expect(prompt).toContain("490");
     expect(prompt).toContain("500");

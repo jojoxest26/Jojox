@@ -21,6 +21,7 @@ import { FullSiteAudit } from "./components/FullSiteAudit.js";
 import { Reveal } from "./components/Reveal.js";
 import { ChatPage } from "./components/ChatPage.js";
 import { ChatFab } from "./components/ChatFab.js";
+import { ContentStudioPage } from "./components/ContentStudioPage.js";
 import { AuthConfirmPage } from "./components/AuthConfirmPage.js";
 import { SwitchToJojoxPage } from "./components/SwitchToJojoxPage.js";
 import { useSession } from "./hooks/useSession.js";
@@ -116,6 +117,7 @@ function App() {
   if (path === "/sicurezza") return <SecurityPolicyPage />;
   if (path === "/switch") return <SwitchToJojoxPage />;
   if (path === "/chat") return <ChatPage session={session} result={chatResult} />;
+  if (path === "/content") return <ContentStudioPage session={session} />;
   if (path === "/auth/confirm") return <AuthConfirmPage />;
   if (path.startsWith("/r/")) {
     const [owner, repo] = path.slice(3).split("/");

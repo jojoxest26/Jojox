@@ -66,6 +66,7 @@ Per **Claude Desktop**, la stessa voce va nel file di configurazione dell'app (I
 - `src/server/routes/webhooks/stripe.ts` — riceve gli eventi di abbonamento da Stripe e aggiorna il piano dell'utente
 - `src/server/github/` — autenticazione della GitHub App, verifica firma webhook, formattazione del commento/check run
 - `src/server/stripe/` — chiamate dirette all'API REST di Stripe (nessun SDK esterno) e verifica della firma dei webhook
+- `src/server/routes/contentChat.ts` — `POST /api/content-chat`, studio contenuti interno (`/content`, solo per le email in `CONTENT_ADMIN_EMAILS`): scrive reel verticali su JoJoX nel formato di `src/reel.ts`, che il sito anima ed esporta in video (`web/src/lib/reelRenderer.ts`)
 - `src/server/slack/notify.ts` — invia un messaggio a un Incoming Webhook Slack (nessun SDK, solo un POST JSON); non lancia mai un errore verso chi la chiama
 - `src/server/auth/middleware.ts` — verifica del token Supabase
 - `supabase/migrations/` — schema del database (profili, storico, installazioni GitHub, waitlist, analisi ospite), RLS attiva su ogni tabella
@@ -130,6 +131,16 @@ Tre servizi, tutti con piano gratuito sufficiente per iniziare:
 - **Vercel** — sito statico, dominio `jojox.it`
 
 Istruzioni passo-passo, incluse le variabili d'ambiente per Stripe, in `SETUP.md`.
+
+### Studio contenuti (reel per i social)
+
+Pagina interna `/content`, non linkata dal sito: scrivi l'idea di un reel, l'AI lo scrive partendo da quello che dice il sito di JoJoX, la pagina lo anima in verticale (9:16) e lo scarica come video `.mp4` (o `.webm` sui browser che non sanno registrare mp4). La voce fuori campo la registri tu sopra, con il testo già pronto nella pagina.
+
+Per attivarla, su Railway → backend → **Variables**:
+- `CONTENT_ADMIN_EMAILS` — le email che possono usarla, separate da virgola. Finché è vuota, la pagina resta chiusa a tutti.
+- `ANTHROPIC_API_KEY` — la stessa già usata da "Chiedi a JoJoX".
+
+Ogni messaggio usa il modello più capace (lo stesso della chat che scrive codice), conta in `ai_usage_log` come `content_chat` e ha un tetto di 80 messaggi al giorno.
 
 ## Prossimi passi
 

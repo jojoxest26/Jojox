@@ -6,6 +6,11 @@ import { supabaseAdmin } from "../db/supabase.js";
 import { getPlanForUser, DAILY_CHAT_MESSAGE_LIMIT, DAILY_GENERAL_CHAT_LIMIT, startOfTodayUtc } from "../plan.js";
 import { reportError } from "../sentry.js";
 import { logAiUsage } from "../aiUsageLog.js";
+import { ALL_CHECKS } from "../../checks/index.js";
+
+// Letto dal motore, non scritto a mano: il numero scritto a mano era rimasto a 61 quando i controlli
+// erano già diventati di più, e la chat (e i reel che usano questi fatti) lo ripetevano sbagliato.
+const CHECK_COUNT = ALL_CHECKS.length;
 
 // Limiti generosi per un uso normale ma che tengono comunque un tetto fisso
 // ai token (quindi al costo) di ogni singola richiesta, indipendentemente
@@ -73,11 +78,11 @@ const chatRequestSchema = z.object({
     path: ["history"],
   });
 
-const PRODUCT_FACTS_IT = `
-JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di sicurezza con un motore deterministico a pattern — 61 controlli pubblici, nessuna AI nel rilevamento stesso. Copre JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel); su altri linguaggi alcuni controlli generici possono comunque aiutare.
+export const PRODUCT_FACTS_IT = `
+JoJoX analizza codice (scritto da un'AI o da una persona) e trova problemi di sicurezza con un motore deterministico a pattern — ${CHECK_COUNT} controlli pubblici, nessuna AI nel rilevamento stesso. Copre JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) e PHP (Laravel); su altri linguaggi alcuni controlli generici possono comunque aiutare.
 
 Piani:
-- Gratis (0€): 5 analisi al mese, monitoraggio continuo h24 gratis su 1 repository GitHub collegato, tutti i 61 controlli con esempi di correzione, punteggio di sicurezza (0-100) + badge scaricabile, storico delle ultime 20 analisi. Si può anche provare senza registrarsi (1 analisi gratuita, senza email).
+- Gratis (0€): 5 analisi al mese, monitoraggio continuo h24 gratis su 1 repository GitHub collegato, tutti i ${CHECK_COUNT} controlli con esempi di correzione, punteggio di sicurezza (0-100) + badge scaricabile, storico delle ultime 20 analisi. Si può anche provare senza registrarsi (1 analisi gratuita, senza email).
 - Pro (19€/mese o 190€/anno): 100 analisi al mese incluse (storico completo), integrazione GitHub che controlla ogni push e blocca le modifiche più rischiose, un account/organizzazione GitHub collegato, commenti automatici sulle pull request, correzioni automatiche proposte come pull request, badge che si aggiorna da solo a ogni push, e questa chat stessa ("Chiedi a JoJoX"). Oltre le 100 si possono comprare pacchetti extra di 50 analisi.
 - Team (49€/mese o 490€/anno): come Pro ma con 500 analisi al mese condivise tra il team, account/organizzazioni GitHub illimitati e fino a 5 persone con repository e storico condivisi.
 - Business (1.490€/mese o 14.900€/anno): pensato per aziende, non per singoli sviluppatori — 2000 analisi al mese condivise dal team, account/organizzazioni GitHub e repository illimitati, fino a 25 persone incluse, monitoraggio continuo h24 su ogni repository collegato, assistenza email prioritaria.
@@ -91,10 +96,10 @@ Prodotti aggiuntivi pensati per le aziende, acquistabili a parte dall'abbonament
 `.trim();
 
 const PRODUCT_FACTS_EN = `
-JoJoX analyzes code (AI-generated or hand-written) and finds security issues with a deterministic, pattern-based engine — 61 public checks, no AI in the detection itself. Covers JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel); some generic checks can still help on other languages.
+JoJoX analyzes code (AI-generated or hand-written) and finds security issues with a deterministic, pattern-based engine — ${CHECK_COUNT} public checks, no AI in the detection itself. Covers JavaScript/TypeScript, SQL/Supabase, Python (Flask/Django), Go (Gin, net/http), Java (Spring) and PHP (Laravel); some generic checks can still help on other languages.
 
 Plans:
-- Free (€0): 5 analyses/month, free continuous 24/7 monitoring on 1 connected GitHub repository, all 61 checks with fix examples, security score (0-100) + downloadable badge, history of the last 20 analyses. Can also be tried without signing up (1 free analysis, no email).
+- Free (€0): 5 analyses/month, free continuous 24/7 monitoring on 1 connected GitHub repository, all ${CHECK_COUNT} checks with fix examples, security score (0-100) + downloadable badge, history of the last 20 analyses. Can also be tried without signing up (1 free analysis, no email).
 - Pro (€19/month or €190/year): 100 analyses/month included (full history), GitHub integration that checks every push and blocks the riskiest changes, one connected GitHub account/organization, automatic pull request comments, automatic fixes proposed as pull requests, a badge that updates itself on every push, and this chat itself ("Ask JoJoX"). Extra packs of 50 analyses can be bought beyond the 100.
 - Team (€49/month or €490/year): same as Pro but with 500 analyses/month shared across the team, unlimited GitHub accounts/organizations and up to 5 people sharing repositories and history.
 - Business (€1,490/month or €14,900/year): aimed at companies, not individual developers — 2,000 analyses/month shared by the team, unlimited GitHub accounts/organizations and repositories, up to 25 people included, continuous 24/7 monitoring on every connected repository, priority email support.
