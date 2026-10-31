@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { AnalysisResult, SourceFile } from "../../../src/types.js";
 import { applyAutofixes, analyzeFiles, type AutofixResult } from "../../../src/analyze.js";
+import { excludeSelfScanFixtures } from "../../../src/server/util/selfScanFixtures.js";
 import {
   analyzeAuditViaApi,
   createAuditCheckoutSession,
@@ -239,7 +240,13 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
       setResultTier(analysisResult.tier);
       setPrUrl(analysisResult.prUrl);
       setPrSkipped(analysisResult.prSkipped);
-      const autofixResult = applyAutofixes(files);
+      // Stessa esclusione applicata lato server prima di calcolare `result`:
+      // senza questa riga l'autofix e il punteggio prima/dopo mostrati qui
+      // giravano sui 218 file grezzi invece che su quelli davvero analizzati,
+      // mostrando un riepilogo (es. "19 problemi da correggere a mano") che
+      // non corrispondeva alla Pull Request realmente aperta.
+      const filesForAutofix = githubTarget ? excludeSelfScanFixtures(files, githubTarget.owner, githubTarget.repo) : files;
+      const autofixResult = applyAutofixes(filesForAutofix);
       setAutofix(autofixResult);
       // Ricalcoliamo il punteggio (e il numero di problemi) sui file corretti
       // solo per mostrare il miglioramento reale ottenuto dalla correzione
