@@ -137,7 +137,15 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
     fetchGithubRepos(selectedInstallationId, session.access_token)
       .then(setRepos)
       .catch(() => setRepos([]));
-  }, [session, selectedInstallationId]);
+    // Dipende da session.user.id, non dall'intero oggetto session: Supabase
+    // emette un nuovo oggetto session (stesso utente) a ogni refresh silenzioso
+    // del token in background, e usare l'intero oggetto come dipendenza
+    // azzerava la selezione del repository (setSelectedRepoFullName(null))
+    // ogni volta che capitava — senza nessun cambiamento visibile nella UI,
+    // quindi l'utente scopriva di aver perso la selezione solo dopo aver
+    // avviato l'audit, trovandosi senza repository collegato.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user.id, selectedInstallationId]);
 
   async function buyAudit() {
     if (!session) {
