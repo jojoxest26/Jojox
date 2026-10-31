@@ -15,7 +15,14 @@ import {
   type GithubRepo,
   type ProfileDetails,
 } from "../lib/api.js";
-import { readFileAsText, downloadZip, collectFilesFromDataTransfer, BINARY_EXTENSIONS, MAX_FILE_BYTES } from "../lib/fileUpload.js";
+import {
+  readFileAsText,
+  downloadZip,
+  collectFilesFromDataTransfer,
+  stripSelectedFolderName,
+  BINARY_EXTENSIONS,
+  MAX_FILE_BYTES,
+} from "../lib/fileUpload.js";
 import { buildCorrectionsZipEntries } from "../lib/correctionsManifest.js";
 import { openReportWindow } from "../lib/report.js";
 import { useBfcacheReset } from "../lib/useBfcacheReset.js";
@@ -166,7 +173,7 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
 
   async function loadFiles(fileList: FileList) {
     const entries = Array.from(fileList)
-      .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
+      .map((file) => ({ file, path: stripSelectedFolderName(file.webkitRelativePath || file.name) }))
       .filter(({ path, file }) => !shouldSkip(path, file.size))
       .slice(0, MAX_FILES);
     const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
@@ -180,7 +187,10 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
   }
 
   async function loadFromDrop(dataTransfer: DataTransfer) {
-    const collected = await collectFilesFromDataTransfer(dataTransfer);
+    const collected = (await collectFilesFromDataTransfer(dataTransfer)).map(({ file, path }) => ({
+      file,
+      path: stripSelectedFolderName(path),
+    }));
     const entries = collected.filter(({ path, file }) => !shouldSkip(path, file.size)).slice(0, MAX_FILES);
     const loaded = await Promise.all(entries.map(({ file, path }) => readFileAsText(file, path)));
     setFiles(loaded);

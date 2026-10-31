@@ -12,6 +12,22 @@ export const BINARY_EXTENSIONS =
 // scartarlo qui prima evita che faccia fallire l'intera richiesta.
 export const MAX_FILE_BYTES = 200_000;
 
+/**
+ * Toglie il primo segmento di un percorso — il nome della cartella locale
+ * selezionata dall'utente, che webkitRelativePath include sempre (es.
+ * "jojox-progetto-31ott/package.json" diventa "package.json"). Quel nome è
+ * arbitrario (dipende da come l'utente ha chiamato lo zip estratto sul suo
+ * computer) e non significa nulla per il repository GitHub di destinazione:
+ * lasciarlo nei percorsi rompe sia il confronto "questi file corrispondono
+ * al repository?" sia l'esclusione dei falsi positivi sul nostro stesso
+ * repository, che si aspettano entrambi percorsi relativi alla radice del
+ * progetto (es. "src/checks/critical.ts"), non a una cartella locale.
+ */
+export function stripSelectedFolderName(path: string): string {
+  const slash = path.indexOf("/");
+  return slash === -1 ? path : path.slice(slash + 1);
+}
+
 export function readFileAsText(file: File, pathOverride?: string): Promise<SourceFile> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
