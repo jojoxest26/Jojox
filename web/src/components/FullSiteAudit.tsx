@@ -516,18 +516,22 @@ export function FullSiteAudit({ session }: { session: Session | null }) {
             </div>
           )}
 
-          {result && session && (
-            <AiInsightsSection files={filesForInsights} session={session} auditCreditId={auditCreditId ?? undefined} />
-          )}
+          {result && (session || (profile && !profile.planTrialUsed)) && (
+            <div className="full-site-audit-side-cards">
+              {session && (
+                <AiInsightsSection files={filesForInsights} session={session} auditCreditId={auditCreditId ?? undefined} />
+              )}
 
-          {result && profile && !profile.planTrialUsed && (
-            <div className="card trial-offer">
-              <strong>{t.fullSiteAudit.trialOfferTitle}</strong>
-              <p className="dropzone-hint">{t.fullSiteAudit.trialOfferBody}</p>
-              <button type="button" className="btn btn-primary hard-border hard-shadow-sm" disabled={activatingTrial} onClick={activateTrial}>
-                {activatingTrial ? t.fullSiteAudit.trialActivating : t.fullSiteAudit.trialCta}
-              </button>
-              {trialError && <p style={{ color: "var(--critical)", marginTop: "0.5rem" }}>{trialError}</p>}
+              {profile && !profile.planTrialUsed && (
+                <div className="card trial-offer">
+                  <strong>{t.fullSiteAudit.trialOfferTitle}</strong>
+                  <p className="dropzone-hint">{t.fullSiteAudit.trialOfferBody}</p>
+                  <button type="button" className="btn btn-primary hard-border hard-shadow-sm" disabled={activatingTrial} onClick={activateTrial}>
+                    {activatingTrial ? t.fullSiteAudit.trialActivating : t.fullSiteAudit.trialCta}
+                  </button>
+                  {trialError && <p style={{ color: "var(--critical)", marginTop: "0.5rem" }}>{trialError}</p>}
+                </div>
+              )}
             </div>
           )}
 

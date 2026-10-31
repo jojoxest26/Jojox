@@ -1234,6 +1234,20 @@ body::after {
   background: var(--surface-muted);
   border: 1px solid var(--accent);
 }
+/* Full Site Audit: Revisione AI e prova del monitoraggio affiancate invece
+   che impilate a piena larghezza, una sotto l'altra — più compatte e
+   visibili insieme senza scorrere oltre. */
+.full-site-audit-side-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.full-site-audit-side-cards > * {
+  flex: 1 1 280px;
+  margin-top: 0;
+  padding: 1rem 1.25rem;
+}
 .trial-offer .dropzone-hint {
   max-width: 560px;
   margin: 0.4rem auto 1rem;
